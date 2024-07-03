@@ -24,7 +24,7 @@ PFFDTD requires at least Python 3.9 to run, with additional required packages in
 conda_pffdtd.yml (for conda).  Conda (or miniconda) is recommended to get started with a PFFDTD-specific conda environment (see .yml file).
 
 ### Installation (C/CUDA)
-To compile, run 'make all' in the c_cuda folder.  
+To compile, run 'make all' in the src folder.  
 
 You will need the CUDA toolkit, which you can install from [this link](https://developer.nvidia.com/cuda-downloads).
 

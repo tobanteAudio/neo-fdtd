@@ -39,7 +39,7 @@ sim_setup(
 )
 
 #then from '../data/sim_data/mv_fcc/gpu' folder, run (relative path for default folder structure):
-#   ../../../../c_cuda/fdtd_main_gpu_single.x
+#   ../../../../src/fdtd_main_gpu_single.x
 
 #then post-process with something like:
 #   python -m fdtd.process_outputs --data_dir='../data/sim_data/mv_fcc/gpu/' --fcut_lowpass 2500.0 --N_order_lowpass=8 --symmetric --fcut_lowcut 10.0 --N_order_lowcut=4 --air_abs_filter='stokes' --save_wav --plot
