@@ -17,8 +17,8 @@
 #ifndef _FDTD_DATA_H
 #define _FDTD_DATA_H
 
-#include "helper_funcs.h"
-#include "fdtd_common.h"
+#include "helper_funcs.hpp"
+#include "fdtd_common.hpp"
 
 #include "hdf5.h"
 

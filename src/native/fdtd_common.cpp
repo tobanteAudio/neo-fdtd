@@ -13,7 +13,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "fdtd_common.h"
+#include "fdtd_common.hpp"
 
 
 //linear indices to sub-indices in 3d, Nz continguous

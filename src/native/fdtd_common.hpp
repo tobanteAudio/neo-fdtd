@@ -16,7 +16,7 @@
 #ifndef _FDTD_COMMON_H
 #define _FDTD_COMMON_H
 
-#include "helper_funcs.h"
+#include "helper_funcs.hpp"
 
 #include <stdint.h> 
 #include <string.h> 

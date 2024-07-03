@@ -14,7 +14,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "fdtd_data.h"
+#include "fdtd_data.hpp"
 
 
 //load the sim data from Python-written HDF5 files

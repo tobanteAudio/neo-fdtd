@@ -13,7 +13,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "helper_funcs.h"
+#include "helper_funcs.hpp"
 
 //self-explanatory
 bool check_file_exists(char *filename) {

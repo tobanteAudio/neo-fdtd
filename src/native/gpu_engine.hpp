@@ -15,33 +15,16 @@
 
 #ifndef _GPU_ENGINE_H
 #define _GPU_ENGINE_H
-#ifndef _STDIO_H
 #include <stdio.h>
-#endif
-#ifndef _STDLIB_H
 #include <stdlib.h> //for malloc
-#endif
-#ifndef _STDINT_H
 #include <stdint.h> 
-#endif
-#ifndef _ASSERT_H
 #include <assert.h> //for assert
-#endif
-#ifndef _STDBOOL_H
 #include <stdbool.h> //for bool
-#endif
-#ifndef _MATH_H
 #include <math.h> //NAN
-#endif
-#ifndef _HELPER_FUNCS_H
-#include <helper_funcs.h> 
-#endif
-#ifndef _FDTD_COMMON_H
-#include <fdtd_common.h>
-#endif
-#ifndef _OMP_H
-#include <omp.h>
-#endif
+
+#include "helper_funcs.h" 
+#include "fdtd_common.h"
+#include "omp.h"
 
 #define CU_DIV_CEIL(x,y) ((DIV_CEIL(x,y)==0)? (1) : (DIV_CEIL(x,y))) //want 0 to map to 1, otherwise kernel errors
 

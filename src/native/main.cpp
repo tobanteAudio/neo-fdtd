@@ -18,18 +18,18 @@
 #include <assert.h> //for assert
 #include <time.h> //date and time
 
-#include "helper_funcs.h"
-#include "fdtd_common.h"
-#include "fdtd_data.h"
+#include "helper_funcs.hpp"
+#include "fdtd_common.hpp"
+#include "fdtd_data.hpp"
 
 #ifndef USING_CUDA //this is defined in Makefile
    #error "forgot to define USING_CUDA"
 #endif
 
 #if USING_CUDA
-   #include "gpu_engine.h"
+   #include "gpu_engine.hpp"
 #else
-   #include "cpu_engine.h"
+   #include "cpu_engine.hpp"
 #endif
 
 int main(int argc,char** argv) {

@@ -13,7 +13,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "cpu_engine.h"
+#include "cpu_engine.hpp"
 
 #include <stdio.h>
 #include <stdlib.h> //for malloc
