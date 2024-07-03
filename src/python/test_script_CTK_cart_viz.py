@@ -14,8 +14,8 @@
 from sim_setup import sim_setup
 
 sim_setup(
-    model_json_file='../data/models/CTK_Church/model_export.json',
-    mat_folder='../data/materials',
+    model_json_file='../../data/models/CTK_Church/model_export.json',
+    mat_folder='../../data/materials',
     source_num=1,
     insig_type='dhann30', #for viz
     diff_source=False,
@@ -35,11 +35,11 @@ sim_setup(
     fcc_flag=False,
     PPW=7.5, #for 2% phase velocity error at fmax
     fmax=500.0,
-    save_folder='../data/sim_data/ctk_cart/viz', #can run python from here
+    save_folder='../../data/sim_data/ctk_cart/viz', #can run python from here
     compress=0,
     draw_vox=True,
     draw_backend='mayavi', #will draw 'voxelization' (spheres are active boundary nodes, cubes rigid boundary nodes)
 )
 
 #then run with python and 3D visualization:
-#   python3 -m fdtd.sim_fdtd --data_dir='../data/sim_data/ctk_cart/viz' --plot --draw_backend='mayavi' --json_model='../data/models/CTK_Church/model_export.json'
+#   python3 -m fdtd.sim_fdtd --data_dir='../../data/sim_data/ctk_cart/viz' --plot --draw_backend='mayavi' --json_model='../../data/models/CTK_Church/model_export.json'

@@ -14,8 +14,8 @@
 from sim_setup import sim_setup
 
 sim_setup(
-    model_json_file='../data/models/Musikverein_ConcertHall/model_export.json',
-    mat_folder='../data/materials',
+    model_json_file='../../data/models/Musikverein_ConcertHall/model_export.json',
+    mat_folder='../../data/materials',
     source_num=3,
     insig_type='dhann30',
     diff_source=False,
@@ -32,11 +32,11 @@ sim_setup(
     fcc_flag=True,
     PPW=5.6, #for 2% phase velocity error at fmax
     fmax=1000.0,
-    save_folder='../data/sim_data/mv_fcc/viz',
+    save_folder='../../data/sim_data/mv_fcc/viz',
     compress=0,
     draw_vox=True,
     draw_backend='polyscope', #will draw 'voxelization' with polyscope (in which small white spheres denote rigid boundary nodes)
 )
 
 #then run with python and 3D visualization:
-#   python3 -m fdtd.sim_fdtd --data_dir='../data/sim_data/mv_fcc/viz' --plot --draw_backend='mayavi' --json_model='../data/models/Musikverein_ConcertHall/model_export.json'
+#   python3 -m fdtd.sim_fdtd --data_dir='../../data/sim_data/mv_fcc/viz' --plot --draw_backend='mayavi' --json_model='../../data/models/Musikverein_ConcertHall/model_export.json'

@@ -18,7 +18,7 @@ from numpy import array as npa
 from materials.adm_funcs import *
 
 plot=False #set to True to see fits, but have to close plots to proceed to next material
-write_folder = Path('../data/materials')
+write_folder = Path('../../data/materials')
 #some examples to save admittance/impedance data 
 #these are Sabine coefficients, 16Hz to 16kHz centre frequencies
 mv_chairs       = npa([0.22  , 0.22  , 0.22 , 0.22 , 0.26 , 0.3  , 0.33 , 0.34 , 0.34 , 0.34 , 0.34])

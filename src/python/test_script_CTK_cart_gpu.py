@@ -15,8 +15,8 @@
 from sim_setup import sim_setup
 
 sim_setup(
-    model_json_file='../data/models/CTK_Church/model_export.json',
-    mat_folder='../data/materials',
+    model_json_file='../../data/models/CTK_Church/model_export.json',
+    mat_folder='../../data/materials',
     source_num=1,
     insig_type='impulse', #for RIR
     diff_source=True, #for single precision
@@ -36,12 +36,12 @@ sim_setup(
     fcc_flag=False,
     PPW=10.5, #for 1% phase velocity error at fmax
     fmax=1400.0,
-    save_folder='../data/sim_data/ctk_cart/gpu', 
-    save_folder_gpu='../data/sim_data/ctk_cart/gpu',
+    save_folder='../../data/sim_data/ctk_cart/gpu', 
+    save_folder_gpu='../../data/sim_data/ctk_cart/gpu',
     compress=0,
 )
-#then from '../data/sim_data/ctk_cart/gpu' folder, run (relative path for default folder structure):
+#then from '../../data/sim_data/ctk_cart/gpu' folder, run (relative path for default folder structure):
 #   ../../../../src/fdtd_main_gpu_single.x
 
 #then post-process with something like:
-# python -m fdtd.process_outputs --data_dir='../data/sim_data/ctk_cart/gpu/' --fcut_lowpass 1400.0 --N_order_lowpass=8 --symmetric --fcut_lowcut 10.0 --N_order_lowcut=4 --save_wav --plot
+# python -m fdtd.process_outputs --data_dir='../../data/sim_data/ctk_cart/gpu/' --fcut_lowpass 1400.0 --N_order_lowpass=8 --symmetric --fcut_lowcut 10.0 --N_order_lowcut=4 --save_wav --plot
