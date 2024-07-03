@@ -1,4 +1,3 @@
-// vim: tabstop=3: ai
 ///////////////////////////////////////////////////////////////////////////////
 // This file is a part of PFFDTD.
 //
@@ -80,12 +79,12 @@ struct MatQuad {
 //some declarations (comments at definitions)
 void read_h5_constant(hid_t file, char *dset_str, void *data_container, TYPE t);
 void read_h5_dataset(hid_t file, char *dset_str, int ndims, hsize_t *dims, void **data_array, TYPE t);
-void load_sim_data(struct SimData *sd);
-void free_sim_data(struct SimData *sd);
+void load_sim_data(SimData *sd);
+void free_sim_data(SimData *sd);
 void read_h5_dataset(hid_t file, char *dset_str, int ndims, hsize_t *dims, void **data_array, TYPE t);
 void read_h5_constant(hid_t file, char *dset_str, void *data_container, TYPE t);
-void print_last_samples(struct SimData *sd);
-void scale_input(struct SimData *sd);
-void rescale_output(struct SimData *sd);
-void write_outputs(struct SimData *sd);
+void print_last_samples(SimData *sd);
+void scale_input(SimData *sd);
+void rescale_output(SimData *sd);
+void write_outputs(SimData *sd);
 

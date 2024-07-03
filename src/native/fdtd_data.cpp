@@ -1,4 +1,3 @@
-// vim: tabstop=3: ai
 ///////////////////////////////////////////////////////////////////////////////
 // This file is a part of PFFDTD.
 //
@@ -18,7 +17,7 @@
 
 
 //load the sim data from Python-written HDF5 files
-void load_sim_data(struct SimData *sd) {
+void load_sim_data(SimData *sd) {
    //local values, to read in and attach to struct at end
    int64_t Nx,Ny,Nz;
    int64_t Nb,Nbl,Nba;
@@ -44,7 +43,7 @@ void load_sim_data(struct SimData *sd) {
    int8_t NN;
    int8_t *Mb;
    int8_t Nm;
-   struct MatQuad *mat_quads;
+   MatQuad *mat_quads;
    Real *mat_beta; //one per material
 
    double Ts;
@@ -202,7 +201,7 @@ void load_sim_data(struct SimData *sd) {
    read_h5_dataset(file, dset_str, expected_ndims, dims,(void **)&saf_bn,FLOAT64);
    assert((int64_t)dims[0]==Nb);
 
-   mymalloc((void **)&ssaf_bn, Nb*sizeof(Real));
+   allocate_zeros((void **)&ssaf_bn, Nb*sizeof(Real));
    for (int64_t i=0; i<Nb; i++) {
       if (fcc_flag>0) 
          ssaf_bn[i] = (Real)(0.5/sqrt(2.0))*saf_bn[i]; //rescale for S*h/V and cast
@@ -343,8 +342,8 @@ void load_sim_data(struct SimData *sd) {
    //////////////////
    // DEF (RLC) datasets
    //////////////////
-   mymalloc((void **)&mat_quads, static_cast<unsigned long>(Nm*MMb)*sizeof(struct MatQuad)); //initalises to zero
-   mymalloc((void **)&mat_beta, Nm*sizeof(Real)); 
+   allocate_zeros((void **)&mat_quads, static_cast<unsigned long>(Nm*MMb)*sizeof(MatQuad)); //initalises to zero
+   allocate_zeros((void **)&mat_beta, Nm*sizeof(Real)); 
    for (int8_t i=0; i<Nm; i++) {
       double *DEF; //for one material
       sprintf(dset_str,"mat_%02d_DEF",i);expected_ndims=2;
@@ -451,7 +450,7 @@ void load_sim_data(struct SimData *sd) {
    //////////////////
    // bit-pack and check adj_bn
    //////////////////
-   mymalloc((void **)&adj_bn, Nb*sizeof(uint16_t));
+   allocate_zeros((void **)&adj_bn, Nb*sizeof(uint16_t));
    //#pragma omp parallel for
    for (int64_t i=0; i<Nb; i++) {
       for (int8_t j=0; j<NN; j++) { 
@@ -472,7 +471,7 @@ void load_sim_data(struct SimData *sd) {
    //////////////////
    // calculate K_bn from adj_bn
    //////////////////
-   mymalloc((void **)&K_bn, Nb*sizeof(int8_t));
+   allocate_zeros((void **)&K_bn, Nb*sizeof(int8_t));
    //#pragma omp parallel for
    for (int64_t nb=0; nb<Nb; nb++) {
       K_bn[nb] = 0;
@@ -487,7 +486,7 @@ void load_sim_data(struct SimData *sd) {
    //////////////////
    //make compressed bit-mask 
    int64_t Nbm = (Npts-1)/8+1;
-   mymalloc((void **)&bn_mask, Nbm); //one bit per 
+   allocate_zeros((void **)&bn_mask, Nbm); //one bit per 
    for (int64_t i=0; i<Nb; i++) {
       int64_t ii = bn_ixyz[i];
       SET_BIT(bn_mask[ii>>3],ii%8);
@@ -495,7 +494,7 @@ void load_sim_data(struct SimData *sd) {
 
    // create bn_mask_raw to double check
    bool *bn_mask_raw;
-   mymalloc((void **)&bn_mask_raw, Npts*sizeof(bool));
+   allocate_zeros((void **)&bn_mask_raw, Npts*sizeof(bool));
    //#pragma omp parallel for
    for (int64_t i=0; i<Nb; i++) {
       int64_t ii = bn_ixyz[i];
@@ -519,9 +518,9 @@ void load_sim_data(struct SimData *sd) {
       Nbl += mat_bn[i]>=0;
    }
    printf("Nbl = %ld\n",Nbl);
-   mymalloc((void **)&mat_bnl, Nbl*sizeof(int8_t));
-   mymalloc((void **)&bnl_ixyz, Nbl*sizeof(int64_t));
-   mymalloc((void **)&ssaf_bnl, Nbl*sizeof(Real));
+   allocate_zeros((void **)&mat_bnl, Nbl*sizeof(int8_t));
+   allocate_zeros((void **)&bnl_ixyz, Nbl*sizeof(int64_t));
+   allocate_zeros((void **)&ssaf_bnl, Nbl*sizeof(Real));
    {
       int64_t j=0;
       for (int64_t i=0; i<Nb; i++) {
@@ -545,8 +544,8 @@ void load_sim_data(struct SimData *sd) {
    Nba = 2*(Nx*Nyf+Nx*Nz+Nyf*Nz) - 12*(Nx+Nyf+Nz) + 56;
    if (fcc_flag>0) Nba /= 2;
 
-   mymalloc((void **)&bna_ixyz, Nba*sizeof(int64_t));
-   mymalloc((void **)&Q_bna, Nba*sizeof(int8_t));
+   allocate_zeros((void **)&bna_ixyz, Nba*sizeof(int64_t));
+   allocate_zeros((void **)&Q_bna, Nba*sizeof(int8_t));
    {
       int64_t ii = 0;
       for (int64_t ix=1; ix<Nx-1; ix++) {
@@ -576,13 +575,13 @@ void load_sim_data(struct SimData *sd) {
       printf("ABC nodes\n");
       if (fcc_flag==2) { //need to sort bna_ixyz 
          int64_t *bna_sort_keys;
-         mymalloc((void **)&bna_sort_keys, Nba*sizeof(int64_t));
-         qsort_keys(bna_ixyz,bna_sort_keys,Nba);
+         allocate_zeros((void **)&bna_sort_keys, Nba*sizeof(int64_t));
+         sort_keys(bna_ixyz,bna_sort_keys,Nba);
 
          //now sort corresponding Q_bna array
          int8_t *Q_bna_sorted;
          int8_t *Q_bna_unsorted;
-         mymalloc((void **)&Q_bna_sorted, Nba*sizeof(int8_t));
+         allocate_zeros((void **)&Q_bna_sorted, Nba*sizeof(int8_t));
          //swap pointers
          Q_bna_unsorted = Q_bna;
          Q_bna = Q_bna_sorted;
@@ -597,7 +596,7 @@ void load_sim_data(struct SimData *sd) {
    }
 
    //for outputs
-   mymalloc((void **)&u_out, Nr*Nt*sizeof(double));
+   allocate_zeros((void **)&u_out, Nr*Nt*sizeof(double));
    /*------------------------
     * ATTACH 
    ------------------------*/
@@ -640,7 +639,7 @@ void load_sim_data(struct SimData *sd) {
 }
 
 //free everything
-void free_sim_data(struct SimData *sd) {
+void free_sim_data(SimData *sd) {
    /*------------------------
     * FREE WILLY 
    ------------------------*/
@@ -782,7 +781,7 @@ void read_h5_constant(hid_t file, char *dset_str, void *data_container, TYPE t) 
 }
 
 //print last samples of simulation (for correctness checking..)
-void print_last_samples(struct SimData *sd) {
+void print_last_samples(SimData *sd) {
    int64_t Nt = sd->Nt;
    int64_t Nr = sd->Nr;
    double *u_out = sd->u_out;
@@ -798,7 +797,7 @@ void print_last_samples(struct SimData *sd) {
 }
 
 //scale input to be in middle of floating-point range 
-void scale_input(struct SimData *sd) {
+void scale_input(SimData *sd) {
    double *in_sigs = sd->in_sigs;
    int64_t Nt = sd->Nt;
    int64_t Ns = sd->Ns;
@@ -807,7 +806,7 @@ void scale_input(struct SimData *sd) {
    double max_in = 0.0;
    for (int64_t n=0; n<Nt; n++) {
       for (int64_t ns=0; ns<Ns; ns++) {
-          max_in = MAX(max_in,fabs(in_sigs[(int64_t)ns*Nt+n]));
+          max_in = std::max(max_in,fabs(in_sigs[(int64_t)ns*Nt+n]));
       }
    }
    double aexp = 0.5; //normalise to middle power of two
@@ -831,7 +830,7 @@ void scale_input(struct SimData *sd) {
 }
 
 //undo that scaling
-void rescale_output(struct SimData *sd) {
+void rescale_output(SimData *sd) {
    double *u_out = sd->u_out;
    int64_t Nt = sd->Nt;
    int64_t Nr = sd->Nr;
@@ -847,7 +846,7 @@ void rescale_output(struct SimData *sd) {
 }
 
 //save outputs in HDF5 (to processed subsequently with Python script)
-void write_outputs(struct SimData *sd) {
+void write_outputs(SimData *sd) {
    //write outputs in correct order
    int64_t *out_reorder = sd->out_reorder;
    int64_t Nt = sd->Nt;
@@ -859,7 +858,7 @@ void write_outputs(struct SimData *sd) {
    hid_t file, space, dset;
 
    double *u_out;
-   mymalloc((void **)&u_out, Nt*Nr*sizeof(double));
+   allocate_zeros((void **)&u_out, Nt*Nr*sizeof(double));
    for (int64_t nr=0; nr<Nr; nr++) {
       for (int64_t n=0; n<Nt; n++) {
          u_out[nr*Nt + n] = sd->u_out[out_reorder[nr]*Nt + n];

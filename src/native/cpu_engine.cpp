@@ -1,4 +1,3 @@
-// vim: tabstop=3: ai
 ///////////////////////////////////////////////////////////////////////////////
 // This file is a part of PFFDTD.
 //
@@ -23,7 +22,7 @@
 #include <math.h> //NAN
 #include <omp.h>
 
-double run_sim(struct SimData *sd) 
+double run_sim(SimData *sd) 
 {
    //keep local ints, scalars
    int64_t Ns   = sd->Ns;
@@ -53,7 +52,7 @@ double run_sim(struct SimData *sd)
    int8_t fcc_flag    = sd->fcc_flag;
    Real *ssaf_bnl   = sd->ssaf_bnl;
    Real *mat_beta   = sd->mat_beta;
-   struct MatQuad *mat_quads = sd->mat_quads;
+   MatQuad *mat_quads = sd->mat_quads;
 
    //these are states grids
    Real *u0,*u1;
@@ -63,16 +62,16 @@ double run_sim(struct SimData *sd)
    Real *vh1,*gh1;
 
    //allocate memory
-   mymalloc((void **)&u0, (size_t)Npts*sizeof(Real));
-   mymalloc((void **)&u1, (size_t)Npts*sizeof(Real));
-   mymalloc((void **)&u0b, (size_t)Nbl*sizeof(Real));
-   mymalloc((void **)&u1b, (size_t)Nbl*sizeof(Real));
-   mymalloc((void **)&u2b, (size_t)Nbl*sizeof(Real));
-   mymalloc((void **)&u2ba, (size_t)Nba*sizeof(Real));
+   allocate_zeros((void **)&u0, (size_t)Npts*sizeof(Real));
+   allocate_zeros((void **)&u1, (size_t)Npts*sizeof(Real));
+   allocate_zeros((void **)&u0b, (size_t)Nbl*sizeof(Real));
+   allocate_zeros((void **)&u1b, (size_t)Nbl*sizeof(Real));
+   allocate_zeros((void **)&u2b, (size_t)Nbl*sizeof(Real));
+   allocate_zeros((void **)&u2ba, (size_t)Nba*sizeof(Real));
 
    //size hash-defined, but not using all of it necesssarily
-   mymalloc((void **)&vh1, (size_t)Nbl*MMb*sizeof(Real));
-   mymalloc((void **)&gh1, (size_t)Nbl*MMb*sizeof(Real));
+   allocate_zeros((void **)&vh1, (size_t)Nbl*MMb*sizeof(Real));
+   allocate_zeros((void **)&gh1, (size_t)Nbl*MMb*sizeof(Real));
 
    //sim coefficients
    Real lo2 = sd->lo2;
@@ -335,7 +334,7 @@ double run_sim(struct SimData *sd)
 
 //function that does freq-dep RLC boundaries.  See 2016 ISMRA paper and accompanying webpage (slightly improved here)
 double process_bnl_pts_fd(Real *u0b, const Real *u2b, const Real *ssaf_bnl, const int8_t *mat_bnl, int64_t Nbl, int8_t *Mb, Real lo2,
-                         Real *vh1, Real *gh1, const struct MatQuad *mat_quads, const Real *mat_beta) {
+                         Real *vh1, Real *gh1, const MatQuad *mat_quads, const Real *mat_beta) {
    double tstart = omp_get_wtime();
    #pragma omp parallel for schedule(static) 
    for (int64_t nb=0; nb<Nbl; nb++) {
@@ -355,7 +354,7 @@ double process_bnl_pts_fd(Real *u0b, const Real *u2b, const Real *ssaf_bnl, cons
       for (int8_t m=0; m<Mb[k]; m++) {
          int64_t nbm = nb*MMb+m;
          int32_t mbk = k*MMb+m;
-         const struct MatQuad *tm;
+         const MatQuad *tm;
          tm = &(mat_quads[mbk]);
          vh1nb[m] = vh1[nbm];
          u0bint -= fac*( _2*(tm->bDh)*vh1nb[m] - (tm->bFh)*gh1[nbm] );
@@ -366,7 +365,7 @@ double process_bnl_pts_fd(Real *u0b, const Real *u2b, const Real *ssaf_bnl, cons
       for (int8_t m=0; m<Mb[k]; m++) {
          int64_t nbm = nb*MMb+m;
          int32_t mbk = k*MMb+m;
-         const struct MatQuad *tm; 
+         const MatQuad *tm; 
          tm = &(mat_quads[mbk]);
          Real vh0nbm = (tm->b)*du + (tm->bd)*vh1nb[m] - _2*(tm->bFh)*gh1[nbm];
          gh1[nbm] += (vh0nbm + vh1nb[m])/_2;

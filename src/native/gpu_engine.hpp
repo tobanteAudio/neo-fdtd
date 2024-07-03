@@ -1,4 +1,3 @@
-// vim: tabstop=3: ai
 ///////////////////////////////////////////////////////////////////////////////
 // This file is a part of PFFDTD.
 //
@@ -664,9 +663,9 @@ double run_sim(const struct SimData *sd)
    ngpus = max_ngpus; 
    assert(ngpus < (sd->Nx));
    struct gpuData *gds;
-   mymalloc((void **)&gds, ngpus*sizeof(gpuData)); 
+   allocate_zeros((void **)&gds, ngpus*sizeof(gpuData)); 
    struct gpuHostData *ghds;
-   mymalloc((void **)&ghds, ngpus*sizeof(gpuHostData)); //one bit per 
+   allocate_zeros((void **)&ghds, ngpus*sizeof(gpuHostData)); //one bit per 
 
    if (ngpus>1) check_sorted(sd); //needs to be sorted for multi-GPU
 
@@ -757,12 +756,12 @@ double run_sim(const struct SimData *sd)
       ghd->u_out_buf = u_out_buf + Nr_read;
 
       //recalculate indices, these are associated host versions to copy over to devices
-      mymalloc((void **)&(ghd->bn_ixyz), ghd->Nb*sizeof(int64_t));
-      mymalloc((void **)&(ghd->bnl_ixyz), ghd->Nbl*sizeof(int64_t));
-      mymalloc((void **)&(ghd->bna_ixyz), ghd->Nba*sizeof(int64_t));
-      mymalloc((void **)&(ghd->bn_mask), ghd->Nbm*sizeof(uint8_t));
-      mymalloc((void **)&(ghd->in_ixyz), ghd->Ns*sizeof(int64_t));
-      mymalloc((void **)&(ghd->out_ixyz), ghd->Nr*sizeof(int64_t));
+      allocate_zeros((void **)&(ghd->bn_ixyz), ghd->Nb*sizeof(int64_t));
+      allocate_zeros((void **)&(ghd->bnl_ixyz), ghd->Nbl*sizeof(int64_t));
+      allocate_zeros((void **)&(ghd->bna_ixyz), ghd->Nba*sizeof(int64_t));
+      allocate_zeros((void **)&(ghd->bn_mask), ghd->Nbm*sizeof(uint8_t));
+      allocate_zeros((void **)&(ghd->in_ixyz), ghd->Ns*sizeof(int64_t));
+      allocate_zeros((void **)&(ghd->out_ixyz), ghd->Nr*sizeof(int64_t));
 
       int64_t offset = Nzy*Nx_pos;
       for (int64_t nb=0; nb<(ghd->Nb); nb++) {
@@ -862,8 +861,8 @@ double run_sim(const struct SimData *sd)
       gpuErrchk( cudaMalloc(&(gd->mat_beta), (size_t)sd->Nm*sizeof(Real)) );    
       gpuErrchk( cudaMemcpy(gd->mat_beta, sd->mat_beta, (size_t)sd->Nm*sizeof(Real), cudaMemcpyHostToDevice) );
 
-      gpuErrchk( cudaMalloc(&(gd->mat_quads), (size_t)sd->Nm*MMb*sizeof(struct MatQuad)) );    
-      gpuErrchk( cudaMemcpy(gd->mat_quads, sd->mat_quads, (size_t)sd->Nm*MMb*sizeof(struct MatQuad), cudaMemcpyHostToDevice) );
+      gpuErrchk( cudaMalloc(&(gd->mat_quads), (size_t)sd->Nm*MMb*sizeof(MatQuad)) );    
+      gpuErrchk( cudaMemcpy(gd->mat_quads, sd->mat_quads, (size_t)sd->Nm*MMb*sizeof(MatQuad), cudaMemcpyHostToDevice) );
 
       gpuErrchk( cudaMalloc(&(gd->bn_mask), (size_t)(ghd->Nbm*sizeof(uint8_t))) );    
       gpuErrchk( cudaMemcpy(gd->bn_mask, ghd->bn_mask, (size_t)ghd->Nbm*sizeof(uint8_t), cudaMemcpyHostToDevice) );
