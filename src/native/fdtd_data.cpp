@@ -343,7 +343,7 @@ void load_sim_data(struct SimData *sd) {
    //////////////////
    // DEF (RLC) datasets
    //////////////////
-   mymalloc((void **)&mat_quads, Nm*MMb*sizeof(struct MatQuad)); //initalises to zero
+   mymalloc((void **)&mat_quads, static_cast<unsigned long>(Nm*MMb)*sizeof(struct MatQuad)); //initalises to zero
    mymalloc((void **)&mat_beta, Nm*sizeof(Real)); 
    for (int8_t i=0; i<Nm; i++) {
       double *DEF; //for one material

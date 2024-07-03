@@ -14,8 +14,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef _FDTD_DATA_H
-#define _FDTD_DATA_H
+#pragma once
 
 #include "helper_funcs.hpp"
 #include "fdtd_common.hpp"
@@ -90,4 +89,3 @@ void scale_input(struct SimData *sd);
 void rescale_output(struct SimData *sd);
 void write_outputs(struct SimData *sd);
 
-#endif

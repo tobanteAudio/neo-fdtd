@@ -13,8 +13,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef _FDTD_COMMON_H
-#define _FDTD_COMMON_H
+#pragma once
 
 #include "helper_funcs.hpp"
 
@@ -65,4 +64,4 @@ void print_progress(uint32_t n, uint32_t Nt, uint64_t Npts, uint64_t Nb,
                      double time_elapsed_air, double time_elapsed_sample_air, 
                      double time_elapsed_bn, double time_elapsed_sample_bn, int num_workers);
 
-#endif
+

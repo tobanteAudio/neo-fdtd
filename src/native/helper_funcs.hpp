@@ -13,8 +13,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef _HELPER_FUNCS_H
-#define _HELPER_FUNCS_H
+#pragma once
 
 #include <stdio.h>
 #include <stdlib.h> //for malloc
@@ -60,4 +59,4 @@ int cmpfunc_int64 (const void * a, const void * b);
 int cmpfunc_int64_keys (const void * a, const void * b);
 void qsort_keys(int64_t *val_arr, int64_t *key_arr, int64_t N);
 
-#endif
+

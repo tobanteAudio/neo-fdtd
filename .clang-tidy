@@ -1,0 +1,67 @@
+Checks: >
+  *-,
+
+  bugprone-*,
+  -bugprone-macro-parentheses,
+
+
+  -cert-*,
+  -cert-err58-cpp,
+  -cert-oop54-cpp,
+
+  -clang-analyzer-*,
+  -clang-diagnostics-*,
+
+  -concurrency-*,
+
+  -cppcoreguidelines-*,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-avoid-const-or-ref-data-members,
+  -cppcoreguidelines-pro-bounds-constant-array-index,
+
+  -hicpp-*,
+
+  -misc-*,
+
+  -modernize-*,
+
+  -performance-*,
+
+  -readability-*,
+  -readability-identifier-naming,
+  -readability-const-return-type,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+
+  -*-non-private-member-variables-in-classes,
+  -*-special-member-functions,
+
+WarningsAsErrors: "*"
+FormatStyle: none
+CheckOptions:
+  - key: bugprone-easily-swappable-parameters.MinimumLength
+    value: 4
+  - key: cppcoreguidelines-avoid-do-while.IgnoreMacros
+    value: true
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.ClassMemberCase
+    value: camelBack
+  - key: readability-identifier-naming.ClassConstantCase
+    value: camelBack
+  - key: readability-identifier-naming.PrivateMemberPrefix
+    value: _
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionCase
+    value: camelBack
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: CamelCase
+  - key: readability-identifier-naming.IgnoreMainLikeFunctions
+    value: 1
+  - key: readability-identifier-naming.ParameterCase
+    value: camelBack
+  - key: readability-identifier-naming.UnionCase
+    value: CamelCase
+  - key: readability-identifier-naming.VariableCase
+    value: camelBack
