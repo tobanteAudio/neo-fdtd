@@ -26,7 +26,7 @@ import hashlib
 import multiprocessing as mp
 import scipy.io.wavfile
 
-EPS = np.finfo(np.float).eps
+EPS = np.finfo(np.float64).eps
 
 def rotmatrix_ax_ang(Rax:Any, Rang:float):
     assert isinstance(Rax,np.ndarray)
