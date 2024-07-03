@@ -7,8 +7,11 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 add_executable(pffdtd)
-target_compile_definitions(pffdtd PRIVATE PRECISION=1 USING_CUDA=0)
+target_compile_definitions(pffdtd PRIVATE PRECISION=2 USING_CUDA=0)
 target_sources(pffdtd 
     PRIVATE
         src/native/cpu_engine.cpp
