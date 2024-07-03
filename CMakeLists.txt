@@ -8,15 +8,18 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(pffdtd)
-target_compile_definitions(pffdtd PRIVATE PRECISION=2 USING_CUDA=0)
+target_compile_definitions(pffdtd PRIVATE PRECISION=1 USING_CUDA=0)
 target_sources(pffdtd 
     PRIVATE
+        src/native/cpu_engine.c
         src/native/cpu_engine.h
+        src/native/fdtd_common.c
         src/native/fdtd_common.h
+        src/native/fdtd_data.c
         src/native/fdtd_data.h
-        src/native/fdtd_main.c
-        src/native/fdtd_data.h
+        src/native/helper_funcs.c
         src/native/helper_funcs.h
+        src/native/main.c
 )
 
 find_package(HDF5 REQUIRED)
