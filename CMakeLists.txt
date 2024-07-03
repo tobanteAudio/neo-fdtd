@@ -11,12 +11,12 @@ add_executable(pffdtd)
 target_compile_definitions(pffdtd PRIVATE PRECISION=2 USING_CUDA=0)
 target_sources(pffdtd 
     PRIVATE
-        src/cpu_engine.h
-        src/fdtd_common.h
-        src/fdtd_data.h
-        src/fdtd_main.c
-        src/fdtd_data.h
-        src/helper_funcs.h
+        src/native/cpu_engine.h
+        src/native/fdtd_common.h
+        src/native/fdtd_data.h
+        src/native/fdtd_main.c
+        src/native/fdtd_data.h
+        src/native/helper_funcs.h
 )
 
 find_package(HDF5 REQUIRED)
