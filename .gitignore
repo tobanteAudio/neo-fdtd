@@ -1,5 +1,7 @@
 /.vscode
 /data/sim_data
+/build
+/cmake-build-*
 
 /venv
 __pycache__# Byte-compiled / optimized / DLL files
