@@ -145,22 +145,22 @@ void load_sim_data(SimData *sd)
    //////////////////
    strcpy(dset_str, "Nx");
    read_h5_constant(file, dset_str, (void *)&Nx, INT64);
-   printf("Nx=%ld\n", Nx);
+   printf("Nx=%lld\n", Nx);
 
    strcpy(dset_str, "Ny");
    read_h5_constant(file, dset_str, (void *)&Ny, INT64);
-   printf("Ny=%ld\n", Ny);
+   printf("Ny=%lld\n", Ny);
 
    strcpy(dset_str, "Nz");
    read_h5_constant(file, dset_str, (void *)&Nz, INT64);
-   printf("Nz=%ld\n", Nz);
+   printf("Nz=%lld\n", Nz);
 
    Npts = Nx * Ny * Nz;
-   printf("Npts=%ld\n", Npts);
+   printf("Npts=%lld\n", Npts);
 
    strcpy(dset_str, "Nb");
    read_h5_constant(file, dset_str, (void *)&Nb, INT64);
-   printf("Nb=%ld\n", Nb);
+   printf("Nb=%lld\n", Nb);
 
    //////////////////
    // bn_ixyz dataset
@@ -251,19 +251,19 @@ void load_sim_data(SimData *sd)
    //////////////////
    strcpy(dset_str, "Nt");
    read_h5_constant(file, dset_str, (void *)&Nt, INT64);
-   printf("Nt=%ld\n", Nt);
+   printf("Nt=%lld\n", Nt);
 
    strcpy(dset_str, "Ns");
    read_h5_constant(file, dset_str, (void *)&Ns, INT64);
-   printf("Ns=%ld\n", Ns);
+   printf("Ns=%lld\n", Ns);
 
    strcpy(dset_str, "Nr");
    read_h5_constant(file, dset_str, (void *)&Nr, INT64);
-   printf("Nr=%ld\n", Nr);
+   printf("Nr=%lld\n", Nr);
 
    strcpy(dset_str, "Nr");
    read_h5_constant(file, dset_str, (void *)&Nr, INT64);
-   printf("Nr=%ld\n", Nr);
+   printf("Nr=%lld\n", Nr);
 
    strcpy(dset_str, "diff");
    read_h5_constant(file, dset_str, (void *)&diff, BOOL);
@@ -563,7 +563,7 @@ void load_sim_data(SimData *sd)
    {
       Nbl += mat_bn[i] >= 0;
    }
-   printf("Nbl = %ld\n", Nbl);
+   printf("Nbl = %lld\n", Nbl);
    allocate_zeros((void **)&mat_bnl, Nbl * sizeof(int8_t));
    allocate_zeros((void **)&bnl_ixyz, Nbl * sizeof(int64_t));
    allocate_zeros((void **)&ssaf_bnl, Nbl * sizeof(Real));
@@ -863,10 +863,10 @@ void print_last_samples(SimData *sd)
    printf("RAW OUTPUTS\n");
    for (int64_t nr = 0; nr < Nr; nr++)
    {
-      printf("receiver %ld\n", nr);
+      printf("receiver %lld\n", nr);
       for (int64_t n = Nt - 5; n < Nt; n++)
       {
-         printf("sample %ld: %.16e\n", n, u_out[out_reorder[nr] * Nt + n]);
+         printf("sample %lld: %.16e\n", n, u_out[out_reorder[nr] * Nt + n]);
       }
    }
 }
