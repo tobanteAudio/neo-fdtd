@@ -22,24 +22,24 @@ sim_setup(
     diff_source=True,
     mat_files_dict={
                     'Floor': 'mv_floor.h5',
-                    'Chairs' : 'mv_chairs.h5',
+                    'Chairs': 'mv_chairs.h5',
                     'Plasterboard': 'mv_plasterboard.h5',
                     'Window': 'mv_window.h5',
                     'Wood': 'mv_wood.h5',
-                    }, #see build_mats.py to set these material impedances from absorption data
+    },  # see build_mats.py to set these material impedances from absorption data
     duration=3.0,
     Tc=20,
     rh=50,
     fcc_flag=True,
-    PPW=7.7, #for 1% phase velocity error at fmax
+    PPW=7.7,  # for 1% phase velocity error at fmax
     fmax=2500.0,
     save_folder='../../data/sim_data/mv_fcc/gpu',
     save_folder_gpu='../../data/sim_data/mv_fcc/gpu',
-    compress=3, #apply level-3 GZIP compression to larger h5 files
+    compress=3,  # apply level-3 GZIP compression to larger h5 files
 )
 
-#then from '../../data/sim_data/mv_fcc/gpu' folder, run (relative path for default folder structure):
+# then from '../../data/sim_data/mv_fcc/gpu' folder, run (relative path for default folder structure):
 #   ../../../../src/fdtd_main_gpu_single.x
 
-#then post-process with something like:
+# then post-process with something like:
 #   python -m fdtd.process_outputs --data_dir='../../data/sim_data/mv_fcc/gpu/' --fcut_lowpass 2500.0 --N_order_lowpass=8 --symmetric --fcut_lowcut 10.0 --N_order_lowcut=4 --air_abs_filter='stokes' --save_wav --plot
