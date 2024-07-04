@@ -8,15 +8,15 @@ sim_setup(
     diff_source=True,  # for single precision
     mat_files_dict={
         'Walls': 'tobi_wall.h5',
-        'Ceiling': 'tobi_wall.h5',
+        'Ceiling': 'tobi_ceiling.h5',
         'Floor': 'tobi_floor.h5',
     },
-    duration=0.55,
+    duration=1.0,
     Tc=20,
     rh=50,
     fcc_flag=False,
     PPW=7.1,
-    fmax=4000.0,
+    fmax=1000.0,
     save_folder='../../data/sim_data/Tobi/gpu',
     save_folder_gpu='../../data/sim_data/Tobi/gpu',
     compress=0,
