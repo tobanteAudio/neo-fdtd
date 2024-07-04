@@ -1,8 +1,0 @@
-[requires]
-hdf5/1.14.4.3
-
-[options]
-
-[generators]
-CMakeDeps
-CMakeToolchain
