@@ -31,14 +31,14 @@
 #define CLEAR_BIT(var, pos) ((var) &= ~(1ULL << (pos)))
 #define SET_BIT_VAL(var, pos, val) ((var) = ((var) & ~(1ULL << (pos))) | ((val) << (pos)))
 
-typedef enum
+enum TYPE : unsigned char
 {
    FLOAT64,
    FLOAT32,
    INT64,
    INT8,
    BOOL,
-} TYPE;
+};
 
 bool check_file_exists(char *filename);
 void allocate_zeros(void **arr, uint64_t Nbytes);

@@ -1,9 +1,10 @@
 Checks: >
   *-,
 
-  bugprone-*,
+  -bugprone-*,
   -bugprone-macro-parentheses,
-
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
 
   -cert-*,
   -cert-err58-cpp,
@@ -25,7 +26,7 @@ Checks: >
 
   -modernize-*,
 
-  -performance-*,
+  performance-*,
 
   -readability-*,
   -readability-identifier-naming,

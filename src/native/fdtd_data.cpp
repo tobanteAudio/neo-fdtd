@@ -720,9 +720,8 @@ void read_h5_dataset(hid_t file, char *dset_str, int ndims, hsize_t *dims, void 
          status = H5Dread(dset, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, *data_array);
          break;
       case INT8:
-         status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, *data_array);
-         break;
       case BOOL: //bool read in as INT8
+         status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, *data_array);
          status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, *data_array);
          break;
       default:
@@ -757,10 +756,9 @@ void read_h5_constant(hid_t file, char *dset_str, void *data_container, TYPE t) 
       case INT64:
          status = H5Dread(dset, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, data_container);
          break;
+      case INT8:
       case BOOL:
          status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, data_container);
-         break;
-      case INT8:
          status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, data_container);
          break;
       default:
