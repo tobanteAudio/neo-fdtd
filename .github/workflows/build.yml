@@ -1,0 +1,81 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+env:
+  HOMEBREW_NO_INSTALL_CLEANUP: 1
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    env:
+      MACOSX_DEPLOYMENT_TARGET: ${{ matrix.osx_target }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux
+            os: ubuntu-24.04
+            osx_target: ""
+            cmake_flags: ""
+            cxx_flags: "-march=x86-64-v2"
+
+          - name: macOS-X64
+            os: macos-13
+            osx_target: "10.15"
+            cmake_flags: "-D CMAKE_C_COMPILER=/opt/homebrew/opt/llvm/bin/clang -D CMAKE_CXX_COMPILER=/opt/homebrew/opt/llvm/bin/clang++"
+            cxx_flags: "-march=x86-64-v2"
+
+          - name: macOS-ARM64
+            os: macos-14
+            osx_target: "11.0"
+            cmake_flags: "-D CMAKE_C_COMPILER=/opt/homebrew/opt/llvm/bin/clang -D CMAKE_CXX_COMPILER=/opt/homebrew/opt/llvm/bin/clang++"
+            cxx_flags: ""
+
+          - name: Windows
+            os: windows-latest
+            osx_target: ""
+            cmake_flags: ""
+            cxx_flags: "-march=x86-64-v2"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update -y
+          sudo apt install -y libomp-dev ninja-build
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ninja llvm
+
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: choco install ninja
+
+      - name: Install clang
+        if: runner.os == 'Windows'
+        uses: egor-tensin/setup-clang@v1
+
+      - name: CMake configure
+        run: cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_CXX_FLAGS="${{ matrix.cxx_flags }}" ${{ matrix.cmake_flags }}
+
+      - name: CMake build
+        run: cmake --build build
+
+      # - name: CTest
+      #   run: ctest --test-dir build -C Release --output-on-failure -j 1
