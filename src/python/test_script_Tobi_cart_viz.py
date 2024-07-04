@@ -7,9 +7,9 @@ sim_setup(
     insig_type='dhann30',  # for viz
     diff_source=False,
     mat_files_dict={
-        'Walls': 'ctk_walls.h5',
-        'Ceiling': 'ctk_ceiling.h5',
-        'Floor': 'mv_floor.h5',
+        'Walls': 'tobi_wall.h5',
+        'Ceiling': 'tobi_ceiling.h5',
+        'Floor': 'tobi_floor.h5',
     },
     duration=0.1,  # duration in seconds
     Tc=20,

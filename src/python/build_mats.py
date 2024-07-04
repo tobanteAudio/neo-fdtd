@@ -17,10 +17,10 @@ from pathlib import Path
 from numpy import array as npa
 from materials.adm_funcs import *
 
-plot=True #set to True to see fits, but have to close plots to proceed to next material
+plot=False #set to True to see fits, but have to close plots to proceed to next material
 write_folder = Path('../../data/materials')
 
-tobi_wall    = np.array([0.1, 0.2, 0.5, 0.7, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99, 0.99])
+tobi_wall    = np.array([0.01, 0.01, 0.01, 0.05, 0.06, 0.07, 0.09, 0.08, 0.08, 0.08, 0.08])
 tobi_floor   = np.array([0.15, 0.15, 0.15, 0.11, 0.1, 0.07, 0.06, 0.07, 0.07, 0.07, 0.07])
 tobi_ceiling = np.array([0.01, 0.01, 0.01, 0.05, 0.06, 0.07, 0.09, 0.08, 0.08, 0.08, 0.08])
 fit_to_Sabs_oct_11(tobi_wall    , filename=Path(write_folder / 'tobi_wall.h5')    , plot=plot)
