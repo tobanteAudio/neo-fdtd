@@ -2,9 +2,9 @@ import json
 
 
 def main():
-    L = 7.0
-    W = 5.19
-    H = 3.70
+    L = 6.0
+    W = 3.65
+    H = 3.12
     model = {
         "mats_hash": {
             "Walls": {
@@ -75,7 +75,7 @@ def main():
     }
 
     with open("model_export.json", "w") as file:
-        json.dump(model, file)
+        json.dump(obj=model, fp=file)
 
 
 main()
