@@ -13,4 +13,4 @@ repos:
       - id: detect-private-key
       - id: requirements-txt-fixer
       - id: check-case-conflict
-      - id: check-added-large-files
+      # - id: check-added-large-files

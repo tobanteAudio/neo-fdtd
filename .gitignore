@@ -2,6 +2,7 @@
 /data/sim_data
 /build
 /cmake-build-*
+.DS_Store
 
 /venv
 __pycache__# Byte-compiled / optimized / DLL files
