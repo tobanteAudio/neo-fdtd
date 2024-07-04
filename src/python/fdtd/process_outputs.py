@@ -29,7 +29,7 @@ from air_abs.ola_filter import apply_ola_filter
 from common.myfuncs import wavwrite,iceil,iround
 
 #class to process sim_outs.h5 file
-class ProcessOutputs: 
+class ProcessOutputs:
     def __init__(self,data_dir):
         self.print('loading...')
 
@@ -106,7 +106,7 @@ class ProcessOutputs:
         if fcut>0:
             if apply_int:
                 #design combined butter filter with integrator
-                z,p,k=butter(N_order,fcut*2*pi,btype='high',analog=True,output='zpk') 
+                z,p,k=butter(N_order,fcut*2*pi,btype='high',analog=True,output='zpk')
                 assert(np.all(z==0.0))
                 z = z[1:] #remove one zero
                 #p = np.r_[p,0] #adds integrator (bilinear routine handles p-z cancellation)
@@ -115,7 +115,7 @@ class ProcessOutputs:
                 self.print('applying lowcut-integrator')
             else:
                 #design digital high-pass
-                sos=butter(N_order,2*Ts*fcut,btype='high',output='sos') 
+                sos=butter(N_order,2*Ts*fcut,btype='high',output='sos')
                 self.print('applying lowcut')
             r_out_f = sosfilt(sos,r_out)
         elif apply_int: #shouldn't really use this without lowcut, but here in case
@@ -141,16 +141,16 @@ class ProcessOutputs:
             self.print(f'{N_order=} for symmetric IIR filtering')
 
         #design digital high-pass
-        sos=butter(N_order,2*Ts_f*fcut,btype='low',output='sos') 
+        sos=butter(N_order,2*Ts_f*fcut,btype='low',output='sos')
         self.print('applying lowpass to filtered output')
         r_out_f = sosfilt(sos,r_out_f)
         if symmetric: #runs again, time reversed
             self.print('applying second time in reverse to remove phase shift')
             r_out_f = sosfilt(sos,r_out_f[:,::-1])[:,::-1]
-            
+
         self.r_out_f = r_out_f
 
-    #resample with resampy, 48kHz default 
+    #resample with resampy, 48kHz default
     def resample(self,Fs_f=48e3):
         Fs = self.Fs #raw Fs
         if Fs==Fs_f:
@@ -232,7 +232,7 @@ class ProcessOutputs:
         ax.grid(which='both', axis='both')
         ax.legend()
 
-    #plot the final processed outputs 
+    #plot the final processed outputs
     def plot_filtered_outputs(self):
         #possibly resampled
         r_out_f = self.r_out_f
@@ -277,17 +277,17 @@ class ProcessOutputs:
         Fs_f = self.Fs_f
         data_dir = self.data_dir
         r_out_f = self.r_out_f
-        r_out_f = np.atleast_2d(r_out_f) 
-        n_fac = np.max(np.abs(r_out_f.flat[:])) 
+        r_out_f = np.atleast_2d(r_out_f)
+        n_fac = np.max(np.abs(r_out_f.flat[:]))
         self.print(f'headroom = {-20*np.log10(n_fac):.1}dB')
         for i in range(r_out_f.shape[0]):
             fname = Path(data_dir / Path(f'R{i+1:03d}_out_normalised.wav')) #normalised across receivers
-            wavwrite(fname,int(Fs_f),r_out_f[i]/n_fac) 
+            wavwrite(fname,int(Fs_f),r_out_f[i]/n_fac)
             if n_fac<1.0:
                 fname = Path(data_dir / Path(f'R{i+1:03d}_out_native.wav')) #not scaled, direct sound amplitude ~1/4πR
-                wavwrite(fname,int(Fs_f),r_out_f[i]) 
+                wavwrite(fname,int(Fs_f),r_out_f[i])
 
-    #saw processed outputs in .h5 (with native scaling) 
+    #saw processed outputs in .h5 (with native scaling)
     def save_h5(self):
         #saves processed outputs
         self.print('saving H5 data..')
@@ -346,7 +346,7 @@ def main():
 
     if args.save_wav:
         po.save_wav()
-        
+
     if args.plot_raw:
         po.plot_raw_outputs()
 

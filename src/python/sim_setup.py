@@ -42,7 +42,7 @@ def sim_setup(
                 source_num=1, #1-based indexing, source to simulate (in sources.csv)
                 save_folder_gpu=None, #folder to save gpu-prepared .h5 data (sorted and rotated and FCC-folded)
                 #save_folder_cpu=None,
-                draw_vox=False, #draw voxelization 
+                draw_vox=False, #draw voxelization
                 draw_backend='mayavi', #default, 'polyscope' better for larger grids
                 diff_source=False, #use this for single precision runs
                 fcc_flag=False, #to use FCC scheme
@@ -115,7 +115,7 @@ def sim_setup(
     #check that source/receivers don't intersect with boundaries
     sim_comms.check_for_clashes(vox_scene.bn_ixyz)
 
-    #make copy for sorting/rotation for gpu 
+    #make copy for sorting/rotation for gpu
     if save_folder_gpu is not None and Path(save_folder_gpu) != Path(save_folder):
         copy_sim_data(save_folder,save_folder_gpu)
     if save_folder_gpu is not None:

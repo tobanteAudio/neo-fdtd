@@ -10,7 +10,7 @@
 #
 # Description: This is a class for a Cartesian grid with grid spacing 'h' and
 # some bounds.  Saves minimal data in HDF5 file if needed outside.
-# 
+#
 ##############################################################################
 
 import numpy as np
@@ -75,12 +75,12 @@ class CartGrid():
     def print(self,fstring):
         print(f'--CART_GRID: {fstring}')
 
-    #don't use this unless grid is small 
+    #don't use this unless grid is small
     def draw_gridpoints(self,backend='mayavi'):
-        xv = self.xv  
-        yv = self.yv  
-        zv = self.zv  
-        h = self.h  
+        xv = self.xv
+        yv = self.yv
+        zv = self.zv
+        h = self.h
 
         X,Y,Z = np.meshgrid(xv,yv,zv,indexing='ij')
         if backend=='mayavi':
@@ -100,10 +100,10 @@ class CartGrid():
 
     #save in HDF5 file
     def save(self,save_folder):
-        xv = self.xv  
-        yv = self.yv  
-        zv = self.zv  
-        h = self.h  
+        xv = self.xv
+        yv = self.yv
+        zv = self.zv
+        h = self.h
 
         save_folder = Path(save_folder)
         self.print(f'{save_folder=}')

@@ -54,12 +54,12 @@ class SimEngine:
         #bn: bn (full)
         #bnr: bn-rigid
         #bnl: bn-lossy (fd updates)
-        #bnl ∩ bnr = ø , bnl ∪ bnr = bn 
+        #bnl ∩ bnr = ø , bnl ∪ bnr = bn
 
         h5f = h5py.File(data_dir / Path('vox_out.h5'),'r')
         self.adj_bn   = h5f['adj_bn'][...] #full
         self.bn_ixyz  = h5f['bn_ixyz'][...] #full
-        self.Nx       = h5f['Nx'][()] 
+        self.Nx       = h5f['Nx'][()]
         self.Ny       = h5f['Ny'][()]
         self.Nz       = h5f['Nz'][()]
         self.xv       = h5f['xv'][()] #for plotting
@@ -97,7 +97,7 @@ class SimEngine:
         self.fcc = self.fcc_flag>0
         if self.fcc:
             assert self.fcc_flag==1
-            
+
         self.print(f'Nx={self.Nx} Ny={self.Ny} Nz={self.Nz}')
         self.print(f'h={self.h} Ts={self.Ts} c={self.c}, SR={1/self.Ts}')
         self.print(f'l={self.l} l2={self.l2} fcc={self.fcc}')
@@ -118,7 +118,7 @@ class SimEngine:
             assert (self.l<=np.sqrt(1/3))
             assert (self.l2<=1/3)
 
-        
+
         h5f = h5py.File(Path(data_dir / Path('sim_mats.h5')),'r')
         Nmat = h5f['Nmat'][()]
         DEF = np.zeros((Nmat,MMb,3))
@@ -173,7 +173,7 @@ class SimEngine:
 
         Nbl = self.bnl_ixyz.size #reduced (non-rigid only)
         u2b = np.zeros((Nbl,),dtype=np.float64)
-        u2ba = np.zeros((self.Nba,),dtype=np.float64) 
+        u2ba = np.zeros((self.Nba,),dtype=np.float64)
 
         vh0 = np.zeros((Nbl,MMb),dtype=np.float64)
         vh1 = np.zeros((Nbl,MMb),dtype=np.float64)
@@ -183,7 +183,7 @@ class SimEngine:
             self.H_tot = np.zeros((Nt,),dtype=np.float64)
             self.E_lost = np.zeros((Nt+1,),dtype=np.float64)
             self.E_in = np.zeros((Nt+1,),dtype=np.float64)
-            self.u2in = np.zeros((self.Ns,),dtype=np.float64) 
+            self.u2in = np.zeros((self.Ns,),dtype=np.float64)
 
         self.u_out = u_out
         self.u0 = u0
@@ -235,7 +235,7 @@ class SimEngine:
                                                       ('D',np.float64,(MMb,)),\
                                                       ('E',np.float64,(MMb,)),\
                                                       ('F',np.float64,(MMb,))])
-        assert np.all(mat_bnl<Nm) 
+        assert np.all(mat_bnl<Nm)
 
         for k in range(Nm):
             M = Mb[k]
@@ -275,7 +275,7 @@ class SimEngine:
 
         if self.energy_on:
             #copy for continguous memory access
-            self.D_bnl = np.copy(mat_coeffs_struct[mat_bnl]['D']) 
+            self.D_bnl = np.copy(mat_coeffs_struct[mat_bnl]['D'])
             self.E_bnl = np.copy(mat_coeffs_struct[mat_bnl]['E']) #this picks up fake rigid (zeros)
             self.F_bnl = np.copy(mat_coeffs_struct[mat_bnl]['F'])
 
@@ -317,7 +317,7 @@ class SimEngine:
         pbar['samples'].close()
 
         self.print(f'Run-time loop: {t_elapsed:.6f}, {Nt*Npts/1e6/t_elapsed:.2f} MVox/s')
-    
+
     def run_plot(self,nsteps=1,draw_backend='mayavi',json_model=None):
         self.print('running..')
         Nx = self.Nx
@@ -385,7 +385,7 @@ class SimEngine:
 
         elif draw_backend=='mayavi':
             from mayavi import mlab
-            from tvtk.api import tvtk 
+            from tvtk.api import tvtk
 
             fig = mlab.gcf()
             if json_model is not None:
@@ -420,18 +420,18 @@ class SimEngine:
                         edges_yz_1 = np.r_[edges_yz_1,pts[tris[ii,(j+1)%3]][:,[1,2]]]
                         del ii
 
-                    u = edges_xy_1[:,0]-edges_xy_0[:,0]; 
-                    v = edges_xy_1[:,1]-edges_xy_0[:,1]; 
+                    u = edges_xy_1[:,0]-edges_xy_0[:,0];
+                    v = edges_xy_1[:,1]-edges_xy_0[:,1];
                     w=np.zeros(u.shape)
                     mlab.quiver3d(edges_xy_0[:,0],edges_xy_0[:,1],np.full(u.shape,zv[iz_in]),u,v,w,mode='2ddash',scale_factor=1.,color=(0,0,0))
 
-                    u = edges_xz_1[:,0]-edges_xz_0[:,0]; 
+                    u = edges_xz_1[:,0]-edges_xz_0[:,0];
                     v=np.zeros(u.shape)
-                    w = edges_xz_1[:,1]-edges_xz_0[:,1]; 
+                    w = edges_xz_1[:,1]-edges_xz_0[:,1];
                     mlab.quiver3d(edges_xz_0[:,0],np.full(u.shape,yv[iy_in]),edges_xz_0[:,1],u,v,w,mode='2ddash',scale_factor=1.,color=(0,0,0))
 
-                    v = edges_yz_1[:,0]-edges_yz_0[:,0]; 
-                    w = edges_yz_1[:,1]-edges_yz_0[:,1]; 
+                    v = edges_yz_1[:,0]-edges_yz_0[:,0];
+                    w = edges_yz_1[:,1]-edges_yz_0[:,1];
                     u=np.zeros(w.shape)
                     mlab.quiver3d(np.full(u.shape,xv[ix_in]),edges_yz_0[:,0],edges_yz_0[:,1],u,v,w,mode='2ddash',scale_factor=1.,color=(0,0,0))
 
@@ -510,7 +510,7 @@ class SimEngine:
                 #mcb_xy.data_range = (cmax-40, cmax)
                 #mcb_yz.data_range = (cmax-40, cmax)
                 #mcb_xz.data_range = (cmax-40, cmax)
-                mcb_xy.data_range = (-cmax*1.1, cmax*1.1) 
+                mcb_xy.data_range = (-cmax*1.1, cmax*1.1)
                 mcb_yz.data_range = (-cmax*1.1, cmax*1.1)
                 mcb_xz.data_range = (-cmax*1.1, cmax*1.1)
 
@@ -583,7 +583,7 @@ class SimEngine:
 
         #run N steps (one at a time, in blocks, or full sim -- for port)
         for n in range(nstart,nstart+nsteps):
-            
+
             if energy_on:
                 u2 = self.u0
                 Lu2 = self.Lu1
@@ -613,7 +613,7 @@ class SimEngine:
 
             if energy_on:
                 E_lost[n+1] = E_lost[n] + V_fac*0.25*h/l*nb_energy_loss(ssaf_bnl,vh0,vh1,E_bnl) #E_lost[n+1] = E_lost[n] + V_fac*0.25*h/l*np.sum(ssaf_bnl*(((vh0+vh1)**2)*E_bnl).T)
-                
+
                 E_lost[n+1] += 0.5*V_fac*h/l*np.sum((V_bna*Q_bna)*(u0.flat[bna_ixyz]-u2ba)**2)  #E_lost[n+1] += 0.5*V_fac*h/l*nb_energy_loss_abc(V_bna,Q_bna,u0,u2ba,bna_ixyz) #problem with numba fn signature
                 #H_tot[n] += E_lost[n]
 
@@ -640,21 +640,21 @@ class SimEngine:
     def gather_slice(self,ix=None,iy=None,iz=None):
         u1 = self.u1
         if ix is not None:
-            uslice = u1[ix,:,:] 
+            uslice = u1[ix,:,:]
             #fill in checkerboard effect if FCC (subgrid)
             if self.fcc:
                 nb_fcc_fill_plot_holes(uslice,ix)
 
         elif iy is not None:
-            uslice = u1[:,iy,:] 
+            uslice = u1[:,iy,:]
             if self.fcc:
                 nb_fcc_fill_plot_holes(uslice,iy)
 
         elif iz is not None:
-            uslice = u1[:,:,iz] 
+            uslice = u1[:,:,iz]
             if self.fcc:
                 nb_fcc_fill_plot_holes(uslice,iz)
-            
+
         return uslice
 
     def print_last_samples(self,Np):
@@ -709,7 +709,7 @@ def nb_stencil_air_cart(Lu1,u1,bn_mask):
                                        + u1[ix,iy+1,iz] \
                                        + u1[ix,iy-1,iz] \
                                        + u1[ix,iy,iz+1] \
-                                       + u1[ix,iy,iz-1] 
+                                       + u1[ix,iy,iz-1]
 
 @nb.jit(nopython=True,parallel=True)
 def nb_stencil_air_fcc(Lu1,u1,bn_mask):
@@ -734,11 +734,11 @@ def nb_stencil_air_fcc(Lu1,u1,bn_mask):
 
 @nb.jit(nopython=True,parallel=True)
 def nb_stencil_bn_fcc(Lu1,u1,bn_ixyz,adj_bn):
-    Nx,Ny,Nz = u1.shape 
+    Nx,Ny,Nz = u1.shape
     Nb = bn_ixyz.size
     for i in nb.prange(Nb):
         K = np.sum(adj_bn[i,:])
-        ib = bn_ixyz[i] 
+        ib = bn_ixyz[i]
         Lu1.flat[ib] = 0.25*(-K*u1.flat[ib]  \
                 + adj_bn[i,0] * u1.flat[ib+Ny*Nz+Nz ] \
                 + adj_bn[i,1] * u1.flat[ib-Ny*Nz-Nz ] \
@@ -760,7 +760,7 @@ def nb_stencil_bn_cart(Lu1,u1,bn_ixyz,adj_bn):
     Nb = bn_ixyz.size
     for i in nb.prange(Nb):
         K = np.sum(adj_bn[i,:])
-        ib = bn_ixyz[i] 
+        ib = bn_ixyz[i]
         Lu1.flat[ib] =  -K*u1.flat[ib]\
              + adj_bn[i,0]*u1.flat[ib+Ny*Nz]\
              + adj_bn[i,1]*u1.flat[ib-Ny*Nz]\
@@ -774,18 +774,18 @@ def nb_flip_halos(u1):
     Nx,Ny,Nz = u1.shape
     for ix in nb.prange(Nx):
         for iy in range(Ny):
-            u1[ix,iy,0] = u1[ix,iy,2] 
-            u1[ix,iy,Nz-1] = u1[ix,iy,Nz-3] 
+            u1[ix,iy,0] = u1[ix,iy,2]
+            u1[ix,iy,Nz-1] = u1[ix,iy,Nz-3]
 
     for ix in nb.prange(Nx):
         for iz in range(Nz):
-            u1[ix,0,iz] = u1[ix,2,iz] 
-            u1[ix,Ny-1,iz] = u1[ix,Ny-3,iz] 
+            u1[ix,0,iz] = u1[ix,2,iz]
+            u1[ix,Ny-1,iz] = u1[ix,Ny-3,iz]
 
     for iy in nb.prange(Ny):
         for iz in range(Nz):
-            u1[0,iy,iz] = u1[2,iy,iz] 
-            u1[Nx-1,iy,iz] = u1[Nx-3,iy,iz] 
+            u1[0,iy,iz] = u1[2,iy,iz]
+            u1[Nx-1,iy,iz] = u1[Nx-3,iy,iz]
 
 
 @nb.jit(nopython=True,parallel=True)
@@ -793,32 +793,32 @@ def nb_save_bn(u0,u2b,bn_ixyz):
     #using for bnl and bna
     Nb = bn_ixyz.size
     for i in nb.prange(Nb):
-        ib = bn_ixyz[i] 
+        ib = bn_ixyz[i]
         u2b.flat[i] = u0.flat[ib] #save before overwrite
 
 @nb.jit(nopython=True,parallel=True)
 def nb_leapfrog_update(u0,u1,Lu1,l2):
-    Nx,Ny,Nz = u0.shape 
+    Nx,Ny,Nz = u0.shape
     for ix in nb.prange(1,Nx-1):
         for iy in range(1,Ny-1):
             for iz in range(1,Nz-1):
-                u0[ix,iy,iz] = 2.0*u1[ix,iy,iz] - u0[ix,iy,iz] + l2*Lu1[ix,iy,iz] 
+                u0[ix,iy,iz] = 2.0*u1[ix,iy,iz] - u0[ix,iy,iz] + l2*Lu1[ix,iy,iz]
 
 @nb.jit(nopython=True,parallel=True)
 def nb_update_abc(u0,u2ba,l,bna_ixyz,Q_bna):
     Nba = bna_ixyz.size
     for i in nb.prange(Nba):
         lQ = l*Q_bna[i]
-        ib = bna_ixyz[i] 
+        ib = bna_ixyz[i]
         u0.flat[ib] = (u0.flat[ib] + lQ*u2ba[i])/(1.0 + lQ)
 
 @nb.jit(nopython=True,parallel=True)
 def nb_update_bnl_fd(u0,u2b,l,bnl_ixyz,ssaf_bnl,vh0,vh1,gh1,mat_bnl,mat_coeffs_struct):
     Nbl = bnl_ixyz.size
     for i in nb.prange(Nbl):
-        k = mat_bnl[i] 
+        k = mat_bnl[i]
         if k==-1: #shouldn't happen, but leaving as reminder
-            continue 
+            continue
         b   = mat_coeffs_struct[k]['b']
         bd  = mat_coeffs_struct[k]['bd']
         bDh = mat_coeffs_struct[k]['bDh']
@@ -839,7 +839,7 @@ def nb_update_bnl_fd(u0,u2b,l,bnl_ixyz,ssaf_bnl,vh0,vh1,gh1,mat_bnl,mat_coeffs_s
 
 @nb.jit(nopython=True,parallel=True)
 def nb_energy_int(u1,u2,Lu2,l2):
-    Nx,Ny,Nz = u1.shape 
+    Nx,Ny,Nz = u1.shape
     return np.sum((((u1-u2)**2)/l2 - u1*Lu2)[1:Nx-1,1:Ny-1,1:Nz-1])
     #psum = 0.0
     #for i in nb.prange(u1.size):
@@ -873,7 +873,7 @@ def nb_get_abc_ib(bna_ixyz,Q_bna,Nx,Ny,Nz,fcc):
                 if fcc and (ix+iy+iz)%2==1:
                     continue
                 Q = 0
-                if ((ix==1) or (ix==Nx-2)): 
+                if ((ix==1) or (ix==Nx-2)):
                     Q+=1
                 if ((iy==1) or (iy==Ny-2)):
                     Q+=1

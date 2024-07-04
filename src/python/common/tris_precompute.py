@@ -9,7 +9,7 @@
 # File name: tris_precompute.py
 #
 # Description: Use numpy structured arrays to precompute a bunch of stuff for arrays of triangles
-# Used in triangle intersection routines 
+# Used in triangle intersection routines
 #
 ##############################################################################
 
@@ -33,7 +33,7 @@ def tris_precompute(pts=None,tris=None):
 
     #edge vectors
     ab = b - a
-    bc = c - b 
+    bc = c - b
     ca = a - c
 
     #centroid
@@ -98,7 +98,7 @@ def tris_precompute(pts=None,tris=None):
     #a = tris_pre[ti]['v'][0]
     #b = tris_pre[ti]['v'][1]
     #c = tris_pre[ti]['v'][2]
-    #or 
+    #or
     #a = tris_pre['v'][:,0,:]
     #b = tris_pre['v'][:,1,:]
     #c = tris_pre['v'][:,2,:]
@@ -120,4 +120,3 @@ def tris_precompute(pts=None,tris=None):
     tris_pre['area'] = area
 
     return tris_pre
-

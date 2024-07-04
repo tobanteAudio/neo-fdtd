@@ -8,9 +8,9 @@
 #
 # File name: ola_filter.py
 #
-# Description: This is an implementation of overlap-add (STFT/iSTFT) air 
+# Description: This is an implementation of overlap-add (STFT/iSTFT) air
 # absorption filtering.  Tuned for 75% overlap and 1024-sample Hann window at
-# 48kHz. 
+# 48kHz.
 #
 # Used in paper:
 # Hamilton, B. "Adding air attenuation to simulated room impulse responses: A
@@ -22,7 +22,7 @@ import numpy as np
 import numba as nb
 from numpy import array as npa
 from numpy import exp, sqrt, log2, pi, ceil, cos
-from scipy.fft import rfft,irfft 
+from scipy.fft import rfft,irfft
 from air_abs.get_air_absorption import get_air_absorption
 from common.myfuncs import iround, iceil
 from tqdm import tqdm
@@ -51,7 +51,7 @@ def apply_ola_filter(x,Fs,Tc,rh,Nw=1024):
     del x
 
     wa = 0.5*(1-cos(2*pi*np.arange(Nw)/Nw)) #hann window
-    ws = wa/(3/8*Nw/Ha) #scaled for COLA 
+    ws = wa/(3/8*Nw/Ha) #scaled for COLA
 
     fv = np.arange(Nfft_h)/Nfft*Fs
     rd = get_air_absorption(fv,Tc,rh)
@@ -77,4 +77,3 @@ def apply_ola_filter(x,Fs,Tc,rh,Nw=1024):
         y[i] = yp[Nw:]
         pbar.close()
     return np.squeeze(y) #squeeze to 1d in case
-

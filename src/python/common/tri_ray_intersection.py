@@ -8,10 +8,10 @@
 #
 # File name: tri_ray_intersection.py
 #
-# Description: Triangle-ray intersection routines.  
+# Description: Triangle-ray intersection routines.
 # One single ray / triangle, and one vectorised for one-ray-many-tri or one-tri-many-ray
 # some tests (__main__ entry)
-# 
+#
 # returns boolean for hit. distance is Inf when no hit
 #
 # N.B. these intersection routines are customised for their purposes in PFFDTD
@@ -97,7 +97,7 @@ def tri_ray_intersection_vec(ray_o,ray_d,tris_pre,d_eps=1e-6,cp_eps=1e-6):
     #check if coplanar
     beta = dotv(ray_un,tris_unor)
 
-    fail = np.abs(beta)<cp_eps 
+    fail = np.abs(beta)<cp_eps
     beta[fail] = -np.finfo(np.float64).eps #fake value to avoid divide by zero
 
     t_ret = np.full(beta.size,np.inf)
@@ -149,7 +149,7 @@ def main():
         bmin = np.amin(pts,axis=0)
         bmax = np.amax(pts,axis=0)
         scale = vecnorm(bmax-bmin)
-        
+
         tris_pre = tris_precompute(pts=pts,tris=tris)
 
         #ray direction and origin (make coming from outside and pointing in)
@@ -164,7 +164,7 @@ def main():
         dist = np.full(Ntris,np.nan)
         for ti in range(0,Ntris):
             hit[ti],dist[ti] = tri_ray_intersection(ro,rd,tris_pre[ti])
-            
+
         hit2,dist2 = tri_ray_intersection_vec(ro,rd,tris_pre)
         print(f'{dist=}')
 
@@ -205,7 +205,7 @@ def main():
         bmax = np.amax(pts,axis=0)
         scale = vecnorm(bmax-bmin)
 
-        
+
         tri_pre = tris_precompute(pts=pts,tris=npa([tri]))
 
         ro = normalise(npr.randn(Nrays,3))*scale
@@ -221,7 +221,7 @@ def main():
             hit[ri],dist[ri] = tri_ray_intersection(ro[ri],rd[ri],tri_pre[0])
 
         print(f'{dist=}')
-            
+
         hit2,dist2 = tri_ray_intersection_vec(ro,rd,tri_pre)
 
         assert np.all(hit==hit2),'mismatch!'

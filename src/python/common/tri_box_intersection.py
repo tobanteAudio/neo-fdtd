@@ -8,10 +8,10 @@
 #
 # File name: tri_box_intersection.py
 #
-# Description: Triangle-box intersection routines.  
+# Description: Triangle-box intersection routines.
 # One single box / triangle, and one vectorised for one-ray-many-box or one-tri-many-box
 # some tests (__main__ entry)
-# 
+#
 # returns boolean for hit
 #
 # Following Schwarz-Seidel method (2010)
@@ -30,7 +30,7 @@ def tri_box_intersection(bbmin,bbmax,tri_pre,debug=False):
     n = tri_pre['nor']
     tbmin = tri_pre['bmin']
     tbmax = tri_pre['bmax']
-    v = tri_pre['v'] 
+    v = tri_pre['v']
 
     p = bbmin
     dp = bbmax - bbmin
@@ -67,7 +67,7 @@ def tri_box_intersection(bbmin,bbmax,tri_pre,debug=False):
             vixy = 0.5*(v[(i+1)%3,[xq,yq]] + v[i,[xq,yq]])
             neixy = npa([-ei[yq],ei[xq]])
             if n[zq]<0:
-                neixy *= -1 
+                neixy *= -1
             deixy = -np.dot(neixy,vixy) + np.amax([0,dp[xq]*neixy[0]]) + np.amax([0,dp[yq]*neixy[1]])
             if ((np.dot(neixy,p[[xq,yq]]) + deixy) < 0):
                 if debug:
@@ -82,7 +82,7 @@ def tri_box_intersection_vec(bbmin,bbmax,tris_pre):
     nor = tris_pre['nor']
     tbmin = tris_pre['bmin']
     tbmax = tris_pre['bmax']
-    v = tris_pre['v'] 
+    v = tris_pre['v']
 
     p = bbmin
     dp = bbmax - bbmin
@@ -109,7 +109,7 @@ def tri_box_intersection_vec(bbmin,bbmax,tris_pre):
             ei = v[:,(i+1)%3,:] - v[:,i,:]
             vixy = 0.5*(v[:,(i+1)%3,[xq,yq]] + v[:,i,[xq,yq]])
             neixy = np.c_[-ei[:,yq],ei[:,xq]]
-            neixy[nor[:,zq]<0] *= -1 
+            neixy[nor[:,zq]<0] *= -1
             dpx = (dp.T[xq]).T*neixy[:,0]
             dpy = (dp.T[yq]).T*neixy[:,1]
             deixy =  -dotv(neixy,vixy) \
@@ -121,7 +121,7 @@ def tri_box_intersection_vec(bbmin,bbmax,tris_pre):
 
 def main():
     import numpy.random as npr
-    from common.box import Box 
+    from common.box import Box
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--nodraw', action='store_true',help='don''t draw')
@@ -145,7 +145,7 @@ def main():
         tris = np.arange(Ntris*3).reshape(-1,3)
         tris_pre = tris_precompute(pts=pts,tris=tris)
 
-        
+
         b = npr.randn(3,3) #for a random box
         bmin = np.amin(b,axis=0)
         bmax = np.amax(b,axis=0)

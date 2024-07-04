@@ -56,10 +56,10 @@ ty3 = np.arange(0,y3.shape[-1])/SR
 
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
-ax.plot(tx,x.T,linestyle='-',color='b',label='orig') 
-ax.plot(ty1,y1.T,linestyle='-',color='g',label='stokes') 
-ax.plot(ty2,y2.T,linestyle='-',color='r',label='modal') 
-ax.plot(ty3,y3.T,linestyle='-',color='y',label='OLA') 
+ax.plot(tx,x.T,linestyle='-',color='b',label='orig')
+ax.plot(ty1,y1.T,linestyle='-',color='g',label='stokes')
+ax.plot(ty2,y2.T,linestyle='-',color='r',label='modal')
+ax.plot(ty3,y3.T,linestyle='-',color='y',label='OLA')
 ax.margins(0, 0.1)
 ax.grid(which='both', axis='both')
 ax.legend()
@@ -68,4 +68,3 @@ plt.show()
 
 #multi channel test
 SR = 48e3
-

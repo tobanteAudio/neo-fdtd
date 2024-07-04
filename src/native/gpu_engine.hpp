@@ -8,7 +8,7 @@
 //
 // File name: gpu_engine.h
 //
-// Description: GPU-based implementation of FDTD engine (using CUDA).  
+// Description: GPU-based implementation of FDTD engine (using CUDA).
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -16,12 +16,12 @@
 #define _GPU_ENGINE_H
 #include <stdio.h>
 #include <stdlib.h> //for malloc
-#include <stdint.h> 
+#include <stdint.h>
 #include <assert.h> //for assert
 #include <stdbool.h> //for bool
 #include <math.h> //NAN
 
-#include "helper_funcs.h" 
+#include "helper_funcs.h"
 #include "fdtd_common.h"
 #include "omp.h"
 
@@ -40,7 +40,7 @@
 #define cuBx2 16
 #define cuBy2 8
 
-//thread-block dims for 1d kernels (bn, ABC loss) 
+//thread-block dims for 1d kernels (bn, ABC loss)
 #define cuBrw 128
 #define cuBb 128
 
@@ -50,32 +50,32 @@ __constant__ Real c2;
 __constant__ Real cl;
 __constant__ Real csl2;
 __constant__ Real clo2;
-__constant__ int64_t cuNx; 
-__constant__ int64_t cuNy; 
-__constant__ int64_t cuNz; 
-__constant__ int64_t cuNb; 
+__constant__ int64_t cuNx;
+__constant__ int64_t cuNy;
+__constant__ int64_t cuNz;
+__constant__ int64_t cuNb;
 __constant__ int64_t cuNbl;
-__constant__ int64_t cuNba; 
-__constant__ int64_t cuNxNy; 
+__constant__ int64_t cuNba;
+__constant__ int64_t cuNxNy;
 __constant__ int8_t cuMb[MNm]; //to store Mb per mat (MNm has to be hash-defined)
 
 uint64_t print_gpu_details(int i);
 void check_sorted(const struct SimData *sd);
 void split_data(const struct SimData *sd, struct gpuHostData *ghds, int ngpus);
 double run_sim(const struct SimData *sd);
-//CUDA kernels 
+//CUDA kernels
 __global__ void KernelAirCart(Real * __restrict__ u0, const Real * __restrict__ u1, const uint8_t * __restrict__ bn_mask);
 __global__ void KernelAirFCC(Real * __restrict__ u0, const Real * __restrict__ u1, const uint8_t * __restrict__ bn_mask);
 __global__ void KernelFoldFCC(Real * __restrict__ u1);
-__global__ void KernelBoundaryRigidCart(Real * __restrict__ u0, const Real * __restrict__ u1,  
+__global__ void KernelBoundaryRigidCart(Real * __restrict__ u0, const Real * __restrict__ u1,
                                             const uint16_t * __restrict__ adj_bn,
-                                            const int64_t * __restrict__ bn_ixyz, 
+                                            const int64_t * __restrict__ bn_ixyz,
                                             const int8_t * __restrict__ K_bn);
-__global__ void KernelBoundaryRigidFCC(Real * __restrict__ u0, const Real * __restrict__ u1,  
+__global__ void KernelBoundaryRigidFCC(Real * __restrict__ u0, const Real * __restrict__ u1,
                                             const uint16_t * __restrict__ adj_bn,
-                                            const int64_t * __restrict__ bn_ixyz, 
+                                            const int64_t * __restrict__ bn_ixyz,
                                             const int8_t * __restrict__ K_bn);
-__global__ void KernelBoundaryABC(Real * __restrict__ u0, 
+__global__ void KernelBoundaryABC(Real * __restrict__ u0,
                                   const Real * __restrict__ u2ba,
                                   const int8_t * __restrict__ Q_bna,
                                   const int64_t *  __restrict__ bna_ixyz);
@@ -94,10 +94,10 @@ __global__ void FlipHaloYZ_Xbeg(Real * __restrict__ u1);
 __global__ void FlipHaloYZ_Xend(Real * __restrict__ u1);
 
 //this is data on host, sometimes copied and recomputed for copy to GPU devices (indices), sometimes just aliased pointers (scalar arrays)
-struct gpuHostData { //arrays on host (for copy), mirrors gpu local data 
+struct gpuHostData { //arrays on host (for copy), mirrors gpu local data
    double *in_sigs; //aliased
    Real *u_out_buf; //aliased
-   double *u_out; //aliased 
+   double *u_out; //aliased
    Real *ssaf_bnl; //aliased
    int64_t *in_ixyz; //recomputed
    int64_t *out_ixyz; //recomputed
@@ -128,7 +128,7 @@ struct gpuData { //for or on gpu (arrays all on GPU)
    int8_t *Q_bna;
    int64_t *out_ixyz;
    uint16_t *adj_bn;
-   Real *ssaf_bnl; 
+   Real *ssaf_bnl;
    uint8_t  *bn_mask;
    int8_t   *mat_bnl;
    int8_t  *K_bn;
@@ -136,29 +136,29 @@ struct gpuData { //for or on gpu (arrays all on GPU)
    struct MatQuad *mat_quads;
    Real *u0;
    Real *u1;
-   Real *u0b; 
-   Real *u1b; 
-   Real *u2b; 
-   Real *u2ba; 
-   Real *vh1; 
-   Real *gh1; 
+   Real *u0b;
+   Real *u1b;
+   Real *u2b;
+   Real *u2ba;
+   Real *vh1;
+   Real *gh1;
    Real *u_out_buf;
    dim3 block_dim_air;
    dim3 grid_dim_air;
    dim3 block_dim_fold;
    dim3 grid_dim_fold;
    dim3 block_dim_readout;
-   dim3 grid_dim_readout; 
+   dim3 grid_dim_readout;
    dim3 block_dim_bn;
    dim3 block_dim_halo_xy;
    dim3 block_dim_halo_yz;
    dim3 block_dim_halo_xz;
-   dim3 grid_dim_bn; 
-   dim3 grid_dim_bnl; 
-   dim3 grid_dim_bna; 
-   dim3 grid_dim_halo_xy; 
-   dim3 grid_dim_halo_yz; 
-   dim3 grid_dim_halo_xz; 
+   dim3 grid_dim_bn;
+   dim3 grid_dim_bnl;
+   dim3 grid_dim_bna;
+   dim3 grid_dim_halo_xy;
+   dim3 grid_dim_halo_yz;
+   dim3 grid_dim_halo_xz;
    cudaStream_t cuStream_air;
    cudaStream_t cuStream_bn;
    cudaEvent_t cuEv_air_start;
@@ -174,7 +174,7 @@ struct gpuData { //for or on gpu (arrays all on GPU)
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
 {
-   if (code != cudaSuccess) 
+   if (code != cudaSuccess)
    {
       fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
       if (abort) exit(code);
@@ -199,7 +199,7 @@ uint64_t print_gpu_details(int i) {
 //NB. 'x' is contiguous dim in CUDA domain
 
 //vanilla scheme, unrolled, intrinsics to control rounding errors
-__global__ void KernelAirCart(Real * __restrict__ u0, const Real * __restrict__ u1,  
+__global__ void KernelAirCart(Real * __restrict__ u0, const Real * __restrict__ u1,
                                             const uint8_t * __restrict__ bn_mask)
 {
    int64_t cx = blockIdx.x*cuBx + threadIdx.x + 1;
@@ -213,18 +213,18 @@ __global__ void KernelAirCart(Real * __restrict__ u0, const Real * __restrict__ 
       tmp2 = ADD_O(u1[ii + cuNx],u1[ii - cuNx]);
       tmp1 = ADD_O(tmp1,tmp2);
       tmp2 = ADD_O(u1[ii + 1],u1[ii - 1]);
-      tmp1 = ADD_O(tmp1,tmp2); 
+      tmp1 = ADD_O(tmp1,tmp2);
       tmp1 = FMA_D(c1,u1[ii],FMA_D(c2,tmp1,-u0[ii]));
 
       //write final value back to global memory
-      if ( !(GET_BIT(bn_mask[ii>>3],ii%8)) ) { 
+      if ( !(GET_BIT(bn_mask[ii>>3],ii%8)) ) {
          u0[ii] = tmp1;
       }
    }
 }
 
-//air update for FCC, on folded grid (improvement to 2013 DAFx paper) 
-__global__ void KernelAirFCC(Real * __restrict__ u0, const Real * __restrict__ u1,  
+//air update for FCC, on folded grid (improvement to 2013 DAFx paper)
+__global__ void KernelAirFCC(Real * __restrict__ u0, const Real * __restrict__ u1,
                                         const uint8_t * __restrict__ bn_mask)
 {
    // get ix,iy,iz from thread and block Id's
@@ -249,7 +249,7 @@ __global__ void KernelAirFCC(Real * __restrict__ u0, const Real * __restrict__ u
       tmp1 = ADD_O(tmp1,tmp3);
       tmp1 = FMA_D(c1,u1[ii],FMA_D(c2,tmp1,-u0[ii]));
       //write final value back to global memory
-      if ( !(GET_BIT(bn_mask[ii>>3],ii%8)) ) { 
+      if ( !(GET_BIT(bn_mask[ii>>3],ii%8)) ) {
          u0[ii] = tmp1;
       }
    }
@@ -258,7 +258,7 @@ __global__ void KernelAirFCC(Real * __restrict__ u0, const Real * __restrict__ u
 //this folds in half of FCC subgrid so everything is nicely homogenous (no braching for stencil)
 __global__ void KernelFoldFCC(Real * __restrict__ u1)
 {
-   int64_t cx = blockIdx.x*cuBx2 + threadIdx.x; 
+   int64_t cx = blockIdx.x*cuBx2 + threadIdx.x;
    int64_t cz = blockIdx.y*cuBy2 + threadIdx.y;
    //fold is along middle dimension
    if ((cx<cuNx) && (cz<cuNz)) {
@@ -267,9 +267,9 @@ __global__ void KernelFoldFCC(Real * __restrict__ u1)
 }
 
 //rigid boundaries, cartesian, using adj info
-__global__ void KernelBoundaryRigidCart(Real * __restrict__ u0, const Real * __restrict__ u1,  
+__global__ void KernelBoundaryRigidCart(Real * __restrict__ u0, const Real * __restrict__ u1,
                                             const uint16_t * __restrict__ adj_bn,
-                                            const int64_t * __restrict__ bn_ixyz, 
+                                            const int64_t * __restrict__ bn_ixyz,
                                             const int8_t * __restrict__ K_bn)
 {
    int64_t nb = blockIdx.x*cuBb + threadIdx.x;
@@ -287,7 +287,7 @@ __global__ void KernelBoundaryRigidCart(Real * __restrict__ u0, const Real * __r
       tmp2 = ADD_O((Real)GET_BIT(adj,2)*u1[ii + cuNx],  (Real)GET_BIT(adj,3)*u1[ii - cuNx]);
       tmp1 = ADD_O(tmp1,tmp2);
       tmp2 = ADD_O((Real)GET_BIT(adj,4)*u1[ii + 1],     (Real)GET_BIT(adj,5)*u1[ii - 1]);
-      tmp1 = ADD_O(tmp1,tmp2); 
+      tmp1 = ADD_O(tmp1,tmp2);
       tmp1 = FMA_D(b1,u1[ii],FMA_D(b2,tmp1,-u0[ii]));
 
       //u0[ii] = partial; //write back to global memory
@@ -296,9 +296,9 @@ __global__ void KernelBoundaryRigidCart(Real * __restrict__ u0, const Real * __r
 }
 
 //rigid boundaries, FCC, using adj info
-__global__ void KernelBoundaryRigidFCC(Real * __restrict__ u0, const Real * __restrict__ u1,  
+__global__ void KernelBoundaryRigidFCC(Real * __restrict__ u0, const Real * __restrict__ u1,
                                             const uint16_t * __restrict__ adj_bn,
-                                            const int64_t * __restrict__ bn_ixyz, 
+                                            const int64_t * __restrict__ bn_ixyz,
                                             const int8_t * __restrict__ K_bn)
 {
    int64_t nb = blockIdx.x*cuBb + threadIdx.x;
@@ -330,7 +330,7 @@ __global__ void KernelBoundaryRigidFCC(Real * __restrict__ u0, const Real * __re
 }
 
 //ABC loss at boundaries of simulation grid
-__global__ void KernelBoundaryABC(Real * __restrict__ u0, 
+__global__ void KernelBoundaryABC(Real * __restrict__ u0,
                                   const Real * __restrict__ u2ba,
                                   const int8_t * __restrict__ Q_bna,
                                   const int64_t *  __restrict__ bna_ixyz)
@@ -346,12 +346,12 @@ __global__ void KernelBoundaryABC(Real * __restrict__ u0,
    }
 }
 
-//Part of freq-dep boundary update 
+//Part of freq-dep boundary update
 __global__ void KernelBoundaryFD(Real * __restrict__ u0b, const Real *u2b,
                                   Real * __restrict__ vh1, Real * __restrict__ gh1,
                                   const Real * ssaf_bnl, const int8_t * mat_bnl,
                                   const Real * __restrict__ mat_beta, const struct MatQuad * __restrict__ mat_quads)
-{  
+{
    int64_t nb = blockIdx.x*cuBb + threadIdx.x;
    if (nb<cuNbl) {
       Real _1 = 1.0;
@@ -383,7 +383,7 @@ __global__ void KernelBoundaryFD(Real * __restrict__ u0b, const Real *u2b,
       for (int8_t m=0; m<cuMb[k]; m++) { //faster on average than MMb
          int64_t nbm = m*cuNbl + nb;
          int32_t mbk = k*MMb+m;
-         const struct MatQuad *tm; 
+         const struct MatQuad *tm;
          tm = &(mat_quads[mbk]);
          Real vh0m = (tm->b)*du + (tm->bd)*vh1int[m] - _2*(tm->bFh)*gh1int[m];
          gh1[nbm] = gh1int[m] + (vh0m + vh1int[m])/_2;
@@ -494,7 +494,7 @@ void check_sorted(const struct SimData *sd) {
    for (int64_t i=1; i<Nr; i++) assert (out_ixyz[i] >= out_ixyz[i-1]); //possible to have duplicates
 }
 
-//counts for splitting data across GPUs 
+//counts for splitting data across GPUs
 void split_data(const struct SimData *sd, struct gpuHostData *ghds, int ngpus) {
    int64_t Nx = sd->Nx;
    int64_t Ny = sd->Ny;
@@ -546,7 +546,7 @@ void split_data(const struct SimData *sd, struct gpuHostData *ghds, int ngpus) {
    int64_t Nb = sd->Nb;
    {
       int gid=0;
-      for (int64_t i=0; i<Nb; i++) { 
+      for (int64_t i=0; i<Nb; i++) {
          while (bn_ixyz[i] >= Nxcc[gid]*Ny*Nz) {
             gid++;
          }
@@ -566,7 +566,7 @@ void split_data(const struct SimData *sd, struct gpuHostData *ghds, int ngpus) {
    int64_t Nbl = sd->Nbl;
    {
       int gid=0;
-      for (int64_t i=0; i<Nbl; i++) { 
+      for (int64_t i=0; i<Nbl; i++) {
          while (bnl_ixyz[i] >= Nxcc[gid]*Ny*Nz) {
             gid++;
          }
@@ -586,7 +586,7 @@ void split_data(const struct SimData *sd, struct gpuHostData *ghds, int ngpus) {
    int64_t Nba = sd->Nba;
    {
       int gid=0;
-      for (int64_t i=0; i<Nba; i++) { 
+      for (int64_t i=0; i<Nba; i++) {
          while (bna_ixyz[i] >= Nxcc[gid]*Ny*Nz) {
             gid++;
          }
@@ -607,7 +607,7 @@ void split_data(const struct SimData *sd, struct gpuHostData *ghds, int ngpus) {
    int64_t Ns = sd->Ns;
    {
       int gid=0;
-      for (int64_t i=0; i<Ns; i++) { 
+      for (int64_t i=0; i<Ns; i++) {
          while (in_ixyz[i] >= Nxcc[gid]*Ny*Nz) {
             gid++;
          }
@@ -627,7 +627,7 @@ void split_data(const struct SimData *sd, struct gpuHostData *ghds, int ngpus) {
    int64_t Nr = sd->Nr;
    {
       int gid=0;
-      for (int64_t i=0; i<Nr; i++) { 
+      for (int64_t i=0; i<Nr; i++) {
          while (out_ixyz[i] >= Nxcc[gid]*Ny*Nz) {
             gid++;
          }
@@ -644,7 +644,7 @@ void split_data(const struct SimData *sd, struct gpuHostData *ghds, int ngpus) {
 }
 
 //run the sim!
-double run_sim(const struct SimData *sd) 
+double run_sim(const struct SimData *sd)
 {
    //if you want to test synchronous, env variable for that
    const char* s = getenv("CUDA_LAUNCH_BLOCKING");
@@ -660,12 +660,12 @@ double run_sim(const struct SimData *sd)
 
    int ngpus,max_ngpus;
    cudaGetDeviceCount(&max_ngpus); //control outside with CUDA_VISIBLE_DEVICES
-   ngpus = max_ngpus; 
+   ngpus = max_ngpus;
    assert(ngpus < (sd->Nx));
    struct gpuData *gds;
-   allocate_zeros((void **)&gds, ngpus*sizeof(gpuData)); 
+   allocate_zeros((void **)&gds, ngpus*sizeof(gpuData));
    struct gpuHostData *ghds;
-   allocate_zeros((void **)&ghds, ngpus*sizeof(gpuHostData)); //one bit per 
+   allocate_zeros((void **)&ghds, ngpus*sizeof(gpuHostData)); //one bit per
 
    if (ngpus>1) check_sorted(sd); //needs to be sorted for multi-GPU
 
@@ -673,7 +673,7 @@ double run_sim(const struct SimData *sd)
    split_data(sd, ghds, ngpus);
 
    for (int gid=0; gid < ngpus; gid++) {
-      gds[gid].totalmembytes = print_gpu_details(gid); 
+      gds[gid].totalmembytes = print_gpu_details(gid);
    }
 
    Real lo2 = sd->lo2;
@@ -711,11 +711,11 @@ double run_sim(const struct SimData *sd)
    int64_t Nx_pos=0;
    //uint64_t Nx_pos2=0;
 
-   Real *u_out_buf; 
+   Real *u_out_buf;
    gpuErrchk( cudaMallocHost(&u_out_buf, (size_t)(sd->Nr*sizeof(Real))) );
    memset(u_out_buf, 0, (size_t)(sd->Nr*sizeof(Real))); //set floats to zero
 
-   int64_t Nzy = (sd->Nz)*(sd->Ny); //area-slice 
+   int64_t Nzy = (sd->Nz)*(sd->Ny); //area-slice
 
    //here we recalculate indices to move to devices
    for (int gid=0; gid < ngpus; gid++) {
@@ -810,10 +810,10 @@ double run_sim(const struct SimData *sd)
       gpuErrchk( cudaMalloc(&(gd->u1), (size_t)((ghd->Npts)*sizeof(Real))) );
       gpuErrchk( cudaMemset(gd->u1, 0, (size_t)((ghd->Npts)*sizeof(Real))) );
 
-      gpuErrchk( cudaMalloc(&(gd->K_bn), (size_t)(ghd->Nb*sizeof(int8_t))) );    
+      gpuErrchk( cudaMalloc(&(gd->K_bn), (size_t)(ghd->Nb*sizeof(int8_t))) );
       gpuErrchk( cudaMemcpy(gd->K_bn, ghd->K_bn, ghd->Nb*sizeof(int8_t), cudaMemcpyHostToDevice) );
 
-      gpuErrchk( cudaMalloc(&(gd->ssaf_bnl), (size_t)(ghd->Nbl*sizeof(Real))) );    
+      gpuErrchk( cudaMalloc(&(gd->ssaf_bnl), (size_t)(ghd->Nbl*sizeof(Real))) );
       gpuErrchk( cudaMemcpy(gd->ssaf_bnl, ghd->ssaf_bnl, ghd->Nbl*sizeof(Real), cudaMemcpyHostToDevice) );
 
       gpuErrchk( cudaMalloc(&(gd->u0b), (size_t)(ghd->Nbl*sizeof(Real))) );
@@ -846,25 +846,25 @@ double run_sim(const struct SimData *sd)
       gpuErrchk( cudaMalloc(&(gd->bna_ixyz), (size_t)(ghd->Nba*sizeof(int64_t))) );
       gpuErrchk( cudaMemcpy(gd->bna_ixyz, ghd->bna_ixyz, (size_t)ghd->Nba*sizeof(int64_t), cudaMemcpyHostToDevice) );
 
-      gpuErrchk( cudaMalloc(&(gd->Q_bna), (size_t)(ghd->Nba*sizeof(int8_t))) );    
+      gpuErrchk( cudaMalloc(&(gd->Q_bna), (size_t)(ghd->Nba*sizeof(int8_t))) );
       gpuErrchk( cudaMemcpy(gd->Q_bna, ghd->Q_bna, ghd->Nba*sizeof(int8_t), cudaMemcpyHostToDevice) );
 
       gpuErrchk( cudaMalloc(&(gd->out_ixyz), (size_t)(ghd->Nr*sizeof(int64_t))) );
       gpuErrchk( cudaMemcpy(gd->out_ixyz, ghd->out_ixyz, (size_t)ghd->Nr*sizeof(int64_t), cudaMemcpyHostToDevice) );
 
-      gpuErrchk( cudaMalloc(&(gd->adj_bn), (size_t)(ghd->Nb*sizeof(uint16_t))) );    
+      gpuErrchk( cudaMalloc(&(gd->adj_bn), (size_t)(ghd->Nb*sizeof(uint16_t))) );
       gpuErrchk( cudaMemcpy(gd->adj_bn, ghd->adj_bn, (size_t)ghd->Nb*sizeof(uint16_t), cudaMemcpyHostToDevice) );
 
-      gpuErrchk( cudaMalloc(&(gd->mat_bnl), (size_t)(ghd->Nbl*sizeof(int8_t))) );    
+      gpuErrchk( cudaMalloc(&(gd->mat_bnl), (size_t)(ghd->Nbl*sizeof(int8_t))) );
       gpuErrchk( cudaMemcpy(gd->mat_bnl, ghd->mat_bnl, (size_t)ghd->Nbl*sizeof(int8_t), cudaMemcpyHostToDevice) );
 
-      gpuErrchk( cudaMalloc(&(gd->mat_beta), (size_t)sd->Nm*sizeof(Real)) );    
+      gpuErrchk( cudaMalloc(&(gd->mat_beta), (size_t)sd->Nm*sizeof(Real)) );
       gpuErrchk( cudaMemcpy(gd->mat_beta, sd->mat_beta, (size_t)sd->Nm*sizeof(Real), cudaMemcpyHostToDevice) );
 
-      gpuErrchk( cudaMalloc(&(gd->mat_quads), (size_t)sd->Nm*MMb*sizeof(MatQuad)) );    
+      gpuErrchk( cudaMalloc(&(gd->mat_quads), (size_t)sd->Nm*MMb*sizeof(MatQuad)) );
       gpuErrchk( cudaMemcpy(gd->mat_quads, sd->mat_quads, (size_t)sd->Nm*MMb*sizeof(MatQuad), cudaMemcpyHostToDevice) );
 
-      gpuErrchk( cudaMalloc(&(gd->bn_mask), (size_t)(ghd->Nbm*sizeof(uint8_t))) );    
+      gpuErrchk( cudaMalloc(&(gd->bn_mask), (size_t)(ghd->Nbm*sizeof(uint8_t))) );
       gpuErrchk( cudaMemcpy(gd->bn_mask, ghd->bn_mask, (size_t)ghd->Nbm*sizeof(uint8_t), cudaMemcpyHostToDevice) );
 
       Ns_read += ghd->Ns;
@@ -872,7 +872,7 @@ double run_sim(const struct SimData *sd)
       Nb_read += ghd->Nb;
       Nbl_read += ghd->Nbl;
       Nba_read += ghd->Nba;
-      Nx_read += ghd->Nx; 
+      Nx_read += ghd->Nx;
       Nx_pos = Nx_read-1; //back up one at subsequent stage
 
       printf("Nx_read = %ld\n",Nx_read);
@@ -906,8 +906,8 @@ double run_sim(const struct SimData *sd)
       //threads grids and blocks (swap x and z)
       int64_t cuGx = CU_DIV_CEIL(sd->Nz-2,cuBx);
       int64_t cuGy = CU_DIV_CEIL(sd->Ny-2,cuBy);
-      int64_t cuGz = CU_DIV_CEIL(ghd->Nxh-2,cuBz); 
-      int64_t cuGr = CU_DIV_CEIL(ghd->Nr,cuBrw); 
+      int64_t cuGz = CU_DIV_CEIL(ghd->Nxh-2,cuBz);
+      int64_t cuGr = CU_DIV_CEIL(ghd->Nr,cuBrw);
       int64_t cuGb = CU_DIV_CEIL(ghd->Nb,cuBb);
       int64_t cuGbl = CU_DIV_CEIL(ghd->Nbl,cuBb);
       int64_t cuGba = CU_DIV_CEIL(ghd->Nba,cuBb);
@@ -928,10 +928,10 @@ double run_sim(const struct SimData *sd)
       gd->block_dim_bn      = dim3(cuBb, 1, 1);
 
       gd->grid_dim_air      = dim3(cuGx, cuGy, cuGz);
-      gd->grid_dim_readout  = dim3(cuGr, 1, 1); 
-      gd->grid_dim_bn       = dim3(cuGb, 1, 1); 
-      gd->grid_dim_bnl       = dim3(cuGbl, 1, 1); 
-      gd->grid_dim_bna       = dim3(cuGba, 1, 1); 
+      gd->grid_dim_readout  = dim3(cuGr, 1, 1);
+      gd->grid_dim_bn       = dim3(cuGb, 1, 1);
+      gd->grid_dim_bnl       = dim3(cuGbl, 1, 1);
+      gd->grid_dim_bna       = dim3(cuGba, 1, 1);
 
       gd->block_dim_halo_xy = dim3(cuBx2, cuBy2, 1);
       gd->block_dim_halo_yz = dim3(cuBx2, cuBy2, 1);
@@ -1024,7 +1024,7 @@ double run_sim(const struct SimData *sd)
 
          //injecting source first, negating sample to add it in first (NB source on different stream than bn)
          for (int64_t ns=0; ns<ghd->Ns; ns++) {
-            AddIn<<<1,1,0,gd->cuStream_air>>>(gd->u0 + ghd->in_ixyz[ns],(Real)(-(ghd->in_sigs[ns*sd->Nt+n]))); 
+            AddIn<<<1,1,0,gd->cuStream_air>>>(gd->u0 + ghd->in_ixyz[ns],(Real)(-(ghd->in_sigs[ns*sd->Nt+n])));
          }
          //now air updates (not conflicting with bn updates because of bn_mask)
          if (sd->fcc_flag==0) {
@@ -1049,7 +1049,7 @@ double run_sim(const struct SimData *sd)
          gpuErrchk( cudaSetDevice(gid) );
          struct gpuData *gd = &(gds[gid]);
          struct gpuHostData *ghd = &(ghds[gid]);
-         gpuErrchk( cudaEventSynchronize(gd->cuEv_readout_end) ); 
+         gpuErrchk( cudaEventSynchronize(gd->cuEv_readout_end) );
          //copy grid points off output buffer
          for (int64_t nr=0; nr<ghd->Nr; nr++) {
             ghd->u_out[nr*sd->Nt + n] = (double)(ghd->u_out_buf[nr]);
@@ -1071,45 +1071,45 @@ double run_sim(const struct SimData *sd)
       //copy forward (even)
       for (int gid=0; gid < ngpus-1; gid+=2) {
          gpuErrchk( cudaSetDevice(gid) );
-         gpuErrchk( cudaMemcpyPeerAsync(gds[gid+1].u0, gid+1, 
-                                        gds[gid].u0 + Nzy*(ghds[gid].Nxh-2), gid, 
-                                        (size_t)(Nzy*sizeof(Real)), 
+         gpuErrchk( cudaMemcpyPeerAsync(gds[gid+1].u0, gid+1,
+                                        gds[gid].u0 + Nzy*(ghds[gid].Nxh-2), gid,
+                                        (size_t)(Nzy*sizeof(Real)),
                                         gds[gid].cuStream_bn) );
       }
       //copy back (odd)
       for (int gid=1; gid < ngpus; gid+=2) {
          gpuErrchk( cudaSetDevice(gid) );
-         gpuErrchk( cudaMemcpyPeerAsync(gds[gid-1].u0 + Nzy*(ghds[gid-1].Nxh-1), gid-1, 
-                                        gds[gid].u0 + Nzy, gid, 
-                                        (size_t)(Nzy*sizeof(Real)), 
+         gpuErrchk( cudaMemcpyPeerAsync(gds[gid-1].u0 + Nzy*(ghds[gid-1].Nxh-1), gid-1,
+                                        gds[gid].u0 + Nzy, gid,
+                                        (size_t)(Nzy*sizeof(Real)),
                                         gds[gid].cuStream_bn) );
       }
       //copy forward (odd)
       for (int gid=1; gid < ngpus-1; gid+=2) {
          gpuErrchk( cudaSetDevice(gid) );
-         gpuErrchk( cudaMemcpyPeerAsync(gds[gid+1].u0, gid+1, 
-                                        gds[gid].u0 + Nzy*(ghds[gid].Nxh-2), gid, 
-                                        (size_t)(Nzy*sizeof(Real)), 
+         gpuErrchk( cudaMemcpyPeerAsync(gds[gid+1].u0, gid+1,
+                                        gds[gid].u0 + Nzy*(ghds[gid].Nxh-2), gid,
+                                        (size_t)(Nzy*sizeof(Real)),
                                         gds[gid].cuStream_bn) );
       }
       //copy back (even) -- skip zero
       for (int gid=2; gid < ngpus; gid+=2) {
          gpuErrchk( cudaSetDevice(gid) );
-         gpuErrchk( cudaMemcpyPeerAsync(gds[gid-1].u0 + Nzy*(ghds[gid-1].Nxh-1), gid-1, 
-                                        gds[gid].u0 + Nzy, gid, 
-                                        (size_t)(Nzy*sizeof(Real)), 
+         gpuErrchk( cudaMemcpyPeerAsync(gds[gid-1].u0 + Nzy*(ghds[gid-1].Nxh-1), gid-1,
+                                        gds[gid].u0 + Nzy, gid,
+                                        (size_t)(Nzy*sizeof(Real)),
                                         gds[gid].cuStream_bn) );
       }
 
       for (int gid=0; gid < ngpus; gid++) {
-         gpuErrchk( cudaSetDevice(gid) ); 
+         gpuErrchk( cudaSetDevice(gid) );
          struct gpuData *gd = &(gds[gid]);
          gpuErrchk( cudaStreamSynchronize(gd->cuStream_bn) ); //transfer complete
       }
       for (int gid=0; gid < ngpus; gid++) {
          struct gpuData *gd = &(gds[gid]);
          //update pointers
-         Real *tmp_ptr; 
+         Real *tmp_ptr;
          tmp_ptr = gd->u1;
          gd->u1 = gd->u0;
          gd->u0 = tmp_ptr;
@@ -1169,7 +1169,7 @@ double run_sim(const struct SimData *sd)
    }
 
    /*------------------------
-    * FREE WILLY 
+    * FREE WILLY
    ------------------------*/
    gpuErrchk( cudaSetDevice(0) );
    gpuErrchk( cudaEventDestroy(cuEv_main_start) );
@@ -1236,4 +1236,3 @@ double run_sim(const struct SimData *sd)
    return time_elapsed;
 }
 #endif
-

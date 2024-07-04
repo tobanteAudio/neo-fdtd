@@ -12,4 +12,3 @@ module RoomExportExtension
   extension.description = "Export geometry with materials to JSON."
   Sketchup.register_extension(extension, true)
 end
-

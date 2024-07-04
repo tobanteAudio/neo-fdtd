@@ -27,7 +27,7 @@ fit_to_Sabs_oct_11(tobi_wall    , filename=Path(write_folder / 'tobi_wall.h5')  
 fit_to_Sabs_oct_11(tobi_floor   , filename=Path(write_folder / 'tobi_floor.h5')   , plot=plot)
 fit_to_Sabs_oct_11(tobi_ceiling , filename=Path(write_folder / 'tobi_ceiling.h5') , plot=plot)
 
-# #some examples to save admittance/impedance data 
+# #some examples to save admittance/impedance data
 # #these are Sabine coefficients, 16Hz to 16kHz centre frequencies
 # mv_chairs       = npa([0.22  , 0.22  , 0.22 , 0.22 , 0.26 , 0.3  , 0.33 , 0.34 , 0.34 , 0.34 , 0.34])
 # mv_floor        = npa([0.14  , 0.14  , 0.14 , 0.14 , 0.1  , 0.06 , 0.08 , 0.1  , 0.1  , 0.1  , 0.1])

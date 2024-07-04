@@ -35,7 +35,7 @@ def apply_visco_filter(x,Fs,Tc,rh,NdB=120,t_start=None):
 
     Ts = 1/Fs
     if t_start is None:
-       t_start = Ts**2/(2*pi*g) 
+       t_start = Ts**2/(2*pi*g)
        print(f'{t_start=}')
 
     x = np.atleast_2d(x)

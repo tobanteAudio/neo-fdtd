@@ -36,7 +36,7 @@ class SimConsts:
             assert l<=np.sqrt(1/3) #check with round-off errors
 
         #back off to remove nyquist mode
-        l *= 0.999 
+        l *= 0.999
         l2 = l*l
 
         if h is not None:

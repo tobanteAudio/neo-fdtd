@@ -62,9 +62,9 @@ def rotate_xyz_deg(thx_d,thy_d,thz_d):
     Rz = npa([[np.cos(thz),-np.sin(thz),0],\
              [np.sin(thz),np.cos(thz),0],\
              [0,0,1]])
-   
-    R = Rx @ Ry @ Rz 
-   
+
+    R = Rx @ Ry @ Rz
+
     return R,Rx,Ry,Rz
 
 
@@ -79,7 +79,7 @@ def rotate_az_el_deg(az_d,el_d):
     Raz = Rz
     R = Raz @ Rel
 
-    return R,Raz,Rel 
+    return R,Raz,Rel
 
 #only used in box
 def mydefault(a:Any, default:Any):
@@ -104,7 +104,7 @@ def clamp(x:Any, xmin:Any, xmax:Any):
     assert isinstance(x,(np.ndarray,int,np.integer,float))
     assert isinstance(xmin,(np.ndarray,int,np.integer,float))
     assert isinstance(xmax,(np.ndarray,int,np.integer,float))
-    return np.where(x<xmin,xmin,np.where(x>xmax,xmax,x)) 
+    return np.where(x<xmin,xmin,np.where(x>xmax,xmax,x))
 
 def vclamp(x, xmin, xmax):
     return np.where(x<xmin,xmin,np.where(x>xmax,xmax,x)) #only this works for vectorized xmin,xmax
@@ -224,12 +224,12 @@ def read_txt_values(filepath_str):
         keyvals = [line.rstrip('\n').split(' ') for line in lines]
         for keyval in keyvals:
             assert len(keyval)==2
-            key = keyval[0] 
+            key = keyval[0]
             val = keyval[1] #still a string
             rdict[key] = val
             print(f'key = {key}, val = {val}')
     return rdict
-    
+
 def gen_md5hash(*args):
     hash_list = []
     out_hash = ''

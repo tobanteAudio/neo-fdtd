@@ -93,7 +93,7 @@ def write_freq_ind_mat_from_Yn(Yn,filename):
         print(f'--MATS: {fstring}')
 
     assert ~np.isnan(Yn)
-    assert ~np.isinf(Yn) 
+    assert ~np.isinf(Yn)
     assert Yn>0 #rigid should be specified in scene (no material)
     write_freq_ind_mat_from_Zn(1/Yn,filename)
 
@@ -105,7 +105,7 @@ def write_freq_dep_mat(DEF,filename):
     _print(f'{DEF=}')
     DEF = np.atleast_2d(DEF)
     assert ~np.any(np.isinf(DEF)) #rigid should be specified in scene (no material)
-    assert ~np.any(np.isnan(DEF)) 
+    assert ~np.any(np.isnan(DEF))
     assert np.all(DEF>=0) #all non-neg
     assert np.all(np.sum(DEF>0,axis=-1)) #at least one non-zero
     assert DEF.shape[1]==3
@@ -118,7 +118,7 @@ def write_freq_dep_mat(DEF,filename):
 #write HDF5 mat file from frequency-independent triplet (D=F=0)
 def read_mat_DEF(filename):
     h5f = h5py.File(Path(filename),'r')
-    DEF = h5f['DEF'][()] 
+    DEF = h5f['DEF'][()]
     h5f.close()
     return DEF
 
@@ -263,7 +263,7 @@ def fit_to_Sabs_oct_11(Sabs,filename,plot=False):
         else:
             i2 = np.flatnonzero(fv>=fc*sqrt(2))[0]
 
-        Y_target[i1:i2] = Ynm 
+        Y_target[i1:i2] = Ynm
         w0 = 2*pi*fc
         dw = w0/sqrt(2) #using resonance with half-octave bandwidth
         ymv[j] = Ynm
@@ -290,9 +290,9 @@ def fit_to_Sabs_oct_11(Sabs,filename,plot=False):
             cost = np.sum(np.abs(abs_opt-abs_target)) #simply fit to absorption coefficients
             #other possible cost functions
             #cost = np.sum(np.abs(np.abs(Y_target) - np.abs(Yn_opt)))
-            #cost = np.sum(np.abs(1-np.abs(Y_target)/np.abs(Yn_opt))) 
-            #cost = np.sum(np.abs(Y_target - Yn_opt)) 
-            #cost = np.sum(np.abs(R_target - Rf_opt)) 
+            #cost = np.sum(np.abs(1-np.abs(Y_target)/np.abs(Yn_opt)))
+            #cost = np.sum(np.abs(Y_target - Yn_opt))
+            #cost = np.sum(np.abs(R_target - Rf_opt))
             return cost
 
     #limit optimisation to just Yabs (keep bandwidths fix and w0 fixed)
@@ -310,7 +310,7 @@ def fit_to_Sabs_oct_11(Sabs,filename,plot=False):
 
     D,E,F = _to_DEF(ymv_opt,dwv_opt,w0v_opt)
     DEF = np.c_[D,E,F]
-    
+
     #now save
     h5f = h5py.File(filename,'w')
     assert np.all(np.sum(DEF>0,axis=-1)) #at least one non-zero

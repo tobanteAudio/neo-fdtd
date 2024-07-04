@@ -21,7 +21,7 @@ IDIR = .
 
 #on Ubuntu (install libhdf5-dev with aptitude)
 HDF5_INC = /usr/include/hdf5/serial/
-HDF5_LIB = /usr/lib/x86_64-linux-gnu/hdf5/serial/ 
+HDF5_LIB = /usr/lib/x86_64-linux-gnu/hdf5/serial/
 
 #on Arch (install hdf5 with pacman)
 #HDF5_INC = /usr/include/
@@ -52,9 +52,9 @@ CULDFLAGS += -L$(HDF5_LIB) -lhdf5
 
 SRC= fdtd_main.c
 
-cpu: cpu_double cpu_single 
+cpu: cpu_double cpu_single
 
-gpu: gpu_double gpu_single 
+gpu: gpu_double gpu_single
 
 all: cpu gpu
 

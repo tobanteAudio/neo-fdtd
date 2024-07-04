@@ -9,7 +9,7 @@
 # File name: vox_grid.py
 #
 # Description: VoxGrid class for voxelizer
-#  Uses multiprocessing.  
+#  Uses multiprocessing.
 #
 # Notes:
 #  - Performance will depend on geometry, grid spacing, voxel size and # processes
@@ -62,10 +62,10 @@ class VoxGrid(VoxGridBase):
         #Nh*h is width of non-overlapping part of voxel (with 0.5 spacing around points)
         #Nh is also min number of points along one dim
         #Nhx*h is size of voxel with halo (one extra layer)
-        #Nhx is also number of points along one dim (Nxh>=Nh+2) 
+        #Nhx is also number of points along one dim (Nxh>=Nh+2)
 
         if Nh is None and Nvox_est is None: #heuristic, but seems ok
-            fac = 0.025 
+            fac = 0.025
             Nvox_est = iceil(fac*np.sqrt(Ntris * np.prod(Nxyz)))
 
         #calculate Nh if estimate given
@@ -131,14 +131,14 @@ class VoxGrid(VoxGridBase):
                     ixyz_start = npa([ix_start,iy_start,iz_start])
                     ixyz_last = npa([ix_last,iy_last,iz_last]) #matlab-style end
 
-                    vox = self.voxels[vox_idx] 
+                    vox = self.voxels[vox_idx]
                     vox.bmin = bmin
                     vox.bmax = bmax
                     vox.ixyz_start = ixyz_start
                     vox.Nhxyz = ixyz_last-ixyz_start+1
                     vox.idx = vox_idx
 
-                    #start and end values of vox with one-layer still inbounds 
+                    #start and end values of vox with one-layer still inbounds
                     assert np.all(vox.Nhxyz>=Nh+2) #min size
                     assert np.all(vox.Nhxyz<2*(Nh+2)) #max size
                     vox_idx += 1
@@ -147,7 +147,7 @@ class VoxGrid(VoxGridBase):
 
         pbar.close()
         self.print(self.timer.ftoc('initialise voxels'))
-        assert vox_idx == Nvox 
+        assert vox_idx == Nvox
 
         self.Nvox_xyz = Nvox_xyz
         self.Nvox = Nvox
@@ -185,7 +185,7 @@ def main():
     args = parser.parse_args()
     print(args)
     assert args.Nprocs>0
-    #assert args.Nvox_est is not None or args.Nh is not None 
+    #assert args.Nvox_est is not None or args.Nh is not None
     assert args.h is not None
     assert args.json is not None
 

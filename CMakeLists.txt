@@ -12,7 +12,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_executable(pffdtd)
 target_compile_definitions(pffdtd PRIVATE PRECISION=1 USING_CUDA=0)
-target_sources(pffdtd 
+target_sources(pffdtd
     PRIVATE
         src/native/cpu_engine.cpp
         src/native/cpu_engine.hpp

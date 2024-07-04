@@ -37,7 +37,7 @@ class RoomGeo:
             self.bmax = -npa([np.inf,np.inf,np.inf])
         else:
             self.bmax = bmax
-            
+
         self.tris = None
         self.mat_side = None
         self.pts = None
@@ -81,9 +81,9 @@ class RoomGeo:
         if '_RIGID' in mat_str:
             #move to end (also corresponds to -1 index)
             mat_str.remove('_RIGID')
-            mat_str.append('_RIGID') 
+            mat_str.append('_RIGID')
             Nmat -= 1 #adjust Nmat
-        
+
         #print(mat_str)
 
         colors = []
@@ -197,14 +197,14 @@ class RoomGeo:
         mat_str = self.mat_str
         Nmat = self.Nmat
         fig = None
-        if plot_normals or wireframe: 
+        if plot_normals or wireframe:
             assert backend=='mayavi'
 
         #sources/receivers not drawn
 
         if backend == 'mayavi':
             from mayavi import mlab
-            from tvtk.api import tvtk 
+            from tvtk.api import tvtk
 
             fig = mlab.figure()
             #fig = mlab.gcf()
@@ -231,7 +231,7 @@ class RoomGeo:
                     mlab.quiver3d(*mtp['cent'].T,*mtp['nor'].T,color=color)
 
             mlab.orientation_axes()
-            
+
             #mlab.axes binds to last object so draw line across bmin and bmax and attach axes
             fake_verts = np.c_[self.bmin,self.bmax] #stacks as column vectors 2x3
             mlab.plot3d(*fake_verts,transparent=True,opacity=0)
@@ -244,7 +244,7 @@ class RoomGeo:
             import polyscope as ps
             # Initialize polyscope
             try:
-                ps.init() #gives error if run more than once (at least in ipython) 
+                ps.init() #gives error if run more than once (at least in ipython)
             except:
                 self.print('polyscope already initialised?')
                 pass
@@ -294,7 +294,7 @@ class RoomGeo:
         self.print(f'room Rxyz = {rg.Rxyz}')
         for i in range(rg.Nmat):
             self.print(f'mat {i}: {rg.mat_str[i]}, {rg.mat_area[i]:.3f}m²')
-    
+
 def main():
     import argparse
     parser = argparse.ArgumentParser()
@@ -316,7 +316,7 @@ def main():
 
     print(args)
 
-    room = RoomGeo(args.json,az_el=args.az_el) 
+    room = RoomGeo(args.json,az_el=args.az_el)
     room.print_stats()
 
     if not args.nodraw:

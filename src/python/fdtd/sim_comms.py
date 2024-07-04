@@ -22,9 +22,9 @@ import h5py
 from scipy.signal import lfilter,bilinear_zpk
 from numpy import pi,cos,sin
 
-class SimComms: 
+class SimComms:
     def __init__(self,save_folder):
-        #will read h,xv,yv,zv from h5 data 
+        #will read h,xv,yv,zv from h5 data
         save_folder = Path(save_folder)
         assert save_folder.exists()
         assert save_folder.is_dir()
@@ -37,8 +37,8 @@ class SimComms:
 
         h5f = h5py.File(save_folder / Path('cart_grid.h5'),'r')
         self.xv      = h5f['xv'][()]
-        self.yv      = h5f['yv'][()] 
-        self.zv      = h5f['zv'][()] 
+        self.yv      = h5f['yv'][()]
+        self.zv      = h5f['zv'][()]
         h5f.close()
 
         self.fcc = (self.fcc_flag>0)
@@ -103,7 +103,7 @@ class SimComms:
 
         self.in_sigs = in_sigs
 
-    def diff_source(self): 
+    def diff_source(self):
         #differentiate with bilinear transform, to undo after sim
         #required for single precision (safeguard against DC instability)
         in_sigs = self.in_sigs
@@ -121,8 +121,8 @@ class SimComms:
     def prepare_receiver_pts(self,Rxyz):
         Rxyz = np.atleast_2d(Rxyz)
         #many receivers, can have duplicates
-        out_alpha = np.zeros((Rxyz.shape[0],8),np.float64) 
-        out_ixyz = np.zeros((Rxyz.shape[0],8),dtype=np.int64) 
+        out_alpha = np.zeros((Rxyz.shape[0],8),np.float64)
+        out_ixyz = np.zeros((Rxyz.shape[0],8),dtype=np.int64)
         for rr in range(Rxyz.shape[0]):
             out_alpha[rr],out_ixyz[rr] = self.get_linear_interp_weights(Rxyz[rr])
 
@@ -200,7 +200,7 @@ class SimComms:
                              [0,-1,-1],\
                              [-1,-1,-1]])
 
-        if self.fcc: #adapt to subgrid, with two times grid spacing 
+        if self.fcc: #adapt to subgrid, with two times grid spacing
             #note: this much simpler than interpolating within tetra/octa tiling (holes of FCC grid) using barycentric coords (PITA)
             ix_iy_iz8_off *= 2
             if np.mod(np.sum(ix_iy_iz),2) == 1:
@@ -247,4 +247,3 @@ class SimComms:
         self.print(f'boundary intersection check with out_ixyz..')
         _check_for_clashes(self.out_ixyz,bn_ixyz)
         self.print(timer.ftoc('check in_xyz'))
-

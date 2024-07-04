@@ -20,7 +20,7 @@ from pathlib import Path
 from common.timerdict import TimerDict
 import h5py
 
-class SimMats: 
+class SimMats:
     def __init__(self,save_folder):
         save_folder = Path(save_folder)
         assert save_folder.exists()
@@ -31,7 +31,7 @@ class SimMats:
     def print(self,fstring):
         print(f'--MATS: {fstring}')
 
-    def package(self,mat_files_dict,mat_list,read_folder): 
+    def package(self,mat_files_dict,mat_list,read_folder):
         mat_list=mat_list[:] #make copy of input
         if '_RIGID' in mat_list:
             mat_list.remove('_RIGID')
@@ -49,7 +49,7 @@ class SimMats:
             h5f.close()
 
         Nmat = len(DEF_list)
-        Mb = np.zeros((Nmat,),dtype=np.int8) #number of circuit branches 
+        Mb = np.zeros((Nmat,),dtype=np.int8) #number of circuit branches
         h5f = h5py.File(Path(save_folder / Path('sim_mats.h5')) ,'w')
         h5f.create_dataset('Nmat', data=np.int8(Nmat))
         for i in range(Nmat):

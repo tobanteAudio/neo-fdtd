@@ -10,7 +10,7 @@
 #
 # Description: This is an implementation of an air absorption filter based on a
 # modal approach.  It solves a system of 1-d dissipative wave equations tune to
-# air attenuation curves using a soft-source boundary condition.  
+# air attenuation curves using a soft-source boundary condition.
 #
 # See paper for details:
 # Hamilton, B. "Adding air attenuation to simulated room impulse responses: A
@@ -22,7 +22,7 @@ import numpy as np
 import numba as nb
 from numpy import array as npa
 from numpy import exp, sqrt, log, pi, cos
-from scipy.fft import dct,idct #default type2 
+from scipy.fft import dct,idct #default type2
 from air_abs.get_air_absorption import get_air_absorption
 from common.myfuncs import iround, iceil
 from tqdm import tqdm
@@ -58,7 +58,7 @@ def apply_modal_filter(x,Fs,Tc,rh,pad_t=0.0):
     fx[:,0] = 1
     Fm = dct(fx,type=2,norm='ortho',axis=-1)
 
-    sigqTs = c*alphaq*Ts 
+    sigqTs = c*alphaq*Ts
     a1 = 2*exp(-sigqTs)*cos(wqTs)
     a2 = -exp(-2*sigqTs)
     Fmsig1 = Fm*(1+sigqTs/2)/(1+sigqTs)

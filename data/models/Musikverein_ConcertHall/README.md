@@ -10,4 +10,3 @@ See also:
 B. Hamilton, C. J. Webb, N. D. Fletcher, and S. Bilbao. Finite difference room acoustics simulation with
 general impedance boundaries and viscothermal losses in air: Parallel implementation on multiple
 GPUs. In Proc. Int. Symp. Music & Room Acoust., La Plata, Argentina, September 2016.
-

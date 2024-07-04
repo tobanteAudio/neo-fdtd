@@ -2,14 +2,14 @@
 # vim: set tabstop=2
 ##############################################################################
 # This file is a part of PFFDTD.
-# 
+#
 # PFFTD is released under the MIT License.
 # For details see the LICENSE file.
-# 
+#
 # Copyright 2021 Brian Hamilton.
-# 
+#
 # File name: RoomExport.rb
-# 
+#
 # Description: Functions called by SU plugin (RoomExporter) to export geometry and materials
 #   Exports Sketchup model's non-hidden faces and vertices to JSON
 #    Uses Materials and not Layers (aka Tags in SU2020+)
@@ -20,7 +20,7 @@
 # - Materials should be one-sided (only one side has material), but can be two-sided if materials match
 # - This plugin doesn't export/explode components or groups. That should be done beforehand.
 # - Colors are exported, but textures are not (some average color somehow is exported for textures)
-# 
+#
 ##############################################################################
 
 require 'sketchup.rb'
@@ -48,15 +48,15 @@ module RoomExporter
       counts_hash['n_faces_tofix'] = 0 #number of faces with some error
       counts_hash['n_faces_rigid'] = 0 #number of faces without materials
       Sketchup.set_status_text("Processing " + ents.length.to_s + " entities")
-      for i in 0...ents.length 
+      for i in 0...ents.length
         ent = ents[i]
-        if ent.is_a?(Sketchup::Group) 
+        if ent.is_a?(Sketchup::Group)
           Sketchup.set_status_text("Encountered Group")
           counts_hash['n_groups'] += 1 #ignore and notify later
-        elsif ent.is_a?(Sketchup::ComponentInstance) 
+        elsif ent.is_a?(Sketchup::ComponentInstance)
           Sketchup.set_status_text("Encountered component: " + ent.definition.name)
           counts_hash['n_comps'] += 1 #ingore and notify later
-        elsif ent.is_a?(Sketchup::Face) 
+        elsif ent.is_a?(Sketchup::Face)
           #skip if hidden or visible
           if (ent.hidden?)
             counts_hash['n_faces_hidden'] += 1
@@ -113,7 +113,7 @@ module RoomExporter
 
           if !mats_hash.has_key?(mat_name)
             mats_hash[mat_name] = {'tris' => [],
-                                   'pts' => [], 
+                                   'pts' => [],
                                    'pt_cc' => 0, #point counter
                                    'color' => [0,0,0],
                                    'sides' => []
@@ -184,7 +184,7 @@ module RoomExporter
         return
       end
 
-      #go through model 
+      #go through model
       Sketchup.set_status_text("Traversing model...")
       mats_hash, counts_hash = self.export_entities()
       Sketchup.set_status_text("Done traversing model...")
@@ -206,9 +206,9 @@ module RoomExporter
         UI.messagebox(warning_msg)
       end
 
-      json_hash = {'mats_hash': mats_hash, 
-                  'sources': sources, 
-                  'receivers': receivers, 
+      json_hash = {'mats_hash': mats_hash,
+                  'sources': sources,
+                  'receivers': receivers,
                   'export_datetime': Time.now}
 
       if $DEBUG
@@ -240,16 +240,16 @@ module RoomExporter
       UI.messagebox(mats_msg)
 
       #print anything else worth noting
-      if counts_hash['n_faces_hidden']>0 || counts_hash['n_faces_nvisible']>0 
+      if counts_hash['n_faces_hidden']>0 || counts_hash['n_faces_nvisible']>0
         UI.messagebox('found %d hidden faces, %d faces not visible' % [counts_hash['n_faces_hidden'],counts_hash['n_faces_nvisible']])
       end
-      if counts_hash['n_faces_tofix']>0 
+      if counts_hash['n_faces_tofix']>0
         UI.messagebox('found %d faces with inconsistent material, moved to _TOFIX layer' % [counts_hash['n_faces_tofix']])
       end
-      if counts_hash['n_faces_rigid']>0 
+      if counts_hash['n_faces_rigid']>0
         UI.messagebox('found %d faces with no material, taken to be rigid' % [counts_hash['n_faces_rigid']])
       end
-      if counts_hash['n_groups']>0 || counts_hash['n_comps']>0 
+      if counts_hash['n_groups']>0 || counts_hash['n_comps']>0
         UI.messagebox('found  %d groups, and %d components' % [counts_hash['n_groups'],counts_hash['n_comps']])
       end
       return
@@ -262,10 +262,10 @@ module RoomExporter
       bmax = Geom::Point3d.new(-Float::INFINITY,-Float::INFINITY,-Float::INFINITY)
       model = Sketchup.active_model
       ents = model.entities
-      for i in 0...ents.length 
+      for i in 0...ents.length
         ent = ents[i]
         #only checks faces, not groups or components (only what's exported)
-        if ent.is_a?(Sketchup::Face) 
+        if ent.is_a?(Sketchup::Face)
           #skip if hidden or visible
           if (ent.hidden?)
             next
@@ -288,7 +288,7 @@ module RoomExporter
       return bmin_m,bmax_m
     end
 
-    def self.read_CSV(type) 
+    def self.read_CSV(type)
       warning_msg = ''
       srlist = []
       if type=='source'
@@ -352,7 +352,7 @@ module RoomExporter
       return srlist,warning_msg
     end
 
-    def self.plot_positions(type) 
+    def self.plot_positions(type)
       if type=='source'
         layer_name = '_SOURCES'
         prefix = 'S'
@@ -401,7 +401,7 @@ if (Sketchup.version.to_f < version_required)
   fail
 end
 
-#load once 
+#load once
 if (not file_loaded?('RoomExport.rb'))
   plugins_menu = UI.menu("Plugins")
   submenu = plugins_menu.add_submenu("Room Exporter")

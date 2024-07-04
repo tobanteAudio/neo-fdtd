@@ -8,10 +8,10 @@
 #
 # File name: vox_scene.py
 #
-# Description: a scene voxelizer for FDTD  
+# Description: a scene voxelizer for FDTD
 #
 #  Sets up primary input for FDTD (adjacencies, materials, boundary nodes)
-#  CPU-based and uses multiprocessing.  
+#  CPU-based and uses multiprocessing.
 #  Tested up to ~10^10 points.  Meant for single-node use (no MPI)
 #
 # Notes:
@@ -127,7 +127,7 @@ class VoxScene:
         # Nb_proc_shm = shared_memory.SharedMemory(create=True,size=Nprocs*np.dtype(np.int64).itemsize)
         # Nb_proc = np.frombuffer(Nb_proc_shm.buf,dtype=np.int64)
         Nb_proc = np.ndarray(Nprocs,dtype=np.int64)
-        Nb_proc[:] = 0 
+        Nb_proc[:] = 0
 
         NN = self.NN
 
@@ -197,7 +197,7 @@ class VoxScene:
 
                 #then mask by distance to plane
                 dtp = np.full(vox_shape,np.inf,dtype=np.float64)
-                dtp.flat[bb_mask.flat[:]] = dotv(unor,cent-xyz_vox[bb_mask.flat[:]]) 
+                dtp.flat[bb_mask.flat[:]] = dotv(unor,cent-xyz_vox[bb_mask.flat[:]])
                 dist_mask1 = (np.abs(dtp)<= hf*(1+R_EPS))
                 if ~np.any(dist_mask1):
                     continue
@@ -209,14 +209,14 @@ class VoxScene:
                     rd = uvv[k]
 
                     ray_d = rd*np.ones(ray_o.shape)
-                
+
                     #returns np.inf or dist>0 if hit
                     hit_dist = np.full(vox_shape,np.inf)
                     _,hit_dist.flat[ray_mask.flat[:]] = tri_ray_intersection_vec(ray_o,ray_d,npa([tri_pre]),d_eps=1.0e-3*h)
 
                     assert np.all(hit_dist>=0.0)
                     hit_dist -= hf #shift, doesn't affect np.inf entries
-                    hit_dist[hit_dist<-R_EPS*hf] = np.inf #overwrite hits behind point 
+                    hit_dist[hit_dist<-R_EPS*hf] = np.inf #overwrite hits behind point
 
                     tnb_mask |= (np.abs(hit_dist)<=R_EPS*hf)
                     hit_dist[tnb_mask] = np.abs(hit_dist[tnb_mask]) #so ndist is positive
@@ -232,7 +232,7 @@ class VoxScene:
                     vox_adj.reshape(-1,NN)[ii0,k] = False
                     vox_bp.flat[ii0] = True
 
-                    #indices where new nearest hit 
+                    #indices where new nearest hit
                     nh_mask = np.full(vox_shape,False)
                     nh_mask.flat[ii0] =  (hit_dist.flat[ii0] < vox_ndist.flat[ii0])
                     vox_ndist[nh_mask] = hit_dist[nh_mask] #update to abs for neg dist
@@ -241,8 +241,8 @@ class VoxScene:
                 #NB can have fictitious boundary faces at edges
                 #leg on correct side but not overtop triangle... (since intersection not registered)
                 #..same problem with jordan's theorem tests
- 
-                #finally zero out nb points 
+
+                #finally zero out nb points
                 vox_adj.reshape(-1,NN)[vox_nb.flat[:],:]=False
 
                 assert np.all(~vox_adj.reshape(-1,NN)[tnb_mask.flat[:],:])
@@ -281,7 +281,7 @@ class VoxScene:
             h5f_vox.close()
 
         def process_voxels(idx_list,proc_idx):
-            #using one progress bar because tqdm has problems with multiple, and cleaner 
+            #using one progress bar because tqdm has problems with multiple, and cleaner
             pbar = tqdm(total=len(idx_list),desc=f'process {proc_idx:02d} voxeliser processing',ascii=True,leave=False,position=0)
             for idx in idx_list:
                 process_voxel(idx,proc_idx)
@@ -333,13 +333,13 @@ class VoxScene:
         tidx_bn = np.full((Nbt,),-1,dtype=np.int32)
         ndist_bn = np.full((Nbt,),np.inf,dtype=np.float64)
 
-        #consolidate now with single process 
+        #consolidate now with single process
         pbar = tqdm(total=Nvox_nonempty,desc=f'process 0: consolidate',ascii=True,leave=False,position=0)
         bb = 0 #boundary point counter
         for idx in range(Nvox_nonempty):
             vox_idx = vg.nonempty_idx[idx]
             vox = vg.voxels[vox_idx]
-            Nhx,Nhy,Nhz = vox.Nhxyz 
+            Nhx,Nhy,Nhz = vox.Nhxyz
             vox_shape = (Nhx,Nhy,Nhz) #in points
             ix_start,iy_start,iz_start = vox.ixyz_start
 
@@ -378,7 +378,7 @@ class VoxScene:
         self.print(self.timer.ftoc('consolidate'))
         pbar.close()
 
-        #merge 
+        #merge
         self.timer.tic('merge')
 
         assert np.unique(bn_ixyz).size == bn_ixyz.size
@@ -390,10 +390,10 @@ class VoxScene:
         #surface area corrections (effective cell surface seen by walls)
         self.print('materials (+sides)...')
         self.timer.tic('sides')
-        bn_ix,bn_iy,bn_iz = ind2sub3d(bn_ixyz,Nx,Ny,Nz) 
+        bn_ix,bn_iy,bn_iz = ind2sub3d(bn_ixyz,Nx,Ny,Nz)
         xyz_bn = np.c_[xv[bn_ix],yv[bn_iy],zv[bn_iz]]
         xyz_bn = np.c_[xv[bn_ix],yv[bn_iy],zv[bn_iz]]
-        dv = dotv(xyz_bn-rg.tris_pre['cent'][tidx_bn],rg.tris_pre['unor'][tidx_bn]) 
+        dv = dotv(xyz_bn-rg.tris_pre['cent'][tidx_bn],rg.tris_pre['unor'][tidx_bn])
 
         mat_bn = rg.mat_ind[tidx_bn] #default choice
         #unmark wrong sides of one-sided triangles
@@ -433,7 +433,7 @@ class VoxScene:
 
 
         #attach to class
-        self.bn_ixyz = bn_ixyz 
+        self.bn_ixyz = bn_ixyz
         self.adj_bn  = adj_bn
         self.mat_bn  = mat_bn
         self.saf_bn  = saf_bn
@@ -441,7 +441,7 @@ class VoxScene:
         self.print(self.timer.ftoc('calc_adj total'))
 
     def save(self,save_folder,compress=None):
-        #save to HDF5 data file 
+        #save to HDF5 data file
         save_folder = Path(save_folder)
         self.print(f'{save_folder=}')
         if not save_folder.exists():
@@ -543,7 +543,7 @@ class VoxScene:
         Nx,Ny,Nz = cg.Nxyz
         Nmat = rg.Nmat
         colors = rg.colors
-        
+
         bn_ix,bn_iy,bn_iz = ind2sub3d(bn_ixyz,Nx,Ny,Nz)
 
         if backend == 'mayavi':
@@ -581,7 +581,7 @@ class VoxScene:
         vvh = self.vvh
         for j in range(0,vvh.shape[0],2): #to draw legs only once
             qq = np.flatnonzero(~adj_bn[:,j])
-            aa = vvh[j,:] 
+            aa = vvh[j,:]
             x = xv[bn_ix[qq]]
             y = yv[bn_iy[qq]]
             z = zv[bn_iz[qq]]
@@ -604,7 +604,7 @@ class VoxScene:
 #numba funcs
 #these are in fact faster in serial as written and current numba version
 #possible to improve with option to choose scheduling types (maybe a feature in future numba versions)
-@nb.jit(nopython=True,parallel=False) 
+@nb.jit(nopython=True,parallel=False)
 def nb_fill_adj(bn_ixyz,adj_bn,adj_full):
     for i in nb.prange(bn_ixyz.size):
         bitmask = np.uint8(0)
@@ -613,7 +613,7 @@ def nb_fill_adj(bn_ixyz,adj_bn,adj_full):
         adj_full.flat[bn_ixyz[i]] = bitmask
         #print(f'{bitmask=}, {adj_bn[i]=}')
 
-@nb.jit(nopython=True,parallel=False) 
+@nb.jit(nopython=True,parallel=False)
 def nb_fill_adj_fcc(bn_ixyz,adj_bn,adj_full):
     for i in nb.prange(bn_ixyz.size):
         bitmask = np.uint16(0)
@@ -636,7 +636,7 @@ def nb_check_adj_full(adj,Nx,Ny,Nz):
                 assert ~(((adj[ix,iy,iz] >> 5) & 1) ^ ((adj[ix,iy,iz-1] >> 4) & 1))
 
 @nb.jit(nopython=True,parallel=False)
-def nb_check_adj_full_fcc(adj,Nx,Ny,Nz): 
+def nb_check_adj_full_fcc(adj,Nx,Ny,Nz):
     assert adj.shape == (Nx,Ny,Nz)
     for ix in nb.prange(1,Nx-1):
         for iy in np.arange(1,Ny-1):
@@ -692,7 +692,7 @@ def main():
     args = parser.parse_args()
     print(args)
     assert args.Nprocs>0
-    #assert args.Nvox_est is not None or args.Nh is not None 
+    #assert args.Nvox_est is not None or args.Nh is not None
     assert args.h is not None
     assert args.json is not None
     assert args.offset>2.0
@@ -719,7 +719,7 @@ def main():
         vox_scene.check_adj_full()
 
     if args.save_folder:
-        vox_scene.save(args.save_folder) 
+        vox_scene.save(args.save_folder)
 
     if args.draw:
         room_geo.draw(wireframe=False,backend=draw_backend)

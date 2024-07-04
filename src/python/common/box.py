@@ -34,7 +34,7 @@ class Box:
 
     def init(self,Lx,Ly,Lz,Rax,Rang,shift):
 
-        verts = npa([[0.,0.,0.],[0.,0.,Lz],[0.,Ly,0.],[0.,Ly,Lz],[Lx,0.,0.],[Lx,0.,Lz],[Lx,Ly,0.],[Lx,Ly,Lz]]) 
+        verts = npa([[0.,0.,0.],[0.,0.,Lz],[0.,Ly,0.],[0.,Ly,Lz],[Lx,0.,0.],[Lx,0.,Lz],[Lx,Ly,0.],[Lx,Ly,Lz]])
         if self.centered:
             verts -= 0.5*npa([Lx,Ly,Lz])
 
@@ -54,7 +54,7 @@ class Box:
         bmax = np.amax(verts,0)
 
         #update A,b
-        A = A.dot(R.T) 
+        A = A.dot(R.T)
         b += shift.dot(A.T)
 
         #set member variables
@@ -80,7 +80,7 @@ class Box:
     #just draw (no show)
     def _draw(self,backend='mayavi',r=None,color=(0,1,0)):
         box = self
-        
+
         if backend == 'mayavi':
             from mayavi import mlab
             for edge in box.edges:
@@ -95,7 +95,7 @@ class Box:
         box = self
         if backend == 'mayavi':
             from mayavi import mlab
-            from tvtk.api import tvtk 
+            from tvtk.api import tvtk
             fig = mlab.gcf()
             box._draw()
             box._draw_faces()
@@ -118,10 +118,10 @@ class Box:
     #draw faces without show()
     def _draw_faces(self,backend='mayavi'):
         box = self
-        
+
         if backend == 'mayavi':
             from mayavi import mlab
-            x = box.verts[:,0]; y = box.verts[:,1]; z = box.verts[:,2] 
+            x = box.verts[:,0]; y = box.verts[:,1]; z = box.verts[:,2]
             mlab.triangular_mesh(x,y,z,box.tris,color=(0,0,0),opacity=0.6)
             mlab.draw()
             print('drawing box faces..')
@@ -133,7 +133,7 @@ def main():
     Lx = npr.random()
     Ly = npr.random()
     Lz = npr.random()
-    print('Lx = %.2f, Ly = %.2f, Lz = %.2f' % (Lx,Ly,Lz)) 
+    print('Lx = %.2f, Ly = %.2f, Lz = %.2f' % (Lx,Ly,Lz))
 
     box = Box(Lx,Ly,Lz)
     print('box 0 ... bmin = %.2f,%.2f,%.2f' % (box.bmin[0],box.bmin[1],box.bmin[2]))
@@ -146,14 +146,14 @@ def main():
     Lx = npr.random()
     Ly = npr.random()
     Lz = npr.random()
-    print('Lx = %.2f, Ly = %.2f, Lz = %.2f' % (Lx,Ly,Lz)) 
+    print('Lx = %.2f, Ly = %.2f, Lz = %.2f' % (Lx,Ly,Lz))
     Rax = npr.rand(3)
     Rang = (-1.0 + 2.0*npr.random())*90
     print('Rax = %.2f,%.2f,%.2f, Rang = %.2f degrees' % (Rax[0],Rax[1],Rax[2],Rang))
     print()
 
     box = Box(Lx,Ly,Lz,Rax,Rang)
-    print('Lx = %.2f, Ly = %.2f, Lz = %.2f' % (Lx,Ly,Lz)) 
+    print('Lx = %.2f, Ly = %.2f, Lz = %.2f' % (Lx,Ly,Lz))
     print('Rax = %.2f,%.2f,%.2f, Rang = %.2f degrees' % (Rax[0],Rax[1],Rax[2],Rang))
     print('box 1 ... bmin = %.2f,%.2f,%.2f' % (box.bmin[0],box.bmin[1],box.bmin[2]))
     print('box 1 ... bmax =  %.2f,%.2f,%.2f' % (box.bmax[0],box.bmax[1],box.bmax[2]))
@@ -166,7 +166,7 @@ def main():
     Lx = npr.random()
     Ly = npr.random()
     Lz = npr.random()
-    print('Lx = %.2f, Ly = %.2f, Lz = %.2f' % (Lx,Ly,Lz)) 
+    print('Lx = %.2f, Ly = %.2f, Lz = %.2f' % (Lx,Ly,Lz))
     Rax = npr.rand(3)
     Rang = (-1.0 + 2.0*npr.random())*90
     print('Rax = %.2f,%.2f,%.2f, Rang = %.2f degrees' % (Rax[0],Rax[1],Rax[2],Rang))

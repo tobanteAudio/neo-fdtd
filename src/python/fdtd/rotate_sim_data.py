@@ -35,7 +35,7 @@ def rotate_sim_data(data_dir,tr=None,compress=False):
 
     timer.tic('read')
     h5f = h5py.File(data_dir / Path('vox_out.h5'),'r')
-    Nx      = h5f['Nx'][()] 
+    Nx      = h5f['Nx'][()]
     Ny      = h5f['Ny'][()]
     Nz      = h5f['Nz'][()]
     h5f.close()
@@ -51,14 +51,14 @@ def rotate_sim_data(data_dir,tr=None,compress=False):
 
     #read
     h5f = h5py.File(data_dir / Path('vox_out.h5'),'r')
-    xv      = h5f['xv'][()] 
-    yv      = h5f['yv'][()] 
-    zv      = h5f['zv'][()] 
+    xv      = h5f['xv'][()]
+    yv      = h5f['yv'][()]
+    zv      = h5f['zv'][()]
     adj_bn  = h5f['adj_bn'][...]
     bn_ixyz = h5f['bn_ixyz'][...]
     h5f.close()
 
-    NN = adj_bn.shape[1] 
+    NN = adj_bn.shape[1]
     if NN==6:
         iVV = npa([[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]])
     else:
@@ -83,11 +83,11 @@ def rotate_sim_data(data_dir,tr=None,compress=False):
         abcl = [a,b,c]
         return [abcl[i] for i in tr] #swap with order
 
-    Nxt,Nyt,Nzt = _swap3(Nx,Ny,Nz,tr) 
+    Nxt,Nyt,Nzt = _swap3(Nx,Ny,Nz,tr)
     bn_ixyzt = npa(_swap3(*ind2sub3d(bn_ixyz,Nx,Ny,Nz),tr)).T @ npa([Nzt*Nyt,Nzt,1])
     in_ixyzt = npa(_swap3(*ind2sub3d(in_ixyz,Nx,Ny,Nz),tr)).T @ npa([Nzt*Nyt,Nzt,1])
     out_ixyzt = npa(_swap3(*ind2sub3d(out_ixyz,Nx,Ny,Nz),tr)).T @ npa([Nzt*Nyt,Nzt,1])
-    xvt,yvt,zvt = _swap3(xv,yv,zv,tr) 
+    xvt,yvt,zvt = _swap3(xv,yv,zv,tr)
     assert xvt.size == Nxt
     assert yvt.size == Nyt
     assert zvt.size == Nzt
@@ -156,7 +156,7 @@ def sort_sim_data(data_dir):
     #sort rows
     ii = np.argsort(bn_ixyz)
     bn_ixyz = bn_ixyz[ii]
-    adj_bn = adj_bn[ii] 
+    adj_bn = adj_bn[ii]
     mat_bn = mat_bn[ii]
     saf_bn = saf_bn[ii]
 
@@ -195,7 +195,7 @@ def fold_fcc_sim_data(data_dir):
     timer = TimerDict()
     data_dir = Path(data_dir)
     h5f = h5py.File(data_dir / Path('vox_out.h5'),'r')
-    Nx      = h5f['Nx'][()] 
+    Nx      = h5f['Nx'][()]
     Ny      = h5f['Ny'][()]
     Nz      = h5f['Nz'][()]
     h5f.close()

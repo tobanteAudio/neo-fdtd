@@ -72,7 +72,7 @@ def get_air_absorption(freq_vec,temperature_celsius,rel_humidity_pnct,pressure_a
     #(B.3)
     C=-6.8346*(T01/Tk)**1.261 + 4.6151
     #(B.1) and (B.2)
-    h=rh*(10**C)*p 
+    h=rh*(10**C)*p
 
     #relaxation frequencies
     #(3)
@@ -81,13 +81,13 @@ def get_air_absorption(freq_vec,temperature_celsius,rel_humidity_pnct,pressure_a
     #(4)
     frN = p * Tr**(-0.5) * (9 + 280 * h * exp(-4.17 * (Tr**(-1/3) - 1)))
 
-    #(5) 
+    #(5)
     absfull1=8.686*f2*(1.84e-11 * sqrt(Tr)/p + Tr**-2.5 * (0.01275*(exp(-2239.1/Tk)/(frO + f2/frO)) + 0.1068*(exp(-3352.0/Tk)/(frN + f2/frN))))
 
     #(A.2)
     absClRo=1.6e-10*sqrt(Tr)*f2/p
 
-    #derived 
+    #derived
     eta = log(10)*1.6e-11/(4*pi2)*(c2)*sqrt(Tr)/p
 
     #(A.3)
@@ -128,7 +128,7 @@ def get_air_absorption(freq_vec,temperature_celsius,rel_humidity_pnct,pressure_a
 
 def main():
     from numpy.random import random_sample
-    
+
     f = np.logspace(log10(1),log10(80e3))
     rh = 15
     Tc = 10
