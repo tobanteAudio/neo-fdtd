@@ -31,7 +31,7 @@ jobs:
           - name: macOS-X64
             os: macos-13
             osx_target: "10.15"
-            cmake_flags: "-D CMAKE_C_COMPILER=/opt/homebrew/opt/llvm/bin/clang -D CMAKE_CXX_COMPILER=/opt/homebrew/opt/llvm/bin/clang++"
+            cmake_flags: "-D CMAKE_C_COMPILER=/usr/local/opt/llvm/bin/clang -D CMAKE_CXX_COMPILER=/usr/local/opt/llvm/bin/clang++"
             cxx_flags: "-march=x86-64-v2"
 
           - name: macOS-ARM64
@@ -40,11 +40,11 @@ jobs:
             cmake_flags: "-D CMAKE_C_COMPILER=/opt/homebrew/opt/llvm/bin/clang -D CMAKE_CXX_COMPILER=/opt/homebrew/opt/llvm/bin/clang++"
             cxx_flags: ""
 
-          - name: Windows
-            os: windows-latest
-            osx_target: ""
-            cmake_flags: ""
-            cxx_flags: "-march=x86-64-v2"
+          # - name: Windows
+          #   os: windows-latest
+          #   osx_target: ""
+          #   cmake_flags: ""
+          #   cxx_flags: "-march=x86-64-v2"
 
     steps:
       - name: Checkout code
@@ -56,11 +56,11 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt update -y
-          sudo apt install -y libomp-dev ninja-build
+          sudo apt install -y libomp-dev ninja-build libhdf5-dev
 
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew install ninja llvm
+        run: brew install ninja llvm hd5
 
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
