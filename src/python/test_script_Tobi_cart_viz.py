@@ -10,12 +10,19 @@ sim_setup(
         'Walls': 'tobi_wall.h5',
         'Ceiling': 'tobi_ceiling.h5',
         'Floor': 'tobi_floor.h5',
+        'Panel_1': 'tobi_dead.h5',
+        'Panel_2': 'tobi_dead.h5',
+        'Panel_3': 'tobi_dead.h5',
+        'Panel_4': 'tobi_dead.h5',
+        'Panel_5': 'tobi_dead.h5',
+        'Panel_6': 'tobi_dead.h5',
+        'Sofa': 'tobi_dead.h5'
     },
     duration=0.1,  # duration in seconds
     Tc=20,
     rh=50,
-    fcc_flag=False,
-    PPW=7.5,  # for 2% phase velocity error at fmax
+    fcc_flag=True,
+    PPW=7.7,  # for 2% phase velocity error at fmax
     fmax=500.0,
     save_folder='../../data/sim_data/Tobi/viz',  # can run python from here
     compress=0,

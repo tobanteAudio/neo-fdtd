@@ -249,6 +249,7 @@ class ProcessOutputs:
             ax.plot(tv,r_out_f[i],linestyle='-',label=f'R{i+1}')
         ax.set_title('r_out filtered')
         ax.margins(0, 0.1)
+        # ax.set_xlim((0,0.1))
         ax.set_xlabel('time (s)')
         ax.grid(which='both', axis='both')
         ax.legend()
