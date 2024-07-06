@@ -20,7 +20,7 @@ from materials.adm_funcs import *
 plot=False #set to True to see fits, but have to close plots to proceed to next material
 write_folder = Path('../../data/materials')
 
-tobi_dead    = np.array([0.1, 0.3, 0.6, 0.75, 0.89, 0.89, 0.89, 0.89, 0.89, 0.89, 0.89])
+tobi_dead    = np.array([0.2, 0.55, 0.8, 0.85, 0.85, 0.90, 0.91, 0.92, 0.93, 0.94, 0.95])
 tobi_wall    = np.array([0.01, 0.01, 0.01, 0.05, 0.06, 0.07, 0.09, 0.08, 0.08, 0.08, 0.08])
 tobi_floor   = np.array([0.15, 0.15, 0.15, 0.11, 0.1, 0.07, 0.06, 0.07, 0.07, 0.07, 0.07])
 tobi_ceiling = np.array([0.01, 0.01, 0.01, 0.05, 0.06, 0.07, 0.09, 0.08, 0.08, 0.08, 0.08])
