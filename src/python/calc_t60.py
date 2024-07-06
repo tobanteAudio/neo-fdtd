@@ -8,6 +8,8 @@ import scipy.signal as signal
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
 
+from common.plot import plot_styles
+
 
 def collect_wav_files(directory, pattern="*.wav"):
     search_pattern = os.path.join(directory, pattern)
@@ -96,26 +98,6 @@ def main():
             print(f"T60 at {center_freq} Hz: {t60:.2f} seconds")
 
         file_times.append(np.array(t60_times))
-
-    plot_styles = {
-        'axes.edgecolor': 'white',
-        'axes.facecolor': 'white',
-        'axes.grid': True,
-        'axes.grid.which': 'both',
-        'axes.spines.left': False,
-        'axes.spines.right': False,
-        'axes.spines.top': False,
-        'axes.spines.bottom': False,
-        'figure.constrained_layout.use': True,
-        'grid.color': '#CCCCCC',
-        'grid.linewidth': '0.8',
-        'xtick.color': '#666666',
-        'xtick.major.bottom': True,
-        'xtick.minor.bottom': False,
-        'ytick.color': '#666666',
-        'ytick.major.left': True,
-        'ytick.minor.left': False,
-    }
 
     plt.rcParams.update(plot_styles)
 

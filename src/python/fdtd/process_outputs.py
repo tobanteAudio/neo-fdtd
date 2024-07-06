@@ -27,6 +27,7 @@ from air_abs.visco_filter import apply_visco_filter
 from air_abs.modal_filter import apply_modal_filter
 from air_abs.ola_filter import apply_ola_filter
 from common.myfuncs import wavwrite,iceil,iround
+from common.plot import plot_styles
 
 #class to process sim_outs.h5 file
 class ProcessOutputs:
@@ -229,7 +230,8 @@ class ProcessOutputs:
         ax.set_title('r_out')
         ax.margins(0, 0.1)
         ax.set_xlabel('time (s)')
-        ax.grid(which='both', axis='both')
+        ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
+        ax.minorticks_on()
         ax.legend()
 
     #plot the final processed outputs
@@ -251,7 +253,8 @@ class ProcessOutputs:
         ax.margins(0, 0.1)
         ax.set_xlim((0,0.1))
         ax.set_xlabel('time (s)')
-        ax.grid(which='both', axis='both')
+        ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
+        ax.minorticks_on()
         ax.legend()
 
         ax = fig.add_subplot(2, 1, 2)
@@ -266,7 +269,8 @@ class ProcessOutputs:
         ax.set_xscale('log')
         ax.set_ylim((dB_max-80,dB_max+10))
         ax.set_xlim((1,Fs_f/2))
-        ax.grid(which='both', axis='both')
+        ax.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
+        ax.minorticks_on()
         ax.legend()
 
     def show_plots(self):
@@ -347,6 +351,8 @@ def main():
 
     if args.save_wav:
         po.save_wav()
+
+    plt.rcParams.update(plot_styles)
 
     if args.plot_raw:
         po.plot_raw_outputs()
