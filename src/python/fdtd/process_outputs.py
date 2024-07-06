@@ -245,11 +245,11 @@ class ProcessOutputs:
 
         fig = plt.figure()
         ax = fig.add_subplot(2, 1, 1)
-        for i in range(r_out_f.shape[0]):
+        for i in range(1): # r_out_f.shape[0]
             ax.plot(tv,r_out_f[i],linestyle='-',label=f'R{i+1}')
         ax.set_title('r_out filtered')
         ax.margins(0, 0.1)
-        # ax.set_xlim((0,0.1))
+        ax.set_xlim((0,0.1))
         ax.set_xlabel('time (s)')
         ax.grid(which='both', axis='both')
         ax.legend()
@@ -257,7 +257,7 @@ class ProcessOutputs:
         ax = fig.add_subplot(2, 1, 2)
         r_out_f_fft_dB = 20*log10(np.abs(rfft(r_out_f,Nfft,axis=-1))+np.spacing(1))
         dB_max = np.max(r_out_f_fft_dB)
-        for i in range(r_out_f.shape[0]):
+        for i in range(1): # r_out_f.shape[0]
             ax.plot(fv,r_out_f_fft_dB[i],linestyle='-',label=f'R{i+1}')
         ax.set_title('r_out filtered')
         ax.margins(0, 0.1)
