@@ -24,7 +24,7 @@ python "$sim_name"
 
 # Run sim
 cd "$sim_dir"
-OMP_NUM_THREADS=16 $engine_exe
+$engine_exe
 
 # Post-process
 cd "$python_dir"
