@@ -1,6 +1,6 @@
+import argparse
 import glob
 import os
-import sys
 
 import numpy as np
 import scipy.io.wavfile as wavfile
@@ -13,15 +13,6 @@ def collect_wav_files(directory, pattern="*.wav"):
     wav_files = glob.glob(search_pattern)
     return wav_files
 
-
-def octave_filter(sig, fs, center_freq):
-    # Design octave bandpass filter
-    low_freq = center_freq / np.sqrt(2)
-    high_freq = center_freq * np.sqrt(2)
-    sos = signal.butter(4, [low_freq, high_freq],
-                        btype='band', fs=fs, output='sos')
-    filtered_signal = signal.sosfilt(sos, sig)
-    return filtered_signal
 
 
 def third_octave_filter(sig, fs, center):
@@ -70,15 +61,27 @@ def ebu_3000_t60_threshold_lower(freqs):
 
 
 def main():
-    center_freqs = [15.625, 31.5, 63, 125, 250, 500, 1000, 2000]
-    center_freqs = [
-        20, 25, 31.5, 40, 50, 63, 80, 100, 125, 160,
-        200, 250, 315, 400, 500, 630, 800, 1000
-    ]
-    # 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000, 12500, 16000, 20000
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data_dir', type=str, help='run directory')
+    parser.add_argument('--fmin', type=float, help='min third-octave band')
+    parser.add_argument('--fmax', type=float, help='max third-octave band')
+    parser.set_defaults(fmin=20.0)
+    parser.set_defaults(fmax=1000.0)
 
-    directory = sys.argv[1]
+    args = parser.parse_args()
+    directory = args.data_dir
     files = collect_wav_files(directory, "*_out_normalised.wav")
+
+    # ISO 1/3 octaves
+    center_freqs = np.array([
+        20, 25, 31.5, 40, 50, 63, 80, 100, 125, 160,
+        200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600,
+        2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000, 12500, 16000,
+        20000
+    ])
+
+    center_freqs = center_freqs[np.where(center_freqs >= args.fmin)]
+    center_freqs = center_freqs[np.where(center_freqs <= args.fmax)]
 
     file_times = []
     for file in files:

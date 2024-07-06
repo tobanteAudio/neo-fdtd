@@ -23,7 +23,7 @@ sim_setup(
     rh=50,
     fcc_flag=True,
     PPW=7.7,
-    fmax=1200.0,
+    fmax=1000.0,
     save_folder='../../data/sim_data/Tobi/cpu',
     save_folder_gpu='../../data/sim_data/Tobi/gpu',
     compress=0,
