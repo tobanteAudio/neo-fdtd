@@ -1,7 +1,7 @@
 from sim_setup import sim_setup
 
 sim_setup(
-    model_json_file='../../data/models/Office/model.json',
+    model_json_file='../../data/models/Studio/model.json',
     mat_folder='../../data/materials',
     source_num=1,
     insig_type='impulse',  # for RIR
@@ -20,7 +20,7 @@ sim_setup(
     fcc_flag=True,
     PPW=7.7,
     fmax=1000.0,
-    save_folder='../../data/sim_data/Office/cpu',
-    save_folder_gpu='../../data/sim_data/Office/gpu',
+    save_folder='../../data/sim_data/Studio/cpu',
+    save_folder_gpu='../../data/sim_data/Studio/gpu',
     compress=0,
 )

@@ -7,7 +7,7 @@ python_dir="$root_dir/src/python"
 engine_exe="$root_dir/build/pffdtd"
 
 fmax=1000
-sim_name="Office"
+sim_name="Studio"
 sim_setup="${sim_name}_cpu.py"
 sim_model_gen="${sim_name}_model.py"
 sim_dir="$root_dir/data/sim_data/$sim_name/cpu"

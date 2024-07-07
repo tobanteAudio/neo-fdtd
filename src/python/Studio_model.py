@@ -47,5 +47,5 @@ builder.add_receiver("Engineer", listener.tolist())
 builder.add_receiver("Producer Sitting", producer_sit.tolist())
 builder.add_receiver("Producer Standing", producer_stand.tolist())
 
-model_file = '../../data/models/Office/model.json'
+model_file = '../../data/models/Studio/model.json'
 builder.build(model_file)
