@@ -182,18 +182,22 @@
   },
   "sources": [
     {
-      "name": "Speaker Left",
+      "name": "PC Speaker Left",
       "xyz": [0.2, 2.33, 0.8]
     },
     {
-      "name": "Speaker Right",
+      "name": "PC Speaker Right",
       "xyz": [0.2, 3.28, 0.8]
     }
   ],
   "receivers": [
     {
-      "name": "Listener",
+      "name": "PC Listener",
       "xyz": [1.0, 2.7800000000000002, 1.2]
+    },
+    {
+      "name": "TV Listener",
+      "xyz": [2.0, 2.7800000000000002, 1.2]
     }
   ]
 }

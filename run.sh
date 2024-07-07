@@ -6,17 +6,20 @@ root_dir="$(cd "$(dirname "$0")" && pwd)"
 python_dir="$root_dir/src/python"
 engine_exe="$root_dir/build/pffdtd"
 
-sim_dir="$root_dir/data/sim_data/Office/cpu"
-sim_name="test_script_Office_cpu.py"
-model_dir="$root_dir/data/models/Office"
+sim_dir="$root_dir/data/sim_data/LivingRoom/cpu"
+sim_name="test_script_LivingRoom_cpu.py"
+model_dir="$root_dir/data/models/LivingRoom"
 fmax=1000
 
 # Delete old sim
 rm -rf "$sim_dir"
 
 # Create model
-cd "$model_dir"
-python generate_model.py
+# cd "$model_dir"
+# python generate_model.py
+
+cd "$python_dir"
+python -m common.room_builder ../../data/models/LivingRoom/model.json
 
 # Create sim data
 cd "$python_dir"
