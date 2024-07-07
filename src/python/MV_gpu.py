@@ -26,7 +26,7 @@ sim_setup(
                     'Plasterboard': 'mv_plasterboard.h5',
                     'Window': 'mv_window.h5',
                     'Wood': 'mv_wood.h5',
-    },  # see build_mats.py to set these material impedances from absorption data
+    },
     duration=3.0,
     Tc=20,
     rh=50,

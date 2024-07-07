@@ -29,7 +29,7 @@ sim_setup(
                     'PlushChair': 'ctk_chair.h5',
                     'Tile': 'ctk_tile.h5',
                     'Walls': 'ctk_walls.h5',
-    },  # see build_mats.py to set these material impedances from absorption data
+    },
     duration=3.0,  # duration in seconds
     Tc=20,
     rh=50,

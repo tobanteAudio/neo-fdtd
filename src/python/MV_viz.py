@@ -20,12 +20,12 @@ sim_setup(
     insig_type='dhann30',
     diff_source=False,
     mat_files_dict={
-                    'Floor': 'mv_floor.h5',
-                    'Chairs': 'mv_chairs.h5',
-                    'Plasterboard': 'mv_plasterboard.h5',
-                    'Window': 'mv_window.h5',
-                    'Wood': 'mv_wood.h5',
-    },  # see build_mats.py to set these material impedances from absorption data
+        'Floor': 'mv_floor.h5',
+        'Chairs': 'mv_chairs.h5',
+        'Plasterboard': 'mv_plasterboard.h5',
+        'Window': 'mv_window.h5',
+        'Wood': 'mv_wood.h5',
+    },
     duration=0.1,
     Tc=20,
     rh=50,
