@@ -7,12 +7,12 @@ sim_setup(
     insig_type='dhann30',  # for viz
     diff_source=False,
     mat_files_dict={
-        'Walls': 'office_wall.h5',
-        'Ceiling': 'office_ceiling.h5',
-        'Floor': 'office_floor.h5',
-        'Panel': 'office_dead.h5',
+        'Walls': 'wall_concrete_painted.h5',
+        'Ceiling': 'wall_concrete_painted.h5',
+        'Floor': 'floor_wood.h5',
+        'Panel': 'absorber_8000_100mm.h5',
         'Table': 'mv_wood.h5',
-        'Sofa': 'office_dead.h5'
+        'Sofa': 'absorber_8000_100mm.h5'
     },
     duration=0.1,  # duration in seconds
     Tc=20,
