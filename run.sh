@@ -6,9 +6,9 @@ root_dir="$(cd "$(dirname "$0")" && pwd)"
 python_dir="$root_dir/src/python"
 engine_exe="$root_dir/build/pffdtd"
 
-sim_dir="$root_dir/data/sim_data/Tobi/cpu"
-sim_name="test_script_Tobi_cart_cpu.py"
-model_dir="$root_dir/data/models/Tobi_Office"
+sim_dir="$root_dir/data/sim_data/Office/cpu"
+sim_name="test_script_Office_cpu.py"
+model_dir="$root_dir/data/models/Office"
 fmax=1000
 
 # Delete old sim

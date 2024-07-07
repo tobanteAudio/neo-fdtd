@@ -20,17 +20,17 @@ from materials.adm_funcs import *
 plot=False #set to True to see fits, but have to close plots to proceed to next material
 write_folder = Path('../../data/materials')
 
-tobi_dead    = np.array([0.2, 0.55, 0.8, 0.85, 0.85, 0.90, 0.91, 0.92, 0.93, 0.94, 0.95])
-tobi_medium  = np.array([0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3])
-tobi_wall    = np.array([0.01, 0.01, 0.01, 0.05, 0.06, 0.07, 0.09, 0.08, 0.08, 0.08, 0.08])
-tobi_floor   = np.array([0.15, 0.15, 0.15, 0.11, 0.1, 0.07, 0.06, 0.07, 0.07, 0.07, 0.07])
-tobi_ceiling = np.array([0.01, 0.01, 0.01, 0.05, 0.06, 0.07, 0.09, 0.08, 0.08, 0.08, 0.08])
+office_dead    = np.array([0.2, 0.55, 0.8, 0.85, 0.85, 0.90, 0.91, 0.92, 0.93, 0.94, 0.95])
+office_medium  = np.array([0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3])
+office_wall    = np.array([0.01, 0.01, 0.01, 0.05, 0.06, 0.07, 0.09, 0.08, 0.08, 0.08, 0.08])
+office_floor   = np.array([0.15, 0.15, 0.15, 0.11, 0.1, 0.07, 0.06, 0.07, 0.07, 0.07, 0.07])
+office_ceiling = np.array([0.01, 0.01, 0.01, 0.05, 0.06, 0.07, 0.09, 0.08, 0.08, 0.08, 0.08])
 
-fit_to_Sabs_oct_11(tobi_dead    , filename=Path(write_folder / 'tobi_dead.h5') , plot=plot)
-fit_to_Sabs_oct_11(tobi_medium  , filename=Path(write_folder / 'tobi_medium.h5') , plot=plot)
-fit_to_Sabs_oct_11(tobi_wall    , filename=Path(write_folder / 'tobi_wall.h5')    , plot=plot)
-fit_to_Sabs_oct_11(tobi_floor   , filename=Path(write_folder / 'tobi_floor.h5')   , plot=plot)
-fit_to_Sabs_oct_11(tobi_ceiling , filename=Path(write_folder / 'tobi_ceiling.h5') , plot=plot)
+fit_to_Sabs_oct_11(office_dead    , filename=Path(write_folder / 'office_dead.h5') , plot=plot)
+fit_to_Sabs_oct_11(office_medium  , filename=Path(write_folder / 'office_medium.h5') , plot=plot)
+fit_to_Sabs_oct_11(office_wall    , filename=Path(write_folder / 'office_wall.h5')    , plot=plot)
+fit_to_Sabs_oct_11(office_floor   , filename=Path(write_folder / 'office_floor.h5')   , plot=plot)
+fit_to_Sabs_oct_11(office_ceiling , filename=Path(write_folder / 'office_ceiling.h5') , plot=plot)
 # #some examples to save admittance/impedance data
 # #these are Sabine coefficients, 16Hz to 16kHz centre frequencies
 # mv_chairs       = npa([0.22  , 0.22  , 0.22 , 0.22 , 0.26 , 0.3  , 0.33 , 0.34 , 0.34 , 0.34 , 0.34])

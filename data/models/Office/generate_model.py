@@ -324,6 +324,7 @@ def main():
 
     with open("model_export.json", "w") as file:
         json.dump(obj=model, fp=file)
+        print("", file=file)
 
 
 main()
