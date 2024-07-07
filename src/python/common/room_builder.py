@@ -286,7 +286,7 @@ class RoomBuilder:
             size = src["size"]
             rot = [0, 0, 0]
             offset = 0.075
-            # offset = 0.05
+            # offset = 0.025
             pos = list(
                 np.array(src["xyz"]) + np.array([-0.435/2, offset, -0.52])
             )
