@@ -16,6 +16,7 @@ sim_setup(
         'Panel_4': 'tobi_dead.h5',
         'Panel_5': 'tobi_dead.h5',
         'Panel_6': 'tobi_dead.h5',
+        'Table': 'mv_wood.h5',
         'Sofa': 'tobi_dead.h5'
     },
     duration=0.1,  # duration in seconds

@@ -2,6 +2,43 @@ import json
 import numpy as np
 
 
+def find_third_vertex(A, B):
+    A = np.array(A)
+    B = np.array(B)
+
+    # Calculate the vector from A to B
+    AB = B - A
+
+    # Calculate the distance AB
+    d = np.linalg.norm(AB)
+
+    # Normalize the vector AB
+    AB_normalized = AB / d
+
+    # Find two vectors perpendicular to AB and to each other
+    if AB_normalized[0] != 0 or AB_normalized[1] != 0:
+        perp_vector_1 = np.array([-AB_normalized[1], AB_normalized[0], 0])
+    else:
+        perp_vector_1 = np.array([0, AB_normalized[2], -AB_normalized[1]])
+
+    perp_vector_1 = perp_vector_1 / np.linalg.norm(perp_vector_1)
+
+    perp_vector_2 = np.cross(AB_normalized, perp_vector_1)
+    perp_vector_2 = perp_vector_2 / np.linalg.norm(perp_vector_2)
+
+    # Calculate the height of the equilateral triangle
+    h = (np.sqrt(3) / 2) * d
+
+    # Calculate the midpoint M
+    M = (A + B) / 2
+
+    # Calculate the two possible locations for the third vertex
+    C1 = M + h * perp_vector_1
+    C2 = M - h * perp_vector_1
+
+    return C1, C2
+
+
 def transform_point(point, scale, rotation, translation):
     """
     Transform a 3D point by scaling, rotating, and translating.
@@ -106,13 +143,36 @@ def main():
     # W = 5.19
     # H = 3.70
 
-    p1_pts, p1_tris = make_box(2.5, 0.1, 1.5, [W/2-2.5/2, L-0.3, 0.75])
-    p2_pts, p2_tris = make_box(0.1, 2.5, 1.5, [0.2, L-2.5-0.5, 0.75])
-    p3_pts, p3_tris = make_box(0.1, 2.5, 1.5, [W-0.1-0.2, L-2.5-0.5, 0.75])
-    p4_pts, p4_tris = make_box(2.5, 2.0, 0.1, [W/2-2.5/2, L-2.0-0.5, H-0.1-0.3])
-    p5_pts, p5_tris = make_box(2.5, 2.0, 0.1, [W/2-2.5/2, L-2.0-2.1-0.5, H-0.1-0.3])
-    p6_pts, p6_tris = make_box(2.5, 0.1, 1.5, [W/2-2.5/2, 0.3, 0.75])
-    sofa_points, sofa_tris = make_box(1.75, 1, 0.5, [W/2-1.75/2, 0.1, 0.1])
+    src_height = 1.2
+    src_backwall = 1
+    src_distance = 1.75
+    src_left = [W/2-src_distance/2, L-src_backwall, src_height]
+    src_right = [W/2+src_distance/2, L-src_backwall, src_height]
+
+    l1, l2 = find_third_vertex(src_left, src_right)
+    listener = l1 if l1[1] < l2[1] else l2
+
+    producer_low = listener.copy()
+    producer_low[1] = 1
+    producer_low[2] = 0.9
+
+    producer_high = listener.copy()
+    producer_high[1] = 1
+
+    offset = np.array([-0.05, -0.05, -1.2])
+    stl_ps, stl_ts = make_box(0.1, 0.1, 1.1, src_left+offset)
+    str_ps, str_ts = make_box(0.1, 0.1, 1.1, src_right+offset)
+    lis_ps, lis_ts = make_box(0.1, 0.1, 1.1, listener+offset)
+
+    p1_ps, p1_ts = make_box(2.5, 0.1, 1.5, [W/2-2.5/2, L-0.3, 0.75])
+    p2_ps, p2_ts = make_box(0.1, 2.5, 1.5, [0.2, L-2.5-0.5, 0.75])
+    p3_ps, p3_ts = make_box(0.1, 2.5, 1.5, [W-0.1-0.2, L-2.5-0.5, 0.75])
+    p4_ps, p4_ts = make_box(2.5, 2, 0.1, [W/2-2.5/2, L-2-0.5, H-0.1-0.3])
+    p5_ps, p5_ts = make_box(2.5, 2, 0.1, [W/2-2.5/2, L-2-2.1-0.5, H-0.1-0.3])
+    p6_ps, p6_ts = make_box(2.5, 0.1, 1.5, [W/2-2.5/2, 0.3, 0.75])
+
+    sofa_points, sofa_ts = make_box(1.75, 1, 0.5, [W/2-1.75/2, 0.1, 0.1])
+    table_ps, table_ts = make_box(2, 0.8, 0.02, [W/2-1, listener[1]+0.4, 0.8])
 
     model = {
         "mats_hash": {
@@ -173,65 +233,92 @@ def main():
                 "sides": [1, 1]
             },
             "Panel_1": {
-                "tris": p1_tris,
-                "pts": p1_pts,
+                "tris": p1_ts,
+                "pts": p1_ps,
                 "color": [111, 55, 10],
-                "sides": [2]*len(p1_tris)
+                "sides": [2]*len(p1_ts)
             },
             "Panel_2": {
-                "tris": p2_tris,
-                "pts": p2_pts,
+                "tris": p2_ts,
+                "pts": p2_ps,
                 "color": [111, 55, 10],
-                "sides": [2]*len(p2_tris)
+                "sides": [2]*len(p2_ts)
             },
             "Panel_3": {
-                "tris": p3_tris,
-                "pts": p3_pts,
+                "tris": p3_ts,
+                "pts": p3_ps,
                 "color": [111, 55, 10],
-                "sides": [2]*len(p3_tris)
+                "sides": [2]*len(p3_ts)
             },
             "Panel_4": {
-                "tris": p4_tris,
-                "pts": p4_pts,
+                "tris": p4_ts,
+                "pts": p4_ps,
                 "color": [111, 55, 10],
-                "sides": [2]*len(p4_tris)
+                "sides": [2]*len(p4_ts)
             },
             "Panel_5": {
-                "tris": p5_tris,
-                "pts": p5_pts,
+                "tris": p5_ts,
+                "pts": p5_ps,
                 "color": [111, 55, 10],
-                "sides": [2]*len(p5_tris)
+                "sides": [2]*len(p5_ts)
             },
             "Panel_6": {
-                "tris": p6_tris,
-                "pts": p6_pts,
+                "tris": p6_ts,
+                "pts": p6_ps,
                 "color": [111, 55, 10],
-                "sides": [2]*len(p6_tris)
+                "sides": [2]*len(p6_ts)
+            },
+            "Table": {
+                "tris": table_ts,
+                "pts": table_ps,
+                "color": [130, 75, 25],
+                "sides": [2]*len(table_ts)
             },
             "Sofa": {
-                "tris": sofa_tris,
+                "tris": sofa_ts,
                 "pts": sofa_points,
                 "color": [25, 25, 25],
-                "sides": [2]*len(sofa_tris)
+                "sides": [2]*len(sofa_ts)
             },
+            # "Stand_Left": {
+            #     "tris": stl_ts,
+            #     "pts": stl_ps,
+            #     "color": [25, 25, 25],
+            #     "sides": [2]*len(stl_ps)
+            # },
+            # "Stand_Right": {
+            #     "tris": str_ts,
+            #     "pts": str_ps,
+            #     "color": [25, 25, 25],
+            #     "sides": [2]*len(str_ps)
+            # },
+            # "Listener": {
+            #     "tris": lis_ts,
+            #     "pts": lis_ps,
+            #     "color": [25, 25, 25],
+            #     "sides": [2]*len(lis_ps)
+            # },
         },
         "sources": [{
-            "xyz": [(W/2)-1, L-0.75, 1.2],
+            "xyz": src_left,
             "name": "Speaker Left"
         }, {
-            "xyz": [(W/2)+1, L-0.75, 1.2],
+            "xyz": src_right,
             "name": "Speaker Right"
         }],
-        "receivers": [{
-            "xyz": [W/2, L-2.75, 1.2],
-            "name": "Engineer"
-        }, {
-            "xyz": [(W/3)*1, 0.8, 0.9],
-            "name": "Producer Low"
-        }, {
-            "xyz": [(W/3)*2, 0.8, 0.9],
-            "name": "Producer High"
-        }],
+        "receivers": [
+            {
+                "xyz": listener.tolist(),
+                "name": "Engineer"
+            },
+            {
+                "xyz": producer_low.tolist(),
+                "name": "Producer Low"
+            },
+            {
+                "xyz": producer_high.tolist(),
+                "name": "Producer High"
+            }],
         # "receivers": make_receiver_grid(L, W, H, step=1.5),
     }
 
