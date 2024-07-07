@@ -18,9 +18,6 @@ rm -rf "$sim_dir"
 # cd "$model_dir"
 # python generate_model.py
 
-cd "$python_dir"
-python -m common.room_builder ../../data/models/LivingRoom/model.json
-
 # Create sim data
 cd "$python_dir"
 python build_mats.py
