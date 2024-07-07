@@ -20,32 +20,32 @@ producer_sit[2] = 0.9
 producer_stand = listener.copy()
 producer_stand[1] = 1
 
-builder = RoomBuilder(W, L, H, wall_color=[255, 255, 255])
-builder.with_colors({
+room = RoomBuilder(W, L, H, wall_color=[255, 255, 255])
+room.with_colors({
     "Ceiling": [200, 200, 200],
     "Floor": [151, 134, 122],
-    "Panel": [111, 55, 10],
+    "Absorber": [111, 55, 10],
     "Table": [130, 75, 25],
     "Sofa": [25, 25, 25],
     "Walls": [255, 255, 255],
 })
 
-builder.add_box("Panel", [2.5, 0.1, 1.5], [W/2-2.5/2, L-0.3, 0.75])
-builder.add_box("Panel", [0.1, 2.5, 1.5], [0.2, L-2.5-0.5, 0.75])
-builder.add_box("Panel", [0.1, 2.5, 1.5], [W-0.1-0.2, L-2.5-0.5, 0.75])
-builder.add_box("Panel", [2.5, 2.0, 0.1], [W/2-2.5/2, L-2-0.5, H-0.1-0.3])
-builder.add_box("Panel", [2.5, 2.0, 0.1], [W/2-2.5/2, L-2-2.1-0.5, H-0.1-0.3])
-builder.add_box("Panel", [2.5, 0.1, 1.5], [W/2-2.5/2, 0.3, 0.75])
+room.add_box("Absorber", [2.5, 0.1, 1.5], [W/2-2.5/2, L-0.3, 0.75])
+room.add_box("Absorber", [0.1, 2.5, 1.5], [0.2, L-2.5-0.5, 0.75])
+room.add_box("Absorber", [0.1, 2.5, 1.5], [W-0.1-0.2, L-2.5-0.5, 0.75])
+room.add_box("Absorber", [2.5, 2.0, 0.1], [W/2-2.5/2, L-2-0.5, H-0.1-0.3])
+room.add_box("Absorber", [2.5, 2.0, 0.1], [W/2-2.5/2, L-2-2.1-0.5, H-0.1-0.3])
+room.add_box("Absorber", [2.5, 0.1, 1.5], [W/2-2.5/2, 0.3, 0.75])
 
-builder.add_box("Sofa", [2.52, 0.98, 0.48], [W/2-2.52/2, 0.1, 0.05])
-builder.add_box("Table", [1.8, 0.8, 0.02], [W/2-1.8/2, listener[1]+0.4, 0.7])
+room.add_box("Sofa", [2.52, 0.98, 0.48], [W/2-2.52/2, 0.1, 0.05])
+room.add_box("Table", [1.8, 0.8, 0.02], [W/2-1.8/2, listener[1]+0.4, 0.7])
 
-builder.add_source("Speaker Left", src_left)
-builder.add_source("Speaker Right", src_right)
-builder.add_receiver("Engineer", listener.tolist())
+room.add_source("Speaker Left", src_left)
+room.add_source("Speaker Right", src_right)
+room.add_receiver("Engineer", listener.tolist())
 
-builder.add_receiver("Producer Sitting", producer_sit.tolist())
-builder.add_receiver("Producer Standing", producer_stand.tolist())
+room.add_receiver("Producer Sitting", producer_sit.tolist())
+room.add_receiver("Producer Standing", producer_stand.tolist())
 
 model_file = '../../data/models/Studio/model.json'
-builder.build(model_file)
+room.build(model_file)

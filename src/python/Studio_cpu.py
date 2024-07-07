@@ -7,12 +7,12 @@ sim_setup(
     insig_type='impulse',  # for RIR
     diff_source=True,  # for single precision
     mat_files_dict={
-        'Walls': 'concrete_painted.h5',
         'Ceiling': 'concrete_painted.h5',
         'Floor': 'floor_wood.h5',
-        'Panel': 'absorber_8000_100mm.h5',
-        'Sofa': 'absorber_8000_100mm.h5',
-        'Table': 'mv_wood.h5',
+        'Absorber': 'absorber_8000_200mm_gap_100mm.h5',
+        'Sofa': 'absorber_8000_200mm_gap_100mm.h5',
+        'Table': 'door_wood.h5',
+        'Walls': 'concrete_painted.h5',
     },
     duration=1.0,
     Tc=20,

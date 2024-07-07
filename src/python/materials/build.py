@@ -6,14 +6,20 @@ from materials.adm_funcs import fit_to_Sabs_oct_11
 def main():
     plot=False
     write_folder = Path('../../data/materials')
+                                             #  16,   31,   63,  125,  250,  500,   1K,   2K,   4K,   8K,  16K
+    absorber_8000_100mm           = np.array([0.01, 0.01, 0.05, 0.30, 0.69, 0.92, 0.93, 0.94, 0.95, 0.93, 0.90])
+    absorber_8000_200mm           = np.array([0.05, 0.10, 0.40, 0.85, 0.89, 0.92, 0.93, 0.94, 0.95, 0.93, 0.90])
+    absorber_8000_200mm_gap_100mm = np.array([0.10, 0.30, 0.60, 0.78, 0.85, 0.85, 0.90, 0.91, 0.92, 0.90, 0.88])
+    concrete_painted              = np.array([0.01, 0.01, 0.01, 0.05, 0.06, 0.07, 0.09, 0.08, 0.08, 0.08, 0.08])
+    floor_wood                    = np.array([0.10, 0.11, 0.13, 0.15, 0.11, 0.10, 0.07, 0.06, 0.07, 0.07, 0.07])
+    door_wood                     = np.array([0.06, 0.08, 0.14, 0.14, 0.10, 0.06, 0.08, 0.10, 0.10, 0.10, 0.08])
 
-    absorber_8000_100mm   = np.array([0.20, 0.55, 0.60, 0.75, 0.85, 0.90, 0.91, 0.92, 0.93, 0.94, 0.82])
-    floor_wood            = np.array([0.15, 0.15, 0.15, 0.11, 0.10, 0.07, 0.06, 0.07, 0.07, 0.07, 0.07])
-    concrete_painted = np.array([0.01, 0.01, 0.01, 0.05, 0.06, 0.07, 0.09, 0.08, 0.08, 0.08, 0.08])
-
-    fit_to_Sabs_oct_11(absorber_8000_100mm   , filename=Path(write_folder / 'absorber_8000_100mm.h5')   , plot=plot)
-    fit_to_Sabs_oct_11(floor_wood            , filename=Path(write_folder / 'floor_wood.h5')            , plot=plot)
-    fit_to_Sabs_oct_11(concrete_painted , filename=Path(write_folder / 'concrete_painted.h5') , plot=plot)
+    fit_to_Sabs_oct_11(absorber_8000_100mm           , filename=Path(write_folder / 'absorber_8000_100mm.h5')           , plot=plot)
+    fit_to_Sabs_oct_11(absorber_8000_200mm           , filename=Path(write_folder / 'absorber_8000_200mm.h5')           , plot=plot)
+    fit_to_Sabs_oct_11(absorber_8000_200mm_gap_100mm , filename=Path(write_folder / 'absorber_8000_200mm_gap_100mm.h5') , plot=plot)
+    fit_to_Sabs_oct_11(concrete_painted              , filename=Path(write_folder / 'concrete_painted.h5')              , plot=plot)
+    fit_to_Sabs_oct_11(floor_wood                    , filename=Path(write_folder / 'floor_wood.h5')                    , plot=plot)
+    fit_to_Sabs_oct_11(door_wood                     , filename=Path(write_folder / 'door_wood.h5')                     , plot=plot)
 
     # #some examples to save admittance/impedance data
     # #these are Sabine coefficients, 16Hz to 16kHz centre frequencies
