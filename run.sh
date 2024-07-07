@@ -29,6 +29,7 @@ $engine_exe
 
 # Post-process
 cd "$python_dir"
-python -m fdtd.process_outputs --data_dir="$sim_dir" --fcut_lowpass "$fmax" --N_order_lowpass=8 --symmetric --fcut_lowcut 10.0 --N_order_lowcut=4 --air_abs_filter="stokes" --save_wav
+
+python -m fdtd.process_outputs --data_dir="$sim_dir" --fcut_lowpass "$fmax" --N_order_lowpass=8 --symmetric --fcut_lowcut 10.0 --N_order_lowcut=4 --air_abs_filter="stokes" --save_wav --plot
 python -m analysis.t60 --data_dir="$sim_dir" --fmin=20 --fmax="$fmax"
-python -m fdtd.process_outputs --data_dir="$sim_dir" --fcut_lowpass "$fmax" --N_order_lowpass=8 --symmetric --fcut_lowcut 10.0 --N_order_lowcut=4 --air_abs_filter="stokes" --plot
+python -m analysis.room_modes --data_dir="$sim_dir"
