@@ -7,8 +7,8 @@ sim_setup(
     insig_type='impulse',  # for RIR
     diff_source=True,  # for single precision
     mat_files_dict={
-        'Walls': 'wall_concrete_painted.h5',
-        'Ceiling': 'wall_concrete_painted.h5',
+        'Walls': 'concrete_painted.h5',
+        'Ceiling': 'concrete_painted.h5',
         'Floor': 'floor_wood.h5',
         'Panel': 'absorber_8000_100mm.h5',
         'Sofa': 'absorber_8000_100mm.h5',

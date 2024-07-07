@@ -7,8 +7,8 @@ sim_setup(
     insig_type='dhann30',  # for viz
     diff_source=False,
     mat_files_dict={
-        'Walls': 'wall_concrete_painted.h5',
-        'Ceiling': 'wall_concrete_painted.h5',
+        'Walls': 'concrete_painted.h5',
+        'Ceiling': 'concrete_painted.h5',
         'Floor': 'floor_wood.h5',
         'Panel': 'absorber_8000_100mm.h5',
         'Table': 'mv_wood.h5',
