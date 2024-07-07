@@ -7,10 +7,11 @@ sim_setup(
     insig_type='dhann30',  # for viz
     diff_source=False,
     mat_files_dict={
+        'Absorber M': 'absorber_8000_100mm.h5',
+        'Absorber L': 'absorber_8000_200mm_gap_100mm.h5',
         'Ceiling': 'concrete_painted.h5',
         'Floor': 'floor_wood.h5',
-        'Absorber': 'absorber_8000_200mm_gap_100mm.h5',
-        'Sofa': 'absorber_8000_200mm_gap_100mm.h5',
+        'Sofa': 'absorber_8000_200mm.h5',
         'Table': 'door_wood.h5',
         'Walls': 'concrete_painted.h5',
     },

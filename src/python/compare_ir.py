@@ -53,7 +53,7 @@ def main():
     ax[0].set_title('Spectrum')
     ax[0].set_xlabel('Frequency [Hz]')
     ax[0].set_ylabel('Amplitude [dB]')
-    ax[0].set_ylim((30, 80))
+    ax[0].set_ylim((10, 80))
     ax[0].set_xlim((args.fmin, fmax))
     ax[0].xaxis.set_major_formatter(formatter)
     ax[0].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)

@@ -1,8 +1,9 @@
 from common.room_builder import RoomBuilder, find_third_vertex
 
-L = 6.0
-W = 3.65
-H = 3.12
+S = 0.90
+L = 7.00*S
+W = 5.19*S
+H = 3.70*S
 
 src_height = 1.2
 src_backwall = 1
@@ -14,30 +15,32 @@ l1, l2 = find_third_vertex(src_left, src_right)
 listener = l1 if l1[1] < l2[1] else l2
 
 producer_sit = listener.copy()
-producer_sit[1] = 1
+producer_sit[1] = 0.8
 producer_sit[2] = 0.9
 
 producer_stand = listener.copy()
-producer_stand[1] = 1
+producer_stand[1] = 0.8
 
 room = RoomBuilder(W, L, H, wall_color=[255, 255, 255])
 room.with_colors({
+    "Absorber M": [111, 55, 10],
+    "Absorber L": [111, 55, 10],
     "Ceiling": [200, 200, 200],
     "Floor": [151, 134, 122],
-    "Absorber": [111, 55, 10],
     "Table": [130, 75, 25],
     "Sofa": [25, 25, 25],
     "Walls": [255, 255, 255],
 })
 
-room.add_box("Absorber", [2.5, 0.1, 1.5], [W/2-2.5/2, L-0.3, 0.75])
-room.add_box("Absorber", [0.1, 2.5, 1.5], [0.2, L-2.5-0.5, 0.75])
-room.add_box("Absorber", [0.1, 2.5, 1.5], [W-0.1-0.2, L-2.5-0.5, 0.75])
-room.add_box("Absorber", [2.5, 2.0, 0.1], [W/2-2.5/2, L-2-0.5, H-0.1-0.3])
-room.add_box("Absorber", [2.5, 2.0, 0.1], [W/2-2.5/2, L-2-2.1-0.5, H-0.1-0.3])
-room.add_box("Absorber", [2.5, 0.1, 1.5], [W/2-2.5/2, 0.3, 0.75])
+room.add_box("Absorber M", [0.1, 2.5, 1.5], [0.2, L-2.5-0.5, 0.75])
+room.add_box("Absorber M", [0.1, 2.5, 1.5], [W-0.1-0.2, L-2.5-0.5, 0.75])
 
-room.add_box("Sofa", [2.52, 0.98, 0.48], [W/2-2.52/2, 0.1, 0.05])
+room.add_box("Absorber L", [2.5, 0.2, 1.5], [W/2-2.5/2, L-0.2-0.1, 0.75])
+room.add_box("Absorber L", [2.5, 0.2, 1.5], [W/2-2.5/2, 0.1, 0.75])
+room.add_box("Absorber L", [2.5, 2.0, 0.2], [W/2-2.5/2, L-2-0.5, H-0.3])
+room.add_box("Absorber L", [2.5, 2.0, 0.2], [W/2-2.5/2, L-2-2.1-0.5, H-0.3])
+
+room.add_box("Sofa", [2.52, 0.98, 0.48], [W/2-2.52/2, 0.4, 0.05])
 room.add_box("Table", [1.8, 0.8, 0.02], [W/2-1.8/2, listener[1]+0.4, 0.7])
 
 room.add_source("Speaker Left", src_left)
