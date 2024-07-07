@@ -29,6 +29,8 @@ let geo = {
   scale: null,
   mats_hash: {},
   mat_names: null,
+  sources: null,
+  receivers: null,
 };
 
 let json_data = {};
@@ -68,9 +70,12 @@ async function loadJSON(event) {
 
   //read JSON
   let text = await file.text();
+
   //parse JSON
   json_data = JSON.parse(text);
   geo.mats_hash = json_data.mats_hash;
+  geo.sources = json_data.sources;
+  geo.receivers = json_data.receivers;
   geo.mat_names = Object.keys(geo.mats_hash).sort();
 
   window.addEventListener("resize", onWindowResize(threejs));
@@ -275,6 +280,28 @@ async function createModelMesh() {
       (geo.max.z - geo.min.z) ** 2
   );
 }
+
+function addSphere(radius,pos,color)
+{
+  let scene = threejs.scene;
+
+  const geometry = new THREE.SphereGeometry(radius, 32, 32);
+  const material = new THREE.MeshBasicMaterial({ color: color });
+  const sphere = new THREE.Mesh(geometry, material);
+
+  sphere.position.set(pos[0], pos[1], pos[2]);
+  scene.add(sphere);
+}
+
+async function createSourceReceiverSpheres() {
+  for (let i = 0; i < geo.sources.length; i++) {
+    addSphere(0.05,geo.sources[i].xyz, 0x0000ff);
+  }
+  for (let i = 0; i < geo.receivers.length; i++) {
+    addSphere(0.05,geo.receivers[i].xyz, 0x00ff00);
+  }
+}
+
 async function createModelCamera() {
   let scene_container = threejs.scene_container;
 
@@ -318,6 +345,7 @@ async function drawModel() {
 
   await createScene(threejs);
   await createModelMesh();
+  await createSourceReceiverSpheres();
   await createModelCamera();
   await createModelLights();
   await createRenderer(threejs, update_model); //update
