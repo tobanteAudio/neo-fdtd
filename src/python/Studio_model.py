@@ -25,6 +25,7 @@ room = RoomBuilder(W, L, H, wall_color=[255, 255, 255])
 room.with_colors({
     "Absorber M": [111, 55, 10],
     "Absorber L": [111, 55, 10],
+    "Baffle": [15, 15, 15],
     "Ceiling": [200, 200, 200],
     "Floor": [151, 134, 122],
     "Table": [130, 75, 25],
@@ -43,10 +44,14 @@ room.add_box("Absorber L", [2.5, 2.0, 0.2], [W/2-2.5/2, L-2-2.1-0.5, H-0.3])
 room.add_box("Sofa", [2.52, 0.98, 0.48], [W/2-2.52/2, 0.4, 0.05])
 room.add_box("Table", [1.8, 0.8, 0.02], [W/2-1.8/2, listener[1]+0.4, 0.7])
 
+speaker_box = [0.435, 0.490, 0.650]
+speaker_mid = [0.217, -0.075, 0.520]
+room.add_cabinet_speaker("Speaker Left", src_left, speaker_box, speaker_mid)
+room.add_cabinet_speaker("Speaker Right", src_right, speaker_box, speaker_mid)
+# room.add_cabinet_speaker("Speaker Left", src_left)
+# room.add_cabinet_speaker("Speaker Right", src_right)
 # room.add_source("Speaker Left", src_left)
 # room.add_source("Speaker Right", src_right)
-room.add_baffle_source("Speaker Left", src_left, baffle_size=0.65)
-room.add_baffle_source("Speaker Right", src_right, baffle_size=0.65)
 
 room.add_receiver("Engineer", listener.tolist())
 room.add_receiver("Producer Sitting", producer_sit.tolist())

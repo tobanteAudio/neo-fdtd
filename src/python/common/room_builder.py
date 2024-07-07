@@ -144,7 +144,7 @@ class RoomBuilder:
         self.width = width
         self.height = height
         self.sources = []
-        self.baffle_sources = []
+        self.cabinet_sources = []
         self.receivers = []
         self.boxes = defaultdict(list)
         self.wall_color = wall_color
@@ -166,12 +166,18 @@ class RoomBuilder:
         })
         return self
 
-    def add_baffle_source(self, name, position, baffle_size=1.0):
+    def add_cabinet_speaker(self, name, position, size=None, center=None):
+        size = size if size else [0.25, 0.33, 0.39]
+        if not center:
+            center = [size[0]/2, -0.075, size[2]/2]
+
         self.add_source(name, position)
-        self.baffle_sources.append({
+        self.cabinet_sources.append({
             "xyz": position,
-            "size": baffle_size,
+            "size": size,
+            "center": center,
         })
+
         return self
 
     def add_receiver(self, name, position):
@@ -193,6 +199,22 @@ class RoomBuilder:
         L = self.length
         W = self.width
         H = self.height
+
+        cabinet_spec = {
+            "tris": [],
+            "pts": [],
+            "color": [10, 10, 10],
+            "sides": []
+        }
+
+        counter = 0
+        for src in self.cabinet_sources:
+            rot = [0, 0, 0]
+            size = src["size"]
+            xyz = src["xyz"]
+            center = src["center"]
+            pos = list(np.array(xyz) - np.array(center))
+            self.add_box("Baffle", size, pos, rot)
 
         model = {
             "mats_hash": {
@@ -273,32 +295,6 @@ class RoomBuilder:
                 counter += len(ps)
 
             model["mats_hash"][key] = spec
-
-        baffle_spec = {
-            "tris": [],
-            "pts": [],
-            "color": [10, 10, 10],
-            "sides": []
-        }
-
-        counter = 0
-        for src in self.baffle_sources:
-            size = src["size"]
-            rot = [0, 0, 0]
-            offset = 0.075
-            # offset = 0.025
-            pos = list(
-                np.array(src["xyz"]) + np.array([-0.435/2, offset, -0.52])
-            )
-
-            ps, ts = make_surface(0.435, size, pos, rot, counter)
-            baffle_spec["tris"] += ts
-            baffle_spec["pts"] += ps
-            baffle_spec["sides"] += [3]*len(ts)
-            counter += len(ps)
-
-        if len(self.baffle_sources) > 0:
-            model["mats_hash"]["Baffle"] = baffle_spec
 
         with open(file_path, "w") as file:
             json.dump(model, file)
