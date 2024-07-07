@@ -214,7 +214,7 @@ class RoomBuilder:
             xyz = src["xyz"]
             center = src["center"]
             pos = list(np.array(xyz) - np.array(center))
-            self.add_box("Baffle", size, pos, rot)
+            self.add_box("Speaker_Cabinet", size, pos, rot)
 
         model = {
             "mats_hash": {

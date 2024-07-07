@@ -25,11 +25,11 @@ room = RoomBuilder(W, L, H, wall_color=[255, 255, 255])
 room.with_colors({
     "Absorber M": [111, 55, 10],
     "Absorber L": [111, 55, 10],
-    "Baffle": [15, 15, 15],
     "Ceiling": [200, 200, 200],
     "Floor": [151, 134, 122],
     "Table": [130, 75, 25],
     "Sofa": [25, 25, 25],
+    "Speaker_Cabinet": [15, 15, 15],
     "Walls": [255, 255, 255],
 })
 
