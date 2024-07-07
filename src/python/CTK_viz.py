@@ -6,7 +6,7 @@
 #
 # Copyright 2021 Brian Hamilton.
 #
-# File name: test_script_CTK_cart_viz.py
+# File name: CTK_viz.py
 #
 # Description: this shows a simple setup with Cartesian scheme, for visualization purposes
 #

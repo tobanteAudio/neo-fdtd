@@ -210,5 +210,5 @@ class RoomBuilder:
             model["mats_hash"][key] = spec
 
         with open(file_path, "w") as file:
-            json.dump(model, file, indent=1)
+            json.dump(model, file)
             print("", file=file)

@@ -6,7 +6,7 @@
 #
 # Copyright 2021 Brian Hamilton.
 #
-# File name: test_script_CTK_cart_gpu.py
+# File name: CTK_gpu.py
 #
 # Description: this shows a simple setup with Cartesian scheme, for a single-precision GPU run (<2GB VRAM)
 #

@@ -1,27 +1,32 @@
 #!/bin/sh
 
 set -e
-root_dir="$(cd "$(dirname "$0")" && pwd)"
 
+root_dir="$(cd "$(dirname "$0")" && pwd)"
 python_dir="$root_dir/src/python"
 engine_exe="$root_dir/build/pffdtd"
 
-sim_dir="$root_dir/data/sim_data/LivingRoom/cpu"
-sim_name="test_script_LivingRoom_cpu.py"
-model_dir="$root_dir/data/models/LivingRoom"
 fmax=1000
+sim_name="Office"
+sim_setup="${sim_name}_cpu.py"
+sim_model_gen="${sim_name}_model.py"
+sim_dir="$root_dir/data/sim_data/$sim_name/cpu"
+model_dir="$root_dir/data/models/$sim_name"
 
 # Delete old sim
 rm -rf "$sim_dir"
 
 # Create model
-# cd "$model_dir"
-# python generate_model.py
+cd "$model_dir"
+python generate_model.py
+
+# cd "$python_dir"
+# python "$sim_model_gen"
 
 # Create sim data
 cd "$python_dir"
 python build_mats.py
-python "$sim_name"
+python "$sim_setup"
 
 # Run sim
 cd "$sim_dir"
