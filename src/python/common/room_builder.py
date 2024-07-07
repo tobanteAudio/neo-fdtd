@@ -3,6 +3,42 @@ import json
 
 import numpy as np
 
+def find_third_vertex(A, B):
+    A = np.array(A)
+    B = np.array(B)
+
+    # Calculate the vector from A to B
+    AB = B - A
+
+    # Calculate the distance AB
+    d = np.linalg.norm(AB)
+
+    # Normalize the vector AB
+    AB_normalized = AB / d
+
+    # Find two vectors perpendicular to AB and to each other
+    if AB_normalized[0] != 0 or AB_normalized[1] != 0:
+        perp_vector_1 = np.array([-AB_normalized[1], AB_normalized[0], 0])
+    else:
+        perp_vector_1 = np.array([0, AB_normalized[2], -AB_normalized[1]])
+
+    perp_vector_1 = perp_vector_1 / np.linalg.norm(perp_vector_1)
+
+    perp_vector_2 = np.cross(AB_normalized, perp_vector_1)
+    perp_vector_2 = perp_vector_2 / np.linalg.norm(perp_vector_2)
+
+    # Calculate the height of the equilateral triangle
+    h = (np.sqrt(3) / 2) * d
+
+    # Calculate the midpoint M
+    M = (A + B) / 2
+
+    # Calculate the two possible locations for the third vertex
+    C1 = M + h * perp_vector_1
+    C2 = M - h * perp_vector_1
+
+    return C1, C2
+
 
 def transform_point(point, scale, rotation, translation):
     """

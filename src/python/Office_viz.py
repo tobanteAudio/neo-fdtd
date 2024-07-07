@@ -1,7 +1,7 @@
 from sim_setup import sim_setup
 
 sim_setup(
-    model_json_file='../../data/models/Office/model_export.json',
+    model_json_file='../../data/models/Office/model.json',
     mat_folder='../../data/materials',
     source_num=1,
     insig_type='dhann30',  # for viz
@@ -10,12 +10,7 @@ sim_setup(
         'Walls': 'office_wall.h5',
         'Ceiling': 'office_ceiling.h5',
         'Floor': 'office_floor.h5',
-        'Panel_1': 'office_dead.h5',
-        'Panel_2': 'office_dead.h5',
-        'Panel_3': 'office_dead.h5',
-        'Panel_4': 'office_dead.h5',
-        'Panel_5': 'office_dead.h5',
-        'Panel_6': 'office_dead.h5',
+        'Panel': 'office_dead.h5',
         'Table': 'mv_wood.h5',
         'Sofa': 'office_dead.h5'
     },
@@ -33,4 +28,4 @@ sim_setup(
 )
 
 # then run with python and 3D visualization:
-#   python3 -m fdtd.sim_fdtd --data_dir='../../data/sim_data/Office/viz' --plot --draw_backend='mayavi' --json_model='../../data/models/Office/model_export.json'
+#   python3 -m fdtd.sim_fdtd --data_dir='../../data/sim_data/Office/viz' --plot --draw_backend='mayavi' --json_model='../../data/models/Office/model.json'

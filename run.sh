@@ -16,14 +16,11 @@ model_dir="$root_dir/data/models/$sim_name"
 # Delete old sim
 rm -rf "$sim_dir"
 
-# Create model
-cd "$model_dir"
-python generate_model.py
+# Generate model
+cd "$python_dir"
+python "$sim_model_gen"
 
-# cd "$python_dir"
-# python "$sim_model_gen"
-
-# Create sim data
+# Generate sim data
 cd "$python_dir"
 python build_mats.py
 python "$sim_setup"

@@ -1,7 +1,7 @@
 from sim_setup import sim_setup
 
 sim_setup(
-    model_json_file='../../data/models/Office/model_export.json',
+    model_json_file='../../data/models/Office/model.json',
     mat_folder='../../data/materials',
     source_num=1,
     insig_type='impulse',  # for RIR
@@ -10,12 +10,7 @@ sim_setup(
         'Walls': 'office_wall.h5',
         'Ceiling': 'office_ceiling.h5',
         'Floor': 'office_floor.h5',
-        'Panel_1': 'office_dead.h5',
-        'Panel_2': 'office_dead.h5',
-        'Panel_3': 'office_dead.h5',
-        'Panel_4': 'office_dead.h5',
-        'Panel_5': 'office_dead.h5',
-        'Panel_6': 'office_dead.h5',
+        'Panel': 'office_dead.h5',
         'Sofa': 'office_dead.h5',
         'Table': 'mv_wood.h5',
     },
@@ -29,8 +24,3 @@ sim_setup(
     save_folder_gpu='../../data/sim_data/Office/gpu',
     compress=0,
 )
-# then from '../../data/sim_data/Office/gpu' folder, run (relative path for default folder structure):
-#   ../../../../src/fdtd_main_gpu_single.x
-
-# then post-process with something like:
-# python -m fdtd.process_outputs --data_dir='../../data/sim_data/Office/gpu/' --fcut_lowpass 1400.0 --N_order_lowpass=8 --symmetric --fcut_lowcut 10.0 --N_order_lowcut=4 --save_wav --plot
