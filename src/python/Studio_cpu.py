@@ -4,11 +4,12 @@ sim_setup(
     model_json_file='../../data/models/Studio/model.json',
     mat_folder='../../data/materials',
     source_num=1,
-    insig_type='impulse',  # for RIR
-    diff_source=True,  # for single precision
+    insig_type='impulse',
+    diff_source=True,
     mat_files_dict={
         'Absorber M': 'absorber_8000_100mm.h5',
         'Absorber L': 'absorber_8000_200mm_gap_100mm.h5',
+        'Baffle': 'door_wood.h5',
         'Ceiling': 'concrete_painted.h5',
         'Floor': 'floor_wood.h5',
         'Sofa': 'absorber_8000_200mm.h5',

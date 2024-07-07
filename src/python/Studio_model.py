@@ -43,8 +43,8 @@ room.add_box("Absorber L", [2.5, 2.0, 0.2], [W/2-2.5/2, L-2-2.1-0.5, H-0.3])
 room.add_box("Sofa", [2.52, 0.98, 0.48], [W/2-2.52/2, 0.4, 0.05])
 room.add_box("Table", [1.8, 0.8, 0.02], [W/2-1.8/2, listener[1]+0.4, 0.7])
 
-room.add_source("Speaker Left", src_left)
-room.add_source("Speaker Right", src_right)
+room.add_source("Speaker Left", src_left, baffle_size=0.65)
+room.add_source("Speaker Right", src_right, baffle_size=0.65)
 room.add_receiver("Engineer", listener.tolist())
 
 room.add_receiver("Producer Sitting", producer_sit.tolist())
