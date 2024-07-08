@@ -195,6 +195,17 @@ class RoomBuilder:
         })
         return self
 
+    def add_diffusor_1d(self, size, position, well_width):
+        max_depth = size[1]
+        depths = np.array([0.0, 0.25, 1.0, 0.5, 0.5, 1.0, 0.25]) * max_depth
+        wells = int(size[0]/well_width)
+        for i in range(wells):
+            x = position[0] + well_width*i
+            y = position[1]
+            z = position[2]
+            depth = depths[i % len(depths)]
+            self.add_box("Diffusor", [well_width, depth, size[2]], [x, y, z])
+
     def build(self, file_path):
         L = self.length
         W = self.width

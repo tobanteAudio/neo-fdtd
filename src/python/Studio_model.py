@@ -7,7 +7,7 @@ H = 3.70*S
 
 src_height = 1.2
 src_backwall = 1
-src_distance = 1.75
+src_distance = 2.2
 src_left = [W/2-src_distance/2, L-src_backwall, src_height]
 src_right = [W/2+src_distance/2, L-src_backwall, src_height]
 
@@ -26,6 +26,7 @@ room.with_colors({
     "Absorber M": [111, 55, 10],
     "Absorber L": [111, 55, 10],
     "Ceiling": [200, 200, 200],
+    "Diffusor": [140, 80, 35],
     "Floor": [151, 134, 122],
     "Table": [130, 75, 25],
     "Sofa": [25, 25, 25],
@@ -33,13 +34,18 @@ room.with_colors({
     "Walls": [255, 255, 255],
 })
 
-room.add_box("Absorber M", [0.1, 2.5, 1.5], [0.2, L-2.5-0.5, 0.75])
-room.add_box("Absorber M", [0.1, 2.5, 1.5], [W-0.1-0.2, L-2.5-0.5, 0.75])
+room.add_box("Absorber M", [0.1, 2.5, 1.5], [0.2, L-2.5-0.75, 0.75])
+room.add_box("Absorber M", [0.1, 2.5, 1.5], [W-0.1-0.2, L-2.5-0.75, 0.75])
 
-room.add_box("Absorber L", [2.5, 0.2, 1.5], [W/2-2.5/2, L-0.2-0.1, 0.75])
-room.add_box("Absorber L", [2.5, 0.2, 1.5], [W/2-2.5/2, 0.1, 0.75])
+room.add_box("Absorber L", [1.0, 0.2, 2.5], [src_left[0]-1.0/2, L-0.2-0.1, 0.25])
+room.add_box("Absorber L", [1.0, 0.2, 2.5], [src_right[0]-1.0/2, L-0.2-0.1, 0.25])
+
 room.add_box("Absorber L", [2.5, 2.0, 0.2], [W/2-2.5/2, L-2-0.5, H-0.3])
-room.add_box("Absorber L", [2.5, 2.0, 0.2], [W/2-2.5/2, L-2-2.1-0.5, H-0.3])
+room.add_box("Absorber L", [2.5, 2.0, 0.2], [W/2-2.5/2, L-2-2.5-0.5, H-0.3])
+
+room.add_diffusor_1d([2, 15*0.0254, 1.5], [W/2-1, 0.05, 0.7], 3*0.0254)
+room.add_box("Absorber L", [1.0, 0.2, 2.5], [0.1, 0.1, 0.25])
+room.add_box("Absorber L", [1.0, 0.2, 2.5], [W-1.0-0.1, 0.1, 0.25])
 
 room.add_box("Sofa", [2.52, 0.98, 0.48], [W/2-2.52/2, 0.4, 0.05])
 room.add_box("Table", [1.8, 0.8, 0.02], [W/2-1.8/2, listener[1]+0.4, 0.7])
