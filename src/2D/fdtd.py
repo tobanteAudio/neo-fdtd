@@ -1,3 +1,4 @@
+import argparse
 import pathlib
 
 import cv2
@@ -27,17 +28,18 @@ def point_on_circle(center, radius, angle):
     return (p_x, p_y)
 
 
-def add_diffusor(width, max_depth, in_mask, X, Y):
+def add_diffusor(well_width, max_depth, in_mask, X, Y):
     depths = np.array([0.0, 0.25, 1.0, 0.5, 0.5, 1.0, 0.25])
     depths = np.array([0.0, 0.06, 0.25, 0.56, 1.0, 0.5, 0.12,
                       0.94, 0.81, 0.81, 0.94, 0.12, 0.5, 1, 0.56, 0.25, 0.06])
     assert depths.shape[0] == 17
     prime = depths.shape[0]
-    n = int(10/width)
+    total_width = 4
+    n = int(total_width/well_width)
     for w in range(n):
-        xs = (40/2-5)+w*width
-        xe = xs+width
-        ys = 40/2-5-max_depth
+        xs = (30/2-total_width/2)+w*well_width
+        xe = xs+well_width
+        ys = 30/2-5-max_depth
         ye = ys+depths[w % prime] * max_depth+0.05
         in_mask[(X >= xs) & (Y >= ys) & (X < xe) & (Y < ye)] = False
 
@@ -45,7 +47,7 @@ def add_diffusor(width, max_depth, in_mask, X, Y):
 
 
 @nb.njit(parallel=True)
-def stencil_air_cart(u0, u1, u2, mask):
+def stencil_air(u0, u1, u2, mask):
     Nx, Ny = u1.shape
     for ix in nb.prange(1, Nx-1):
         for iy in range(1, Ny-1):
@@ -59,7 +61,7 @@ def stencil_air_cart(u0, u1, u2, mask):
 
 
 @nb.njit(parallel=True)
-def stencil_boundary_rigid_cart(u0, u1, u2, bn_ixy, adj_bn):
+def stencil_boundary_rigid(u0, u1, u2, bn_ixy, adj_bn):
     Nx, Ny = u1.shape
     Nb = bn_ixy.size
     for i in nb.prange(Nb):
@@ -79,7 +81,7 @@ def stencil_boundary_rigid_cart(u0, u1, u2, bn_ixy, adj_bn):
 
 
 @nb.njit(parallel=True)
-def stencil_boundary_loss_cart(u0, u2, bn_ixy, adj_bn, loss_factor):
+def stencil_boundary_loss(u0, u2, bn_ixy, adj_bn, loss_factor):
     Nb = bn_ixy.size
     for i in nb.prange(Nb):
         ib = bn_ixy[i]
@@ -92,13 +94,22 @@ def stencil_boundary_loss_cart(u0, u2, bn_ixy, adj_bn, loss_factor):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--duration', type=float, default=0.09)
+    parser.add_argument('--fmax', type=float, default=1000.0)
+    parser.add_argument('--ppw', type=float, default=10.5)
+    parser.add_argument('--save', action='store_true')
+    parser.add_argument('--video', action='store_true')
+
+    args = parser.parse_args()
+
     c = 343  # speed of sound m/s (20degC)
-    fmax = 1000  # Hz
-    PPW = 10.5  # points per wavelength at fmax
-    duration = 0.09  # seconds
+    fmax = args.fmax  # Hz
+    PPW = args.ppw  # points per wavelength at fmax
+    duration = args.duration  # seconds
     refl_coeff = 0.99  # reflection coefficient
 
-    Bx, By = 40.0, 40.0  # box dims (with lower corner at origin)
+    Bx, By = 30.0, 30.0  # box dims (with lower corner at origin)
     x_in, y_in = Bx*0.5, By*0.5  # source input position
     R_dome = By*0.5  # heigh of dome (to be centered on roof of box)
 
@@ -141,13 +152,13 @@ def main():
     in_mask = add_diffusor(dx*3, 0.5, in_mask, X, Y)
 
     angles = np.linspace(0.0, 180.0, 180, endpoint=True)
-    receiver_ixy = []
+    out_ixy = []
     for i in range(angles.shape[0]):
         x, y = point_on_circle((x_in, y_in-5.0), 5.0, np.deg2rad(angles[i]))
         xc = int(np.round(x / dx + 0.5) + 1)
         yc = int(np.round(y / dx + 0.5) + 1)
         idx = xc+yc*Nx
-        receiver_ixy.append(idx)
+        out_ixy.append(idx)
         # in_mask[xc, yc] = False
 
     if apply_rigid:
@@ -193,11 +204,12 @@ def main():
     target_sps = 0.115
     fps = int(min(90, target_sps/sps30))
 
-    video_name = 'output_video.avi'
-    height, width = 1000, 1000  # u0.shape
-    fourcc = cv2.VideoWriter_fourcc(*'DIVX')
-    video = cv2.VideoWriter(video_name, fourcc, fps,
-                            (width, height), isColor=False)
+    if args.video:
+        video_name = 'output_video.avi'
+        height, width = 1000, 1000  # u0.shape
+        fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+        video = cv2.VideoWriter(video_name, fourcc, fps,
+                                (width, height), isColor=False)
 
     h5f = h5py.File('.' / pathlib.Path('diffusor.h5'), 'w')
     h5f.create_dataset('fmax', data=np.float64(fmax))
@@ -213,7 +225,7 @@ def main():
     h5f.create_dataset('adj_bn', data=adj_bn)
     h5f.create_dataset('bn_ixy', data=bn_ixy)
     h5f.create_dataset('in_mask', data=in_mask.flatten().astype(np.uint8))
-    h5f.create_dataset('receiver_ixy', data=receiver_ixy)
+    h5f.create_dataset('out_ixy', data=out_ixy)
     h5f.create_dataset('src_sig', data=src_sig)
     h5f.close()
 
@@ -221,59 +233,35 @@ def main():
     print(f'fs   = {fs:.3f} Hz')
     print(f'Δx   = {dx*100:.5f} cm / {dx*1000:.2f} mm')
     print(f'fps  = {fps}')
+    print(f'Nb   = {bn_ixy.shape[0]}')
+    print(f'Nt   = {int(Nt)}')
     print(f'Nx   = {int(Nx)}')
     print(f'Ny   = {int(Ny)}')
-    print(f'Nt   = {int(Nt)}')
-    print(f'Nb   = {bn_ixy.shape[0]}')
-    return
+    print(f'N    = {int(Nx)*int(Ny)}')
 
-    for nt in tqdm(range(Nt)):
-        stencil_air_cart(u0, u1, u2, in_mask)
-        if apply_rigid:
-            stencil_boundary_rigid_cart(u0, u1, u2, bn_ixy, adj_bn)
-            if apply_loss:
-                stencil_boundary_loss_cart(u0, u2, bn_ixy, adj_bn, loss_factor)
+    if args.video:
+        for nt in tqdm(range(Nt)):
+            stencil_air(u0, u1, u2, in_mask)
+            if apply_rigid:
+                stencil_boundary_rigid(u0, u1, u2, bn_ixy, adj_bn)
+                if apply_loss:
+                    stencil_boundary_loss(u0, u2, bn_ixy, adj_bn, loss_factor)
 
-        u0[inx, iny] = u0[inx, iny] + src_sig[nt]
+            u0[inx, iny] = u0[inx, iny] + src_sig[nt]
 
-        u2 = u1.copy()
-        u1 = u0.copy()
+            u2 = u1.copy()
+            u1 = u0.copy()
 
-        img = np.abs(u0)
-        img = cv2.normalize(img, None, 0, 255,
-                            cv2.NORM_MINMAX).astype(np.uint8)
-        img[~in_mask] = 255
-        img = cv2.resize(img, (1000, 1000))
-        video.write(cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE))
+            img = np.abs(u0)
+            img = cv2.normalize(img, None, 0, 255,
+                                cv2.NORM_MINMAX).astype(np.uint8)
+            img[~in_mask] = 255
+            img = cv2.resize(img, (1000, 1000))
+            video.write(cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE))
 
-    video.release()
+        video.release()
 
     print(f"last: u0={u0[inx, iny]} u1={u1[inx, iny]} u2={u2[inx, iny]}")
-
-    # fig = plt.figure()
-
-    # def draw_func(i):
-    #     plt.cla()
-    #     plt.clf()
-    #     plt.xlim([np.min(xv), np.max(xv)])
-    #     plt.ylim([np.min(yv), np.max(yv)])
-    #     img = plt.imshow(
-    #         (frames[i] * draw_mask).T,
-    #         extent=(np.min(xv), np.max(xv), np.min(yv), np.max(yv)),
-    #         cmap="bone",
-    #         aspect="equal",
-    #         origin="lower"
-    #         # vmin=0.0,
-    #         # vmax=0.05
-    #     )
-    #     # Add minorticks on the colorbar to make
-    #     # it easy to read the values off the colorbar.
-    #     color_bar = fig.colorbar(img, extend = 'both')
-
-    #     color_bar.minorticks_on()
-
-    # ani = FuncAnimation(fig, draw_func, frames=len(frames), interval=16)
-    # plt.show()
 
 
 if __name__ == "__main__":
