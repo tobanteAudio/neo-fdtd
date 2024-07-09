@@ -7,4 +7,4 @@ LIBS=-lhdf5
 # 	source /opt/intel/oneapi/setvars.sh
 
 all:
-	${CXX} -fsycl -O3 -D NDEBUG ${LIBS} fdtd.cpp
+	${CXX} -fsycl -std=c++20 -O3 -D NDEBUG ${LIBS} fdtd.cpp
