@@ -10,6 +10,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+option(PFFDTD_ENABLE_SYCL "Build with sycl" OFF)
+
 add_executable(pffdtd)
 target_compile_definitions(pffdtd PRIVATE PRECISION=2 USING_CUDA=0)
 target_sources(pffdtd
@@ -36,3 +38,7 @@ if((CMAKE_CXX_COMPILER_ID STREQUAL "MSVC") OR (CMAKE_CXX_COMPILER_FRONTEND_VARIA
 else ()
     target_compile_options(pffdtd PRIVATE -Wno-deprecated-declarations)
 endif ()
+
+if(PFFDTD_ENABLE_SYCL)
+    add_subdirectory(src/2D)
+endif()
