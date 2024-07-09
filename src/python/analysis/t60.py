@@ -62,17 +62,7 @@ def ebu_3000_t60_threshold_lower(freqs):
     return times
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--data_dir', type=str, help='run directory')
-    parser.add_argument('--fmin', type=float, help='min third-octave band')
-    parser.add_argument('--fmax', type=float, help='max third-octave band')
-    parser.set_defaults(fmin=20.0)
-    parser.set_defaults(fmax=1000.0)
-
-    args = parser.parse_args()
-    directory = args.data_dir
-    files = collect_wav_files(directory, "*_out_normalised.wav")
+def run(files, fmin, fmax, show_all=False, show_tolerance=True):
 
     # ISO 1/3 octaves
     center_freqs = np.array([
@@ -82,8 +72,8 @@ def main():
         20000
     ])
 
-    center_freqs = center_freqs[np.where(center_freqs >= args.fmin)]
-    center_freqs = center_freqs[np.where(center_freqs <= args.fmax)]
+    center_freqs = center_freqs[np.where(center_freqs >= fmin)]
+    center_freqs = center_freqs[np.where(center_freqs <= fmax)]
 
     file_times = []
     for file in files:
@@ -101,46 +91,75 @@ def main():
 
     plt.rcParams.update(plot_styles)
 
-    fig, axs = plt.subplots(2, 1)
+    fig, ax = plt.subplots(2, 1)
     formatter = ScalarFormatter()
     formatter.set_scientific(False)
 
     # T60
-    axs[0].margins(0, 0.1)
-    axs[0].semilogx(center_freqs, file_times[0])
+    ax[0].margins(0, 0.1)
+    if show_all:
+        for i, f in enumerate(file_times):
+            ax[0].semilogx(center_freqs, f, label=f"{i}")
+    else:
+        ax[0].semilogx(center_freqs, file_times[0])
 
-    axs[0].set_title("Reverberation Time (T60)")
-    axs[0].set_ylabel("Decay [s]")
-    axs[0].set_xlabel("Frequency [Hz]")
-    axs[0].xaxis.set_major_formatter(formatter)
+    ax[0].set_title("Reverberation Time (T60)")
+    ax[0].set_ylabel("Decay [s]")
+    ax[0].set_xlabel("Frequency [Hz]")
+    ax[0].xaxis.set_major_formatter(formatter)
 
-    axs[0].set_xlim((center_freqs[0], center_freqs[-1]))
-    axs[0].set_ylim((0.0, np.max(file_times[0])+0.1))
+    ax[0].set_xlim((center_freqs[0], center_freqs[-1]))
+    ax[0].set_ylim((0.0, np.max(file_times)+0.1))
 
-    axs[0].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
-    axs[0].minorticks_on()
+    ax[0].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
+    ax[0].minorticks_on()
+    ax[0].legend()
 
     # Tolerance
-    diff = np.insert(np.diff(file_times[0]), 0, 0.0)
-    diff = np.insert(file_times[0][:-1]-file_times[0][1:], 0, 0.0)
+    if show_tolerance:
+        diff = np.insert(np.diff(file_times[0]), 0, 0.0)
+        diff = np.insert(file_times[0][:-1]-file_times[0][1:], 0, 0.0)
+        upper_threshold = ebu_3000_t60_threshold_upper(center_freqs)
+        lower_threshold = ebu_3000_t60_threshold_lower(center_freqs)
 
-    axs[1].margins(0, 0.1)
-    axs[1].semilogx(center_freqs, diff)
-    axs[1].semilogx(center_freqs, ebu_3000_t60_threshold_upper(center_freqs))
-    axs[1].semilogx(center_freqs, ebu_3000_t60_threshold_lower(center_freqs))
+        ax[1].margins(0, 0.1)
+        ax[1].semilogx(center_freqs, diff)
+        ax[1].semilogx(center_freqs, upper_threshold)
+        ax[1].semilogx(center_freqs, lower_threshold)
 
-    axs[1].set_title(f"T60 Tolerance (EBU Tech 3000)")
-    axs[1].set_ylabel("Difference [s]")
-    axs[1].set_xlabel("Frequency [Hz]")
-    axs[1].xaxis.set_major_formatter(formatter)
+        ax[1].set_title(f"T60 Tolerance (EBU Tech 3000)")
+        ax[1].set_ylabel("Difference [s]")
+        ax[1].set_xlabel("Frequency [Hz]")
+        ax[1].xaxis.set_major_formatter(formatter)
 
-    axs[1].set_xlim((center_freqs[0], center_freqs[-1]))
-    axs[1].set_ylim((np.min(diff)-0.1, 0.4))
+        ax[1].set_xlim((center_freqs[0], center_freqs[-1]))
+        ax[1].set_ylim((np.min(diff)-0.1, 0.4))
 
-    axs[1].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
-    axs[1].minorticks_on()
+        ax[1].grid(which='minor', color='#DDDDDD',
+                   linestyle=':', linewidth=0.5)
+        ax[1].minorticks_on()
 
     plt.show()
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('filename', nargs='*')
+    parser.add_argument('--data_dir', type=str)
+    parser.add_argument('--fmin', type=float, default=20.0)
+    parser.add_argument('--fmax', type=float, default=1000.0)
+
+    args = parser.parse_args()
+    if args.data_dir and len(args.filename) > 0:
+        raise RuntimeError("--data_dir not valid, when comparing IRs")
+
+    if args.data_dir:
+        files = collect_wav_files(args.data_dir, "*_out_normalised.wav")
+        run(files, args.fmin, args.fmax, show_tolerance=True)
+
+    if len(args.filename) == 2:
+        files = [args.filename[0], args.filename[1]]
+        run(files, args.fmin, args.fmax, show_all=True, show_tolerance=False)
 
 
 if __name__ == '__main__':
