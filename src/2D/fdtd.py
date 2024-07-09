@@ -14,9 +14,9 @@ def add_diffusor(width, max_depth, in_mask, X, Y):
     prime = depths.shape[0]
     n = int(10/width)
     for w in range(n):
-        xs = (50/2-5)+w*width
+        xs = (45/2-5)+w*width
         xe = xs+width
-        ys = 50/2-5-max_depth
+        ys = 45/2-5-max_depth
         ye = ys+depths[w % prime] * max_depth+0.05
         in_mask[(X >= xs) & (Y >= ys) & (X < xe) & (Y < ye)] = False
 
@@ -72,12 +72,12 @@ def stencil_boundary_loss_cart(u0,  u2, bn_ixy, adj_bn, lf):
 
 def main():
     c = 343  # speed of sound m/s (20degC)
-    fmax = 1000  # Hz
+    fmax = 1600  # Hz
     PPW = 10.5  # points per wavelength at fmax
-    duration = 0.1  # seconds
+    duration = 0.095  # seconds
     refl_coeff = 0.99  # reflection coefficient
 
-    Bx, By = 50.0, 50.0  # box dims (with lower corner at origin)
+    Bx, By = 45.0, 45.0  # box dims (with lower corner at origin)
     x_in, y_in = Bx*0.5, By*0.5  # source input position
     R_dome = By*0.5  # heigh of dome (to be centered on roof of box)
 
@@ -163,7 +163,7 @@ def main():
     fps = int(min(90, target_sps/sps30))
 
     video_name = 'output_video.avi'
-    height, width = u0.shape
+    height, width = 1000,1000# u0.shape
     fourcc = cv2.VideoWriter_fourcc(*'DIVX')
     video = cv2.VideoWriter(video_name, fourcc, fps,
                             (width, height), isColor=False)
@@ -192,8 +192,10 @@ def main():
         u2 = u1.copy()
         u1 = u0.copy()
 
-        img = cv2.normalize(u0, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+        img = np.abs(u0)
+        img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
         img[~in_mask] = 255
+        img = cv2.resize(img, (1000,1000))
         video.write(cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE))
 
     video.release()
