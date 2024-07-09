@@ -14,16 +14,16 @@ def add_diffusor(width, max_depth, in_mask, X, Y):
     prime = depths.shape[0]
     n = int(10/width)
     for w in range(n):
-        xs = (45/2-5)+w*width
+        xs = (40/2-5)+w*width
         xe = xs+width
-        ys = 45/2-5-max_depth
+        ys = 40/2-5-max_depth
         ye = ys+depths[w % prime] * max_depth+0.05
         in_mask[(X >= xs) & (Y >= ys) & (X < xe) & (Y < ye)] = False
 
     return in_mask
 
 
-@nb.jit(nopython=True, parallel=True)
+@nb.njit(parallel=True)
 def stencil_air_cart(u0, u1, u2, mask):
     Nx, Ny = u1.shape
     for ix in nb.prange(1, Nx-1):
@@ -37,7 +37,7 @@ def stencil_air_cart(u0, u1, u2, mask):
                 u0[ix, iy] = 0.5 * (left+right+bottom+top) - last
 
 
-@nb.jit(nopython=True, parallel=True)
+@nb.njit(parallel=True)
 def stencil_boundary_rigid_cart(u0, u1, u2, bn_ixy, adj_bn):
     Nx, Ny = u1.shape
     Nb = bn_ixy.size
@@ -57,7 +57,7 @@ def stencil_boundary_rigid_cart(u0, u1, u2, bn_ixy, adj_bn):
         u0.flat[ib] = (2 - 0.5 * K) * last1 + 0.5 * neighbors - last2
 
 
-@nb.jit(nopython=True, parallel=True)
+@nb.njit(parallel=True)
 def stencil_boundary_loss_cart(u0,  u2, bn_ixy, adj_bn, lf):
     Nb = bn_ixy.size
     for i in nb.prange(Nb):
@@ -72,12 +72,12 @@ def stencil_boundary_loss_cart(u0,  u2, bn_ixy, adj_bn, lf):
 
 def main():
     c = 343  # speed of sound m/s (20degC)
-    fmax = 1600  # Hz
+    fmax = 1000  # Hz
     PPW = 10.5  # points per wavelength at fmax
-    duration = 0.095  # seconds
+    duration = 0.09  # seconds
     refl_coeff = 0.99  # reflection coefficient
 
-    Bx, By = 45.0, 45.0  # box dims (with lower corner at origin)
+    Bx, By = 40.0, 40.0  # box dims (with lower corner at origin)
     x_in, y_in = Bx*0.5, By*0.5  # source input position
     R_dome = By*0.5  # heigh of dome (to be centered on roof of box)
 
@@ -117,7 +117,7 @@ def main():
     if add_dome:
         in_mask[(X - 0.5 * Bx)**2 + (Y - By)**2 < R_dome**2] = True
 
-    in_mask = add_diffusor(dx*3, 2.0, in_mask, X, Y)
+    in_mask = add_diffusor(dx*3, 0.5, in_mask, X, Y)
 
     if apply_rigid:
         # Calculate number of interior neighbours (for interior points only)
@@ -163,7 +163,7 @@ def main():
     fps = int(min(90, target_sps/sps30))
 
     video_name = 'output_video.avi'
-    height, width = 1000,1000# u0.shape
+    height, width = 1000, 1000  # u0.shape
     fourcc = cv2.VideoWriter_fourcc(*'DIVX')
     video = cv2.VideoWriter(video_name, fourcc, fps,
                             (width, height), isColor=False)
@@ -181,11 +181,8 @@ def main():
         stencil_air_cart(u0, u1, u2, in_mask)
         if apply_rigid:
             stencil_boundary_rigid_cart(u0, u1, u2, ib, Kib)
-
             if apply_loss:
                 stencil_boundary_loss_cart(u0, u2, ib, Kib, lf)
-                # u0.flat[ib] = (u0.flat[ib] + lf * (4 - Kib) *
-                #                u2.flat[ib]) / (1 + lf * (4 - Kib))
 
         u0[inx, iny] = u0[inx, iny] + u_in[nt]
 
@@ -193,9 +190,10 @@ def main():
         u1 = u0.copy()
 
         img = np.abs(u0)
-        img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+        img = cv2.normalize(img, None, 0, 255,
+                            cv2.NORM_MINMAX).astype(np.uint8)
         img[~in_mask] = 255
-        img = cv2.resize(img, (1000,1000))
+        img = cv2.resize(img, (1000, 1000))
         video.write(cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE))
 
     video.release()
