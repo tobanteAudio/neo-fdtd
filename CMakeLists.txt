@@ -12,33 +12,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(PFFDTD_ENABLE_SYCL "Build with sycl" OFF)
 
-add_executable(pffdtd)
-target_compile_definitions(pffdtd PRIVATE PRECISION=2 USING_CUDA=0)
-target_sources(pffdtd
-    PRIVATE
-        src/native/cpu_engine.cpp
-        src/native/cpu_engine.hpp
-        src/native/fdtd_common.cpp
-        src/native/fdtd_common.hpp
-        src/native/fdtd_data.cpp
-        src/native/fdtd_data.hpp
-        src/native/helper_funcs.cpp
-        src/native/helper_funcs.hpp
-        src/native/main.cpp
-)
-
 find_package(HDF5 REQUIRED)
-target_link_libraries(pffdtd PRIVATE HDF5::HDF5)
-
 find_package(OpenMP REQUIRED)
-target_link_libraries(pffdtd PRIVATE OpenMP::OpenMP_CXX)
 
-if((CMAKE_CXX_COMPILER_ID STREQUAL "MSVC") OR (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC"))
-    target_compile_options(pffdtd PRIVATE /W4)
-else ()
-    target_compile_options(pffdtd PRIVATE -Wno-deprecated-declarations)
-endif ()
+add_subdirectory(src/3D)
 
 if(PFFDTD_ENABLE_SYCL)
+    find_package(IntelSYCL REQUIRED)
     add_subdirectory(src/2D)
 endif()

@@ -1,7 +1,5 @@
 project(pffdtd_2d)
 
-find_package(IntelSYCL REQUIRED)
-
 add_executable(pffdtd_2d)
 target_sources(pffdtd_2d PRIVATE fdtd.cpp)
 add_sycl_to_target(TARGET pffdtd_2d SOURCES fdtd.cpp)
