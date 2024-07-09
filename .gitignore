@@ -4,6 +4,7 @@
 /cmake-build-*
 .DS_Store
 *.avi
+a.out
 
 /venv
 __pycache__# Byte-compiled / optimized / DLL files
