@@ -2,6 +2,7 @@ import cv2
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
+import numba as nb
 from tqdm import tqdm
 
 
@@ -11,25 +12,72 @@ def add_diffusor(width, max_depth, in_mask, X, Y):
                       0.94, 0.81, 0.81, 0.94, 0.12, 0.5, 1, 0.56, 0.25, 0.06])
     assert depths.shape[0] == 17
     prime = depths.shape[0]
-    n = int(8/width)
+    n = int(10/width)
     for w in range(n):
-        xs = 6+w*width
+        xs = (50/2-5)+w*width
         xe = xs+width
-        ys = 4
-        ye = ys+depths[w % prime] * max_depth+0.03
+        ys = 50/2-5-max_depth
+        ye = ys+depths[w % prime] * max_depth+0.05
         in_mask[(X >= xs) & (Y >= ys) & (X < xe) & (Y < ye)] = False
 
     return in_mask
+
+
+@nb.jit(nopython=True, parallel=True)
+def stencil_air_cart(u0, u1, u2, mask):
+    Nx, Ny = u1.shape
+    for ix in nb.prange(1, Nx-1):
+        for iy in range(1, Ny-1):
+            if mask[ix, iy]:
+                left = u1[ix-1, iy]
+                right = u1[ix+1, iy]
+                bottom = u1[ix, iy-1]
+                top = u1[ix, iy+1]
+                last = u2[ix, iy]
+                u0[ix, iy] = 0.5 * (left+right+bottom+top) - last
+
+
+@nb.jit(nopython=True, parallel=True)
+def stencil_boundary_rigid_cart(u0, u1, u2, bn_ixy, adj_bn):
+    Nx, Ny = u1.shape
+    Nb = bn_ixy.size
+    for i in nb.prange(Nb):
+        ib = bn_ixy[i]
+        K = adj_bn[i]
+
+        last1 = u1.flat[ib]
+        last2 = u2.flat[ib]
+
+        left = u1.flat[ib-1]
+        right = u1.flat[ib + 1]
+        top = u1.flat[ib + Ny]
+        bottom = u1.flat[ib - Ny]
+
+        neighbors = left + right + top + bottom
+        u0.flat[ib] = (2 - 0.5 * K) * last1 + 0.5 * neighbors - last2
+
+
+@nb.jit(nopython=True, parallel=True)
+def stencil_boundary_loss_cart(u0,  u2, bn_ixy, adj_bn, lf):
+    Nb = bn_ixy.size
+    for i in nb.prange(Nb):
+        ib = bn_ixy[i]
+        K = adj_bn[i]
+
+        prev = u2.flat[ib]
+        current = u0.flat[ib]
+
+        u0.flat[ib] = (current + lf * (4 - K) * prev) / (1 + lf * (4 - K))
 
 
 def main():
     c = 343  # speed of sound m/s (20degC)
     fmax = 1000  # Hz
     PPW = 10.5  # points per wavelength at fmax
-    duration = 0.05  # seconds
+    duration = 0.1  # seconds
     refl_coeff = 0.99  # reflection coefficient
 
-    Bx, By = 20.0, 20.0  # box dims (with lower corner at origin)
+    Bx, By = 50.0, 50.0  # box dims (with lower corner at origin)
     x_in, y_in = Bx*0.5, By*0.5  # source input position
     R_dome = By*0.5  # heigh of dome (to be centered on roof of box)
 
@@ -69,7 +117,7 @@ def main():
     if add_dome:
         in_mask[(X - 0.5 * Bx)**2 + (Y - By)**2 < R_dome**2] = True
 
-    in_mask = add_diffusor(dx*2, 1.0, in_mask, X, Y)
+    in_mask = add_diffusor(dx*3, 2.0, in_mask, X, Y)
 
     if apply_rigid:
         # Calculate number of interior neighbours (for interior points only)
@@ -112,7 +160,7 @@ def main():
 
     sps30 = dt*30
     target_sps = 0.115
-    fps = int(min(200, target_sps/sps30))
+    fps = int(min(90, target_sps/sps30))
 
     video_name = 'output_video.avi'
     height, width = u0.shape
@@ -127,32 +175,17 @@ def main():
     print(f'Nx   = {int(Nx)}')
     print(f'Ny   = {int(Ny)}')
     print(f'Nt   = {int(Nt)}')
+    print(f'Nb   = {ib.shape[0]}')
 
     for nt in tqdm(range(Nt)):
-        # AIR
-        left = u1[0:-2, 1:-1]
-        right = u1[2:, 1:-1]
-        top = u1[1:-1, 2:]
-        bottom = u1[1:-1, 0:-2]
-        last = u2[1:-1, 1:-1]
-        mask = in_mask[1:-1, 1:-1]
-        u0[1:-1, 1:-1] = mask * (0.5 * (left + right + top + bottom) - last)
-
+        stencil_air_cart(u0, u1, u2, in_mask)
         if apply_rigid:
-            left = u1.flat[ib - 1]
-            right = u1.flat[ib + 1]
-            top = u1.flat[ib + Ny]
-            bottom = u1.flat[ib - Ny]
-
-            last1 = u1.flat[ib]
-            last2 = u2.flat[ib]
-
-            u0.flat[ib] = (2 - 0.5 * Kib) * last1 + 0.5 * \
-                (left + right + top + bottom) - last2
+            stencil_boundary_rigid_cart(u0, u1, u2, ib, Kib)
 
             if apply_loss:
-                u0.flat[ib] = (u0.flat[ib] + lf * (4 - Kib) *
-                               u2.flat[ib]) / (1 + lf * (4 - Kib))
+                stencil_boundary_loss_cart(u0, u2, ib, Kib, lf)
+                # u0.flat[ib] = (u0.flat[ib] + lf * (4 - Kib) *
+                #                u2.flat[ib]) / (1 + lf * (4 - Kib))
 
         u0[inx, iny] = u0[inx, iny] + u_in[nt]
 
