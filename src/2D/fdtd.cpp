@@ -107,7 +107,7 @@ int main(int, char **argv) {
   auto const Nt = file.read<int64_t>("Nt");
   auto const inx = file.read<int64_t>("inx");
   auto const iny = file.read<int64_t>("iny");
-  auto const lf = file.read<double>("lf");
+  auto const loss_factor = file.read<double>("loss_factor");
   auto const adj_bn = file.read<std::vector<int64_t>>("adj_bn");
   auto const bn_ixy = file.read<std::vector<int64_t>>("bn_ixy");
   auto const in_mask = file.read<std::vector<uint8_t>>("in_mask");
@@ -127,7 +127,7 @@ int main(int, char **argv) {
   std::printf("adj_bn: %ld\n", static_cast<long>(adj_bn.size()));
   std::printf("receiver_ixy: %ld\n", static_cast<long>(receiver_ixy.size()));
   std::printf("src_sig: %ld\n", static_cast<long>(src_sig.size()));
-  std::printf("lf: %f\n", lf);
+  std::printf("loss_factor: %f\n", loss_factor);
 
   auto queueProp = sycl::property_list{sycl::property::queue::in_order()};
   auto queue = sycl::queue{queueProp};
@@ -135,13 +135,19 @@ int main(int, char **argv) {
   auto u0 = sycl::buffer<double, 2>(sycl::range<2>(Nx, Ny));
   auto u1 = sycl::buffer<double, 2>(sycl::range<2>(Nx, Ny));
   auto u2 = sycl::buffer<double, 2>(sycl::range<2>(Nx, Ny));
+  auto out = sycl::buffer<double, 2>(sycl::range<2>(receiver_ixy.size(), Nt));
 
   auto in_mask_buf = sycl::buffer<uint8_t, 1>{in_mask};
   auto bn_ixy_buf = sycl::buffer<int64_t, 1>{bn_ixy};
   auto adj_bn_buf = sycl::buffer<int64_t, 1>{adj_bn};
   auto src_sig_buf = sycl::buffer<double, 1>{src_sig};
 
+  std::printf("111111111");
   for (auto i{0UL}; i < Nt; ++i) {
+    std::printf("\r\r\r\r\r\r\r\r\r");
+    std::printf("%04d/%04d", int(i), int(Nt));
+    std::fflush(stdout);
+
     queue.submit([&](sycl::handler &cgh) {
       auto u0_acc = sycl::accessor{u0, cgh};
       auto u1_acc = sycl::accessor{u1, cgh};
@@ -181,16 +187,28 @@ int main(int, char **argv) {
 
     queue.submit([&](sycl::handler &cgh) {
       auto u0_acc = sycl::accessor{u0, cgh};
+      auto out_acc = sycl::accessor{u1, cgh};
+      cgh.parallel_for<struct CopyOutput>(sycl::range<1>(receiver_ixy.size()),
+                                          [=](sycl::id<1> id) {
+                                            auto const r = id[0];
+                                            out_acc[r] = u0_acc[r];
+                                          });
+    });
+
+    queue.submit([&](sycl::handler &cgh) {
+      auto u0_acc = sycl::accessor{u0, cgh};
       auto u1_acc = sycl::accessor{u1, cgh};
       auto u2_acc = sycl::accessor{u2, cgh};
-      cgh.parallel_for<struct Copy>(sycl::range<2>(Nx, Ny),
-                                    [=](sycl::id<2> id) {
-                                      auto const x = id[0];
-                                      auto const y = id[1];
-                                      u2_acc[x][y] = u1_acc[x][y];
-                                      u1_acc[x][y] = u0_acc[x][y];
-                                    });
+      cgh.parallel_for<struct Rotate>(sycl::range<2>(Nx, Ny),
+                                      [=](sycl::id<2> id) {
+                                        auto const x = id[0];
+                                        auto const y = id[1];
+                                        u2_acc[x][y] = u1_acc[x][y];
+                                        u1_acc[x][y] = u0_acc[x][y];
+                                      });
     });
+
+    queue.wait_and_throw();
   }
 
   auto host = sycl::host_accessor{u0, sycl::read_only};

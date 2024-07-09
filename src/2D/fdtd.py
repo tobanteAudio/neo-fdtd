@@ -79,12 +79,12 @@ def stencil_boundary_rigid_cart(u0, u1, u2, bn_ixy, adj_bn):
 
 
 @nb.njit(parallel=True)
-def stencil_boundary_loss_cart(u0, u2, bn_ixy, adj_bn, lf):
+def stencil_boundary_loss_cart(u0, u2, bn_ixy, adj_bn, loss_factor):
     Nb = bn_ixy.size
     for i in nb.prange(Nb):
         ib = bn_ixy[i]
         K = adj_bn[i]
-
+        lf = loss_factor
         prev = u2.flat[ib]
         current = u0.flat[ib]
 
@@ -174,7 +174,7 @@ def main():
         # calculate specific admittance γ (g)
         assert abs(refl_coeff) <= 1.0
         g = (1-refl_coeff)/(1+refl_coeff)
-        lf = 0.5*np.sqrt(0.5)*g  # a loss factor
+        loss_factor = 0.5*np.sqrt(0.5)*g  # a loss factor
 
     # Set up an excitation signal
     src_sig = np.zeros(Nt, dtype=np.float64)
@@ -209,7 +209,7 @@ def main():
     h5f.create_dataset('Ny', data=np.int64(Ny))
     h5f.create_dataset('inx', data=np.int64(inx))
     h5f.create_dataset('iny', data=np.int64(iny))
-    h5f.create_dataset('lf', data=np.float64(lf))
+    h5f.create_dataset('loss_factor', data=np.float64(loss_factor))
     h5f.create_dataset('adj_bn', data=adj_bn)
     h5f.create_dataset('bn_ixy', data=bn_ixy)
     h5f.create_dataset('in_mask', data=in_mask.flatten().astype(np.uint8))
@@ -232,7 +232,7 @@ def main():
         if apply_rigid:
             stencil_boundary_rigid_cart(u0, u1, u2, bn_ixy, adj_bn)
             if apply_loss:
-                stencil_boundary_loss_cart(u0, u2, bn_ixy, adj_bn, lf)
+                stencil_boundary_loss_cart(u0, u2, bn_ixy, adj_bn, loss_factor)
 
         u0[inx, iny] = u0[inx, iny] + src_sig[nt]
 
