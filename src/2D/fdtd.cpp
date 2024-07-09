@@ -5,6 +5,7 @@
 #include <array>
 #include <cassert>
 #include <cstdint>
+#include <filesystem>
 #include <span>
 #include <stdexcept>
 #include <string>
@@ -137,8 +138,12 @@ private:
 };
 
 int main(int, char **argv) {
-  auto file = H5FReader{argv[1]};
+  auto filePath = std::filesystem::path{argv[1]};
+  if (not std::filesystem::exists(filePath)) {
+    throw std::runtime_error{"invalid file: " + filePath.string()};
+  }
 
+  auto file = H5FReader{argv[1]};
   auto const Nx = file.read<int64_t>("Nx");
   auto const Ny = file.read<int64_t>("Ny");
   auto const Nt = file.read<int64_t>("Nt");
@@ -263,7 +268,9 @@ int main(int, char **argv) {
 
   std::printf("MAX: %f\n", absMax);
 
-  auto results = H5FWriter{"out.h5"};
+  auto dir = filePath.parent_path();
+  auto outfile = dir / "out.h5";
+  auto results = H5FWriter{outfile.string().c_str()};
   results.write("out", std::span{save}, Nr, Nt);
 
   return EXIT_SUCCESS;

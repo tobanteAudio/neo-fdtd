@@ -94,14 +94,24 @@ def stencil_boundary_loss(u0, u2, bn_ixy, adj_bn, loss_factor):
 
 
 def main():
+    bool_action = argparse.BooleanOptionalAction
     parser = argparse.ArgumentParser()
-    parser.add_argument('--duration', type=float, default=0.09)
+    parser.add_argument('--data_dir', type=str)
+    parser.add_argument('--duration', type=float, default=0.1)
     parser.add_argument('--fmax', type=float, default=1000.0)
     parser.add_argument('--ppw', type=float, default=10.5)
     parser.add_argument('--save', action='store_true')
     parser.add_argument('--video', action='store_true')
+    parser.add_argument('--apply_rigid', action=bool_action, default=True)
+    parser.add_argument('--apply_loss', action=bool_action, default=True)
 
     args = parser.parse_args()
+    if not args.data_dir:
+        raise RuntimeError("--data_dir not given")
+
+    data_dir = pathlib.Path(args.data_dir)
+    if not data_dir.exists():
+        data_dir.mkdir(parents=True)
 
     c = 343  # speed of sound m/s (20degC)
     fmax = args.fmax  # Hz
@@ -115,8 +125,8 @@ def main():
 
     draw = True
     add_dome = False
-    apply_rigid = True
-    apply_loss = True
+    apply_rigid = args.apply_rigid
+    apply_loss = args.apply_loss
 
     if apply_loss:
         assert apply_rigid
@@ -149,7 +159,7 @@ def main():
     if add_dome:
         in_mask[(X - 0.5 * Bx)**2 + (Y - By)**2 < R_dome**2] = True
 
-    in_mask = add_diffusor(dx*3, 0.5, in_mask, X, Y)
+    in_mask = add_diffusor(dx*5, 0.4, in_mask, X, Y)
 
     angles = np.linspace(0.0, 180.0, 180, endpoint=True)
     out_ixy = []
@@ -181,6 +191,7 @@ def main():
         draw_mask = np.nan*in_mask
         draw_mask[in_mask] = 1
 
+    loss_factor = 0
     if apply_loss:
         # calculate specific admittance γ (g)
         assert abs(refl_coeff) <= 1.0
@@ -205,13 +216,13 @@ def main():
     fps = int(min(90, target_sps/sps30))
 
     if args.video:
-        video_name = 'output_video.avi'
+        video_name = data_dir/'output_video.avi'
         height, width = 1000, 1000  # u0.shape
         fourcc = cv2.VideoWriter_fourcc(*'DIVX')
         video = cv2.VideoWriter(video_name, fourcc, fps,
                                 (width, height), isColor=False)
 
-    h5f = h5py.File('.' / pathlib.Path('diffusor.h5'), 'w')
+    h5f = h5py.File(data_dir / pathlib.Path('diffusor.h5'), 'w')
     h5f.create_dataset('fmax', data=np.float64(fmax))
     h5f.create_dataset('fs', data=np.float64(fs))
     h5f.create_dataset('dx', data=np.float64(dx))
