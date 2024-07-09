@@ -884,7 +884,7 @@ void scale_input(SimData *sd)
    {
       for (int64_t ns = 0; ns < Ns; ns++)
       {
-         max_in = std::max(max_in, fabs(in_sigs[(int64_t)ns * Nt + n]));
+         max_in = std::max(max_in, fabs(in_sigs[ns * Nt + n]));
       }
    }
    double aexp = 0.5; // normalise to middle power of two
