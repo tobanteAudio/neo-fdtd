@@ -8,6 +8,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  - opencv
   - h5py >= 3.2.1
   - matplotlib >= 3.4.1
   - mayavi >= 4.7.2
