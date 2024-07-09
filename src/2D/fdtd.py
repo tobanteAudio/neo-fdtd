@@ -1,9 +1,30 @@
+import pathlib
+
 import cv2
+import h5py
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
 import numba as nb
 from tqdm import tqdm
+
+
+def point_on_circle(center, radius, angle):
+    """
+    Calculate the coordinates of a point on a circle arc.
+
+    Parameters:
+    center (tuple): (x, y) coordinates of the center of the circle.
+    radius (float): Radius of the circle.
+    angle (float): Angle in radians.
+
+    Returns:
+    tuple: (p_x, p_y) coordinates of the point on the circle arc.
+    """
+    x, y = center
+    p_x = x + radius * np.cos(angle)
+    p_y = y + radius * np.sin(angle)
+    return (p_x, p_y)
 
 
 def add_diffusor(width, max_depth, in_mask, X, Y):
@@ -58,7 +79,7 @@ def stencil_boundary_rigid_cart(u0, u1, u2, bn_ixy, adj_bn):
 
 
 @nb.njit(parallel=True)
-def stencil_boundary_loss_cart(u0,  u2, bn_ixy, adj_bn, lf):
+def stencil_boundary_loss_cart(u0, u2, bn_ixy, adj_bn, lf):
     Nb = bn_ixy.size
     for i in nb.prange(Nb):
         ib = bn_ixy[i]
@@ -119,6 +140,16 @@ def main():
 
     in_mask = add_diffusor(dx*3, 0.5, in_mask, X, Y)
 
+    angles = np.linspace(0.0, 180.0, 180, endpoint=True)
+    receiver_ixy = []
+    for i in range(angles.shape[0]):
+        x, y = point_on_circle((x_in, y_in-5.0), 5.0, np.deg2rad(angles[i]))
+        xc = int(np.round(x / dx + 0.5) + 1)
+        yc = int(np.round(y / dx + 0.5) + 1)
+        idx = xc+yc*Nx
+        receiver_ixy.append(idx)
+        # in_mask[xc, yc] = False
+
     if apply_rigid:
         # Calculate number of interior neighbours (for interior points only)
         K_map = np.zeros((Nx, Ny), dtype=int)
@@ -127,8 +158,8 @@ def main():
         K_map[1:-1, 1:-1] += in_mask[1:-1, 2:]
         K_map[1:-1, 1:-1] += in_mask[1:-1, :-2]
         K_map[~in_mask] = 0
-        ib = np.where((K_map.flat > 0) & (K_map.flat < 4))[0]
-        Kib = K_map.flat[ib]
+        bn_ixy = np.where((K_map.flat > 0) & (K_map.flat < 4))[0]
+        adj_bn = K_map.flat[bn_ixy]
 
     # Grid forcing points
     inx = int(np.round(x_in / dx + 0.5) + 1)
@@ -146,13 +177,13 @@ def main():
         lf = 0.5*np.sqrt(0.5)*g  # a loss factor
 
     # Set up an excitation signal
-    u_in = np.zeros(Nt, dtype=np.float64)
-    u_in[0] = 1.0
+    src_sig = np.zeros(Nt, dtype=np.float64)
+    src_sig[0] = 1.0
 
     # Nh = int(np.ceil(5 * fs / fmax))
     # n = np.arange(Nh)
-    # u_in[:Nh] = 0.5 - 0.5 * np.cos(2 * np.pi * n / Nh)
-    # u_in[:Nh] *= np.sin(2 * np.pi * n / Nh)
+    # src_sig[:Nh] = 0.5 - 0.5 * np.cos(2 * np.pi * n / Nh)
+    # src_sig[:Nh] *= np.sin(2 * np.pi * n / Nh)
 
     u0 = np.zeros((Nx, Ny), dtype=np.float64)
     u1 = np.zeros((Nx, Ny), dtype=np.float64)
@@ -168,6 +199,24 @@ def main():
     video = cv2.VideoWriter(video_name, fourcc, fps,
                             (width, height), isColor=False)
 
+    h5f = h5py.File('.' / pathlib.Path('diffusor.h5'), 'w')
+    h5f.create_dataset('fmax', data=np.float64(fmax))
+    h5f.create_dataset('fs', data=np.float64(fs))
+    h5f.create_dataset('dx', data=np.float64(dx))
+    h5f.create_dataset('dt', data=np.float64(dt))
+    h5f.create_dataset('Nt', data=np.int64(Nt))
+    h5f.create_dataset('Nx', data=np.int64(Nx))
+    h5f.create_dataset('Ny', data=np.int64(Ny))
+    h5f.create_dataset('inx', data=np.int64(inx))
+    h5f.create_dataset('iny', data=np.int64(iny))
+    h5f.create_dataset('lf', data=np.float64(lf))
+    h5f.create_dataset('adj_bn', data=adj_bn)
+    h5f.create_dataset('bn_ixy', data=bn_ixy)
+    h5f.create_dataset('in_mask', data=in_mask.flatten().astype(np.uint8))
+    h5f.create_dataset('receiver_ixy', data=receiver_ixy)
+    h5f.create_dataset('src_sig', data=src_sig)
+    h5f.close()
+
     print(f'fmax = {fmax:.3f} Hz')
     print(f'fs   = {fs:.3f} Hz')
     print(f'Δx   = {dx*100:.5f} cm / {dx*1000:.2f} mm')
@@ -175,16 +224,17 @@ def main():
     print(f'Nx   = {int(Nx)}')
     print(f'Ny   = {int(Ny)}')
     print(f'Nt   = {int(Nt)}')
-    print(f'Nb   = {ib.shape[0]}')
+    print(f'Nb   = {bn_ixy.shape[0]}')
+    return
 
     for nt in tqdm(range(Nt)):
         stencil_air_cart(u0, u1, u2, in_mask)
         if apply_rigid:
-            stencil_boundary_rigid_cart(u0, u1, u2, ib, Kib)
+            stencil_boundary_rigid_cart(u0, u1, u2, bn_ixy, adj_bn)
             if apply_loss:
-                stencil_boundary_loss_cart(u0, u2, ib, Kib, lf)
+                stencil_boundary_loss_cart(u0, u2, bn_ixy, adj_bn, lf)
 
-        u0[inx, iny] = u0[inx, iny] + u_in[nt]
+        u0[inx, iny] = u0[inx, iny] + src_sig[nt]
 
         u2 = u1.copy()
         u1 = u0.copy()
