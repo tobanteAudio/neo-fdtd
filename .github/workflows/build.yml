@@ -57,22 +57,37 @@ jobs:
         run: |
           sudo apt update -y
           sudo apt install -y libomp-dev ninja-build libhdf5-dev
+          pip3 install --break-system-packages conan
 
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew install ninja llvm hdf5
+        run: brew install conan ninja llvm hdf5
 
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
         shell: bash
-        run: choco install ninja
+        run: |
+          choco install ninja
+          pip3 install --upgrade conan
 
       - name: Install clang
         if: runner.os == 'Windows'
         uses: egor-tensin/setup-clang@v1
 
+      - name: Setup conan
+        run: |
+          conan profile detect -f
+          git clone https://github.com/conan-io/cmake-conan.git -b develop2 external/cmake-conan
+
       - name: CMake configure
-        run: cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_CXX_FLAGS="${{ matrix.cxx_flags }}" ${{ matrix.cmake_flags }}
+        run: >
+          cmake
+          -B build
+          -G Ninja
+          -D CMAKE_BUILD_TYPE=Release
+          -D CMAKE_CXX_FLAGS="${{ matrix.cxx_flags }}"
+          -D CMAKE_PROJECT_TOP_LEVEL_INCLUDES=external/cmake-conan/conan_provider.cmake
+          ${{ matrix.cmake_flags }}
 
       - name: CMake build
         run: cmake --build build
