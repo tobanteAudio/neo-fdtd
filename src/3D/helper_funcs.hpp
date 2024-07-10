@@ -40,7 +40,6 @@ enum TYPE : unsigned char
    BOOL,
 };
 
-bool check_file_exists(char *filename);
 void allocate_zeros(void **arr, uint64_t Nbytes);
 int cmpfunc_int64_keys(const void *a, const void *b);
 void sort_keys(int64_t *val_arr, int64_t *key_arr, int64_t N);

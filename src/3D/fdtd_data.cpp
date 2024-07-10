@@ -15,6 +15,8 @@
 
 #include "fdtd_data.hpp"
 
+#include <filesystem>
+
 // load the sim data from Python-written HDF5 files
 void load_sim_data(SimData *sd)
 {
@@ -61,7 +63,7 @@ void load_sim_data(SimData *sd)
    //
    ////////////////////////////////////////////////////////////////////////
    strcpy(filename, "sim_consts.h5");
-   if (!check_file_exists(filename))
+   if (not std::filesystem::exists(filename))
       assert(true == false);
 
    file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
@@ -135,7 +137,7 @@ void load_sim_data(SimData *sd)
    //
    ////////////////////////////////////////////////////////////////////////
    strcpy(filename, "vox_out.h5");
-   if (!check_file_exists(filename))
+   if (not std::filesystem::exists(filename))
       assert(true == false);
 
    file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
@@ -241,7 +243,7 @@ void load_sim_data(SimData *sd)
    //
    ////////////////////////////////////////////////////////////////////////
    strcpy(filename, "comms_out.h5");
-   if (!check_file_exists(filename))
+   if (not std::filesystem::exists(filename))
       assert(true == false);
 
    file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
@@ -339,7 +341,7 @@ void load_sim_data(SimData *sd)
    //
    ////////////////////////////////////////////////////////////////////////
    strcpy(filename, "sim_mats.h5");
-   if (!check_file_exists(filename))
+   if (not std::filesystem::exists(filename))
       assert(true == false);
 
    file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);

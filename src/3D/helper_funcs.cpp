@@ -14,16 +14,6 @@
 
 #include "helper_funcs.hpp"
 
-// self-explanatory
-bool check_file_exists(char *filename)
-{
-   struct stat st;
-   bool file_exists = stat(filename, &st) == 0;
-   if (!file_exists)
-      printf("%s doesn't exist!\n", filename);
-   return file_exists;
-}
-
 // malloc check malloc, and initialise to zero
 // hard stop program if failed
 void allocate_zeros(void **arr, uint64_t Nbytes)
