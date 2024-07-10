@@ -14,7 +14,7 @@ WARNINGS=-Wall -Wno-deprecated-declarations
 # 	source /opt/intel/oneapi/setvars.sh
 
 all:
-	${CXX} ${FLAGS} ${LIBS} ${WARNINGS} fdtd.cpp
+	${CXX} ${FLAGS} ${LIBS} ${WARNINGS} main.cpp
 ```
 
 ```sh

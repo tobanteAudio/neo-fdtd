@@ -159,7 +159,7 @@ def main():
     if add_dome:
         in_mask[(X - 0.5 * Bx)**2 + (Y - By)**2 < R_dome**2] = True
 
-    in_mask = add_diffusor(dx*5, 0.4, in_mask, X, Y)
+    in_mask = add_diffusor(dx*2, 0.8, in_mask, X, Y)
 
     angles = np.linspace(0.0, 180.0, 180, endpoint=True)
     out_ixy = []

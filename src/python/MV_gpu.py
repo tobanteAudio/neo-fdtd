@@ -37,9 +37,3 @@ sim_setup(
     save_folder_gpu='../../data/sim_data/mv_fcc/gpu',
     compress=3,  # apply level-3 GZIP compression to larger h5 files
 )
-
-# then from '../../data/sim_data/mv_fcc/gpu' folder, run (relative path for default folder structure):
-#   ../../../../src/fdtd_main_gpu_single.x
-
-# then post-process with something like:
-#   python -m fdtd.process_outputs --data_dir='../../data/sim_data/mv_fcc/gpu/' --fcut_lowpass 2500.0 --N_order_lowpass=8 --symmetric --fcut_lowcut 10.0 --N_order_lowcut=4 --air_abs_filter='stokes' --save_wav --plot

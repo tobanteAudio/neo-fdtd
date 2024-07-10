@@ -40,4 +40,4 @@ sim_setup(
 )
 
 # then run with python and 3D visualization:
-#   python3 -m fdtd.sim_fdtd --data_dir='../../data/sim_data/mv_fcc/viz' --plot --draw_backend='mayavi' --json_model='../../data/models/Musikverein_ConcertHall/model_export.json'
+#   python3 -m sim3d.sim_fdtd --data_dir='../../data/sim_data/mv_fcc/viz' --plot --draw_backend='mayavi' --json_model='../../data/models/Musikverein_ConcertHall/model_export.json'
