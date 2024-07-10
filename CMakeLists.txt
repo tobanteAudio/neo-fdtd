@@ -15,6 +15,7 @@ option(PFFDTD_ENABLE_SYCL "Build with sycl" OFF)
 find_package(HDF5 REQUIRED)
 find_package(OpenMP REQUIRED)
 
+add_subdirectory(src/cpp)
 add_subdirectory(src/3D)
 
 if(PFFDTD_ENABLE_SYCL)

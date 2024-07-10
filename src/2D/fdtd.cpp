@@ -1,141 +1,11 @@
-#include <sycl/sycl.hpp>
+#include "pffdtd/hdf.hpp"
+#include "pffdtd/simulation_2d.hpp"
+#include "pffdtd/sycl.hpp"
 
-#include "hdf5.h"
-
-#include <array>
-#include <cassert>
 #include <cstdint>
 #include <filesystem>
-#include <span>
 #include <stdexcept>
 #include <string>
-#include <vector>
-
-template <typename T> inline constexpr auto isStdVector = false;
-
-template <typename T> inline constexpr auto isStdVector<std::vector<T>> = true;
-
-struct H5FReader {
-  explicit H5FReader(char const *str)
-      : _handle{H5Fopen(str, H5F_ACC_RDONLY, H5P_DEFAULT)} {}
-
-  ~H5FReader() { H5Fclose(_handle); }
-
-  template <typename T> [[nodiscard]] auto read(char const *dataset) -> T {
-    if constexpr (isStdVector<T>) {
-      return readBuffer<typename T::value_type>(dataset);
-    }
-
-    auto set = H5Dopen(_handle, dataset, H5P_DEFAULT);
-
-    if constexpr (std::is_same_v<T, int64_t>) {
-      auto val = T{};
-      auto type = H5T_NATIVE_INT64;
-      auto ptr = static_cast<void *>(&val);
-      auto err = H5Dread(set, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr);
-      checkErrorAndCloseDataset(dataset, set, err);
-      return val;
-    }
-
-    if constexpr (std::is_same_v<T, double>) {
-      auto val = T{};
-      auto type = H5T_NATIVE_DOUBLE;
-      auto ptr = static_cast<void *>(&val);
-      auto err = H5Dread(set, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr);
-      checkErrorAndCloseDataset(dataset, set, err);
-      return val;
-    }
-
-    return {};
-  }
-
-  template <typename T>
-  [[nodiscard]] auto readBuffer(char const *dataset) -> std::vector<T> {
-    auto set = H5Dopen(_handle, dataset, H5P_DEFAULT);
-    auto space = H5Dget_space(set);
-
-    auto ndims = 1UL;
-    auto dims = std::array<hsize_t, 3>{};
-    assert(H5Sget_simple_extent_ndims(space) == ndims);
-    H5Sget_simple_extent_dims(space, dims.data(), NULL);
-
-    auto size = ndims == 1 ? dims[0] : dims[0] * dims[1];
-
-    if constexpr (std::is_same_v<T, uint8_t>) {
-      auto type = H5T_NATIVE_UINT8;
-      auto buf = std::vector<T>(size);
-      auto err = H5Dread(set, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, buf.data());
-      checkErrorAndCloseDataset(dataset, set, err);
-      return buf;
-    }
-
-    if constexpr (std::is_same_v<T, int64_t>) {
-      auto type = H5T_NATIVE_INT64;
-      auto buf = std::vector<T>(size);
-      auto err = H5Dread(set, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, buf.data());
-      checkErrorAndCloseDataset(dataset, set, err);
-      return buf;
-    }
-
-    if constexpr (std::is_same_v<T, double>) {
-      auto type = H5T_NATIVE_DOUBLE;
-      auto buf = std::vector<T>(size);
-      auto err = H5Dread(set, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, buf.data());
-      checkErrorAndCloseDataset(dataset, set, err);
-      return buf;
-    }
-  }
-
-private:
-  auto checkErrorAndCloseDataset(char const *name, hid_t set, herr_t err)
-      -> void {
-    if (err != 0) {
-      throw std::runtime_error{"dataset read in: " + std::string{name}};
-    }
-
-    if (H5Dclose(set) != 0) {
-      throw std::runtime_error{"dataset close in: " + std::string{name}};
-    }
-  }
-
-  hid_t _handle;
-};
-
-struct H5FWriter {
-  explicit H5FWriter(char const *path)
-      : _handle{H5Fcreate(path, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)} {}
-
-  ~H5FWriter() { H5Fclose(_handle); }
-
-  auto write(char const *name, std::span<double const> buf, size_t Nx,
-             size_t Ny) -> void {
-    hsize_t dims[2]{Nx, Ny};
-
-    auto def = H5P_DEFAULT;
-    auto type = H5T_NATIVE_DOUBLE;
-
-    auto space = H5Screate_simple(2, dims, NULL);
-    auto set = H5Dcreate(_handle, name, type, space, def, def, def);
-    auto status = H5Dwrite(set, type, H5S_ALL, H5S_ALL, def, buf.data());
-
-    if (status != 0) {
-      throw std::runtime_error("error writing dataset\n");
-    }
-
-    status = H5Dclose(set);
-    if (status != 0) {
-      throw std::runtime_error("error closing dataset\n");
-    }
-
-    status = H5Sclose(space);
-    if (status != 0) {
-      throw std::runtime_error("error closing dataset space\n");
-    }
-  }
-
-private:
-  hid_t _handle;
-};
 
 int main(int, char **argv) {
   auto filePath = std::filesystem::path{argv[1]};
@@ -143,53 +13,52 @@ int main(int, char **argv) {
     throw std::runtime_error{"invalid file: " + filePath.string()};
   }
 
-  auto file = H5FReader{argv[1]};
-  auto const Nx = file.read<int64_t>("Nx");
-  auto const Ny = file.read<int64_t>("Ny");
-  auto const Nt = file.read<int64_t>("Nt");
-  auto const inx = file.read<int64_t>("inx");
-  auto const iny = file.read<int64_t>("iny");
-  auto const loss_factor = file.read<double>("loss_factor");
-  auto const adj_bn = file.read<std::vector<int64_t>>("adj_bn");
-  auto const bn_ixy = file.read<std::vector<int64_t>>("bn_ixy");
-  auto const in_mask = file.read<std::vector<uint8_t>>("in_mask");
-  auto const out_ixy = file.read<std::vector<int64_t>>("out_ixy");
-  auto const src_sig = file.read<std::vector<double>>("src_sig");
+  auto const sim = pffdtd::loadSimulation2D(filePath);
+  auto const Nx = sim.Nx;
+  auto const Ny = sim.Ny;
+  auto const Nt = sim.Nt;
+  auto const inx = sim.inx;
+  auto const iny = sim.iny;
+  auto const N = size_t(sim.Nx * sim.Ny);
+  auto const Nr = sim.out_ixy.size();
 
-  auto const N = size_t(Nx * Ny);
-  auto const Nr = out_ixy.size();
-
-  std::printf("Nt: %ld\n", static_cast<long>(Nt));
-  std::printf("Nx: %ld\n", static_cast<long>(Nx));
-  std::printf("Ny: %ld\n", static_cast<long>(Ny));
+  std::printf("Nt: %ld\n", static_cast<long>(sim.Nt));
+  std::printf("Nx: %ld\n", static_cast<long>(sim.Nx));
+  std::printf("Ny: %ld\n", static_cast<long>(sim.Ny));
   std::printf("N: %ld\n", static_cast<long>(N));
-  std::printf("inx: %ld\n", static_cast<long>(inx));
-  std::printf("iny: %ld\n", static_cast<long>(iny));
-  std::printf("in_mask: %ld\n", static_cast<long>(in_mask.size()));
-  std::printf("bn_ixy: %ld\n", static_cast<long>(bn_ixy.size()));
-  std::printf("adj_bn: %ld\n", static_cast<long>(adj_bn.size()));
+  std::printf("inx: %ld\n", static_cast<long>(sim.inx));
+  std::printf("iny: %ld\n", static_cast<long>(sim.iny));
+  std::printf("in_mask: %ld\n", static_cast<long>(sim.in_mask.size()));
+  std::printf("bn_ixy: %ld\n", static_cast<long>(sim.bn_ixy.size()));
+  std::printf("adj_bn: %ld\n", static_cast<long>(sim.adj_bn.size()));
   std::printf("out_ixy: %ld\n", static_cast<long>(Nr));
-  std::printf("src_sig: %ld\n", static_cast<long>(src_sig.size()));
-  std::printf("loss_factor: %f\n", loss_factor);
+  std::printf("src_sig: %ld\n", static_cast<long>(sim.src_sig.size()));
+  std::printf("loss_factor: %f\n", sim.loss_factor);
+
+  for (auto dev : sycl::device::get_devices()) {
+    pffdtd::printDeviceInfo(dev);
+  }
 
   auto prop = sycl::property_list{sycl::property::queue::in_order()};
   auto queue = sycl::queue{prop};
+  auto device = queue.get_device();
+  pffdtd::printDeviceInfo(device);
 
-  auto u0 = sycl::buffer<double, 2>(sycl::range<2>(Nx, Ny));
-  auto u1 = sycl::buffer<double, 2>(sycl::range<2>(Nx, Ny));
-  auto u2 = sycl::buffer<double, 2>(sycl::range<2>(Nx, Ny));
-  auto out = sycl::buffer<double, 2>(sycl::range<2>(Nr, Nt));
+  auto u0 = sycl::buffer<double, 2>(sycl::range<2>(sim.Nx, sim.Ny));
+  auto u1 = sycl::buffer<double, 2>(sycl::range<2>(sim.Nx, sim.Ny));
+  auto u2 = sycl::buffer<double, 2>(sycl::range<2>(sim.Nx, sim.Ny));
+  auto out = sycl::buffer<double, 2>(sycl::range<2>(Nr, sim.Nt));
 
-  auto in_mask_buf = sycl::buffer<uint8_t, 1>{in_mask};
-  auto bn_ixy_buf = sycl::buffer<int64_t, 1>{bn_ixy};
-  auto adj_bn_buf = sycl::buffer<int64_t, 1>{adj_bn};
-  auto out_ixy_buf = sycl::buffer<int64_t, 1>{out_ixy};
-  auto src_sig_buf = sycl::buffer<double, 1>{src_sig};
+  auto in_mask_buf = sycl::buffer<uint8_t, 1>{sim.in_mask};
+  auto bn_ixy_buf = sycl::buffer<int64_t, 1>{sim.bn_ixy};
+  auto adj_bn_buf = sycl::buffer<int64_t, 1>{sim.adj_bn};
+  auto out_ixy_buf = sycl::buffer<int64_t, 1>{sim.out_ixy};
+  auto src_sig_buf = sycl::buffer<double, 1>{sim.src_sig};
 
   std::printf("111111111");
-  for (auto i{0UL}; i < Nt; ++i) {
+  for (auto i{0UL}; i < sim.Nt; ++i) {
     std::printf("\r\r\r\r\r\r\r\r\r");
-    std::printf("%04d/%04d", int(i), int(Nt));
+    std::printf("%04d/%04d", int(i), int(sim.Nt));
     std::fflush(stdout);
 
     queue.submit([&](sycl::handler &cgh) {
@@ -276,7 +145,7 @@ int main(int, char **argv) {
 
   auto dir = filePath.parent_path();
   auto outfile = dir / "out.h5";
-  auto results = H5FWriter{outfile.string().c_str()};
+  auto results = pffdtd::H5FWriter{outfile.string().c_str()};
   results.write("out", std::span{save}, Nr, Nt);
 
   return EXIT_SUCCESS;
