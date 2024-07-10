@@ -16,9 +16,9 @@ find_package(HDF5 REQUIRED)
 find_package(OpenMP REQUIRED)
 
 add_subdirectory(src/cpp)
-add_subdirectory(src/3D)
+add_subdirectory(src/cpp/main_3d)
 
 if(PFFDTD_ENABLE_SYCL)
     find_package(IntelSYCL REQUIRED)
-    add_subdirectory(src/2D)
+    add_subdirectory(src/cpp/main_2d)
 endif()

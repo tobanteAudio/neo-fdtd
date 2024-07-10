@@ -4,7 +4,7 @@ set -e
 
 root_dir="$(cd "$(dirname "$0")" && pwd)"
 python_dir="$root_dir/src/python"
-engine_exe="$root_dir/build/src/3D/pffdtd_3d"
+engine_exe="$root_dir/build/src/cpp/main_3d/pffdtd_3d"
 
 sim_name="Studio"
 sim_setup="${sim_name}_cpu.py"
