@@ -56,12 +56,12 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt update -y
-          sudo apt install -y libomp-dev ninja-build libhdf5-dev
+          sudo apt install -y libomp-dev ninja-build
           pip3 install --break-system-packages conan
 
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew install conan ninja llvm hdf5
+        run: brew install conan ninja llvm
 
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
