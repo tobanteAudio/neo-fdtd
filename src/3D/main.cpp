@@ -12,50 +12,38 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <stdio.h>
-#include <stdint.h> //uint types
-#include <assert.h> //for assert
-#include <time.h>   //date and time
-
-#include "helper_funcs.hpp"
 #include "fdtd_common.hpp"
 #include "fdtd_data.hpp"
+#include "helper_funcs.hpp"
 
-#ifndef USING_CUDA // this is defined in Makefile
-#error "forgot to define USING_CUDA"
+#ifndef USING_CUDA
+  #error "forgot to define USING_CUDA"
 #endif
 
 #if USING_CUDA
-#include "gpu_engine.hpp"
+  #include "gpu_engine.hpp"
 #else
-#include "cpu_engine.hpp"
+  #include "cpu_engine.hpp"
 #endif
 
-int main(int argc, char **argv)
-{
-   (void)argc;
-   (void)argv;
+#include <chrono>
+#include <cstdio>
 
-   // print date & time to start
-   time_t t0;
-   time(&t0);
-   printf("--Date and time: %s", ctime(&t0)); // prints new line
+auto main(int /*argc*/, char** /*argv*/) -> int {
+  auto const start = std::chrono::steady_clock::now();
 
-   // double-check on 64-bit system
-   assert(sizeof(size_t) == sizeof(int64_t));
+  auto sim = Simulation3D{};
+  loadSimulation3D(&sim);
+  scaleInput(&sim);
+  runSim(&sim);
+  rescaleOutput(&sim);
+  writeOutputs(&sim);
+  printLastSample(&sim);
+  freeSimulation3D(&sim);
 
-    auto sim = Simulation3D{};
+  auto const stop = std::chrono::steady_clock::now();
+  auto const sec  = std::chrono::duration<double>(stop - start);
+  std::printf("--Simulation time: %f s", sec.count());
 
-   loadSimulation3D(&sim);
-   scaleInput(&sim);
-   runSim(&sim);
-   rescaleOutput(&sim);
-   writeOutputs(&sim);
-   printLastSample(&sim);
-   freeSimulation3D(&sim);
-
-   // print date & time to end
-   time(&t0);
-   printf("--Date and time: %s", ctime(&t0));
-   return 0;
+  return 0;
 }
