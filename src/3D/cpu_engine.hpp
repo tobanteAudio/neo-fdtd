@@ -14,9 +14,21 @@
 
 #pragma once
 
-#include "helper_funcs.hpp"
 #include "fdtd_common.hpp"
 #include "fdtd_data.hpp"
+#include "helper_funcs.hpp"
 
-double runSim(Simulation3D *sd);
-double process_bnl_pts_fd(Real *u0b, const Real *u2b, const Real *ssaf_bnl, const int8_t *mat_bnl, int64_t Nbl, int8_t *Mb, Real lo2, Real *vh1, Real *gh1, const MatQuad *mat_quads, const Real *mat_beta);
+double runSim(Simulation3D* sd);
+double process_bnl_pts_fd(
+    Real* u0b,
+    Real const* u2b,
+    Real const* ssaf_bnl,
+    int8_t const* mat_bnl,
+    int64_t Nbl,
+    int8_t* Mb,
+    Real lo2,
+    Real* vh1,
+    Real* gh1,
+    MatQuad const* mat_quads,
+    Real const* mat_beta
+);
