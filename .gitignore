@@ -5,6 +5,8 @@
 .DS_Store
 *.avi
 a.out
+/external
+/CMakeUserPresets.json
 
 /venv
 __pycache__# Byte-compiled / optimized / DLL files
