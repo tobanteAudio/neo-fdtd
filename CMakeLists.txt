@@ -13,6 +13,7 @@ option(PFFDTD_ENABLE_SYCL "Build with sycl" OFF)
 
 find_package(fmt REQUIRED)
 find_package(HDF5 REQUIRED)
+find_package(OpenCV REQUIRED COMPONENTS core videoio)
 find_package(OpenMP REQUIRED)
 
 add_subdirectory(src/cpp)
