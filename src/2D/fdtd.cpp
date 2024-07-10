@@ -238,7 +238,8 @@ int main(int, char **argv) {
           sycl::range<1>(Nr), [=](sycl::id<1> id) {
             auto const r = id[0];
             auto const r_ixy = out_ixy_acc[r];
-            out_acc[r][i] = u0_acc.get_pointer()[r_ixy];
+            auto flatPtr = u0_acc.get_multi_ptr<sycl::access::decorated::no>();
+            out_acc[r][i] = flatPtr[r_ixy];
           });
     });
 
@@ -258,15 +259,20 @@ int main(int, char **argv) {
 
   auto save = std::vector<double>(Nt * Nr);
   auto host = sycl::host_accessor{out, sycl::read_only};
-  auto absMax = 0.0;
+  auto max = 0.0;
+  auto min = 0.0;
   for (auto i{0UL}; i < Nt; ++i) {
     for (auto r{0UL}; r < Nr; ++r) {
-      save[i * Nr + r] = host[r][i];
-      absMax = std::max(absMax, std::abs(host[r][i]));
+      auto const sample = host[r][i];
+      save[i * Nr + r] = sample;
+      max = std::max(max, sample);
+      min = std::min(min, sample);
     }
   }
 
-  std::printf("MAX: %f\n", absMax);
+  std::puts("");
+  std::printf("MAX: %f\n", max);
+  std::printf("MIN: %f\n", min);
 
   auto dir = filePath.parent_path();
   auto outfile = dir / "out.h5";
