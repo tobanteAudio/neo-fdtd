@@ -28,7 +28,7 @@ inline auto toString(sycl::info::device_type type) -> std::string {
   return "Unkown";
 }
 
-inline auto printDeviceInfo(sycl::device dev) -> void {
+inline auto summary(sycl::device dev) -> void {
   auto name = dev.get_info<sycl::info::device::name>();
   auto vendor = dev.get_info<sycl::info::device::vendor>();
   auto type = dev.get_info<sycl::info::device::device_type>();

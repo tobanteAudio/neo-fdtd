@@ -14,6 +14,8 @@ int main(int, char **argv) {
   }
 
   auto const sim = pffdtd::loadSimulation2D(filePath);
+  pffdtd::summary(sim);
+
   auto const Nx = sim.Nx;
   auto const Ny = sim.Ny;
   auto const Nt = sim.Nt;
@@ -22,27 +24,14 @@ int main(int, char **argv) {
   auto const N = size_t(sim.Nx * sim.Ny);
   auto const Nr = sim.out_ixy.size();
 
-  std::printf("Nt: %ld\n", static_cast<long>(sim.Nt));
-  std::printf("Nx: %ld\n", static_cast<long>(sim.Nx));
-  std::printf("Ny: %ld\n", static_cast<long>(sim.Ny));
-  std::printf("N: %ld\n", static_cast<long>(N));
-  std::printf("inx: %ld\n", static_cast<long>(sim.inx));
-  std::printf("iny: %ld\n", static_cast<long>(sim.iny));
-  std::printf("in_mask: %ld\n", static_cast<long>(sim.in_mask.size()));
-  std::printf("bn_ixy: %ld\n", static_cast<long>(sim.bn_ixy.size()));
-  std::printf("adj_bn: %ld\n", static_cast<long>(sim.adj_bn.size()));
-  std::printf("out_ixy: %ld\n", static_cast<long>(Nr));
-  std::printf("src_sig: %ld\n", static_cast<long>(sim.src_sig.size()));
-  std::printf("loss_factor: %f\n", sim.loss_factor);
-
   for (auto dev : sycl::device::get_devices()) {
-    pffdtd::printDeviceInfo(dev);
+    pffdtd::summary(dev);
   }
 
   auto prop = sycl::property_list{sycl::property::queue::in_order()};
   auto queue = sycl::queue{prop};
   auto device = queue.get_device();
-  pffdtd::printDeviceInfo(device);
+  pffdtd::summary(device);
 
   auto u0 = sycl::buffer<double, 2>(sycl::range<2>(sim.Nx, sim.Ny));
   auto u1 = sycl::buffer<double, 2>(sycl::range<2>(sim.Nx, sim.Ny));
