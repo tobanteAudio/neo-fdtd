@@ -31,7 +31,7 @@
 #define CLEAR_BIT(var, pos) ((var) &= ~(1ULL << (pos)))
 #define SET_BIT_VAL(var, pos, val) ((var) = ((var) & ~(1ULL << (pos))) | ((val) << (pos)))
 
-enum TYPE : unsigned char
+enum DataType : unsigned char
 {
    FLOAT64,
    FLOAT32,

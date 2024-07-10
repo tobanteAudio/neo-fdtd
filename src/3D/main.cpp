@@ -44,16 +44,15 @@ int main(int argc, char **argv)
    // double-check on 64-bit system
    assert(sizeof(size_t) == sizeof(int64_t));
 
-   struct SimData sd;
+    auto sim = Simulation3D{};
 
-   // load, scale, run, rescale, free..
-   load_sim_data(&sd);
-   scale_input(&sd);
-   run_sim(&sd);
-   rescale_output(&sd);
-   write_outputs(&sd);
-   print_last_samples(&sd);
-   free_sim_data(&sd);
+   loadSimulation3D(&sim);
+   scaleInput(&sim);
+   runSim(&sim);
+   rescaleOutput(&sim);
+   writeOutputs(&sim);
+   printLastSample(&sim);
+   freeSimulation3D(&sim);
 
    // print date & time to end
    time(&t0);

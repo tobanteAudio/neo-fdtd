@@ -14,6 +14,8 @@
 
 #include "cpu_engine.hpp"
 
+#include <vector>
+
 #include <stdio.h>
 #include <stdlib.h> //for malloc
 #include <stdint.h>
@@ -22,7 +24,7 @@
 #include <math.h>    //NAN
 #include <omp.h>
 
-double run_sim(SimData *sd)
+double runSim(Simulation3D *sd)
 {
    // keep local ints, scalars
    int64_t Ns = sd->Ns;
@@ -54,24 +56,24 @@ double run_sim(SimData *sd)
    Real *mat_beta = sd->mat_beta;
    MatQuad *mat_quads = sd->mat_quads;
 
-   // these are states grids
-   Real *u0, *u1;
-   // local copies for boundary
-   Real *u0b, *u1b, *u2b, *u2ba;
-   // for FD-boundaries
-   Real *vh1, *gh1;
-
    // allocate memory
-   allocate_zeros((void **)&u0, (size_t)Npts * sizeof(Real));
-   allocate_zeros((void **)&u1, (size_t)Npts * sizeof(Real));
-   allocate_zeros((void **)&u0b, (size_t)Nbl * sizeof(Real));
-   allocate_zeros((void **)&u1b, (size_t)Nbl * sizeof(Real));
-   allocate_zeros((void **)&u2b, (size_t)Nbl * sizeof(Real));
-   allocate_zeros((void **)&u2ba, (size_t)Nba * sizeof(Real));
+   auto u0_buf = std::vector<Real>(static_cast<size_t>(Npts));
+   auto u1_buf = std::vector<Real>(static_cast<size_t>(Npts));
+   auto u0b_buf = std::vector<Real>(static_cast<size_t>(Nbl));
+   auto u1b_buf = std::vector<Real>(static_cast<size_t>(Nbl));
+   auto u2b_buf = std::vector<Real>(static_cast<size_t>(Nbl));
+   auto u2ba_buf = std::vector<Real>(static_cast<size_t>(Nba));
+   auto vh1_buf = std::vector<Real>(static_cast<size_t>(Nbl * MMb));
+   auto gh1_buf = std::vector<Real>(static_cast<size_t>(Nbl * MMb));
 
-   // size hash-defined, but not using all of it necesssarily
-   allocate_zeros((void **)&vh1, (size_t)Nbl * MMb * sizeof(Real));
-   allocate_zeros((void **)&gh1, (size_t)Nbl * MMb * sizeof(Real));
+   Real *u0 = u0_buf.data();
+   Real *u1 = u1_buf.data();
+   Real* u0b = u0b_buf.data();
+   Real* u1b = u1b_buf.data();
+   Real* u2b = u2b_buf.data();
+   Real* u2ba = u2ba_buf.data();
+   Real* vh1 = vh1_buf.data();
+   Real* gh1 = gh1_buf.data();
 
    // sim coefficients
    Real lo2 = sd->lo2;
@@ -343,18 +345,6 @@ double run_sim(SimData *sd)
    // timing
    double end_time = omp_get_wtime();
    time_elapsed = end_time - start_time;
-
-   /*------------------------
-    * FREE WILLY
-   ------------------------*/
-   free(u0);
-   free(u1);
-   free(u0b);
-   free(u1b);
-   free(u2b);
-   free(u2ba);
-   free(vh1);
-   free(gh1);
 
    /*------------------------
     * RETURN

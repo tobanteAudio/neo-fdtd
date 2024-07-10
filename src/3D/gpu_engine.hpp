@@ -60,9 +60,9 @@ __constant__ int64_t cuNxNy;
 __constant__ int8_t cuMb[MNm]; //to store Mb per mat (MNm has to be hash-defined)
 
 uint64_t print_gpu_details(int i);
-void check_sorted(const struct SimData *sd);
-void split_data(const struct SimData *sd, struct gpuHostData *ghds, int ngpus);
-double run_sim(const struct SimData *sd);
+void check_sorted(const struct Simulation3D *sd);
+void split_data(const struct Simulation3D *sd, struct gpuHostData *ghds, int ngpus);
+double runSim(const struct Simulation3D *sd);
 //CUDA kernels
 __global__ void KernelAirCart(Real * __restrict__ u0, const Real * __restrict__ u1, const uint8_t * __restrict__ bn_mask);
 __global__ void KernelAirFCC(Real * __restrict__ u0, const Real * __restrict__ u1, const uint8_t * __restrict__ bn_mask);
@@ -476,7 +476,7 @@ __global__ void FlipHaloYZ_Xend(Real * __restrict__ u1)
 }
 
 //input indices need to be sorted for multi-device allocation
-void check_sorted(const struct SimData *sd) {
+void check_sorted(const struct Simulation3D *sd) {
    int64_t *bn_ixyz = sd->bn_ixyz;
    int64_t *bnl_ixyz = sd->bnl_ixyz;
    int64_t *bna_ixyz = sd->bna_ixyz;
@@ -495,7 +495,7 @@ void check_sorted(const struct SimData *sd) {
 }
 
 //counts for splitting data across GPUs
-void split_data(const struct SimData *sd, struct gpuHostData *ghds, int ngpus) {
+void split_data(const struct Simulation3D *sd, struct gpuHostData *ghds, int ngpus) {
    int64_t Nx = sd->Nx;
    int64_t Ny = sd->Ny;
    int64_t Nz = sd->Nz;
@@ -644,7 +644,7 @@ void split_data(const struct SimData *sd, struct gpuHostData *ghds, int ngpus) {
 }
 
 //run the sim!
-double run_sim(const struct SimData *sd)
+double runSim(const struct Simulation3D *sd)
 {
    //if you want to test synchronous, env variable for that
    const char* s = getenv("CUDA_LAUNCH_BLOCKING");

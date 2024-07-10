@@ -15,10 +15,14 @@
 
 #include "fdtd_data.hpp"
 
+#include "pffdtd/hdf.hpp"
+
+#include <algorithm>
 #include <filesystem>
+#include <cstdio>
 
 // load the sim data from Python-written HDF5 files
-void load_sim_data(SimData *sd)
+void loadSimulation3D(Simulation3D *sim)
 {
    // local values, to read in and attach to struct at end
    int64_t Nx, Ny, Nz;
@@ -72,19 +76,19 @@ void load_sim_data(SimData *sd)
    // constants
    //////////////////
    strcpy(dset_str, "l");
-   read_h5_constant(file, dset_str, (void *)&l, FLOAT64);
+   readH5Constant(file, dset_str, (void *)&l, FLOAT64);
    printf("l=%.16g\n", l);
 
    strcpy(dset_str, "l2");
-   read_h5_constant(file, dset_str, (void *)&l2, FLOAT64);
+   readH5Constant(file, dset_str, (void *)&l2, FLOAT64);
    printf("l2=%.16g\n", l2);
 
    strcpy(dset_str, "Ts");
-   read_h5_constant(file, dset_str, (void *)&Ts, FLOAT64);
+   readH5Constant(file, dset_str, (void *)&Ts, FLOAT64);
    printf("Ts=%.16g\n", Ts);
 
    strcpy(dset_str, "fcc_flag");
-   read_h5_constant(file, dset_str, (void *)&fcc_flag, INT8);
+   readH5Constant(file, dset_str, (void *)&fcc_flag, INT8);
    printf("fcc_flag=%d\n", fcc_flag);
    assert((fcc_flag >= 0) && (fcc_flag <= 2));
    // printf("%s", fcc>0 ? "fcc=true\n" : "fcc=false\n");
@@ -146,22 +150,22 @@ void load_sim_data(SimData *sd)
    // integers
    //////////////////
    strcpy(dset_str, "Nx");
-   read_h5_constant(file, dset_str, (void *)&Nx, INT64);
+   readH5Constant(file, dset_str, (void *)&Nx, INT64);
    printf("Nx=%ld\n", static_cast<long>(Nx));
 
    strcpy(dset_str, "Ny");
-   read_h5_constant(file, dset_str, (void *)&Ny, INT64);
+   readH5Constant(file, dset_str, (void *)&Ny, INT64);
    printf("Ny=%ld\n", static_cast<long>(Ny));
 
    strcpy(dset_str, "Nz");
-   read_h5_constant(file, dset_str, (void *)&Nz, INT64);
+   readH5Constant(file, dset_str, (void *)&Nz, INT64);
    printf("Nz=%ld\n", static_cast<long>(Nz));
 
    Npts = Nx * Ny * Nz;
    printf("Npts=%ld\n", static_cast<long>(Npts));
 
    strcpy(dset_str, "Nb");
-   read_h5_constant(file, dset_str, (void *)&Nb, INT64);
+   readH5Constant(file, dset_str, (void *)&Nb, INT64);
    printf("Nb=%ld\n", static_cast<long>(Nb));
 
    //////////////////
@@ -169,7 +173,7 @@ void load_sim_data(SimData *sd)
    //////////////////
    strcpy(dset_str, "bn_ixyz");
    expected_ndims = 1;
-   read_h5_dataset(file, dset_str, expected_ndims, dims, (void **)&bn_ixyz, INT64);
+   readH5Dataset(file, dset_str, expected_ndims, dims, (void **)&bn_ixyz, INT64);
    assert((int64_t)dims[0] == Nb);
 
    // printf("bn_ixyz=");
@@ -183,7 +187,7 @@ void load_sim_data(SimData *sd)
    //////////////////
    strcpy(dset_str, "adj_bn");
    expected_ndims = 2;
-   read_h5_dataset(file, dset_str, expected_ndims, dims, (void **)&adj_bn_bool, BOOL);
+   readH5Dataset(file, dset_str, expected_ndims, dims, (void **)&adj_bn_bool, BOOL);
    assert((int64_t)dims[0] == Nb);
    assert(dims[1] == (hsize_t)NN);
 
@@ -202,7 +206,7 @@ void load_sim_data(SimData *sd)
    //////////////////
    strcpy(dset_str, "mat_bn");
    expected_ndims = 1;
-   read_h5_dataset(file, dset_str, expected_ndims, dims, (void **)&mat_bn, INT8);
+   readH5Dataset(file, dset_str, expected_ndims, dims, (void **)&mat_bn, INT8);
    assert((int64_t)dims[0] == Nb);
 
    //////////////////
@@ -210,7 +214,7 @@ void load_sim_data(SimData *sd)
    //////////////////
    strcpy(dset_str, "saf_bn");
    expected_ndims = 1;
-   read_h5_dataset(file, dset_str, expected_ndims, dims, (void **)&saf_bn, FLOAT64);
+   readH5Dataset(file, dset_str, expected_ndims, dims, (void **)&saf_bn, FLOAT64);
    assert((int64_t)dims[0] == Nb);
 
    allocate_zeros((void **)&ssaf_bn, Nb * sizeof(Real));
@@ -252,23 +256,23 @@ void load_sim_data(SimData *sd)
    // integers
    //////////////////
    strcpy(dset_str, "Nt");
-   read_h5_constant(file, dset_str, (void *)&Nt, INT64);
+   readH5Constant(file, dset_str, (void *)&Nt, INT64);
    printf("Nt=%ld\n", static_cast<long>(Nt));
 
    strcpy(dset_str, "Ns");
-   read_h5_constant(file, dset_str, (void *)&Ns, INT64);
+   readH5Constant(file, dset_str, (void *)&Ns, INT64);
    printf("Ns=%ld\n", static_cast<long>(Ns));
 
    strcpy(dset_str, "Nr");
-   read_h5_constant(file, dset_str, (void *)&Nr, INT64);
+   readH5Constant(file, dset_str, (void *)&Nr, INT64);
    printf("Nr=%ld\n", static_cast<long>(Nr));
 
    strcpy(dset_str, "Nr");
-   read_h5_constant(file, dset_str, (void *)&Nr, INT64);
+   readH5Constant(file, dset_str, (void *)&Nr, INT64);
    printf("Nr=%ld\n", static_cast<long>(Nr));
 
    strcpy(dset_str, "diff");
-   read_h5_constant(file, dset_str, (void *)&diff, BOOL);
+   readH5Constant(file, dset_str, (void *)&diff, BOOL);
    printf("diff=%d\n", diff);
 
    //////////////////
@@ -276,7 +280,7 @@ void load_sim_data(SimData *sd)
    //////////////////
    strcpy(dset_str, "in_ixyz");
    expected_ndims = 1;
-   read_h5_dataset(file, dset_str, expected_ndims, dims, (void **)&in_ixyz, INT64);
+   readH5Dataset(file, dset_str, expected_ndims, dims, (void **)&in_ixyz, INT64);
    assert((int64_t)dims[0] == Ns);
 
    // printf("in_ixyz=");
@@ -290,12 +294,12 @@ void load_sim_data(SimData *sd)
    //////////////////
    strcpy(dset_str, "out_ixyz");
    expected_ndims = 1;
-   read_h5_dataset(file, dset_str, expected_ndims, dims, (void **)&out_ixyz, INT64);
+   readH5Dataset(file, dset_str, expected_ndims, dims, (void **)&out_ixyz, INT64);
    assert((int64_t)dims[0] == Nr);
 
    strcpy(dset_str, "out_reorder");
    expected_ndims = 1;
-   read_h5_dataset(file, dset_str, expected_ndims, dims, (void **)&out_reorder, INT64);
+   readH5Dataset(file, dset_str, expected_ndims, dims, (void **)&out_reorder, INT64);
    assert((int64_t)dims[0] == Nr);
 
    // printf("out_ixyz=");
@@ -309,7 +313,7 @@ void load_sim_data(SimData *sd)
    //////////////////
    strcpy(dset_str, "in_sigs");
    expected_ndims = 2;
-   read_h5_dataset(file, dset_str, expected_ndims, dims, (void **)&in_sigs, FLOAT64);
+   readH5Dataset(file, dset_str, expected_ndims, dims, (void **)&in_sigs, FLOAT64);
    assert((int64_t)dims[0] == Ns);
    assert((int64_t)dims[1] == Nt);
 
@@ -351,14 +355,14 @@ void load_sim_data(SimData *sd)
    //////////////////
 
    strcpy(dset_str, "Nmat");
-   read_h5_constant(file, dset_str, (void *)&Nm, INT8);
+   readH5Constant(file, dset_str, (void *)&Nm, INT8);
    printf("Nm=%d\n", Nm);
 
    assert(Nm <= MNm);
 
    strcpy(dset_str, "Mb");
    expected_ndims = 1;
-   read_h5_dataset(file, dset_str, expected_ndims, dims, (void **)&Mb, INT8);
+   readH5Dataset(file, dset_str, expected_ndims, dims, (void **)&Mb, INT8);
 
    for (int8_t i = 0; i < Nm; i++)
    {
@@ -375,7 +379,7 @@ void load_sim_data(SimData *sd)
       double *DEF; // for one material
       sprintf(dset_str, "mat_%02d_DEF", i);
       expected_ndims = 2;
-      read_h5_dataset(file, dset_str, expected_ndims, dims, (void **)&DEF, FLOAT64);
+      readH5Dataset(file, dset_str, expected_ndims, dims, (void **)&DEF, FLOAT64);
       assert((int8_t)dims[0] == Mb[i]);
       assert((int8_t)dims[1] == 3);
       assert(Mb[i] <= MMb);
@@ -660,72 +664,72 @@ void load_sim_data(SimData *sd)
    /*------------------------
     * ATTACH
    ------------------------*/
-   sd->Ns = Ns;
-   sd->Nr = Nr;
-   sd->Nt = Nt;
-   sd->Npts = Npts;
-   sd->Nx = Nx;
-   sd->Ny = Ny;
-   sd->Nz = Nz;
-   sd->Nb = Nb;
-   sd->Nbl = Nbl;
-   sd->Nba = Nba;
-   sd->l = l;
-   sd->l2 = l2;
-   sd->fcc_flag = fcc_flag;
-   sd->Nm = Nm;
-   sd->NN = NN;
-   sd->a2 = a2;
-   sd->a1 = a1;
-   sd->sl2 = sl2;
-   sd->lo2 = lo2;
-   sd->Mb = Mb;
-   sd->bn_ixyz = bn_ixyz;
-   sd->bnl_ixyz = bnl_ixyz;
-   sd->bna_ixyz = bna_ixyz;
-   sd->Q_bna = Q_bna;
-   sd->adj_bn = adj_bn;
-   sd->ssaf_bnl = ssaf_bnl;
-   sd->bn_mask = bn_mask;
-   sd->mat_bnl = mat_bnl;
-   sd->K_bn = K_bn;
-   sd->out_ixyz = out_ixyz;
-   sd->out_reorder = out_reorder;
-   sd->in_ixyz = in_ixyz;
-   sd->in_sigs = in_sigs;
-   sd->u_out = u_out;
-   sd->mat_beta = mat_beta;
-   sd->mat_quads = mat_quads;
+   sim->Ns = Ns;
+   sim->Nr = Nr;
+   sim->Nt = Nt;
+   sim->Npts = Npts;
+   sim->Nx = Nx;
+   sim->Ny = Ny;
+   sim->Nz = Nz;
+   sim->Nb = Nb;
+   sim->Nbl = Nbl;
+   sim->Nba = Nba;
+   sim->l = l;
+   sim->l2 = l2;
+   sim->fcc_flag = fcc_flag;
+   sim->Nm = Nm;
+   sim->NN = NN;
+   sim->a2 = a2;
+   sim->a1 = a1;
+   sim->sl2 = sl2;
+   sim->lo2 = lo2;
+   sim->Mb = Mb;
+   sim->bn_ixyz = bn_ixyz;
+   sim->bnl_ixyz = bnl_ixyz;
+   sim->bna_ixyz = bna_ixyz;
+   sim->Q_bna = Q_bna;
+   sim->adj_bn = adj_bn;
+   sim->ssaf_bnl = ssaf_bnl;
+   sim->bn_mask = bn_mask;
+   sim->mat_bnl = mat_bnl;
+   sim->K_bn = K_bn;
+   sim->out_ixyz = out_ixyz;
+   sim->out_reorder = out_reorder;
+   sim->in_ixyz = in_ixyz;
+   sim->in_sigs = in_sigs;
+   sim->u_out = u_out;
+   sim->mat_beta = mat_beta;
+   sim->mat_quads = mat_quads;
 }
 
 // free everything
-void free_sim_data(SimData *sd)
+void freeSimulation3D(Simulation3D *sim)
 {
    /*------------------------
     * FREE WILLY
    ------------------------*/
-   free(sd->bn_ixyz);
-   free(sd->bnl_ixyz);
-   free(sd->bna_ixyz);
-   free(sd->Q_bna);
-   free(sd->adj_bn);
-   free(sd->mat_bnl);
-   free(sd->bn_mask);
-   free(sd->ssaf_bnl);
-   free(sd->K_bn);
-   free(sd->in_ixyz);
-   free(sd->out_ixyz);
-   free(sd->out_reorder);
-   free(sd->in_sigs);
-   free(sd->u_out);
-   free(sd->Mb);
-   free(sd->mat_beta);
-   free(sd->mat_quads);
+   free(sim->bn_ixyz);
+   free(sim->bnl_ixyz);
+   free(sim->bna_ixyz);
+   free(sim->Q_bna);
+   free(sim->adj_bn);
+   free(sim->mat_bnl);
+   free(sim->bn_mask);
+   free(sim->ssaf_bnl);
+   free(sim->K_bn);
+   free(sim->in_ixyz);
+   free(sim->out_ixyz);
+   free(sim->out_reorder);
+   free(sim->in_sigs);
+   free(sim->u_out);
+   free(sim->Mb);
+   free(sim->mat_beta);
+   free(sim->mat_quads);
    printf("sim data freed\n");
 }
 
 // read HDF5 files
-void read_h5_dataset(hid_t file, char *dset_str, int ndims, hsize_t *dims, void **data_array, TYPE t)
+void readH5Dataset(hid_t file, char *dset_str, int ndims, hsize_t *dims, void **out_array, DataType t)
 {
    hid_t dset, dspace;
    uint64_t N = 0;
@@ -753,24 +757,24 @@ void read_h5_dataset(hid_t file, char *dset_str, int ndims, hsize_t *dims, void 
    switch (t)
    {
    case FLOAT64:
-      *data_array = (double *)malloc(N * sizeof(double));
+      *out_array = (double *)malloc(N * sizeof(double));
       break;
    case FLOAT32:
-      *data_array = (double *)malloc(N * sizeof(float));
+      *out_array = (double *)malloc(N * sizeof(float));
       break;
    case INT64:
-      *data_array = (int64_t *)malloc(N * sizeof(int64_t));
+      *out_array = (int64_t *)malloc(N * sizeof(int64_t));
       break;
    case INT8:
-      *data_array = (int8_t *)malloc(N * sizeof(int8_t));
+      *out_array = (int8_t *)malloc(N * sizeof(int8_t));
       break;
    case BOOL:
-      *data_array = (bool *)malloc(N * sizeof(bool));
+      *out_array = (bool *)malloc(N * sizeof(bool));
       break;
    default:
       assert(true == false);
    }
-   if (*data_array == NULL)
+   if (*out_array == NULL)
    {
       printf("Memory allocation failed");
       assert(true == false); // to break
@@ -779,18 +783,18 @@ void read_h5_dataset(hid_t file, char *dset_str, int ndims, hsize_t *dims, void 
    switch (t)
    {
    case FLOAT64:
-      status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, *data_array);
+      status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array);
       break;
    case FLOAT32:
-      status = H5Dread(dset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, *data_array);
+      status = H5Dread(dset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array);
       break;
    case INT64:
-      status = H5Dread(dset, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, *data_array);
+      status = H5Dread(dset, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array);
       break;
    case INT8:
    case BOOL: // bool read in as INT8
-      status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, *data_array);
-      status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, *data_array);
+      status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array);
+      status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array);
       break;
    default:
       assert(true == false);
@@ -813,7 +817,7 @@ void read_h5_dataset(hid_t file, char *dset_str, int ndims, hsize_t *dims, void 
 }
 
 // read scalars from HDF5 datasets
-void read_h5_constant(hid_t file, char *dset_str, void *data_container, TYPE t)
+void readH5Constant(hid_t file, char *dset_str, void *out, DataType t)
 {
    hid_t dset, dspace;
 
@@ -824,15 +828,15 @@ void read_h5_constant(hid_t file, char *dset_str, void *data_container, TYPE t)
    switch (t)
    {
    case FLOAT64:
-      status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, data_container);
+      status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, out);
       break;
    case INT64:
-      status = H5Dread(dset, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, data_container);
+      status = H5Dread(dset, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, out);
       break;
    case INT8:
    case BOOL:
-      status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, data_container);
-      status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, data_container);
+      status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, out);
+      status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, out);
       break;
    default:
       assert(true == false);
@@ -855,12 +859,12 @@ void read_h5_constant(hid_t file, char *dset_str, void *data_container, TYPE t)
 }
 
 // print last samples of simulation (for correctness checking..)
-void print_last_samples(SimData *sd)
+void printLastSample(Simulation3D *sim)
 {
-   int64_t Nt = sd->Nt;
-   int64_t Nr = sd->Nr;
-   double *u_out = sd->u_out;
-   int64_t *out_reorder = sd->out_reorder;
+   int64_t Nt = sim->Nt;
+   int64_t Nr = sim->Nr;
+   double *u_out = sim->u_out;
+   int64_t *out_reorder = sim->out_reorder;
    // print last samples
    printf("RAW OUTPUTS\n");
    for (int64_t nr = 0; nr < Nr; nr++)
@@ -874,11 +878,11 @@ void print_last_samples(SimData *sd)
 }
 
 // scale input to be in middle of floating-point range
-void scale_input(SimData *sd)
+void scaleInput(Simulation3D *sim)
 {
-   double *in_sigs = sd->in_sigs;
-   int64_t Nt = sd->Nt;
-   int64_t Ns = sd->Ns;
+   double *in_sigs = sim->in_sigs;
+   int64_t Nt = sim->Nt;
+   int64_t Ns = sim->Ns;
 
    // normalise input signals (and save gain)
    double max_in = 0.0;
@@ -907,87 +911,39 @@ void scale_input(SimData *sd)
       }
    }
 
-   sd->infac = infac;
-   sd->in_sigs = in_sigs;
+   sim->infac = infac;
+   sim->in_sigs = in_sigs;
 }
 
 // undo that scaling
-void rescale_output(SimData *sd)
+void rescaleOutput(Simulation3D *sim)
 {
-   double *u_out = sd->u_out;
-   int64_t Nt = sd->Nt;
-   int64_t Nr = sd->Nr;
-   double infac = sd->infac;
+   int64_t Nt = sim->Nt;
+   int64_t Nr = sim->Nr;
+   double infac = sim->infac;
+   double *u_out = sim->u_out;
 
-   for (int64_t nr = 0; nr < Nr; nr++)
-   {
-      for (int64_t n = 0; n < Nt; n++)
-      {
-         u_out[nr * Nt + n] *= infac;
-      }
-   }
+   std::transform(u_out, u_out + Nr * Nt, u_out, [infac](auto sample) {
+      return sample * infac;
+   });
 
-   sd->u_out = u_out;
 }
 
-// save outputs in HDF5 (to processed subsequently with Python script)
-void write_outputs(SimData *sd)
+void writeOutputs(Simulation3D *sim)
 {
-   // write outputs in correct order
-   int64_t *out_reorder = sd->out_reorder;
-   int64_t Nt = sd->Nt;
-   int64_t Nr = sd->Nr;
-   char dset_str[80];
-   char filename[80];
-   hsize_t dims[2];
-   herr_t status;
-   hid_t file, space, dset;
+   auto Nt = static_cast<size_t>(sim->Nt);
+   auto Nr = static_cast<size_t>(sim->Nr);
+   auto *out_reorder = sim->out_reorder;
+   auto u_out = std::vector<double>(Nr * Nt);
 
-   double *u_out;
-   allocate_zeros((void **)&u_out, Nt * Nr * sizeof(double));
-   for (int64_t nr = 0; nr < Nr; nr++)
-   {
-      for (int64_t n = 0; n < Nt; n++)
-      {
-         u_out[nr * Nt + n] = sd->u_out[out_reorder[nr] * Nt + n];
+   // write outputs in correct order
+   for (auto nr = size_t{0}; nr < Nr; ++nr) {
+      for (auto n = size_t{0}; n < Nt; ++n) {
+         u_out[nr * Nt + n] = sim->u_out[out_reorder[nr] * Nt + n];
       }
    }
 
-   dims[0] = Nr;
-   dims[1] = Nt;
-   strcpy(filename, "sim_outs.h5");
-   strcpy(dset_str, "u_out");
-   file = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-   space = H5Screate_simple(2, dims, NULL);
-   dset = H5Dcreate(file, dset_str, H5T_NATIVE_DOUBLE, space, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-   status = H5Dwrite(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, u_out);
-   if (status != 0)
-   {
-      printf("error writing dataset\n");
-      assert(true == false);
-   }
-
-   status = H5Dclose(dset);
-   if (status != 0)
-   {
-      printf("error closing dataset\n");
-      assert(true == false);
-   }
-
-   status = H5Sclose(space);
-   if (status != 0)
-   {
-      printf("error closing dataset space\n");
-      assert(true == false);
-   }
-
-   status = H5Fclose(file);
-   if (status != 0)
-   {
-      printf("error closing file\n");
-      assert(true == false);
-   }
-   printf("wrote output dataset\n");
-   // free this temp array
-   free(u_out);
+   auto writer = pffdtd::H5FWriter{"sim_outs.h5"};
+   writer.write("u_out", std::span{u_out}, Nr, Nt);
+   std::puts("wrote output dataset");
 }

@@ -28,7 +28,7 @@
 #define MNm 64 // change as necssary
 
 // main sim data, on host
-struct SimData
+struct Simulation3D
 {
    int64_t *bn_ixyz;          // boundary node indices
    int64_t *bnl_ixyz;         // lossy boundary node indices
@@ -78,14 +78,12 @@ struct MatQuad
    Real bFh; // b*F-hat
 };
 
-// some declarations (comments at definitions)
-void read_h5_constant(hid_t file, char *dset_str, void *data_container, TYPE t);
-void read_h5_dataset(hid_t file, char *dset_str, int ndims, hsize_t *dims, void **data_array, TYPE t);
-void load_sim_data(SimData *sd);
-void free_sim_data(SimData *sd);
-void read_h5_dataset(hid_t file, char *dset_str, int ndims, hsize_t *dims, void **data_array, TYPE t);
-void read_h5_constant(hid_t file, char *dset_str, void *data_container, TYPE t);
-void print_last_samples(SimData *sd);
-void scale_input(SimData *sd);
-void rescale_output(SimData *sd);
-void write_outputs(SimData *sd);
+void loadSimulation3D(Simulation3D *sim);
+void freeSimulation3D(Simulation3D *sim);
+void printLastSample(Simulation3D *sim);
+void scaleInput(Simulation3D *sim);
+void rescaleOutput(Simulation3D *sim);
+void writeOutputs(Simulation3D *sim);
+
+void readH5Dataset(hid_t file, char *dset_str, int ndims, hsize_t *dims, void **data_array, DataType t);
+void readH5Constant(hid_t file, char *dset_str, void *out, DataType t);
