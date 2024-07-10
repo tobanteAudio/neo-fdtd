@@ -14,6 +14,9 @@
 
 #include "cpu_engine.hpp"
 
+#include <fmt/format.h>
+#include <fmt/os.h>
+
 #include <vector>
 
 #include <assert.h> //for assert
@@ -21,7 +24,6 @@
 #include <omp.h>
 #include <stdbool.h> //for bool
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h> //for malloc
 
 double runSim(Simulation3D* sd) {
@@ -84,8 +86,8 @@ double runSim(Simulation3D* sd) {
   // can control outside with OMP_NUM_THREADS env variable
   int num_workers = omp_get_max_threads();
 
-  printf("ENGINE: fcc_flag=%d\n", fcc_flag);
-  printf("%s", (fcc_flag > 0) ? "fcc=true\n" : "fcc=false\n");
+  fmt::println("ENGINE: fcc_flag={}", fcc_flag);
+  fmt::println("{}", (fcc_flag > 0) ? "fcc=true" : "fcc=false");
 
   // for timing
   double time_elapsed;
@@ -328,7 +330,7 @@ double runSim(Simulation3D* sd) {
         num_workers
     );
   }
-  printf("\n");
+  fmt::println("");
 
   // timing
   double end_time = omp_get_wtime();
@@ -337,18 +339,18 @@ double runSim(Simulation3D* sd) {
   /*------------------------
    * RETURN
   ------------------------*/
-  printf(
-      "Air update: %.6fs, %.2f Mvox/s\n",
+  fmt::println(
+      "Air update: {:.6}s, {:.2} Mvox/s",
       time_elapsed_air,
       Npts * Nt / 1e6 / time_elapsed_air
   );
-  printf(
-      "Boundary loop: %.6fs, %.2f Mvox/s\n",
+  fmt::println(
+      "Boundary loop: {:.6}s, {:.2} Mvox/s",
       time_elapsed_bn,
       Nb * Nt / 1e6 / time_elapsed_bn
   );
-  printf(
-      "Combined (total): %.6fs, %.2f Mvox/s\n",
+  fmt::println(
+      "Combined (total): {:.6}s, {:.2} Mvox/s",
       time_elapsed,
       Npts * Nt / 1e6 / time_elapsed
   );

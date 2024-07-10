@@ -2,6 +2,9 @@
 #include "pffdtd/simulation_2d.hpp"
 #include "pffdtd/sycl.hpp"
 
+#include <fmt/format.h>
+#include <fmt/os.h>
+
 #include <cstdint>
 #include <filesystem>
 #include <stdexcept>
@@ -44,10 +47,10 @@ int main(int, char** argv) {
   auto out_ixy_buf = sycl::buffer<int64_t, 1>{sim.out_ixy};
   auto src_sig_buf = sycl::buffer<double, 1>{sim.src_sig};
 
-  std::printf("111111111");
+  fmt::print(stdout, "111111111");
   for (auto i{0UL}; i < sim.Nt; ++i) {
-    std::printf("\r\r\r\r\r\r\r\r\r");
-    std::printf("%04d/%04d", int(i), int(sim.Nt));
+    fmt::print(stdout, "\r\r\r\r\r\r\r\r\r");
+    fmt::print(stdout, "{:04d}/{:04d}", int(i), int(sim.Nt));
     std::fflush(stdout);
 
     queue.submit([&](sycl::handler& cgh) {
@@ -131,9 +134,9 @@ int main(int, char** argv) {
     }
   }
 
-  std::puts("");
-  std::printf("MAX: %f\n", max);
-  std::printf("MIN: %f\n", min);
+  fmt::println("");
+  fmt::println("MAX: {}", max);
+  fmt::println("MIN: {}", min);
 
   auto dir     = filePath.parent_path();
   auto outfile = dir / "out.h5";

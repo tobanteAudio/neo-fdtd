@@ -2,6 +2,9 @@
 
 #include "pffdtd/hdf.hpp"
 
+#include <fmt/format.h>
+#include <fmt/os.h>
+
 namespace pffdtd {
 
 auto loadSimulation2D(std::filesystem::path const& path) -> Simulation2D {
@@ -25,18 +28,18 @@ auto loadSimulation2D(std::filesystem::path const& path) -> Simulation2D {
 }
 
 auto summary(Simulation2D const& sim) -> void {
-  std::printf("Nt: %ld\n", static_cast<long>(sim.Nt));
-  std::printf("Nx: %ld\n", static_cast<long>(sim.Nx));
-  std::printf("Ny: %ld\n", static_cast<long>(sim.Ny));
-  std::printf("N: %ld\n", static_cast<long>(sim.Nx * sim.Ny));
-  std::printf("inx: %ld\n", static_cast<long>(sim.inx));
-  std::printf("iny: %ld\n", static_cast<long>(sim.iny));
-  std::printf("in_mask: %ld\n", static_cast<long>(sim.in_mask.size()));
-  std::printf("bn_ixy: %ld\n", static_cast<long>(sim.bn_ixy.size()));
-  std::printf("adj_bn: %ld\n", static_cast<long>(sim.adj_bn.size()));
-  std::printf("out_ixy: %ld\n", static_cast<long>(sim.out_ixy.size()));
-  std::printf("src_sig: %ld\n", static_cast<long>(sim.src_sig.size()));
-  std::printf("loss_factor: %f\n", sim.loss_factor);
+  fmt::println("Nt: {}", sim.Nt);
+  fmt::println("Nx: {}", sim.Nx);
+  fmt::println("Ny: {}", sim.Ny);
+  fmt::println("N: {}", sim.Nx * sim.Ny);
+  fmt::println("inx: {}", sim.inx);
+  fmt::println("iny: {}", sim.iny);
+  fmt::println("in_mask: {}", sim.in_mask.size());
+  fmt::println("bn_ixy: {}", sim.bn_ixy.size());
+  fmt::println("adj_bn: {}", sim.adj_bn.size());
+  fmt::println("out_ixy: {}", sim.out_ixy.size());
+  fmt::println("src_sig: {}", sim.src_sig.size());
+  fmt::println("loss_factor: {}", sim.loss_factor);
 }
 
 } // namespace pffdtd

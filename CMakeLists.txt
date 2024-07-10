@@ -11,6 +11,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(PFFDTD_ENABLE_SYCL "Build with sycl" OFF)
 
+find_package(fmt REQUIRED)
 find_package(HDF5 REQUIRED)
 find_package(OpenMP REQUIRED)
 

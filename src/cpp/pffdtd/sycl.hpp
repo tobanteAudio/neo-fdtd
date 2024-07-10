@@ -2,8 +2,10 @@
 
 #include <sycl/sycl.hpp>
 
-#include <cstdio>
 #include <string>
+
+#include <fmt/format.h>
+#include <fmt/os.h>
 
 namespace pffdtd {
 
@@ -27,15 +29,15 @@ inline auto summary(sycl::device dev) -> void {
   auto type         = dev.get_info<sycl::info::device::device_type>();
   auto maxAllocSize = dev.get_info<sycl::info::device::max_mem_alloc_size>();
 
-  std::printf("----------------------------------------\n");
-  std::printf("Name: %s\n", name.c_str());
-  std::printf("Vendor: %s\n", vendor.c_str());
-  std::printf("Type: %s\n", toString(type).c_str());
-  std::printf("Max alloc size: %zu MB\n", maxAllocSize / 1024 / 1024);
+  fmt::println("----------------------------------------");
+  fmt::println("Name: {}", name.c_str());
+  fmt::println("Vendor: {}", vendor.c_str());
+  fmt::println("Type: {}", toString(type).c_str());
+  fmt::println("Max alloc size: {} MB", maxAllocSize / 1024 / 1024);
   for (auto groupSize : dev.get_info<sycl::info::device::sub_group_sizes>()) {
-    std::printf("Subgroup size: %zu\n", groupSize);
+    fmt::println("Subgroup size: {}", groupSize);
   }
-  std::printf("\n");
+  fmt::println("");
 }
 
 } // namespace pffdtd
