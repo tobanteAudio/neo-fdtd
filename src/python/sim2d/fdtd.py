@@ -12,6 +12,12 @@ from diffusor.qrd import quadratic_residue_diffuser
 from diffusor.prd import primitive_root_diffuser
 
 
+def to_ixy(x, y, Nx, Ny, order="row"):
+    if order == "row":
+        return x*Ny+y
+    return y*Nx+x
+
+
 def point_on_circle(center, radius: float, angle: float):
     """
     Calculate the coordinates of a point on a circle arc.
@@ -30,71 +36,69 @@ def point_on_circle(center, radius: float, angle: float):
     return (p_x, p_y)
 
 
+def quantize_point(x, y, dx):
+    def quantize(i):
+        low = np.floor(i/dx)
+        high = np.ceil(i/dx)
+        err_low = np.fabs(i-low*dx)
+        err_high = np.fabs(i-high*dx)
+        err = err_low if err_low < err_high else err_high
+        i_q = low if err_low < err_high else high
+        return i_q*dx, err
+
+    return quantize(x), quantize(y)
+
+
 def add_diffusor(prime, well_width, max_depth, in_mask, X, Y, dx, c, verbose=False):
     print('--SIM-SETUP: Quantize diffusor')
-    width_t = well_width
-    depth_t = max_depth
-    fmin_t, fmax_t = diffusor_bandwidth(width_t, depth_t, c=c)
+    width = well_width
+    depth = max_depth
+    fmin_t, fmax_t = diffusor_bandwidth(width, depth, c=c)
 
-    width_n_t_low = np.floor(width_t/dx)
-    width_n_t_high = np.ceil(width_t/dx)
-    error_w_low = np.fabs(width_t-width_n_t_low*dx)
-    error_w_high = np.fabs(width_t-width_n_t_high*dx)
-    error_w_a = error_w_low if error_w_low < error_w_high else error_w_high
-    nodes_w_a = width_n_t_low if error_w_low < error_w_high else width_n_t_high
-
-    depth_n_t_low = np.floor(depth_t/dx)
-    depth_n_t_high = np.ceil(depth_t/dx)
-    error_d_low = np.fabs(depth_t-depth_n_t_low*dx)
-    error_d_high = np.fabs(depth_t-depth_n_t_high*dx)
-    error_d_a = error_d_low if error_d_low < error_d_high else error_d_high
-    nodes_d_a = depth_n_t_low if error_d_low < error_d_high else depth_n_t_high
-
-    depth_a = nodes_d_a*dx
-    width_a = nodes_w_a*dx
-    fmin_a, fmax_a = diffusor_bandwidth(width_a, depth_a, c=c)
+    (width_q, werr_q), (depth_q, derr_q) = quantize_point(width, depth, dx)
+    fmin_q, fmax_q = diffusor_bandwidth(width_q, depth_q, c=c)
 
     if verbose:
-        print(f"  {width_t=}")
-        print(f"  {depth_t=}")
-        print(f"  {fmin_t=}")
-        print(f"  {fmax_t=}")
-        print(f"  {width_a=}")
-        print(f"  {depth_a=}")
-        print(f"  {fmin_a=}")
-        print(f"  {fmax_a=}")
-        print(f"  {nodes_w_a=}")
-        print(f"  {nodes_d_a=}")
-        print(f"  error_w={error_w_a/width_t*100:.2f}%")
-        print(f"  error_d={error_d_a/depth_t*100:.2f}%")
+        print(f"  {width=:.4f}")
+        print(f"  {depth=:.4f}")
+        print(f"  {fmin_t=:.4f}")
+        print(f"  {fmax_t=:.4f}")
+        print(f"  {width_q=:.4f}")
+        print(f"  {depth_q=:.4f}")
+        print(f"  {fmin_q=:.4f}")
+        print(f"  {fmax_q=:.4f}")
+        print(f"  error_w={werr_q/width*100:.2f}%")
+        print(f"  error_d={derr_q/depth*100:.2f}%")
 
     print('--SIM-SETUP: Locate diffusor')
-    depths, g = primitive_root_diffuser(prime, g=None, depth=depth_a)
-    depths = quadratic_residue_diffuser(prime, depth_a)
+    depths, g = primitive_root_diffuser(prime, g=None, depth=depth_q)
+    depths = quadratic_residue_diffuser(prime, depth_q)
     prime = depths.shape[0]
     total_width = 8
-    n = int(total_width/width_a)
+    n = int(total_width/width_q)
     for w in range(n):
-        xs = (30/2-total_width/2)+w*width_a
-        xe = xs+width_a
-        ys = 30/2-5-depth_a
+        xs = (30/2-total_width/2)+w*width_q
+        xe = xs+width_q
+        ys = 30/2-5-depth_q
         ye = ys+depths[w % prime]+0.05
         in_mask[(X >= xs) & (Y >= ys) & (X < xe) & (Y < ye)] = False
 
     return in_mask
 
 
-def make_receiver_arc(count, center, radius, dx, Nx):
+def make_receiver_arc(count, center, radius, dx, Nx, Ny):
     x, y = center
     angles = np.linspace(0.0, 180.0, count, endpoint=True)
     out_ixy = []
+    out_cart = []
     for i in range(angles.shape[0]):
         x, y = point_on_circle(center, radius, np.deg2rad(angles[i]))
-        xc = int(np.round(x / dx + 0.5) + 1)
-        yc = int(np.round(y / dx + 0.5) + 1)
-        idx = xc+yc*Nx
+        xc = int(np.round(x / dx + 0.5))
+        yc = int(np.round(y / dx + 0.5))
+        idx = to_ixy(xc, yc, Nx, Ny)
         out_ixy.append(idx)
-    return out_ixy
+        out_cart.append((xc, yc))
+    return out_ixy, out_cart
 
 
 @nb.njit(parallel=True)
@@ -153,10 +157,12 @@ def main():
     parser.add_argument('--ppw', type=float, default=10.5)
     parser.add_argument('--save', action='store_true')
     parser.add_argument('--video', action='store_true')
+    parser.add_argument('--verbose', action='store_true')
     parser.add_argument('--apply_rigid', action=bool_action, default=True)
     parser.add_argument('--apply_loss', action=bool_action, default=True)
 
     args = parser.parse_args()
+    verbose = args.verbose
     if not args.data_dir:
         raise RuntimeError("--data_dir not given")
 
@@ -199,14 +205,17 @@ def main():
 
     # Diffusor
     print('--SIM-SETUP: Generate diffusor')
-    prime = 17
-    depth_t = 0.4
-    width_t = 0.08
-    in_mask = add_diffusor(prime, width_t, depth_t, in_mask, X, Y, dx, c)
+    prime = 41
+    depth = 0.4
+    width = 0.04
+    in_mask = add_diffusor(prime, width, depth,
+                           in_mask, X, Y, dx, c, verbose)
 
     # Receiver linear index
     print('--SIM-SETUP: Generate receivers')
-    out_ixy = make_receiver_arc(180, (x_in, y_in-5.0), 5.0, dx, Nx)
+    arc_radius = 5.0
+    arc_center = (x_in, y_in-arc_radius)
+    out_ixy, _ = make_receiver_arc(180, arc_center, arc_radius, dx, Nx, Ny)
 
     if apply_rigid:
         print('--SIM-SETUP: Create node ABCs')
@@ -288,6 +297,13 @@ def main():
     print(f'  Nx   = {int(Nx)}')
     print(f'  Ny   = {int(Ny)}')
     print(f'  N    = {int(Nx)*int(Ny)}')
+
+    model_img = np.zeros((Nx, Ny), dtype=np.uint8)
+    model_img[~in_mask] = 255
+    model_img.flat[out_ixy] = 255
+
+    model_img = cv2.rotate(model_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    cv2.imwrite(data_dir / 'model.png', model_img.astype(np.uint8))
 
     if args.video:
         for nt in tqdm(range(Nt)):
