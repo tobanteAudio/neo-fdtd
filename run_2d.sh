@@ -10,7 +10,7 @@ engine_exe="$root_dir/$build_dir/src/cpp/main_2d/pffdtd_2d"
 sim_name="Diffusor"
 sim_dir="$root_dir/data/sim_data/$sim_name/cpu"
 
-fmax=2000
+fmax=1000
 duration=0.06
 
 # Delete old sim
@@ -21,4 +21,4 @@ cd "$python_dir"
 python -m sim2d.fdtd --save --data_dir="$sim_dir" --duration="$duration" --fmax="$fmax"
 
 # Run sim
-DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=16 "$engine_exe" "$sim_dir/diffusor.h5"
+DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=16 "$engine_exe" -s "$sim_dir/diffusor.h5"

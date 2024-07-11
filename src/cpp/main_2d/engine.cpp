@@ -66,10 +66,6 @@ auto run(Simulation2D const& sim) -> std::vector<double> {
   };
   auto videoThread = std::thread([&video] { write(video); });
 
-  for (auto dev : sycl::device::get_devices()) {
-    pffdtd::summary(dev);
-  }
-
   auto prop   = sycl::property_list{sycl::property::queue::in_order()};
   auto queue  = sycl::queue{prop};
   auto device = queue.get_device();
