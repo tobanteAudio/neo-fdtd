@@ -127,14 +127,18 @@ auto run(Simulation2D const& sim) -> std::vector<double> {
   auto videoThread = std::unique_ptr<std::thread>();
 
   if (sim.render_video) {
-    auto videoFile = sim.file.parent_path() / "out.avi";
-    videoWriter    = std::make_unique<BackgroundWriter>(
-        cv::Size{2000, 2000},
-        VideoWriter{videoFile, sim.video_fps, 2000, 2000}
+    auto const vRatio  = static_cast<double>(Ny) / static_cast<double>(Nx);
+    auto const vWidth  = 2000;
+    auto const vHeight = static_cast<int>(vWidth * vRatio);
+    auto const vFile   = sim.file.parent_path() / "out.avi";
+
+    videoWriter = std::make_unique<BackgroundWriter>(
+        cv::Size{vWidth, vHeight},
+        VideoWriter{vFile, sim.video_fps, size_t(vWidth), size_t(vHeight)}
     );
     videoThread = std::make_unique<std::thread>([&videoWriter, &sim] {
       write(*videoWriter, sim);
-    })
+    });
   }
 
   auto prop   = sycl::property_list{sycl::property::queue::in_order()};
