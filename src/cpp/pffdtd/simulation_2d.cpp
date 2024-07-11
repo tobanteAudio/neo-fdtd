@@ -27,7 +27,8 @@ auto loadSimulation2D(std::filesystem::path const& path) -> Simulation2D {
 
       .out_ixy = file.read<std::vector<int64_t>>("out_ixy"),
 
-      .video_fps = file.read<double>("video_fps"),
+      .render_video = true,
+      .video_fps    = file.read<double>("video_fps"),
   };
 }
 

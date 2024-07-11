@@ -24,6 +24,7 @@ struct Simulation2D {
 
   std::vector<int64_t> out_ixy; // Receiver nodes
 
+  bool render_video;
   double video_fps;
 };
 

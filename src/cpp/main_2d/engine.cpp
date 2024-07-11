@@ -123,15 +123,19 @@ auto run(Simulation2D const& sim) -> std::vector<double> {
 
   pffdtd::summary(sim);
 
-  auto videoFile = sim.file.parent_path() / "out.avi";
-  auto video     = BackgroundWriter{
-          .size   = cv::Size{1000, 1000},
-          .writer = VideoWriter{videoFile, sim.video_fps, 1000, 1000},
-          .queue  = {},
-          .mutex  = {},
-          .done   = false,
-  };
-  auto videoThread = std::thread([&video, &sim] { write(video, sim); });
+  auto videoWriter = std::unique_ptr<BackgroundWriter>();
+  auto videoThread = std::unique_ptr<std::thread>();
+
+  if (sim.render_video) {
+    auto videoFile = sim.file.parent_path() / "out.avi";
+    videoWriter    = std::make_unique<BackgroundWriter>(
+        cv::Size{2000, 2000},
+        VideoWriter{videoFile, sim.video_fps, 2000, 2000}
+    );
+    videoThread = std::make_unique<std::thread>([&videoWriter, &sim] {
+      write(*videoWriter, sim);
+    })
+  }
 
   auto prop   = sycl::property_list{sycl::property::queue::in_order()};
   auto queue  = sycl::queue{prop};
@@ -261,19 +265,16 @@ auto run(Simulation2D const& sim) -> std::vector<double> {
       });
     });
 
-    auto host = sycl::host_accessor{u0, sycl::read_only};
-    for (auto i{0UL}; i < frame.size(); ++i) {
-      frame[i] = std::abs(double(host.get_pointer()[i]));
-      // if (sim.in_mask[i] == 0) {
-      //   frame[i] = 1.0;
-      // }
-    }
+    if (sim.render_video) {
+      auto host = sycl::host_accessor{u0, sycl::read_only};
+      for (auto i{0UL}; i < frame.size(); ++i) {
+        frame[i] = std::abs(double(host.get_pointer()[i]));
+      }
 
-    {
       while (true) {
         auto const wait = [&] {
-          auto lock = std::scoped_lock{video.mutex};
-          return video.queue.size() > 10;
+          auto lock = std::scoped_lock{videoWriter->mutex};
+          return videoWriter->queue.size() > 10;
         }();
 
         if (wait) {
@@ -284,14 +285,16 @@ auto run(Simulation2D const& sim) -> std::vector<double> {
       }
 
       {
-        auto lock = std::scoped_lock{video.mutex};
-        video.queue.push(frame);
+        auto lock = std::scoped_lock{videoWriter->mutex};
+        videoWriter->queue.push(frame);
       }
     }
   }
 
-  video.done.store(true);
-  videoThread.join();
+  if (sim.render_video) {
+    videoWriter->done.store(true);
+    videoThread->join();
+  }
 
   auto save = std::vector<double>(Nt * Nr);
   auto host = sycl::host_accessor{out, sycl::read_only};
