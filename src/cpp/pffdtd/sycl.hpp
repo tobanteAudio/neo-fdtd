@@ -40,4 +40,9 @@ inline auto summary(sycl::device dev) -> void {
   fmt::println("");
 }
 
+template<typename Accessor>
+[[nodiscard]] auto getPointer(Accessor&& a) -> auto* {
+  return a.template get_multi_ptr<sycl::access::decorated::no>().get();
+}
+
 } // namespace pffdtd
