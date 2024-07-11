@@ -21,9 +21,14 @@ VideoWriter::VideoWriter(
 }
 
 auto VideoWriter::write(cv::InputArray frame) -> void {
-  auto resized = cv::Mat{};
-  cv::resize(frame, resized, _size, 0, 0, cv::INTER_AREA);
-  _writer.write(resized);
+  if (_size != frame.size()) {
+    auto resized = cv::Mat{};
+    cv::resize(frame, resized, _size, 0, 0, cv::INTER_AREA);
+    _writer.write(resized);
+    return;
+  }
+
+  _writer.write(frame);
 }
 
 } // namespace pffdtd

@@ -128,7 +128,7 @@ auto run(Simulation2D const& sim) -> std::vector<double> {
 
   if (sim.render_video) {
     auto const vRatio  = static_cast<double>(Ny) / static_cast<double>(Nx);
-    auto const vWidth  = 2000;
+    auto const vWidth  = std::min(2000, static_cast<int>(Nx));
     auto const vHeight = static_cast<int>(vWidth * vRatio);
     auto const vFile   = sim.file.parent_path() / "out.avi";
 
