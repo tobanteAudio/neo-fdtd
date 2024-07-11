@@ -1,6 +1,7 @@
 #include "engine.hpp"
 
 #include "pffdtd/sycl.hpp"
+#include "pffdtd/video.hpp"
 
 #include <fmt/format.h>
 #include <fmt/os.h>
@@ -8,6 +9,8 @@
 namespace pffdtd {
 
 auto run(Simulation2D const& sim) -> std::vector<double> {
+  auto video = VideoWriter{"out.avi", 30.0, 1000, 1000};
+
   auto const Nx  = sim.Nx;
   auto const Ny  = sim.Ny;
   auto const Nt  = sim.Nt;

@@ -19,7 +19,7 @@ opencv/*:stitching=False
 opencv/*:video=False
 opencv/*:videoio=True
 
-opencv/*:with_eigen=False
+opencv/*:with_eigen=True
 opencv/*:with_openexr=False
 opencv/*:with_png=False
 opencv/*:with_tiff=False
