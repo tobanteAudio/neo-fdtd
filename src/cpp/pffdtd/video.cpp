@@ -20,26 +20,10 @@ VideoWriter::VideoWriter(
   }
 }
 
-auto VideoWriter::write(std::span<double> buf, size_t width, size_t height)
-    -> void {
-  auto const input = cv::Mat{
-      static_cast<int>(width),
-      static_cast<int>(height),
-      CV_64F,
-      static_cast<void*>(buf.data()),
-  };
-
-  auto normalized = cv::Mat{};
-  cv::normalize(input, normalized, 0, 255, cv::NORM_MINMAX);
-  normalized.convertTo(normalized, CV_8U);
-
+auto VideoWriter::write(cv::InputArray frame) -> void {
   auto resized = cv::Mat{};
-  cv::resize(normalized, resized, _size, 0, 0, cv::INTER_AREA);
-
-  auto rotated = cv::Mat{};
-  cv::rotate(resized, rotated, cv::ROTATE_90_COUNTERCLOCKWISE);
-
-  _writer.write(rotated);
+  cv::resize(frame, resized, _size, 0, 0, cv::INTER_AREA);
+  _writer.write(resized);
 }
 
 } // namespace pffdtd

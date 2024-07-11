@@ -17,7 +17,7 @@ struct VideoWriter {
       size_t height
   );
 
-  auto write(std::span<double> buf, size_t width, size_t height) -> void;
+  auto write(cv::InputArray frame) -> void;
 
   private:
   cv::VideoWriter _writer;

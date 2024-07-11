@@ -20,14 +20,17 @@ struct BackgroundWriter {
   std::atomic<bool> done{false};
 };
 
-auto write(BackgroundWriter& writer) -> void {
+auto write(BackgroundWriter& bw, Simulation2D const& sim) -> void {
 
-  auto frame = std::vector<double>{};
-  while (not writer.done or not writer.queue.empty()) {
+  auto frame      = std::vector<double>{};
+  auto normalized = cv::Mat{};
+  auto rotated    = cv::Mat{};
+
+  while (not bw.done or not bw.queue.empty()) {
     auto shouldSleep = false;
     {
-      auto lock   = std::scoped_lock{writer.mutex};
-      shouldSleep = writer.queue.empty();
+      auto lock   = std::scoped_lock{bw.mutex};
+      shouldSleep = bw.queue.empty();
     }
 
     if (shouldSleep) {
@@ -36,12 +39,32 @@ auto write(BackgroundWriter& writer) -> void {
     }
 
     {
-      auto lock = std::scoped_lock{writer.mutex};
-
-      frame = writer.queue.front();
-      writer.queue.pop();
-      writer.writer.write(frame, writer.size.width, writer.size.height);
+      auto lock = std::scoped_lock{bw.mutex};
+      frame     = bw.queue.front();
+      bw.queue.pop();
     }
+
+    auto input = cv::Mat{
+        static_cast<int>(sim.Nx),
+        static_cast<int>(sim.Ny),
+        CV_64F,
+        static_cast<void*>(frame.data()),
+    };
+
+    cv::normalize(input, normalized, 0, 255, cv::NORM_MINMAX);
+    normalized.convertTo(normalized, CV_8U);
+
+    for (auto ix{0L}; ix < sim.Nx; ++ix) {
+      for (auto iy{0L}; iy < sim.Ny; ++iy) {
+        if (not sim.in_mask[ix * sim.Ny + iy]) {
+          normalized.at<uint8_t>(ix, iy) = 255;
+        }
+      }
+    }
+
+    cv::rotate(normalized, rotated, cv::ROTATE_90_COUNTERCLOCKWISE);
+
+    bw.writer.write(rotated);
   }
 }
 
@@ -102,13 +125,13 @@ auto run(Simulation2D const& sim) -> std::vector<double> {
 
   auto videoFile = sim.file.parent_path() / "out.avi";
   auto video     = BackgroundWriter{
-          .size   = cv::Size(Nx, Ny),
+          .size   = cv::Size{1000, 1000},
           .writer = VideoWriter{videoFile, sim.video_fps, 1000, 1000},
           .queue  = {},
           .mutex  = {},
           .done   = false,
   };
-  auto videoThread = std::thread([&video] { write(video); });
+  auto videoThread = std::thread([&video, &sim] { write(video, sim); });
 
   auto prop   = sycl::property_list{sycl::property::queue::in_order()};
   auto queue  = sycl::queue{prop};
@@ -247,8 +270,23 @@ auto run(Simulation2D const& sim) -> std::vector<double> {
     }
 
     {
-      auto lock = std::scoped_lock{video.mutex};
-      video.queue.push(frame);
+      while (true) {
+        auto const wait = [&] {
+          auto lock = std::scoped_lock{video.mutex};
+          return video.queue.size() > 10;
+        }();
+
+        if (wait) {
+          std::this_thread::sleep_for(std::chrono::milliseconds{10});
+        } else {
+          break;
+        }
+      }
+
+      {
+        auto lock = std::scoped_lock{video.mutex};
+        video.queue.push(frame);
+      }
     }
   }
 
