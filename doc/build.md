@@ -8,5 +8,5 @@ cmake -S. -B build -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=icx -DC
 cmake --build build
 
 # Using hyper-threads is usally a slow down. Use the number of physical cores.
-DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=16 ./build/src/main_2d/pffdtd_2d ./data/sim_data/Diffusor/cpu/diffusor.h5
+DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=16 ./build/src/main_2d/pffdtd_2d ./data/sim_data/Diffusor/cpu/sim.h5
 ```

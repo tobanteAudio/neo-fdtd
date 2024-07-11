@@ -3,21 +3,23 @@ import pathlib
 
 import cv2
 import h5py
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
 import numpy as np
 import numba as nb
 from tqdm import tqdm
 
+from diffusor.design import diffusor_bandwidth
+from diffusor.qrd import quadratic_residue_diffuser
+from diffusor.prd import primitive_root_diffuser
 
-def point_on_circle(center, radius, angle):
+
+def point_on_circle(center, radius: float, angle: float):
     """
     Calculate the coordinates of a point on a circle arc.
 
     Parameters:
     center (tuple): (x, y) coordinates of the center of the circle.
-    radius (float): Radius of the circle.
-    angle (float): Angle in radians.
+    radius: Radius of the circle.
+    angle: Angle in radians.
 
     Returns:
     tuple: (p_x, p_y) coordinates of the point on the circle arc.
@@ -28,22 +30,71 @@ def point_on_circle(center, radius, angle):
     return (p_x, p_y)
 
 
-def add_diffusor(well_width, max_depth, in_mask, X, Y):
-    depths = np.array([0.0, 0.25, 1.0, 0.5, 0.5, 1.0, 0.25])
-    depths = np.array([0.0, 0.06, 0.25, 0.56, 1.0, 0.5, 0.12,
-                      0.94, 0.81, 0.81, 0.94, 0.12, 0.5, 1, 0.56, 0.25, 0.06])
-    assert depths.shape[0] == 17
+def add_diffusor(prime, well_width, max_depth, in_mask, X, Y, dx, c, verbose=False):
+    print('--SIM-SETUP: Quantize diffusor')
+    width_t = well_width
+    depth_t = max_depth
+    fmin_t, fmax_t = diffusor_bandwidth(width_t, depth_t, c=c)
+
+    width_n_t_low = np.floor(width_t/dx)
+    width_n_t_high = np.ceil(width_t/dx)
+    error_w_low = np.fabs(width_t-width_n_t_low*dx)
+    error_w_high = np.fabs(width_t-width_n_t_high*dx)
+    error_w_a = error_w_low if error_w_low < error_w_high else error_w_high
+    nodes_w_a = width_n_t_low if error_w_low < error_w_high else width_n_t_high
+
+    depth_n_t_low = np.floor(depth_t/dx)
+    depth_n_t_high = np.ceil(depth_t/dx)
+    error_d_low = np.fabs(depth_t-depth_n_t_low*dx)
+    error_d_high = np.fabs(depth_t-depth_n_t_high*dx)
+    error_d_a = error_d_low if error_d_low < error_d_high else error_d_high
+    nodes_d_a = depth_n_t_low if error_d_low < error_d_high else depth_n_t_high
+
+    depth_a = nodes_d_a*dx
+    width_a = nodes_w_a*dx
+    fmin_a, fmax_a = diffusor_bandwidth(width_a, depth_a, c=c)
+
+    if verbose:
+        print(f"  {width_t=}")
+        print(f"  {depth_t=}")
+        print(f"  {fmin_t=}")
+        print(f"  {fmax_t=}")
+        print(f"  {width_a=}")
+        print(f"  {depth_a=}")
+        print(f"  {fmin_a=}")
+        print(f"  {fmax_a=}")
+        print(f"  {nodes_w_a=}")
+        print(f"  {nodes_d_a=}")
+        print(f"  error_w={error_w_a/width_t*100:.2f}%")
+        print(f"  error_d={error_d_a/depth_t*100:.2f}%")
+
+    print('--SIM-SETUP: Locate diffusor')
+    depths, g = primitive_root_diffuser(prime, g=None, depth=depth_a)
+    depths = quadratic_residue_diffuser(prime, depth_a)
     prime = depths.shape[0]
-    total_width = 4
-    n = int(total_width/well_width)
+    total_width = 8
+    n = int(total_width/width_a)
     for w in range(n):
-        xs = (30/2-total_width/2)+w*well_width
-        xe = xs+well_width
-        ys = 30/2-5-max_depth
-        ye = ys+depths[w % prime] * max_depth+0.05
+        xs = (30/2-total_width/2)+w*width_a
+        xe = xs+width_a
+        ys = 30/2-5-depth_a
+        ye = ys+depths[w % prime]+0.05
         in_mask[(X >= xs) & (Y >= ys) & (X < xe) & (Y < ye)] = False
 
     return in_mask
+
+
+def make_receiver_arc(count, center, radius, dx, Nx):
+    x, y = center
+    angles = np.linspace(0.0, 180.0, count, endpoint=True)
+    out_ixy = []
+    for i in range(angles.shape[0]):
+        x, y = point_on_circle(center, radius, np.deg2rad(angles[i]))
+        xc = int(np.round(x / dx + 0.5) + 1)
+        yc = int(np.round(y / dx + 0.5) + 1)
+        idx = xc+yc*Nx
+        out_ixy.append(idx)
+    return out_ixy
 
 
 @nb.njit(parallel=True)
@@ -119,30 +170,20 @@ def main():
     duration = args.duration  # seconds
     refl_coeff = 0.99  # reflection coefficient
 
-    Bx, By = 30.0, 30.0  # box dims (with lower corner at origin)
-    x_in, y_in = Bx*0.5, By*0.5  # source input position
-    R_dome = By*0.5  # heigh of dome (to be centered on roof of box)
-
-    draw = True
-    add_dome = False
     apply_rigid = args.apply_rigid
     apply_loss = args.apply_loss
-
     if apply_loss:
         assert apply_rigid
 
-    if add_dome:
-        Lx = Bx
-        Ly = By+R_dome
-    else:
-        Lx = Bx
-        Ly = By
+    Lx, Ly = 30.0, 30.0  # box dims (with lower corner at origin)
+    x_in, y_in = Lx*0.5, Ly*0.5  # source input position
 
     # calculate grid spacing, time step, sample rate
     dx = c/fmax/PPW  # grid spacing
     dt = np.sqrt(0.5)*dx/c
     fs = 1/dt
 
+    print('--SIM-SETUP: Generate mesh & mask')
     Nx = int(np.ceil(Lx/dx)+2)  # number of points in x-dir
     Ny = int(np.ceil(Ly/dx)+2)  # number of points in y-dir
     Nt = int(np.ceil(duration/dt))  # number of time-steps to compute
@@ -154,24 +195,21 @@ def main():
 
     # Mask for 'interior' points
     in_mask = np.zeros((Nx, Ny), dtype=bool)
-    in_mask[(X >= 0) & (Y >= 0) & (X < Bx) & (Y < By)] = True
+    in_mask[(X >= 0) & (Y >= 0) & (X < Lx) & (Y < Ly)] = True
 
-    if add_dome:
-        in_mask[(X - 0.5 * Bx)**2 + (Y - By)**2 < R_dome**2] = True
+    # Diffusor
+    print('--SIM-SETUP: Generate diffusor')
+    prime = 17
+    depth_t = 0.4
+    width_t = 0.08
+    in_mask = add_diffusor(prime, width_t, depth_t, in_mask, X, Y, dx, c)
 
-    in_mask = add_diffusor(dx*2, 0.8, in_mask, X, Y)
-
-    angles = np.linspace(0.0, 180.0, 180, endpoint=True)
-    out_ixy = []
-    for i in range(angles.shape[0]):
-        x, y = point_on_circle((x_in, y_in-5.0), 5.0, np.deg2rad(angles[i]))
-        xc = int(np.round(x / dx + 0.5) + 1)
-        yc = int(np.round(y / dx + 0.5) + 1)
-        idx = xc+yc*Nx
-        out_ixy.append(idx)
-        # in_mask[xc, yc] = False
+    # Receiver linear index
+    print('--SIM-SETUP: Generate receivers')
+    out_ixy = make_receiver_arc(180, (x_in, y_in-5.0), 5.0, dx, Nx)
 
     if apply_rigid:
+        print('--SIM-SETUP: Create node ABCs')
         # Calculate number of interior neighbours (for interior points only)
         K_map = np.zeros((Nx, Ny), dtype=int)
         K_map[1:-1, 1:-1] += in_mask[2:, 1:-1]
@@ -187,10 +225,7 @@ def main():
     iny = int(np.round(y_in / dx + 0.5) + 1)
     assert in_mask[inx, iny]
 
-    if draw:
-        draw_mask = np.nan*in_mask
-        draw_mask[in_mask] = 1
-
+    print('--SIM-SETUP: Calculate loss factor')
     loss_factor = 0
     if apply_loss:
         # calculate specific admittance γ (g)
@@ -207,22 +242,25 @@ def main():
     # src_sig[:Nh] = 0.5 - 0.5 * np.cos(2 * np.pi * n / Nh)
     # src_sig[:Nh] *= np.sin(2 * np.pi * n / Nh)
 
+    print('--SIM-SETUP: Allocate python memory')
     u0 = np.zeros((Nx, Ny), dtype=np.float64)
     u1 = np.zeros((Nx, Ny), dtype=np.float64)
     u2 = np.zeros((Nx, Ny), dtype=np.float64)
 
     sps30 = dt*30
     target_sps = 0.115
-    fps = int(min(90, target_sps/sps30))
+    fps = int(min(120, target_sps/sps30))
 
     if args.video:
         video_name = data_dir/'output_video.avi'
+        print(f'--SIM-SETUP: Create python video file: {video_name}')
         height, width = 1000, 1000  # u0.shape
         fourcc = cv2.VideoWriter_fourcc(*'DIVX')
         video = cv2.VideoWriter(video_name, fourcc, fps,
                                 (width, height), isColor=False)
 
-    h5f = h5py.File(data_dir / pathlib.Path('diffusor.h5'), 'w')
+    print('--SIM-SETUP: Writing dataset to h5 file')
+    h5f = h5py.File(data_dir / pathlib.Path('sim.h5'), 'w')
     h5f.create_dataset('fmax', data=np.float64(fmax))
     h5f.create_dataset('fs', data=np.float64(fs))
     h5f.create_dataset('video_fps', data=np.float64(fps))
@@ -241,15 +279,15 @@ def main():
     h5f.create_dataset('src_sig', data=src_sig)
     h5f.close()
 
-    print(f'fmax = {fmax:.3f} Hz')
-    print(f'fs   = {fs:.3f} Hz')
-    print(f'Δx   = {dx*100:.5f} cm / {dx*1000:.2f} mm')
-    print(f'fps  = {fps}')
-    print(f'Nb   = {bn_ixy.shape[0]}')
-    print(f'Nt   = {int(Nt)}')
-    print(f'Nx   = {int(Nx)}')
-    print(f'Ny   = {int(Ny)}')
-    print(f'N    = {int(Nx)*int(Ny)}')
+    print(f'  fmax = {fmax:.3f} Hz')
+    print(f'  fs   = {fs:.3f} Hz')
+    print(f'  Δx   = {dx*100:.5f} cm / {dx*1000:.2f} mm')
+    print(f'  fps  = {fps}')
+    print(f'  Nb   = {bn_ixy.shape[0]}')
+    print(f'  Nt   = {int(Nt)}')
+    print(f'  Nx   = {int(Nx)}')
+    print(f'  Ny   = {int(Ny)}')
+    print(f'  N    = {int(Nx)*int(Ny)}')
 
     if args.video:
         for nt in tqdm(range(Nt)):
@@ -273,7 +311,7 @@ def main():
 
         video.release()
 
-    print(f"last: u0={u0[inx, iny]} u1={u1[inx, iny]} u2={u2[inx, iny]}")
+        print(f"last: u0={u0[inx, iny]} u1={u1[inx, iny]} u2={u2[inx, iny]}")
 
 
 if __name__ == "__main__":

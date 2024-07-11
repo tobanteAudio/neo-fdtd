@@ -11,7 +11,7 @@ sim_name="Diffusor"
 sim_dir="$root_dir/data/sim_data/$sim_name/cpu"
 
 fmax=1000
-duration=0.06
+duration=0.045
 
 # Delete old sim
 rm -rf "$sim_dir"
@@ -21,4 +21,4 @@ cd "$python_dir"
 python -m sim2d.fdtd --save --data_dir="$sim_dir" --duration="$duration" --fmax="$fmax"
 
 # Run sim
-DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=16 "$engine_exe" -s "$sim_dir/diffusor.h5"
+DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=16 "$engine_exe" -s "$sim_dir/sim.h5"
