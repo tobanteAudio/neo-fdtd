@@ -36,7 +36,7 @@ def point_on_circle(center, radius: float, angle: float):
     return (p_x, p_y)
 
 
-def quantize_point(x, y, dx):
+def quantize_point(pos, dx, ret_err=True, scale=False):
     def quantize(i):
         low = np.floor(i/dx)
         high = np.ceil(i/dx)
@@ -44,21 +44,39 @@ def quantize_point(x, y, dx):
         err_high = np.fabs(i-high*dx)
         err = err_low if err_low < err_high else err_high
         i_q = low if err_low < err_high else high
-        return i_q*dx, err
+        if scale:
+            return i_q*dx, err
+        else:
+            return i_q, err
 
-    return quantize(x), quantize(y)
+    x, y = pos
+    xq, yq = quantize(x), quantize(y)
+    if ret_err:
+        return xq, yq
+    return xq[0], yq[0]
 
 
-def add_diffusor(prime, well_width, max_depth, in_mask, X, Y, dx, c, verbose=False):
+def add_diffusor(prime, well_width, max_depth, room, in_mask, X, Y, dx, c, verbose=False):
     print('--SIM-SETUP: Quantize diffusor')
+    dim = (well_width, max_depth)
     width = well_width
     depth = max_depth
-    fmin_t, fmax_t = diffusor_bandwidth(width, depth, c=c)
+    fmin_t, fmax_t = diffusor_bandwidth(dim[0], dim[1], c=c)
 
-    (width_q, werr_q), (depth_q, derr_q) = quantize_point(width, depth, dx)
+    (width_q, werr_q), (depth_q, derr_q) = quantize_point(dim, dx)
+    width_q *= dx
+    depth_q *= dx
+    print(dim, width_q, depth_q)
     fmin_q, fmax_q = diffusor_bandwidth(width_q, depth_q, c=c)
 
+    radius = 5
+    total_width = 8
+    pos = (room[0]/2-total_width/2, room[1]/2-radius-depth)
+    pos_q = quantize_point(pos, dx)
+    n = int(total_width/width_q)
+
     if verbose:
+        print(f"  {pos_q=}")
         print(f"  {width=:.4f}")
         print(f"  {depth=:.4f}")
         print(f"  {fmin_t=:.4f}")
@@ -74,12 +92,10 @@ def add_diffusor(prime, well_width, max_depth, in_mask, X, Y, dx, c, verbose=Fal
     depths, g = primitive_root_diffuser(prime, g=None, depth=depth_q)
     depths = quadratic_residue_diffuser(prime, depth_q)
     prime = depths.shape[0]
-    total_width = 8
-    n = int(total_width/width_q)
     for w in range(n):
-        xs = (30/2-total_width/2)+w*width_q
+        xs = (room[0]/2-total_width/2)+w*width_q
         xe = xs+width_q
-        ys = 30/2-5-depth_q
+        ys = room[1]/2-5-depth_q
         ye = ys+depths[w % prime]+0.05
         in_mask[(X >= xs) & (Y >= ys) & (X < xe) & (Y < ye)] = False
 
@@ -93,11 +109,10 @@ def make_receiver_arc(count, center, radius, dx, Nx, Ny):
     out_cart = []
     for i in range(angles.shape[0]):
         x, y = point_on_circle(center, radius, np.deg2rad(angles[i]))
-        xc = int(np.round(x / dx + 0.5))
-        yc = int(np.round(y / dx + 0.5))
-        idx = to_ixy(xc, yc, Nx, Ny)
+        xq, yq = quantize_point((x, y), dx, ret_err=False)
+        idx = to_ixy(xq, yq, Nx, Ny)
         out_ixy.append(idx)
-        out_cart.append((xc, yc))
+        out_cart.append((xq, yq))
     return out_ixy, out_cart
 
 
@@ -171,6 +186,7 @@ def main():
         data_dir.mkdir(parents=True)
 
     c = 343  # speed of sound m/s (20degC)
+    room = (30, 30)
     fmax = args.fmax  # Hz
     PPW = args.ppw  # points per wavelength at fmax
     duration = args.duration  # seconds
@@ -181,7 +197,7 @@ def main():
     if apply_loss:
         assert apply_rigid
 
-    Lx, Ly = 30.0, 30.0  # box dims (with lower corner at origin)
+    Lx, Ly = room[0], room[1]  # box dims (with lower corner at origin)
     x_in, y_in = Lx*0.5, Ly*0.5  # source input position
 
     # calculate grid spacing, time step, sample rate
@@ -205,10 +221,10 @@ def main():
 
     # Diffusor
     print('--SIM-SETUP: Generate diffusor')
-    prime = 41
-    depth = 0.4
-    width = 0.04
-    in_mask = add_diffusor(prime, width, depth,
+    prime = 17
+    depth = 0.35
+    width = 0.048
+    in_mask = add_diffusor(prime, width, depth, room,
                            in_mask, X, Y, dx, c, verbose)
 
     # Receiver linear index
