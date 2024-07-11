@@ -50,10 +50,12 @@ auto run(Simulation2D const& sim) -> std::vector<double> {
   auto const Nx  = sim.Nx;
   auto const Ny  = sim.Ny;
   auto const Nt  = sim.Nt;
+  auto const Nb  = sim.adj_bn.size();
   auto const inx = sim.inx;
   auto const iny = sim.iny;
   auto const N   = size_t(sim.Nx * sim.Ny);
   auto const Nr  = sim.out_ixy.size();
+  auto const lf  = sim.loss_factor;
 
   pffdtd::summary(sim);
 
@@ -115,6 +117,55 @@ auto run(Simulation2D const& sim) -> std::vector<double> {
         auto const last   = u2_acc[x][y];
 
         u0_acc[x][y] = 0.5 * (left + right + bottom + top) - last;
+      });
+    });
+
+    queue.submit([&](sycl::handler& cgh) {
+      auto u0_acc     = sycl::accessor{u0, cgh};
+      auto u1_acc     = sycl::accessor{u1, cgh};
+      auto u2_acc     = sycl::accessor{u2, cgh};
+      auto bn_ixy_acc = sycl::accessor{bn_ixy_buf, cgh};
+      auto adj_bn_acc = sycl::accessor{adj_bn_buf, cgh};
+      auto rigidRange = sycl::range<1>(Nb);
+
+      cgh.parallel_for<struct BoundaryRigid>(rigidRange, [=](sycl::id<1> id) {
+        auto u0 = u0_acc.get_pointer();
+        auto u1 = u1_acc.get_pointer();
+        auto u2 = u2_acc.get_pointer();
+
+        auto const ib = bn_ixy_acc[id];
+        auto const K  = adj_bn_acc[id];
+
+        auto const last1 = u1[ib];
+        auto const last2 = u2[ib];
+
+        auto const left      = u1[ib - 1];
+        auto const right     = u1[ib + 1];
+        auto const bottom    = u1[ib - Ny];
+        auto const top       = u1[ib + Ny];
+        auto const neighbors = left + right + top + bottom;
+
+        u0[ib] = (2 - 0.5 * K) * last1 + 0.5 * neighbors - last2;
+      });
+    });
+
+    queue.submit([&](sycl::handler& cgh) {
+      auto u0_acc     = sycl::accessor{u0, cgh};
+      auto u2_acc     = sycl::accessor{u2, cgh};
+      auto bn_ixy_acc = sycl::accessor{bn_ixy_buf, cgh};
+      auto adj_bn_acc = sycl::accessor{adj_bn_buf, cgh};
+      auto lossRange  = sycl::range<1>(Nb);
+
+      cgh.parallel_for<struct BoundaryLoss>(lossRange, [=](sycl::id<1> id) {
+        auto u0 = u0_acc.get_pointer();
+        auto u2 = u2_acc.get_pointer();
+
+        auto const ib      = bn_ixy_acc[id];
+        auto const K       = adj_bn_acc[id];
+        auto const current = u0[ib];
+        auto const prev    = u2[ib];
+
+        u0[ib] = (current + lf * (4 - K) * prev) / (1 + lf * (4 - K));
       });
     });
 
