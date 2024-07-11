@@ -10,6 +10,8 @@ namespace pffdtd {
 auto loadSimulation2D(std::filesystem::path const& path) -> Simulation2D {
   auto file = H5FReader{path.string().c_str()};
   return Simulation2D{
+      .file = path,
+
       .Nx = file.read<int64_t>("Nx"),
       .Ny = file.read<int64_t>("Ny"),
       .Nt = file.read<int64_t>("Nt"),

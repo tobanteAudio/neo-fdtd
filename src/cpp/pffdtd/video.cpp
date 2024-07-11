@@ -34,9 +34,12 @@ auto VideoWriter::write(std::span<double> buf, size_t width, size_t height)
   normalized.convertTo(normalized, CV_8U);
 
   auto resized = cv::Mat{};
-  cv::resize(input, resized, _size);
+  cv::resize(normalized, resized, _size);
 
-  _writer.write(resized);
+  auto rotated = cv::Mat{};
+  cv::rotate(resized, rotated, cv::ROTATE_90_COUNTERCLOCKWISE);
+
+  _writer.write(rotated);
 }
 
 } // namespace pffdtd

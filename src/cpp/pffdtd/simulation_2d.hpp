@@ -7,6 +7,8 @@
 namespace pffdtd {
 
 struct Simulation2D {
+  std::filesystem::path file;
+
   int64_t Nx; // Number of x sample nodes
   int64_t Ny; // Number of y sample nodes
   int64_t Nt; // Number of time steps

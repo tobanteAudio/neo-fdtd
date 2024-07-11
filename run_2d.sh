@@ -10,7 +10,7 @@ engine_exe="$root_dir/$build_dir/src/cpp/main_2d/pffdtd_2d"
 sim_name="Diffusor"
 sim_dir="$root_dir/data/sim_data/$sim_name/cpu"
 
-fmax=1600
+fmax=1000
 duration=0.06
 
 # Delete old sim

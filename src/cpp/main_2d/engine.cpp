@@ -9,7 +9,8 @@
 namespace pffdtd {
 
 auto run(Simulation2D const& sim) -> std::vector<double> {
-  auto video = VideoWriter{"out.avi", 30.0, 1000, 1000};
+  auto videoFile = sim.file.parent_path() / "out.avi";
+  auto video     = VideoWriter{videoFile, 30.0, 1000, 1000};
 
   auto const Nx  = sim.Nx;
   auto const Ny  = sim.Ny;
@@ -40,6 +41,8 @@ auto run(Simulation2D const& sim) -> std::vector<double> {
   auto adj_bn_buf  = sycl::buffer<int64_t, 1>{sim.adj_bn};
   auto out_ixy_buf = sycl::buffer<int64_t, 1>{sim.out_ixy};
   auto src_sig_buf = sycl::buffer<double, 1>{sim.src_sig};
+
+  auto frame = std::vector<double>(sim.Nx * sim.Ny);
 
   fmt::print(stdout, "111111111");
   for (auto i{0UL}; i < sim.Nt; ++i) {
@@ -112,7 +115,15 @@ auto run(Simulation2D const& sim) -> std::vector<double> {
       );
     });
 
-    queue.wait_and_throw();
+    auto host = sycl::host_accessor{u0, sycl::read_only};
+    for (auto i{0UL}; i < frame.size(); ++i) {
+      frame[i] = std::abs(double(host.get_pointer()[i]));
+      // if (sim.in_mask[i] == 0) {
+      //   frame[i] = 1.0;
+      // }
+    }
+
+    video.write(frame, Ny, Nx);
   }
 
   auto save = std::vector<double>(Nt * Nr);
