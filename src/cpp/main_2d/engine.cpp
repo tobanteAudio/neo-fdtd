@@ -6,11 +6,46 @@
 #include <fmt/format.h>
 #include <fmt/os.h>
 
+#include <atomic>
+#include <queue>
+#include <thread>
+
 namespace pffdtd {
 
+struct BackgroundWriter {
+  cv::Size size;
+  VideoWriter writer;
+  std::queue<std::vector<double>> queue;
+  std::mutex mutex;
+  std::atomic<bool> done{false};
+};
+
+auto write(BackgroundWriter& writer) -> void {
+
+  auto frame = std::vector<double>{};
+  while (not writer.done or not writer.queue.empty()) {
+    auto shouldSleep = false;
+    {
+      auto lock   = std::scoped_lock{writer.mutex};
+      shouldSleep = writer.queue.empty();
+    }
+
+    if (shouldSleep) {
+      std::this_thread::sleep_for(std::chrono::milliseconds{10});
+      continue;
+    }
+
+    {
+      auto lock = std::scoped_lock{writer.mutex};
+
+      frame = writer.queue.front();
+      writer.queue.pop();
+      writer.writer.write(frame, writer.size.width, writer.size.height);
+    }
+  }
+}
+
 auto run(Simulation2D const& sim) -> std::vector<double> {
-  auto videoFile = sim.file.parent_path() / "out.avi";
-  auto video     = VideoWriter{videoFile, 30.0, 1000, 1000};
 
   auto const Nx  = sim.Nx;
   auto const Ny  = sim.Ny;
@@ -21,6 +56,13 @@ auto run(Simulation2D const& sim) -> std::vector<double> {
   auto const Nr  = sim.out_ixy.size();
 
   pffdtd::summary(sim);
+
+  auto videoFile = sim.file.parent_path() / "out.avi";
+  auto video     = BackgroundWriter{
+          .size   = cv::Size(Nx, Ny),
+          .writer = VideoWriter{videoFile, sim.video_fps, 1000, 1000},
+  };
+  auto videoThread = std::thread([&video] { write(video); });
 
   for (auto dev : sycl::device::get_devices()) {
     pffdtd::summary(dev);
@@ -123,8 +165,14 @@ auto run(Simulation2D const& sim) -> std::vector<double> {
       // }
     }
 
-    video.write(frame, Ny, Nx);
+    {
+      auto lock = std::scoped_lock{video.mutex};
+      video.queue.push(frame);
+    }
   }
+
+  video.done.store(true);
+  videoThread.join();
 
   auto save = std::vector<double>(Nt * Nr);
   auto host = sycl::host_accessor{out, sycl::read_only};

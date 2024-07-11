@@ -225,6 +225,7 @@ def main():
     h5f = h5py.File(data_dir / pathlib.Path('diffusor.h5'), 'w')
     h5f.create_dataset('fmax', data=np.float64(fmax))
     h5f.create_dataset('fs', data=np.float64(fs))
+    h5f.create_dataset('video_fps', data=np.float64(fps))
     h5f.create_dataset('dx', data=np.float64(dx))
     h5f.create_dataset('dt', data=np.float64(dt))
     h5f.create_dataset('Nt', data=np.int64(Nt))

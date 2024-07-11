@@ -23,6 +23,8 @@ struct Simulation2D {
   std::vector<double> src_sig; // Source signal
 
   std::vector<int64_t> out_ixy; // Receiver nodes
+
+  double video_fps;
 };
 
 auto loadSimulation2D(std::filesystem::path const& path) -> Simulation2D;

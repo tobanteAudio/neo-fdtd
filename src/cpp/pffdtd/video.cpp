@@ -34,7 +34,7 @@ auto VideoWriter::write(std::span<double> buf, size_t width, size_t height)
   normalized.convertTo(normalized, CV_8U);
 
   auto resized = cv::Mat{};
-  cv::resize(normalized, resized, _size);
+  cv::resize(normalized, resized, _size, 0, 0, cv::INTER_AREA);
 
   auto rotated = cv::Mat{};
   cv::rotate(resized, rotated, cv::ROTATE_90_COUNTERCLOCKWISE);
