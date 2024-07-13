@@ -7,10 +7,20 @@
 #include <fmt/os.h>
 
 #include <atomic>
+#include <concepts>
 #include <queue>
 #include <thread>
 
 namespace pffdtd {
+
+[[nodiscard]] constexpr auto to_ixy(
+    std::integral auto x,
+    std::integral auto y,
+    std::integral auto /*Nx*/,
+    std::integral auto Ny
+) -> std::integral auto {
+  return x * Ny + y;
+}
 
 struct BackgroundWriter {
   cv::Size size;
@@ -304,12 +314,14 @@ auto run(Simulation2D const& sim) -> std::vector<double> {
   auto host = sycl::host_accessor{out, sycl::read_only};
   auto max  = 0.0;
   auto min  = 0.0;
-  for (auto i{0UL}; i < static_cast<size_t>(Nt); ++i) {
-    for (auto r{0UL}; r < Nr; ++r) {
-      auto const sample = host[r][i];
-      save[i * Nr + r]  = sample;
-      max               = std::max(max, sample);
-      min               = std::min(min, sample);
+  for (auto it{0UL}; it < static_cast<size_t>(Nt); ++it) {
+    for (auto ir{0UL}; ir < Nr; ++ir) {
+      auto const idx    = to_ixy(ir, it, Nr, Nt);
+      auto const sample = host[ir][it];
+      save[idx]         = sample;
+
+      max = std::max(max, sample);
+      min = std::min(min, sample);
     }
   }
 
