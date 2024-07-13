@@ -14,6 +14,7 @@ def ported_enclosure_volume(Vas, Fs, Fb):
     Fs: Driver resonant frequency
     Fb: Tuning frequency
     """
+    return Vas/(((Fb/Fs)**2)-1)
     return (Vas*(0.7*Fs))/(Fb-0.7*Fs)
 
 
