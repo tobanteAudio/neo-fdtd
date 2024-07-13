@@ -6,56 +6,57 @@
 //
 // Copyright 2021 Brian Hamilton.
 //
-// File name: cpu_engine.h
+// File name: engine_cpu.hpp
 //
 // Description: CPU-based implementation of FDTD engine, with OpenMP
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "cpu_engine.hpp"
+#include "engine_cpu.hpp"
+
+#include "pffdtd/progress.hpp"
+#include "pffdtd/utility.hpp"
 
 #include <fmt/format.h>
 #include <fmt/os.h>
 
+#include <omp.h>
+
+#include <cassert>
+#include <cmath>
+#include <cstdlib>
 #include <vector>
 
-#include <assert.h> //for assert
-#include <math.h>   //NAN
-#include <omp.h>
-#include <stdbool.h> //for bool
-#include <stdint.h>
-#include <stdlib.h> //for malloc
-
-double runSim(Simulation3D* sd) {
+auto runSim(Simulation3D& sd) -> double {
   // keep local ints, scalars
-  int64_t Ns   = sd->Ns;
-  int64_t Nr   = sd->Nr;
-  int64_t Nt   = sd->Nt;
-  int64_t Npts = sd->Npts;
-  int64_t Nx   = sd->Nx;
-  int64_t Ny   = sd->Ny;
-  int64_t Nz   = sd->Nz;
-  int64_t Nb   = sd->Nb;
-  int64_t Nbl  = sd->Nbl;
-  int64_t Nba  = sd->Nba;
-  int8_t* Mb   = sd->Mb;
+  int64_t Ns   = sd.Ns;
+  int64_t Nr   = sd.Nr;
+  int64_t Nt   = sd.Nt;
+  int64_t Npts = sd.Npts;
+  int64_t Nx   = sd.Nx;
+  int64_t Ny   = sd.Ny;
+  int64_t Nz   = sd.Nz;
+  int64_t Nb   = sd.Nb;
+  int64_t Nbl  = sd.Nbl;
+  int64_t Nba  = sd.Nba;
+  int8_t* Mb   = sd.Mb;
 
   // keep local copies of pointers (style choice)
-  int64_t* bn_ixyz   = sd->bn_ixyz;
-  int64_t* bnl_ixyz  = sd->bnl_ixyz;
-  int64_t* bna_ixyz  = sd->bna_ixyz;
-  int64_t* in_ixyz   = sd->in_ixyz;
-  int64_t* out_ixyz  = sd->out_ixyz;
-  uint16_t* adj_bn   = sd->adj_bn;
-  uint8_t* bn_mask   = sd->bn_mask;
-  int8_t* mat_bnl    = sd->mat_bnl;
-  int8_t* Q_bna      = sd->Q_bna;
-  double* in_sigs    = sd->in_sigs;
-  double* u_out      = sd->u_out;
-  int8_t fcc_flag    = sd->fcc_flag;
-  Real* ssaf_bnl     = sd->ssaf_bnl;
-  Real* mat_beta     = sd->mat_beta;
-  MatQuad* mat_quads = sd->mat_quads;
+  int64_t* bn_ixyz   = sd.bn_ixyz;
+  int64_t* bnl_ixyz  = sd.bnl_ixyz;
+  int64_t* bna_ixyz  = sd.bna_ixyz;
+  int64_t* in_ixyz   = sd.in_ixyz;
+  int64_t* out_ixyz  = sd.out_ixyz;
+  uint16_t* adj_bn   = sd.adj_bn;
+  uint8_t* bn_mask   = sd.bn_mask;
+  int8_t* mat_bnl    = sd.mat_bnl;
+  int8_t* Q_bna      = sd.Q_bna;
+  double* in_sigs    = sd.in_sigs;
+  double* u_out      = sd.u_out;
+  int8_t fcc_flag    = sd.fcc_flag;
+  Real* ssaf_bnl     = sd.ssaf_bnl;
+  Real* mat_beta     = sd.mat_beta;
+  MatQuad* mat_quads = sd.mat_quads;
 
   // allocate memory
   auto u0_buf   = std::vector<Real>(static_cast<size_t>(Npts));
@@ -77,11 +78,11 @@ double runSim(Simulation3D* sd) {
   Real* gh1  = gh1_buf.data();
 
   // sim coefficients
-  Real lo2 = sd->lo2;
-  Real sl2 = sd->sl2;
-  Real l   = sd->l;
-  Real a1  = sd->a1;
-  Real a2  = sd->a2;
+  Real lo2 = sd.lo2;
+  Real sl2 = sd.sl2;
+  Real l   = sd.l;
+  Real a1  = sd.a1;
+  Real a2  = sd.a2;
 
   // can control outside with OMP_NUM_THREADS env variable
   int num_workers = omp_get_max_threads();
@@ -316,7 +317,7 @@ double runSim(Simulation3D* sd) {
     time_elapsed        = current_time - start_time;
     time_elapsed_sample = current_time - sample_start_time;
     // print progress (can be removed or changed)
-    print_progress(
+    pffdtd::print_progress(
         n,
         Nt,
         Npts,

@@ -6,23 +6,64 @@
 //
 // Copyright 2021 Brian Hamilton.
 //
-// File name: fdtd_data.h
+// File name: simulation_3d.cpp
 //
 // Description: Header-only function definitions for handling loading of
 // simulation data from HDF5 files, preparing for simulation, and writing outputs
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "fdtd_data.hpp"
+#include "simulation_3d.hpp"
 
 #include "pffdtd/hdf.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <filesystem>
 
+namespace {
+
+#include <cassert>
+
+// linear indices to sub-indices in 3d, Nz continguous
+void ind2sub3d(
+    int64_t idx,
+    int64_t Nx,
+    int64_t Ny,
+    int64_t Nz,
+    int64_t* ix,
+    int64_t* iy,
+    int64_t* iz
+) {
+  *iz = idx % Nz;
+  *iy = (idx - (*iz)) / Nz % Ny;
+  *ix = ((idx - (*iz)) / Nz - (*iy)) / Ny;
+  assert(*ix > 0);
+  assert(*iy > 0);
+  assert(*iz > 0);
+  assert(*ix < Nx - 1);
+  assert(*iy < Ny - 1);
+  assert(*iz < Nz - 1);
+}
+
+// double check some index inside grid
+void check_inside_grid(
+    int64_t* idx,
+    int64_t N,
+    int64_t Nx,
+    int64_t Ny,
+    int64_t Nz
+) {
+  for (int64_t i = 0; i < N; i++) {
+    int64_t iz, iy, ix;
+    ind2sub3d(idx[i], Nx, Ny, Nz, &ix, &iy, &iz);
+  }
+}
+} // namespace
+
 // load the sim data from Python-written HDF5 files
-void loadSimulation3D(Simulation3D* sim) {
+void loadSimulation3D(Simulation3D& sim) {
   // local values, to read in and attach to struct at end
   int64_t Nx, Ny, Nz;
   int64_t Nb, Nbl, Nba;
@@ -111,10 +152,10 @@ void loadSimulation3D(Simulation3D* sim) {
   // calculate some update coefficients
   double lfac = (fcc_flag > 0) ? 0.25 : 1.0; // laplacian factor
   double dsl2
-      = (1.0 + EPS) * lfac * l2;  // scale for stability (EPS in fdtd_common.h)
+      = (1.0 + EPS) * lfac * l2;  // scale for stability (EPS in fdtd_common.hpp)
   double da1 = (2.0 - dsl2 * NN); // scaling for stability in single
   double da2 = lfac * l2;
-  // Real is defined in fdtd_common.h (float or double)
+  // Real is defined in fdtd_common.hpp (float or double)
   Real a1  = da1;
   Real a2  = da2;
   Real sl2 = dsl2;
@@ -638,66 +679,66 @@ void loadSimulation3D(Simulation3D* sim) {
   /*------------------------
    * ATTACH
   ------------------------*/
-  sim->Ns          = Ns;
-  sim->Nr          = Nr;
-  sim->Nt          = Nt;
-  sim->Npts        = Npts;
-  sim->Nx          = Nx;
-  sim->Ny          = Ny;
-  sim->Nz          = Nz;
-  sim->Nb          = Nb;
-  sim->Nbl         = Nbl;
-  sim->Nba         = Nba;
-  sim->l           = l;
-  sim->l2          = l2;
-  sim->fcc_flag    = fcc_flag;
-  sim->Nm          = Nm;
-  sim->NN          = NN;
-  sim->a2          = a2;
-  sim->a1          = a1;
-  sim->sl2         = sl2;
-  sim->lo2         = lo2;
-  sim->Mb          = Mb;
-  sim->bn_ixyz     = bn_ixyz;
-  sim->bnl_ixyz    = bnl_ixyz;
-  sim->bna_ixyz    = bna_ixyz;
-  sim->Q_bna       = Q_bna;
-  sim->adj_bn      = adj_bn;
-  sim->ssaf_bnl    = ssaf_bnl;
-  sim->bn_mask     = bn_mask;
-  sim->mat_bnl     = mat_bnl;
-  sim->K_bn        = K_bn;
-  sim->out_ixyz    = out_ixyz;
-  sim->out_reorder = out_reorder;
-  sim->in_ixyz     = in_ixyz;
-  sim->in_sigs     = in_sigs;
-  sim->u_out       = u_out;
-  sim->mat_beta    = mat_beta;
-  sim->mat_quads   = mat_quads;
+  sim.Ns          = Ns;
+  sim.Nr          = Nr;
+  sim.Nt          = Nt;
+  sim.Npts        = Npts;
+  sim.Nx          = Nx;
+  sim.Ny          = Ny;
+  sim.Nz          = Nz;
+  sim.Nb          = Nb;
+  sim.Nbl         = Nbl;
+  sim.Nba         = Nba;
+  sim.l           = l;
+  sim.l2          = l2;
+  sim.fcc_flag    = fcc_flag;
+  sim.Nm          = Nm;
+  sim.NN          = NN;
+  sim.a2          = a2;
+  sim.a1          = a1;
+  sim.sl2         = sl2;
+  sim.lo2         = lo2;
+  sim.Mb          = Mb;
+  sim.bn_ixyz     = bn_ixyz;
+  sim.bnl_ixyz    = bnl_ixyz;
+  sim.bna_ixyz    = bna_ixyz;
+  sim.Q_bna       = Q_bna;
+  sim.adj_bn      = adj_bn;
+  sim.ssaf_bnl    = ssaf_bnl;
+  sim.bn_mask     = bn_mask;
+  sim.mat_bnl     = mat_bnl;
+  sim.K_bn        = K_bn;
+  sim.out_ixyz    = out_ixyz;
+  sim.out_reorder = out_reorder;
+  sim.in_ixyz     = in_ixyz;
+  sim.in_sigs     = in_sigs;
+  sim.u_out       = u_out;
+  sim.mat_beta    = mat_beta;
+  sim.mat_quads   = mat_quads;
 }
 
 // free everything
-void freeSimulation3D(Simulation3D* sim) {
+void freeSimulation3D(Simulation3D& sim) {
   /*------------------------
    * FREE WILLY
   ------------------------*/
-  free(sim->bn_ixyz);
-  free(sim->bnl_ixyz);
-  free(sim->bna_ixyz);
-  free(sim->Q_bna);
-  free(sim->adj_bn);
-  free(sim->mat_bnl);
-  free(sim->bn_mask);
-  free(sim->ssaf_bnl);
-  free(sim->K_bn);
-  free(sim->in_ixyz);
-  free(sim->out_ixyz);
-  free(sim->out_reorder);
-  free(sim->in_sigs);
-  free(sim->u_out);
-  free(sim->Mb);
-  free(sim->mat_beta);
-  free(sim->mat_quads);
+  free(sim.bn_ixyz);
+  free(sim.bnl_ixyz);
+  free(sim.bna_ixyz);
+  free(sim.Q_bna);
+  free(sim.adj_bn);
+  free(sim.mat_bnl);
+  free(sim.bn_mask);
+  free(sim.ssaf_bnl);
+  free(sim.K_bn);
+  free(sim.in_ixyz);
+  free(sim.out_ixyz);
+  free(sim.out_reorder);
+  free(sim.in_sigs);
+  free(sim.u_out);
+  free(sim.Mb);
+  free(sim.mat_beta);
+  free(sim.mat_quads);
   printf("sim data freed\n");
 }
 
@@ -844,11 +885,11 @@ void readH5Constant(hid_t file, char* dset_str, void* out, DataType t) {
 }
 
 // print last samples of simulation (for correctness checking..)
-void printLastSample(Simulation3D* sim) {
-  int64_t Nt           = sim->Nt;
-  int64_t Nr           = sim->Nr;
-  double* u_out        = sim->u_out;
-  int64_t* out_reorder = sim->out_reorder;
+void printLastSample(Simulation3D& sim) {
+  int64_t Nt           = sim.Nt;
+  int64_t Nr           = sim.Nr;
+  double* u_out        = sim.u_out;
+  int64_t* out_reorder = sim.out_reorder;
   // print last samples
   printf("RAW OUTPUTS\n");
   for (int64_t nr = 0; nr < Nr; nr++) {
@@ -860,10 +901,10 @@ void printLastSample(Simulation3D* sim) {
 }
 
 // scale input to be in middle of floating-point range
-void scaleInput(Simulation3D* sim) {
-  double* in_sigs = sim->in_sigs;
-  int64_t Nt      = sim->Nt;
-  int64_t Ns      = sim->Ns;
+void scaleInput(Simulation3D& sim) {
+  double* in_sigs = sim.in_sigs;
+  int64_t Nt      = sim.Nt;
+  int64_t Ns      = sim.Ns;
 
   // normalise input signals (and save gain)
   double max_in = 0.0;
@@ -896,32 +937,32 @@ void scaleInput(Simulation3D* sim) {
     }
   }
 
-  sim->infac   = infac;
-  sim->in_sigs = in_sigs;
+  sim.infac   = infac;
+  sim.in_sigs = in_sigs;
 }
 
 // undo that scaling
-void rescaleOutput(Simulation3D* sim) {
-  int64_t Nt    = sim->Nt;
-  int64_t Nr    = sim->Nr;
-  double infac  = sim->infac;
-  double* u_out = sim->u_out;
+void rescaleOutput(Simulation3D& sim) {
+  int64_t Nt    = sim.Nt;
+  int64_t Nr    = sim.Nr;
+  double infac  = sim.infac;
+  double* u_out = sim.u_out;
 
   std::transform(u_out, u_out + Nr * Nt, u_out, [infac](auto sample) {
     return sample * infac;
   });
 }
 
-void writeOutputs(Simulation3D* sim) {
-  auto Nt           = static_cast<size_t>(sim->Nt);
-  auto Nr           = static_cast<size_t>(sim->Nr);
-  auto* out_reorder = sim->out_reorder;
+void writeOutputs(Simulation3D& sim) {
+  auto Nt           = static_cast<size_t>(sim.Nt);
+  auto Nr           = static_cast<size_t>(sim.Nr);
+  auto* out_reorder = sim.out_reorder;
   auto u_out        = std::vector<double>(Nr * Nt);
 
   // write outputs in correct order
   for (auto nr = size_t{0}; nr < Nr; ++nr) {
     for (auto n = size_t{0}; n < Nt; ++n) {
-      u_out[nr * Nt + n] = sim->u_out[out_reorder[nr] * Nt + n];
+      u_out[nr * Nt + n] = sim.u_out[out_reorder[nr] * Nt + n];
     }
   }
 

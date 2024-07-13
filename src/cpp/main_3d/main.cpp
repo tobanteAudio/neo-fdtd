@@ -12,18 +12,17 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "fdtd_common.hpp"
-#include "fdtd_data.hpp"
-#include "helper_funcs.hpp"
+#include "pffdtd/simulation_3d.hpp"
+#include "pffdtd/utility.hpp"
 
 #ifndef USING_CUDA
   #error "forgot to define USING_CUDA"
 #endif
 
 #if USING_CUDA
-  #include "gpu_engine.hpp"
+  #include "engine_cuda.hpp"
 #else
-  #include "cpu_engine.hpp"
+  #include "engine_cpu.hpp"
 #endif
 
 #include <fmt/format.h>
@@ -35,13 +34,13 @@ auto main(int /*argc*/, char** /*argv*/) -> int {
   auto const start = std::chrono::steady_clock::now();
 
   auto sim = Simulation3D{};
-  loadSimulation3D(&sim);
-  scaleInput(&sim);
-  runSim(&sim);
-  rescaleOutput(&sim);
-  writeOutputs(&sim);
-  printLastSample(&sim);
-  freeSimulation3D(&sim);
+  loadSimulation3D(sim);
+  scaleInput(sim);
+  runSim(sim);
+  rescaleOutput(sim);
+  writeOutputs(sim);
+  printLastSample(sim);
+  freeSimulation3D(sim);
 
   auto const stop = std::chrono::steady_clock::now();
   auto const sec  = std::chrono::duration<double>(stop - start);

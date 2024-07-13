@@ -6,7 +6,7 @@
 //
 // Copyright 2021 Brian Hamilton.
 //
-// File name: fdtd_data.h
+// File name: simulation_3d.hpp
 //
 // Description: Header-only function definitions for handling loading of
 // simulation data from HDF5 files, preparing for simulation, and writing outputs
@@ -15,12 +15,12 @@
 
 #pragma once
 
-#include "fdtd_common.hpp"
-#include "helper_funcs.hpp"
+#include "pffdtd/config.hpp"
+#include "pffdtd/utility.hpp"
 
 #include "hdf5.h"
 
-#include <stdint.h>
+#include <cstdint>
 
 // maximum number of RLC branches in freq-dep (FD) boundaries (needed at
 // compile-time for CUDA kernels)
@@ -77,12 +77,12 @@ struct MatQuad {
   Real bFh; // b*F-hat
 };
 
-void loadSimulation3D(Simulation3D* sim);
-void freeSimulation3D(Simulation3D* sim);
-void printLastSample(Simulation3D* sim);
-void scaleInput(Simulation3D* sim);
-void rescaleOutput(Simulation3D* sim);
-void writeOutputs(Simulation3D* sim);
+void loadSimulation3D(Simulation3D& sim);
+void freeSimulation3D(Simulation3D& sim);
+void printLastSample(Simulation3D& sim);
+void scaleInput(Simulation3D& sim);
+void rescaleOutput(Simulation3D& sim);
+void writeOutputs(Simulation3D& sim);
 
 void readH5Dataset(
     hid_t file,

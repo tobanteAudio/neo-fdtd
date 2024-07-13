@@ -1,17 +1,11 @@
 project(pffdtd_3d)
 
 add_executable(pffdtd_3d)
-target_compile_definitions(pffdtd_3d PRIVATE PRECISION=2 USING_CUDA=0)
+target_compile_definitions(pffdtd_3d PRIVATE USING_CUDA=0)
 target_sources(pffdtd_3d
     PRIVATE
-        cpu_engine.cpp
-        cpu_engine.hpp
-        fdtd_common.cpp
-        fdtd_common.hpp
-        fdtd_data.cpp
-        fdtd_data.hpp
-        helper_funcs.cpp
-        helper_funcs.hpp
+        engine_cpu.cpp
+        engine_cpu.hpp
         main.cpp
 )
 

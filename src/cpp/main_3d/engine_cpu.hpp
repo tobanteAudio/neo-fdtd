@@ -6,7 +6,7 @@
 //
 // Copyright 2021 Brian Hamilton.
 //
-// File name: cpu_engine.h
+// File name: engine_cpu.hpp
 //
 // Description: CPU-based implementation of FDTD engine, with OpenMP
 //
@@ -14,11 +14,12 @@
 
 #pragma once
 
-#include "fdtd_common.hpp"
-#include "fdtd_data.hpp"
-#include "helper_funcs.hpp"
+#include "pffdtd/config.hpp"
+#include "pffdtd/simulation_3d.hpp"
 
-double runSim(Simulation3D* sd);
+#include <cstdint>
+
+auto runSim(Simulation3D& sd) -> double;
 double process_bnl_pts_fd(
     Real* u0b,
     Real const* u2b,

@@ -6,14 +6,14 @@
 //
 // Copyright 2021 Brian Hamilton.
 //
-// File name: helper_funcs.h
+// File name: utility.cpp
 //
 // Description: Header-only misc function definitions not specific to FDTD
 // simulation
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "helper_funcs.hpp"
+#include "utility.hpp"
 
 // malloc check malloc, and initialise to zero
 // hard stop program if failed

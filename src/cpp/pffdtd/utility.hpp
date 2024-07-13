@@ -6,7 +6,7 @@
 //
 // Copyright 2021 Brian Hamilton.
 //
-// File name: helper_funcs.h
+// File name: utility.hpp
 //
 // Description: Header-only misc function definitions not specific to FDTD
 // simulation

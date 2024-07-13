@@ -1,53 +1,10 @@
-///////////////////////////////////////////////////////////////////////////////
-// This file is a part of PFFDTD.
-//
-// PFFTD is released under the MIT License.
-// For details see the LICENSE file.
-//
-// Copyright 2021 Brian Hamilton.
-//
-// File name: fdtd_common.h
-//
-// Description: Header-only misc function definitions related to FDTD simulation
-//
-///////////////////////////////////////////////////////////////////////////////
+#include "progress.hpp"
 
-#include "fdtd_common.hpp"
+#include <cstdio>
+#include <ctime>
+#include <sys/ioctl.h> //terminal width
 
-// linear indices to sub-indices in 3d, Nz continguous
-void ind2sub3d(
-    int64_t idx,
-    int64_t Nx,
-    int64_t Ny,
-    int64_t Nz,
-    int64_t* ix,
-    int64_t* iy,
-    int64_t* iz
-) {
-  *iz = idx % Nz;
-  *iy = (idx - (*iz)) / Nz % Ny;
-  *ix = ((idx - (*iz)) / Nz - (*iy)) / Ny;
-  assert(*ix > 0);
-  assert(*iy > 0);
-  assert(*iz > 0);
-  assert(*ix < Nx - 1);
-  assert(*iy < Ny - 1);
-  assert(*iz < Nz - 1);
-}
-
-// double check some index inside grid
-void check_inside_grid(
-    int64_t* idx,
-    int64_t N,
-    int64_t Nx,
-    int64_t Ny,
-    int64_t Nz
-) {
-  for (int64_t i = 0; i < N; i++) {
-    int64_t iz, iy, ix;
-    ind2sub3d(idx[i], Nx, Ny, Nz, &ix, &iy, &iz);
-  }
-}
+namespace pffdtd {
 
 // hacky print progress (like tqdm)..
 // N.B. this conflicts with tmux scrolling (stdout needs to flush)
@@ -150,3 +107,5 @@ void print_progress(
 
   fflush(stdout);
 }
+
+} // namespace pffdtd

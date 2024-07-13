@@ -6,7 +6,7 @@
 //
 // Copyright 2021 Brian Hamilton.
 //
-// File name: gpu_engine.h
+// File name: engine_cuda.hpp
 //
 // Description: GPU-based implementation of FDTD engine (using CUDA).
 //
@@ -14,16 +14,20 @@
 
 #ifndef _GPU_ENGINE_H
 #define _GPU_ENGINE_H
+
+#include "fdtd_common.h"
+
+#include "pffdtd/utility.h"
+#include "pffdtd/progress.hpp"
+
+#include "omp.h"
+
 #include <stdio.h>
 #include <stdlib.h> //for malloc
 #include <stdint.h>
 #include <assert.h> //for assert
 #include <stdbool.h> //for bool
 #include <math.h> //NAN
-
-#include "helper_funcs.h"
-#include "fdtd_common.h"
-#include "omp.h"
 
 #define CU_DIV_CEIL(x,y) ((DIV_CEIL(x,y)==0)? (1) : (DIV_CEIL(x,y))) //want 0 to map to 1, otherwise kernel errors
 
@@ -60,9 +64,9 @@ __constant__ int64_t cuNxNy;
 __constant__ int8_t cuMb[MNm]; //to store Mb per mat (MNm has to be hash-defined)
 
 uint64_t print_gpu_details(int i);
-void check_sorted(const struct Simulation3D *sd);
-void split_data(const struct Simulation3D *sd, struct gpuHostData *ghds, int ngpus);
-double runSim(const struct Simulation3D *sd);
+void check_sorted( Simulation3D const& sd);
+void split_data( Simulation3D const& sd, struct gpuHostData *ghds, int ngpus);
+double runSim(Simulation3D &sd);
 //CUDA kernels
 __global__ void KernelAirCart(Real * __restrict__ u0, const Real * __restrict__ u1, const uint8_t * __restrict__ bn_mask);
 __global__ void KernelAirFCC(Real * __restrict__ u0, const Real * __restrict__ u1, const uint8_t * __restrict__ bn_mask);
@@ -476,17 +480,17 @@ __global__ void FlipHaloYZ_Xend(Real * __restrict__ u1)
 }
 
 //input indices need to be sorted for multi-device allocation
-void check_sorted(const struct Simulation3D *sd) {
-   int64_t *bn_ixyz = sd->bn_ixyz;
-   int64_t *bnl_ixyz = sd->bnl_ixyz;
-   int64_t *bna_ixyz = sd->bna_ixyz;
-   int64_t *in_ixyz = sd->in_ixyz;
-   int64_t *out_ixyz = sd->out_ixyz;
-   int64_t Nb = sd->Nb;
-   int64_t Nbl = sd->Nbl;
-   int64_t Nba = sd->Nba;
-   int64_t Ns = sd->Ns;
-   int64_t Nr = sd->Nr;
+void check_sorted( Simulation3D const& sd) {
+   int64_t *bn_ixyz = sd.bn_ixyz;
+   int64_t *bnl_ixyz = sd.bnl_ixyz;
+   int64_t *bna_ixyz = sd.bna_ixyz;
+   int64_t *in_ixyz = sd.in_ixyz;
+   int64_t *out_ixyz = sd.out_ixyz;
+   int64_t Nb = sd.Nb;
+   int64_t Nbl = sd.Nbl;
+   int64_t Nba = sd.Nba;
+   int64_t Ns = sd.Ns;
+   int64_t Nr = sd.Nr;
    for (int64_t i=1; i<Nb; i++) assert (bn_ixyz[i] > bn_ixyz[i-1]); //check save_gpu_folder
    for (int64_t i=1; i<Nbl; i++) assert (bnl_ixyz[i] > bnl_ixyz[i-1]);
    for (int64_t i=1; i<Nba; i++) assert (bna_ixyz[i] > bna_ixyz[i-1]);
@@ -495,10 +499,10 @@ void check_sorted(const struct Simulation3D *sd) {
 }
 
 //counts for splitting data across GPUs
-void split_data(const struct Simulation3D *sd, struct gpuHostData *ghds, int ngpus) {
-   int64_t Nx = sd->Nx;
-   int64_t Ny = sd->Ny;
-   int64_t Nz = sd->Nz;
+void split_data( Simulation3D const& sd, struct gpuHostData *ghds, int ngpus) {
+   int64_t Nx = sd.Nx;
+   int64_t Ny = sd.Ny;
+   int64_t Nz = sd.Nz;
    struct gpuHostData *ghd;
    //initialise
    for (int gid=0; gid<ngpus; gid++) {
@@ -542,8 +546,8 @@ void split_data(const struct Simulation3D *sd, struct gpuHostData *ghds, int ngp
    }
 
    //bn_ixyz - Nb
-   int64_t *bn_ixyz = sd->bn_ixyz;
-   int64_t Nb = sd->Nb;
+   int64_t *bn_ixyz = sd.bn_ixyz;
+   int64_t Nb = sd.Nb;
    {
       int gid=0;
       for (int64_t i=0; i<Nb; i++) {
@@ -562,8 +566,8 @@ void split_data(const struct Simulation3D *sd, struct gpuHostData *ghds, int ngp
    assert(Nb_check==Nb);
 
    //bnl_ixyz - Nbl
-   int64_t *bnl_ixyz = sd->bnl_ixyz;
-   int64_t Nbl = sd->Nbl;
+   int64_t *bnl_ixyz = sd.bnl_ixyz;
+   int64_t Nbl = sd.Nbl;
    {
       int gid=0;
       for (int64_t i=0; i<Nbl; i++) {
@@ -582,8 +586,8 @@ void split_data(const struct Simulation3D *sd, struct gpuHostData *ghds, int ngp
    assert(Nbl_check==Nbl);
 
    //bna_ixyz - Nba
-   int64_t *bna_ixyz = sd->bna_ixyz;
-   int64_t Nba = sd->Nba;
+   int64_t *bna_ixyz = sd.bna_ixyz;
+   int64_t Nba = sd.Nba;
    {
       int gid=0;
       for (int64_t i=0; i<Nba; i++) {
@@ -603,8 +607,8 @@ void split_data(const struct Simulation3D *sd, struct gpuHostData *ghds, int ngp
 
 
    //in_ixyz - Ns
-   int64_t *in_ixyz = sd->in_ixyz;
-   int64_t Ns = sd->Ns;
+   int64_t *in_ixyz = sd.in_ixyz;
+   int64_t Ns = sd.Ns;
    {
       int gid=0;
       for (int64_t i=0; i<Ns; i++) {
@@ -623,8 +627,8 @@ void split_data(const struct Simulation3D *sd, struct gpuHostData *ghds, int ngp
    assert(Ns_check==Ns);
 
    //out_ixyz - Nr
-   int64_t *out_ixyz = sd->out_ixyz;
-   int64_t Nr = sd->Nr;
+   int64_t *out_ixyz = sd.out_ixyz;
+   int64_t Nr = sd.Nr;
    {
       int gid=0;
       for (int64_t i=0; i<Nr; i++) {
@@ -644,7 +648,7 @@ void split_data(const struct Simulation3D *sd, struct gpuHostData *ghds, int ngp
 }
 
 //run the sim!
-double runSim(const struct Simulation3D *sd)
+double runSim(Simulation3D &sd)
 {
    //if you want to test synchronous, env variable for that
    const char* s = getenv("CUDA_LAUNCH_BLOCKING");
@@ -656,12 +660,12 @@ double runSim(const struct Simulation3D *sd)
       }
    }
 
-   assert((sd->fcc_flag != 1)); //uses either cartesian or FCC folded grid
+   assert((sd.fcc_flag != 1)); //uses either cartesian or FCC folded grid
 
    int ngpus,max_ngpus;
    cudaGetDeviceCount(&max_ngpus); //control outside with CUDA_VISIBLE_DEVICES
    ngpus = max_ngpus;
-   assert(ngpus < (sd->Nx));
+   assert(ngpus < (sd.Nx));
    struct gpuData *gds;
    allocate_zeros((void **)&gds, ngpus*sizeof(gpuData));
    struct gpuHostData *ghds;
@@ -676,11 +680,11 @@ double runSim(const struct Simulation3D *sd)
       gds[gid].totalmembytes = print_gpu_details(gid);
    }
 
-   Real lo2 = sd->lo2;
-   Real a1 = sd->a1;
-   Real a2 = sd->a2;
-   Real l = sd->l;
-   Real sl2 = sd->sl2;
+   Real lo2 = sd.lo2;
+   Real a1 = sd.a1;
+   Real a2 = sd.a2;
+   Real l = sd.l;
+   Real sl2 = sd.sl2;
 
    //timing stuff
    double time_elapsed=0.0;
@@ -712,10 +716,10 @@ double runSim(const struct Simulation3D *sd)
    //uint64_t Nx_pos2=0;
 
    Real *u_out_buf;
-   gpuErrchk( cudaMallocHost(&u_out_buf, (size_t)(sd->Nr*sizeof(Real))) );
-   memset(u_out_buf, 0, (size_t)(sd->Nr*sizeof(Real))); //set floats to zero
+   gpuErrchk( cudaMallocHost(&u_out_buf, (size_t)(sd.Nr*sizeof(Real))) );
+   memset(u_out_buf, 0, (size_t)(sd.Nr*sizeof(Real))); //set floats to zero
 
-   int64_t Nzy = (sd->Nz)*(sd->Ny); //area-slice
+   int64_t Nzy = (sd.Nz)*(sd.Ny); //area-slice
 
    //here we recalculate indices to move to devices
    for (int gid=0; gid < ngpus; gid++) {
@@ -746,13 +750,13 @@ double runSim(const struct Simulation3D *sd)
       printf("Nx=%ld Ns=%ld Nr=%ld Nb=%ld, Npts=%ld\n",ghd->Nx,ghd->Ns,ghd->Nr,ghd->Nb,ghd->Npts);
 
       //aliased pointers (to memory already allocated)
-      ghd->in_sigs   = sd->in_sigs + Ns_read*sd->Nt;
-      ghd->ssaf_bnl   = sd->ssaf_bnl + Nbl_read;
-      ghd->adj_bn    = sd->adj_bn + Nb_read;
-      ghd->mat_bnl   = sd->mat_bnl + Nbl_read;
-      ghd->K_bn      = sd->K_bn + Nb_read;
-      ghd->Q_bna     = sd->Q_bna + Nba_read;
-      ghd->u_out     = sd->u_out + Nr_read*sd->Nt;
+      ghd->in_sigs   = sd.in_sigs + Ns_read*sd.Nt;
+      ghd->ssaf_bnl   = sd.ssaf_bnl + Nbl_read;
+      ghd->adj_bn    = sd.adj_bn + Nb_read;
+      ghd->mat_bnl   = sd.mat_bnl + Nbl_read;
+      ghd->K_bn      = sd.K_bn + Nb_read;
+      ghd->Q_bna     = sd.Q_bna + Nba_read;
+      ghd->u_out     = sd.u_out + Nr_read*sd.Nt;
       ghd->u_out_buf = u_out_buf + Nr_read;
 
       //recalculate indices, these are associated host versions to copy over to devices
@@ -765,15 +769,15 @@ double runSim(const struct Simulation3D *sd)
 
       int64_t offset = Nzy*Nx_pos;
       for (int64_t nb=0; nb<(ghd->Nb); nb++) {
-         int64_t ii = sd->bn_ixyz[nb+Nb_read]; //global index
+         int64_t ii = sd.bn_ixyz[nb+Nb_read]; //global index
          int64_t jj = ii - offset; //local index
          assert(jj>=0);
          assert(jj < ghd->Npts);
          ghd->bn_ixyz[nb] = jj;
-         SET_BIT_VAL(ghd->bn_mask[jj>>3],jj%8,GET_BIT(sd->bn_mask[ii>>3],ii%8)); //set bit
+         SET_BIT_VAL(ghd->bn_mask[jj>>3],jj%8,GET_BIT(sd.bn_mask[ii>>3],ii%8)); //set bit
       }
       for (int64_t nb=0; nb<(ghd->Nbl); nb++) {
-         int64_t ii = sd->bnl_ixyz[nb+Nbl_read]; //global index
+         int64_t ii = sd.bnl_ixyz[nb+Nbl_read]; //global index
          int64_t jj = ii - offset; //local index
          assert(jj>=0);
          assert(jj < ghd->Npts);
@@ -781,7 +785,7 @@ double runSim(const struct Simulation3D *sd)
       }
 
       for (int64_t nb=0; nb<(ghd->Nba); nb++) {
-         int64_t ii = sd->bna_ixyz[nb+Nba_read]; //global index
+         int64_t ii = sd.bna_ixyz[nb+Nba_read]; //global index
          int64_t jj = ii - offset; //local index
          assert(jj>=0);
          assert(jj < ghd->Npts);
@@ -790,14 +794,14 @@ double runSim(const struct Simulation3D *sd)
 
 
       for (int64_t ns=0; ns<(ghd->Ns); ns++) {
-         int64_t ii = sd->in_ixyz[ns+Ns_read];
+         int64_t ii = sd.in_ixyz[ns+Ns_read];
          int64_t jj = ii - offset;
          assert(jj>=0);
          assert(jj < ghd->Npts);
          ghd->in_ixyz[ns] = jj;
       }
       for (int64_t nr=0; nr<(ghd->Nr); nr++) {
-         int64_t ii = sd->out_ixyz[nr+Nr_read];
+         int64_t ii = sd.out_ixyz[nr+Nr_read];
          int64_t jj = ii - offset;
          assert(jj>=0);
          assert(jj < ghd->Npts);
@@ -858,11 +862,11 @@ double runSim(const struct Simulation3D *sd)
       gpuErrchk( cudaMalloc(&(gd->mat_bnl), (size_t)(ghd->Nbl*sizeof(int8_t))) );
       gpuErrchk( cudaMemcpy(gd->mat_bnl, ghd->mat_bnl, (size_t)ghd->Nbl*sizeof(int8_t), cudaMemcpyHostToDevice) );
 
-      gpuErrchk( cudaMalloc(&(gd->mat_beta), (size_t)sd->Nm*sizeof(Real)) );
-      gpuErrchk( cudaMemcpy(gd->mat_beta, sd->mat_beta, (size_t)sd->Nm*sizeof(Real), cudaMemcpyHostToDevice) );
+      gpuErrchk( cudaMalloc(&(gd->mat_beta), (size_t)sd.Nm*sizeof(Real)) );
+      gpuErrchk( cudaMemcpy(gd->mat_beta, sd.mat_beta, (size_t)sd.Nm*sizeof(Real), cudaMemcpyHostToDevice) );
 
-      gpuErrchk( cudaMalloc(&(gd->mat_quads), (size_t)sd->Nm*MMb*sizeof(MatQuad)) );
-      gpuErrchk( cudaMemcpy(gd->mat_quads, sd->mat_quads, (size_t)sd->Nm*MMb*sizeof(MatQuad), cudaMemcpyHostToDevice) );
+      gpuErrchk( cudaMalloc(&(gd->mat_quads), (size_t)sd.Nm*MMb*sizeof(MatQuad)) );
+      gpuErrchk( cudaMemcpy(gd->mat_quads, sd.mat_quads, (size_t)sd.Nm*MMb*sizeof(MatQuad), cudaMemcpyHostToDevice) );
 
       gpuErrchk( cudaMalloc(&(gd->bn_mask), (size_t)(ghd->Nbm*sizeof(uint8_t))) );
       gpuErrchk( cudaMemcpy(gd->bn_mask, ghd->bn_mask, (size_t)ghd->Nbm*sizeof(uint8_t), cudaMemcpyHostToDevice) );
@@ -885,13 +889,13 @@ double runSim(const struct Simulation3D *sd)
       printf("\n");
 
       //swapping x and z here (CUDA has first dim contiguous)
-      gpuErrchk( cudaMemcpyToSymbol(cuNx,&(sd->Nz),sizeof(int64_t)) );
-      gpuErrchk( cudaMemcpyToSymbol(cuNy,&(sd->Ny),sizeof(int64_t)) );
+      gpuErrchk( cudaMemcpyToSymbol(cuNx,&(sd.Nz),sizeof(int64_t)) );
+      gpuErrchk( cudaMemcpyToSymbol(cuNy,&(sd.Ny),sizeof(int64_t)) );
       gpuErrchk( cudaMemcpyToSymbol(cuNz,&(ghd->Nxh),sizeof(int64_t)) );
       gpuErrchk( cudaMemcpyToSymbol(cuNb,&(ghd->Nb),sizeof(int64_t)) );
       gpuErrchk( cudaMemcpyToSymbol(cuNbl,&(ghd->Nbl),sizeof(int64_t)) );
       gpuErrchk( cudaMemcpyToSymbol(cuNba,&(ghd->Nba),sizeof(int64_t)) );
-      gpuErrchk( cudaMemcpyToSymbol(cuMb,sd->Mb,sd->Nm*sizeof(int8_t)) );
+      gpuErrchk( cudaMemcpyToSymbol(cuMb,sd.Mb,sd.Nm*sizeof(int8_t)) );
       gpuErrchk( cudaMemcpyToSymbol(cuNxNy,&Nzy,sizeof(int64_t)) ); //same for all devices
 
       gpuErrchk( cudaMemcpyToSymbol(c1,&a1,sizeof(Real)) );
@@ -904,15 +908,15 @@ double runSim(const struct Simulation3D *sd)
       printf("\n");
 
       //threads grids and blocks (swap x and z)
-      int64_t cuGx = CU_DIV_CEIL(sd->Nz-2,cuBx);
-      int64_t cuGy = CU_DIV_CEIL(sd->Ny-2,cuBy);
+      int64_t cuGx = CU_DIV_CEIL(sd.Nz-2,cuBx);
+      int64_t cuGy = CU_DIV_CEIL(sd.Ny-2,cuBy);
       int64_t cuGz = CU_DIV_CEIL(ghd->Nxh-2,cuBz);
       int64_t cuGr = CU_DIV_CEIL(ghd->Nr,cuBrw);
       int64_t cuGb = CU_DIV_CEIL(ghd->Nb,cuBb);
       int64_t cuGbl = CU_DIV_CEIL(ghd->Nbl,cuBb);
       int64_t cuGba = CU_DIV_CEIL(ghd->Nba,cuBb);
 
-      int64_t cuGx2 = CU_DIV_CEIL(sd->Nz,cuBx2); //full face
+      int64_t cuGx2 = CU_DIV_CEIL(sd.Nz,cuBx2); //full face
       int64_t cuGz2 = CU_DIV_CEIL(ghd->Nxh,cuBy2);  //full face
 
       assert(cuGx >= 1);
@@ -936,9 +940,9 @@ double runSim(const struct Simulation3D *sd)
       gd->block_dim_halo_xy = dim3(cuBx2, cuBy2, 1);
       gd->block_dim_halo_yz = dim3(cuBx2, cuBy2, 1);
       gd->block_dim_halo_xz = dim3(cuBx2, cuBy2, 1);
-      gd->grid_dim_halo_xy  = dim3(CU_DIV_CEIL(sd->Nz,cuBx2), CU_DIV_CEIL(sd->Ny,cuBy2), 1);
-      gd->grid_dim_halo_yz  = dim3(CU_DIV_CEIL(sd->Ny,cuBx2), CU_DIV_CEIL(ghd->Nxh,cuBy2), 1);
-      gd->grid_dim_halo_xz  = dim3(CU_DIV_CEIL(sd->Nz,cuBx2), CU_DIV_CEIL(ghd->Nxh,cuBy2), 1);
+      gd->grid_dim_halo_xy  = dim3(CU_DIV_CEIL(sd.Nz,cuBx2), CU_DIV_CEIL(sd.Ny,cuBy2), 1);
+      gd->grid_dim_halo_yz  = dim3(CU_DIV_CEIL(sd.Ny,cuBx2), CU_DIV_CEIL(ghd->Nxh,cuBy2), 1);
+      gd->grid_dim_halo_xz  = dim3(CU_DIV_CEIL(sd.Nz,cuBx2), CU_DIV_CEIL(ghd->Nxh,cuBy2), 1);
 
       gd->block_dim_fold     = dim3(cuBx2,cuBy2,1);
       gd->grid_dim_fold      = dim3(cuGx2,cuGz2,1);
@@ -954,12 +958,12 @@ double runSim(const struct Simulation3D *sd)
       gpuErrchk( cudaEventCreate(&(gd->cuEv_bn_roundtrip_end)) );
       gpuErrchk( cudaEventCreate(&(gd->cuEv_readout_end)) );
    }
-   assert(Nb_read == sd->Nb);
-   assert(Nbl_read == sd->Nbl);
-   assert(Nba_read == sd->Nba);
-   assert(Nr_read == sd->Nr);
-   assert(Ns_read == sd->Ns);
-   assert(Nx_read == sd->Nx);
+   assert(Nb_read == sd.Nb);
+   assert(Nbl_read == sd.Nbl);
+   assert(Nba_read == sd.Nba);
+   assert(Nr_read == sd.Nr);
+   assert(Ns_read == sd.Ns);
+   assert(Nx_read == sd.Nx);
 
    //these will be on first GPU only
    cudaEvent_t cuEv_main_start;
@@ -972,7 +976,7 @@ double runSim(const struct Simulation3D *sd)
    gpuErrchk( cudaEventCreate(&cuEv_main_sample_start) );
    gpuErrchk( cudaEventCreate(&cuEv_main_sample_end) );
 
-   for (int64_t n=0; n<sd->Nt; n++) { //loop over time-steps
+   for (int64_t n=0; n<sd.Nt; n++) { //loop over time-steps
       for (int gid=0; gid < ngpus; gid++) { //loop over GPUs (one thread launches all kernels)
          gpuErrchk( cudaSetDevice(gid) );
          struct gpuData *gd = &(gds[gid]); //get struct of device pointers
@@ -987,7 +991,7 @@ double runSim(const struct Simulation3D *sd)
          gpuErrchk( cudaEventRecord(gd->cuEv_bn_roundtrip_start,gd->cuStream_bn) );
 
          //boundary updates
-         if (sd->fcc_flag==0) {
+         if (sd.fcc_flag==0) {
             KernelBoundaryRigidCart<<<gd->grid_dim_bn,gd->block_dim_bn,0,gd->cuStream_bn>>>(gd->u0,gd->u1,gd->adj_bn,gd->bn_ixyz,gd->K_bn);
          }
          else {
@@ -1016,7 +1020,7 @@ double runSim(const struct Simulation3D *sd)
             FlipHaloXY_Zend<<<gd->grid_dim_halo_xy,gd->block_dim_halo_xy,0,gd->cuStream_air>>>(gd->u1);
          }
          FlipHaloXZ_Ybeg<<<gd->grid_dim_halo_xz,gd->block_dim_halo_xz,0,gd->cuStream_air>>>(gd->u1);
-         if (sd->fcc_flag==0) {
+         if (sd.fcc_flag==0) {
             FlipHaloXZ_Yend<<<gd->grid_dim_halo_xz,gd->block_dim_halo_xz,0,gd->cuStream_air>>>(gd->u1);
          }
          FlipHaloYZ_Xbeg<<<gd->grid_dim_halo_yz,gd->block_dim_halo_yz,0,gd->cuStream_air>>>(gd->u1);
@@ -1024,10 +1028,10 @@ double runSim(const struct Simulation3D *sd)
 
          //injecting source first, negating sample to add it in first (NB source on different stream than bn)
          for (int64_t ns=0; ns<ghd->Ns; ns++) {
-            AddIn<<<1,1,0,gd->cuStream_air>>>(gd->u0 + ghd->in_ixyz[ns],(Real)(-(ghd->in_sigs[ns*sd->Nt+n])));
+            AddIn<<<1,1,0,gd->cuStream_air>>>(gd->u0 + ghd->in_ixyz[ns],(Real)(-(ghd->in_sigs[ns*sd.Nt+n])));
          }
          //now air updates (not conflicting with bn updates because of bn_mask)
-         if (sd->fcc_flag==0) {
+         if (sd.fcc_flag==0) {
             KernelAirCart<<<gd->grid_dim_air,gd->block_dim_air,0,gd->cuStream_air>>>(gd->u0,gd->u1,gd->bn_mask);
          }
          else {
@@ -1052,7 +1056,7 @@ double runSim(const struct Simulation3D *sd)
          gpuErrchk( cudaEventSynchronize(gd->cuEv_readout_end) );
          //copy grid points off output buffer
          for (int64_t nr=0; nr<ghd->Nr; nr++) {
-            ghd->u_out[nr*sd->Nt + n] = (double)(ghd->u_out_buf[nr]);
+            ghd->u_out[nr*sd.Nt + n] = (double)(ghd->u_out_buf[nr]);
          }
       }
       //synchronise streams
@@ -1148,7 +1152,7 @@ double runSim(const struct Simulation3D *sd)
          time_elapsed_sample_bn = millis_bn/1000.0;
          time_elapsed_bn += time_elapsed_sample_bn;
 
-         print_progress(n, sd->Nt, sd->Npts, sd->Nb, time_elapsed, time_elapsed_sample, time_elapsed_air, time_elapsed_sample_air, time_elapsed_bn, time_elapsed_sample_bn, ngpus);
+         pffdtd::print_progress(n, sd.Nt, sd.Npts, sd.Nb, time_elapsed, time_elapsed_sample, time_elapsed_air, time_elapsed_sample_air, time_elapsed_bn, time_elapsed_sample_bn, ngpus);
       }
    }
    printf("\n");
@@ -1230,9 +1234,9 @@ double runSim(const struct Simulation3D *sd)
       gpuErrchk( cudaDeviceReset() );
    }
 
-   printf("Boundary loop: %.6fs, %.2f Mvox/s\n",time_elapsed_bn,sd->Nb*sd->Nt/1e6/time_elapsed_bn);
-   printf("Air update: %.6fs, %.2f Mvox/s\n",time_elapsed_air,sd->Npts*sd->Nt/1e6/time_elapsed_air);
-   printf("Combined (total): %.6fs, %.2f Mvox/s\n",time_elapsed,sd->Npts*sd->Nt/1e6/time_elapsed);
+   printf("Boundary loop: %.6fs, %.2f Mvox/s\n",time_elapsed_bn,sd.Nb*sd.Nt/1e6/time_elapsed_bn);
+   printf("Air update: %.6fs, %.2f Mvox/s\n",time_elapsed_air,sd.Npts*sd.Nt/1e6/time_elapsed_air);
+   printf("Combined (total): %.6fs, %.2f Mvox/s\n",time_elapsed,sd.Npts*sd.Nt/1e6/time_elapsed);
    return time_elapsed;
 }
 #endif
