@@ -70,7 +70,7 @@ def add_diffusor(prime, well_width, max_depth, room, in_mask, X, Y, dx, c, verbo
     fmin_q, fmax_q = diffusor_bandwidth(width_q, depth_q, c=c)
 
     radius = 5
-    total_width = 8
+    total_width = 5
     pos = (room[0]/2-total_width/2, room[1]/2-radius-depth)
     pos_q = quantize_point(pos, dx)
     n = int(total_width/width_q)
