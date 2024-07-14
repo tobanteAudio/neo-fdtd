@@ -1,7 +1,12 @@
 #pragma once
 
+#include "pffdtd/video.hpp"
+
+#include <atomic>
 #include <cstdint>
 #include <filesystem>
+#include <queue>
+#include <thread>
 #include <vector>
 
 namespace pffdtd {
@@ -30,5 +35,16 @@ struct Simulation2D {
 
 auto loadSimulation2D(std::filesystem::path const& path) -> Simulation2D;
 auto summary(Simulation2D const& sim) -> void;
+
+struct BackgroundVideoWriter {
+  cv::Size size;
+  VideoWriter writer;
+  std::queue<std::vector<double>> queue;
+  std::mutex mutex;
+  std::atomic<bool> done{false};
+};
+
+auto run(BackgroundVideoWriter& bw, Simulation2D const& sim) -> void;
+auto push(BackgroundVideoWriter& bw, std::vector<double> frame) -> void;
 
 } // namespace pffdtd

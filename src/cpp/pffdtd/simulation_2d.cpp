@@ -47,4 +47,72 @@ auto summary(Simulation2D const& sim) -> void {
   fmt::println("loss_factor: {}", sim.loss_factor);
 }
 
+auto run(BackgroundVideoWriter& bw, Simulation2D const& sim) -> void {
+
+  auto frame      = std::vector<double>{};
+  auto normalized = cv::Mat{};
+  auto rotated    = cv::Mat{};
+
+  while (not bw.done or not bw.queue.empty()) {
+    auto shouldSleep = false;
+    {
+      auto lock   = std::scoped_lock{bw.mutex};
+      shouldSleep = bw.queue.empty();
+    }
+
+    if (shouldSleep) {
+      std::this_thread::sleep_for(std::chrono::milliseconds{10});
+      continue;
+    }
+
+    {
+      auto lock = std::scoped_lock{bw.mutex};
+      frame     = bw.queue.front();
+      bw.queue.pop();
+    }
+
+    auto input = cv::Mat{
+        static_cast<int>(sim.Nx),
+        static_cast<int>(sim.Ny),
+        CV_64F,
+        static_cast<void*>(frame.data()),
+    };
+
+    cv::normalize(input, normalized, 0, 255, cv::NORM_MINMAX);
+    normalized.convertTo(normalized, CV_8U);
+
+    for (auto ix{0L}; ix < sim.Nx; ++ix) {
+      for (auto iy{0L}; iy < sim.Ny; ++iy) {
+        if (not sim.in_mask[ix * sim.Ny + iy]) {
+          normalized.at<uint8_t>(ix, iy) = 255;
+        }
+      }
+    }
+
+    cv::rotate(normalized, rotated, cv::ROTATE_90_COUNTERCLOCKWISE);
+
+    bw.writer.write(rotated);
+  }
+}
+
+auto push(BackgroundVideoWriter& bw, std::vector<double> frame) -> void {
+  while (true) {
+    auto const wait = [&] {
+      auto lock = std::scoped_lock{bw.mutex};
+      return bw.queue.size() > 10;
+    }();
+
+    if (wait) {
+      std::this_thread::sleep_for(std::chrono::milliseconds{10});
+    } else {
+      break;
+    }
+  }
+
+  {
+    auto lock = std::scoped_lock{bw.mutex};
+    bw.queue.push(std::move(frame));
+  }
+}
+
 } // namespace pffdtd
