@@ -5,6 +5,7 @@
 #include <atomic>
 #include <cstdint>
 #include <filesystem>
+#include <optional>
 #include <queue>
 #include <thread>
 #include <vector>
@@ -29,15 +30,13 @@ struct Simulation2D {
 
   std::vector<int64_t> out_ixy; // Receiver nodes
 
-  bool render_video;
-  double video_fps;
+  std::optional<VideoWriter::Options> videoOptions;
 };
 
 auto loadSimulation2D(std::filesystem::path const& path) -> Simulation2D;
 auto summary(Simulation2D const& sim) -> void;
 
 struct BackgroundVideoWriter {
-  cv::Size size;
   VideoWriter writer;
   std::queue<std::vector<double>> queue;
   std::mutex mutex;

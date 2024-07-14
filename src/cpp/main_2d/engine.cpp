@@ -75,22 +75,15 @@ auto run(Simulation2D const& sim)
 
   pffdtd::summary(sim);
 
-  auto videoWriter = std::unique_ptr<BackgroundVideoWriter>();
-  auto videoThread = std::unique_ptr<std::thread>();
+  auto shouldRenderVideo = sim.videoOptions.has_value();
+  auto videoWriter       = std::unique_ptr<BackgroundVideoWriter>();
+  auto videoThread       = std::unique_ptr<std::thread>();
 
-  if (sim.render_video) {
-    auto const vRatio  = static_cast<double>(Ny) / static_cast<double>(Nx);
-    auto const vWidth  = std::min(2000, static_cast<int>(Nx));
-    auto const vHeight = static_cast<int>(vWidth * vRatio);
-    auto const vFile   = sim.file.parent_path() / "out.avi";
-
-    videoWriter = std::make_unique<BackgroundVideoWriter>(
-        cv::Size{vWidth, vHeight},
-        VideoWriter{vFile, sim.video_fps, size_t(vWidth), size_t(vHeight)}
-    );
-    videoThread = std::make_unique<std::thread>([&videoWriter, &sim] {
-      run(*videoWriter, sim);
-    });
+  if (shouldRenderVideo) {
+    auto opt    = sim.videoOptions.value();
+    auto func   = [&videoWriter, &sim] { run(*videoWriter, sim); };
+    videoWriter = std::make_unique<BackgroundVideoWriter>(VideoWriter{opt});
+    videoThread = std::make_unique<std::thread>(func);
   }
 
   auto prop   = sycl::property_list{sycl::property::queue::in_order()};
@@ -98,10 +91,10 @@ auto run(Simulation2D const& sim)
   auto device = queue.get_device();
   pffdtd::summary(device);
 
-  auto u0  = sycl::buffer<double, 2>(sycl::range<2>(sim.Nx, sim.Ny));
-  auto u1  = sycl::buffer<double, 2>(sycl::range<2>(sim.Nx, sim.Ny));
-  auto u2  = sycl::buffer<double, 2>(sycl::range<2>(sim.Nx, sim.Ny));
-  auto out = sycl::buffer<double, 2>(sycl::range<2>(Nr, sim.Nt));
+  auto u0  = sycl::buffer<double, 2>(sycl::range<2>(Nx, Ny));
+  auto u1  = sycl::buffer<double, 2>(sycl::range<2>(Nx, Ny));
+  auto u2  = sycl::buffer<double, 2>(sycl::range<2>(Nx, Ny));
+  auto out = sycl::buffer<double, 2>(sycl::range<2>(Nr, Nt));
 
   auto in_mask = sycl::buffer<uint8_t, 1>{sim.in_mask};
   auto bn_ixy  = sycl::buffer<int64_t, 1>{sim.bn_ixy};
@@ -109,12 +102,11 @@ auto run(Simulation2D const& sim)
   auto out_ixy = sycl::buffer<int64_t, 1>{sim.out_ixy};
   auto src_sig = sycl::buffer<double, 1>{sim.src_sig};
 
-  auto frame = std::vector<double>(sim.Nx * sim.Ny);
+  auto frame = std::vector<double>(Nx * Ny);
 
-  fmt::print(stdout, "111111111");
-  for (auto n{0LL}; n < sim.Nt; ++n) {
+  for (auto n{0LL}; n < Nt; ++n) {
     fmt::print(stdout, "\r\r\r\r\r\r\r\r\r");
-    fmt::print(stdout, "{:04d}/{:04d}", n, sim.Nt);
+    fmt::print(stdout, "{:04d}/{:04d}", n, Nt);
     std::fflush(stdout);
 
     queue.submit([&](sycl::handler& cgh) {
@@ -219,7 +211,7 @@ auto run(Simulation2D const& sim)
       });
     });
 
-    if (sim.render_video) {
+    if (shouldRenderVideo) {
       auto host = sycl::host_accessor{u0, sycl::read_only};
       for (auto i{0UL}; i < frame.size(); ++i) {
         frame[i] = std::abs(double(host.get_pointer()[i]));
@@ -228,7 +220,7 @@ auto run(Simulation2D const& sim)
     }
   }
 
-  if (sim.render_video) {
+  if (shouldRenderVideo) {
     videoWriter->done.store(true);
     videoThread->join();
   }

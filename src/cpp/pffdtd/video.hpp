@@ -7,12 +7,14 @@
 namespace pffdtd {
 
 struct VideoWriter {
-  VideoWriter(
-      std::filesystem::path const& filename,
-      double fps,
-      size_t width,
-      size_t height
-  );
+  struct Options {
+    std::filesystem::path file;
+    size_t width;
+    size_t height;
+    double fps;
+  };
+
+  explicit VideoWriter(Options const& options);
 
   auto write(cv::InputArray frame) -> void;
 

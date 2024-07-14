@@ -9,11 +9,24 @@ namespace pffdtd {
 
 auto loadSimulation2D(std::filesystem::path const& path) -> Simulation2D {
   auto file = H5FReader{path.string().c_str()};
+
+  auto const Nx = file.read<int64_t>("Nx");
+  auto const Ny = file.read<int64_t>("Ny");
+
+  auto const videoRatio   = static_cast<double>(Ny) / static_cast<double>(Nx);
+  auto const videoWidth   = std::min<size_t>(2000, static_cast<size_t>(Nx));
+  auto const videoOptions = VideoWriter::Options{
+      .file   = path.parent_path() / "out.avi",
+      .width  = videoWidth,
+      .height = static_cast<size_t>(videoWidth * videoRatio),
+      .fps    = file.read<double>("video_fps"),
+  };
+
   return Simulation2D{
       .file = path,
 
-      .Nx = file.read<int64_t>("Nx"),
-      .Ny = file.read<int64_t>("Ny"),
+      .Nx = Nx,
+      .Ny = Ny,
       .Nt = file.read<int64_t>("Nt"),
 
       .in_mask     = file.read<std::vector<uint8_t>>("in_mask"),
@@ -27,8 +40,7 @@ auto loadSimulation2D(std::filesystem::path const& path) -> Simulation2D {
 
       .out_ixy = file.read<std::vector<int64_t>>("out_ixy"),
 
-      .render_video = true,
-      .video_fps    = file.read<double>("video_fps"),
+      .videoOptions = videoOptions,
   };
 }
 
