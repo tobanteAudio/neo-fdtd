@@ -19,7 +19,7 @@ def main():
     sim_data = h5py.File(args.sim_data, 'r')
     fs = float(sim_data['fs'][...])
     fmax = float(sim_data['fmax'][...])
-    fmin = 40.0
+    fmin = 125.0
     trim_ms = 20
     trim_samples = int(fs/1000*trim_ms)
 
@@ -35,11 +35,11 @@ def main():
 
     out = out[:, trim_samples:]
 
-    sos = signal.butter(8, fmin, fs=fs, btype='high', output='sos')
-    out = signal.sosfilt(sos, out)
+    sos = signal.butter(4, fmin, fs=fs, btype='high', output='sos')
+    out = signal.sosfiltfilt(sos, out)
 
-    sos = signal.butter(8, fmax, fs=fs, btype='low', output='sos')
-    out = signal.sosfilt(sos, out)
+    sos = signal.butter(4, fmax, fs=fs, btype='low', output='sos')
+    out = signal.sosfiltfilt(sos, out)
 
     out *= signal.windows.hann(out.shape[1])
     spectrum = np.fft.rfft(out, axis=-1)
@@ -109,6 +109,7 @@ def main():
     ax[2][1].set_ylim((0.0, 100.0))
     ax[2][1].set_thetamin(0)
     ax[2][1].set_thetamax(180)
+
     plt.show()
 
 
