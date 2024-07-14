@@ -31,7 +31,3 @@ target_sources(pffdtd
         pffdtd/video.cpp
         pffdtd/video.hpp
 )
-
-# if(PFFDTD_ENABLE_SYCL)
-#     add_sycl_to_target(TARGET pffdtd SOURCES simulation_2d.cpp)
-# endif()
