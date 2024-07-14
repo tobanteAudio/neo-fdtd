@@ -112,9 +112,9 @@ auto run(Simulation2D const& sim)
   auto frame = std::vector<double>(sim.Nx * sim.Ny);
 
   fmt::print(stdout, "111111111");
-  for (auto i{0LL}; i < sim.Nt; ++i) {
+  for (auto n{0LL}; n < sim.Nt; ++n) {
     fmt::print(stdout, "\r\r\r\r\r\r\r\r\r");
-    fmt::print(stdout, "{:04d}/{:04d}", i, sim.Nt);
+    fmt::print(stdout, "{:04d}/{:04d}", n, sim.Nt);
     std::fflush(stdout);
 
     queue.submit([&](sycl::handler& cgh) {
@@ -183,15 +183,13 @@ auto run(Simulation2D const& sim)
       });
     });
 
-    if (i == 0) {
-      queue.submit([&](sycl::handler& cgh) {
-        auto u0a = sycl::accessor{u0, cgh};
-        cgh.parallel_for<struct Impulse>(sycl::range<1>(1), [=](sycl::id<1>) {
-          auto const impulse = 1.0;
-          u0a[inx][iny] += impulse;
-        });
+    queue.submit([&](sycl::handler& cgh) {
+      auto u0a         = sycl::accessor{u0, cgh};
+      auto src_sig_acc = sycl::accessor{src_sig, cgh};
+      cgh.parallel_for<struct CopyInput>(sycl::range<1>(1), [=](sycl::id<1>) {
+        u0a[inx][iny] += src_sig_acc[n];
       });
-    }
+    });
 
     queue.submit([&](sycl::handler& cgh) {
       auto u0a         = sycl::accessor{u0, cgh};
@@ -203,7 +201,7 @@ auto run(Simulation2D const& sim)
         auto r        = id[0];
         auto r_ixy    = out_ixy_acc[r];
         auto p0       = getPointer(u0a);
-        out_acc[r][i] = p0[r_ixy];
+        out_acc[r][n] = p0[r_ixy];
       });
     });
 
@@ -237,21 +235,13 @@ auto run(Simulation2D const& sim)
 
   auto outputs = stdex::mdarray<double, stdex::dextents<size_t, 2>>(Nr, Nt);
   auto host    = sycl::host_accessor{out, sycl::read_only};
-  auto max     = 0.0;
-  auto min     = 0.0;
   for (auto it{0UL}; it < static_cast<size_t>(Nt); ++it) {
     for (auto ir{0UL}; ir < Nr; ++ir) {
-      auto sample     = host[ir][it];
-      outputs(ir, it) = sample;
-
-      max = std::max(max, sample);
-      min = std::min(min, sample);
+      outputs(ir, it) = host[ir][it];
     }
   }
 
   fmt::println("");
-  fmt::println("MAX: {}", max);
-  fmt::println("MIN: {}", min);
 
   return outputs;
 }
