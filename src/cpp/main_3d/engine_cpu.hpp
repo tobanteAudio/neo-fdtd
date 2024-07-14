@@ -19,7 +19,9 @@
 
 #include <cstdint>
 
-auto runSim(Simulation3D& sd) -> double;
+namespace pffdtd {
+
+auto run(Simulation3D& sd) -> double;
 double process_bnl_pts_fd(
     Real* u0b,
     Real const* u2b,
@@ -33,3 +35,5 @@ double process_bnl_pts_fd(
     MatQuad const* mat_quads,
     Real const* mat_beta
 );
+
+} // namespace pffdtd

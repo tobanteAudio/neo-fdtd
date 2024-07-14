@@ -16,9 +16,8 @@
 #pragma once
 
 #include "pffdtd/config.hpp"
+#include "pffdtd/hdf.hpp"
 #include "pffdtd/utility.hpp"
-
-#include "hdf5.h"
 
 #include <cstdint>
 
@@ -27,6 +26,8 @@
 #define MMb 12 // change as necssary
 // maximum number of materials allows (needed at compile-time for CUDA)
 #define MNm 64 // change as necssary
+
+namespace pffdtd {
 
 // main sim data, on host
 struct Simulation3D {
@@ -93,3 +94,5 @@ void readH5Dataset(
     DataType t
 );
 void readH5Constant(hid_t file, char* dset_str, void* out, DataType t);
+
+} // namespace pffdtd

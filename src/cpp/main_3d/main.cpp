@@ -33,10 +33,10 @@
 auto main(int /*argc*/, char** /*argv*/) -> int {
   auto const start = std::chrono::steady_clock::now();
 
-  auto sim = Simulation3D{};
+  auto sim = pffdtd::Simulation3D{};
   loadSimulation3D(sim);
   scaleInput(sim);
-  runSim(sim);
+  run(sim);
   rescaleOutput(sim);
   writeOutputs(sim);
   printLastSample(sim);

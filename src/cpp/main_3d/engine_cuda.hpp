@@ -66,7 +66,7 @@ __constant__ int8_t cuMb[MNm]; //to store Mb per mat (MNm has to be hash-defined
 uint64_t print_gpu_details(int i);
 void check_sorted( Simulation3D const& sd);
 void split_data( Simulation3D const& sd, struct gpuHostData *ghds, int ngpus);
-double runSim(Simulation3D &sd);
+double run(Simulation3D &sd);
 //CUDA kernels
 __global__ void KernelAirCart(Real * __restrict__ u0, const Real * __restrict__ u1, const uint8_t * __restrict__ bn_mask);
 __global__ void KernelAirFCC(Real * __restrict__ u0, const Real * __restrict__ u1, const uint8_t * __restrict__ bn_mask);
@@ -648,7 +648,7 @@ void split_data( Simulation3D const& sd, struct gpuHostData *ghds, int ngpus) {
 }
 
 //run the sim!
-double runSim(Simulation3D &sd)
+double run(Simulation3D &sd)
 {
    //if you want to test synchronous, env variable for that
    const char* s = getenv("CUDA_LAUNCH_BLOCKING");

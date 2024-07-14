@@ -10,6 +10,14 @@
 
 namespace pffdtd {
 
+enum DataType : unsigned char {
+  FLOAT64,
+  FLOAT32,
+  INT64,
+  INT8,
+  BOOL,
+};
+
 template<typename T>
 inline constexpr auto isStdVector = false;
 

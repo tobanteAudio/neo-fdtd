@@ -1,11 +1,8 @@
 #pragma once
 
-#include "pffdtd/exception.hpp"
-
 #include <opencv2/videoio.hpp>
 
 #include <filesystem>
-#include <span>
 
 namespace pffdtd {
 

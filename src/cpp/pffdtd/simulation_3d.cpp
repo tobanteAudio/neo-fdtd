@@ -15,16 +15,13 @@
 
 #include "simulation_3d.hpp"
 
-#include "pffdtd/hdf.hpp"
-
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
 
 namespace {
-
-#include <cassert>
 
 // linear indices to sub-indices in 3d, Nz continguous
 void ind2sub3d(
@@ -61,6 +58,8 @@ void check_inside_grid(
   }
 }
 } // namespace
+
+namespace pffdtd {
 
 // load the sim data from Python-written HDF5 files
 void loadSimulation3D(Simulation3D& sim) {
@@ -970,3 +969,5 @@ void writeOutputs(Simulation3D& sim) {
   writer.write("u_out", std::span{u_out}, Nr, Nt);
   std::puts("wrote output dataset");
 }
+
+} // namespace pffdtd

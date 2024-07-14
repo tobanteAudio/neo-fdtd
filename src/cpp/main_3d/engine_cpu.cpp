@@ -27,7 +27,9 @@
 #include <cstdlib>
 #include <vector>
 
-auto runSim(Simulation3D& sd) -> double {
+namespace pffdtd {
+
+auto run(Simulation3D& sd) -> double {
   // keep local ints, scalars
   int64_t Ns   = sd.Ns;
   int64_t Nr   = sd.Nr;
@@ -416,3 +418,5 @@ double process_bnl_pts_fd(
   }
   return omp_get_wtime() - tstart;
 }
+
+} // namespace pffdtd

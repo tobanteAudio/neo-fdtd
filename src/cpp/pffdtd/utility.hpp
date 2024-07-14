@@ -33,14 +33,6 @@
 #define SET_BIT_VAL(var, pos, val)                                               \
   ((var) = ((var) & ~(1ULL << (pos))) | ((val) << (pos)))
 
-enum DataType : unsigned char {
-  FLOAT64,
-  FLOAT32,
-  INT64,
-  INT8,
-  BOOL,
-};
-
 void allocate_zeros(void** arr, uint64_t Nbytes);
 int cmpfunc_int64_keys(void const* a, void const* b);
 void sort_keys(int64_t* val_arr, int64_t* key_arr, int64_t N);

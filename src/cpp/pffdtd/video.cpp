@@ -1,5 +1,7 @@
 #include "video.hpp"
 
+#include "pffdtd/exception.hpp"
+
 #include <opencv2/imgproc.hpp>
 
 namespace pffdtd {
