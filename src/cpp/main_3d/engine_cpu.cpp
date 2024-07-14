@@ -87,24 +87,23 @@ auto run(Simulation3D& sd) -> double {
   Real a2  = sd.a2;
 
   // can control outside with OMP_NUM_THREADS env variable
-  int num_workers = omp_get_max_threads();
+  int numWorkers = omp_get_max_threads();
 
   fmt::println("ENGINE: fcc_flag={}", fcc_flag);
   fmt::println("{}", (fcc_flag > 0) ? "fcc=true" : "fcc=false");
 
   // for timing
-  double time_elapsed;
-  double time_elapsed_air = 0.0;
-  double time_elapsed_bn  = 0.0;
-  double time_elapsed_sample;
-  double time_elapsed_sample_air = 0.0;
-  double time_elapsed_sample_bn  = 0.0;
-  double start_time              = omp_get_wtime();
-  double sample_start_time;
-  double current_time;
+  double timeElapsed;
+  double timeElapsedAir = 0.0;
+  double timeElapsedBn  = 0.0;
+  double timeElapsedSample;
+  double timeElapsedSample_air = 0.0;
+  double timeElapsedSampleBn   = 0.0;
+  double startTime             = omp_get_wtime();
+
   int64_t NzNy = Nz * Ny;
   for (int64_t n = 0; n < Nt; n++) {
-    sample_start_time = omp_get_wtime();
+    auto const sampleStartTime = omp_get_wtime();
 
 // copy last state ABCs
 #pragma omp parallel for
@@ -207,8 +206,8 @@ auto run(Simulation3D& sd) -> double {
     }
 
     // rigid boundary nodes, using adj data
-    time_elapsed_sample_air = omp_get_wtime() - sample_start_time;
-    time_elapsed_air += time_elapsed_sample_air;
+    timeElapsedSample_air = omp_get_wtime() - sampleStartTime;
+    timeElapsedAir += timeElapsedSample_air;
     if (fcc_flag == 0) {
 #pragma omp parallel for
       for (int64_t nb = 0; nb < Nb; nb++) {
@@ -271,7 +270,7 @@ auto run(Simulation3D& sd) -> double {
       u0b[nb] = u0[bnl_ixyz[nb]];
     }
     // process FD boundary nodes
-    time_elapsed_sample_bn = process_bnl_pts_fd(
+    timeElapsedSampleBn = process_bnl_pts_fd(
         u0b,
         u2b,
         ssaf_bnl,
@@ -284,7 +283,7 @@ auto run(Simulation3D& sd) -> double {
         mat_quads,
         mat_beta
     );
-    time_elapsed_bn += time_elapsed_sample_bn;
+    timeElapsedBn += timeElapsedSampleBn;
 // write back
 #pragma omp parallel for
     for (int64_t nb = 0; nb < Nbl; nb++) {
@@ -315,50 +314,50 @@ auto run(Simulation3D& sd) -> double {
     u1b     = u0b;
     u0b     = tmp_ptr;
 
-    current_time        = omp_get_wtime();
-    time_elapsed        = current_time - start_time;
-    time_elapsed_sample = current_time - sample_start_time;
-    // print progress (can be removed or changed)
+    auto const now    = omp_get_wtime();
+    timeElapsed       = now - startTime;
+    timeElapsedSample = now - sampleStartTime;
+
     pffdtd::print_progress(
         n,
         Nt,
         Npts,
         Nb,
-        time_elapsed,
-        time_elapsed_sample,
-        time_elapsed_air,
-        time_elapsed_sample_air,
-        time_elapsed_bn,
-        time_elapsed_sample_bn,
-        num_workers
+        timeElapsed,
+        timeElapsedSample,
+        timeElapsedAir,
+        timeElapsedSample_air,
+        timeElapsedBn,
+        timeElapsedSampleBn,
+        numWorkers
     );
   }
   fmt::println("");
 
   // timing
-  double end_time = omp_get_wtime();
-  time_elapsed    = end_time - start_time;
+  auto const endTime = omp_get_wtime();
+  timeElapsed        = endTime - startTime;
 
   /*------------------------
    * RETURN
   ------------------------*/
   fmt::println(
       "Air update: {:.6}s, {:.2} Mvox/s",
-      time_elapsed_air,
-      Npts * Nt / 1e6 / time_elapsed_air
+      timeElapsedAir,
+      Npts * Nt / 1e6 / timeElapsedAir
   );
   fmt::println(
       "Boundary loop: {:.6}s, {:.2} Mvox/s",
-      time_elapsed_bn,
-      Nb * Nt / 1e6 / time_elapsed_bn
+      timeElapsedBn,
+      Nb * Nt / 1e6 / timeElapsedBn
   );
   fmt::println(
       "Combined (total): {:.6}s, {:.2} Mvox/s",
-      time_elapsed,
-      Npts * Nt / 1e6 / time_elapsed
+      timeElapsed,
+      Npts * Nt / 1e6 / timeElapsed
   );
 
-  return time_elapsed;
+  return timeElapsed;
 }
 
 // function that does freq-dep RLC boundaries.  See 2016 ISMRA paper and
@@ -376,7 +375,7 @@ double process_bnl_pts_fd(
     MatQuad const* mat_quads,
     Real const* mat_beta
 ) {
-  double tstart = omp_get_wtime();
+  auto const start = omp_get_wtime();
 #pragma omp parallel for schedule(static)
   for (int64_t nb = 0; nb < Nbl; nb++) {
     Real _1   = 1.0;
@@ -416,7 +415,7 @@ double process_bnl_pts_fd(
 
     u0b[nb] = u0bint;
   }
-  return omp_get_wtime() - tstart;
+  return omp_get_wtime() - start;
 }
 
 } // namespace pffdtd

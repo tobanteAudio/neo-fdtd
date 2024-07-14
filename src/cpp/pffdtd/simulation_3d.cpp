@@ -19,6 +19,8 @@
 #include <cassert>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <filesystem>
 
 namespace {
@@ -525,7 +527,7 @@ void loadSimulation3D(Simulation3D& sim) {
   // bit-pack and check adj_bn
   //////////////////
   allocate_zeros((void**)&adj_bn, Nb * sizeof(uint16_t));
-  // #pragma omp parallel for
+
   for (int64_t i = 0; i < Nb; i++) {
     for (int8_t j = 0; j < NN; j++) {
       SET_BIT_VAL(adj_bn[i], j, adj_bn_bool[i * NN + j]);
@@ -533,7 +535,6 @@ void loadSimulation3D(Simulation3D& sim) {
   }
   printf("adj_bn filled\n");
 
-  // #pragma omp parallel for
   for (int64_t i = 0; i < Nb; i++) {
     for (int8_t j = 0; j < NN; j++) { // avoids race conditions
       assert(GET_BIT(adj_bn[i], j) == adj_bn_bool[i * NN + j]);
@@ -546,7 +547,7 @@ void loadSimulation3D(Simulation3D& sim) {
   // calculate K_bn from adj_bn
   //////////////////
   allocate_zeros((void**)&K_bn, Nb * sizeof(int8_t));
-  // #pragma omp parallel for
+
   for (int64_t nb = 0; nb < Nb; nb++) {
     K_bn[nb] = 0;
     for (uint8_t nn = 0; nn < NN; nn++) {
@@ -569,14 +570,14 @@ void loadSimulation3D(Simulation3D& sim) {
   // create bn_mask_raw to double check
   bool* bn_mask_raw;
   allocate_zeros((void**)&bn_mask_raw, Npts * sizeof(bool));
-  // #pragma omp parallel for
+
   for (int64_t i = 0; i < Nb; i++) {
     int64_t ii = bn_ixyz[i];
     assert(ii < Npts);
     bn_mask_raw[ii] = true;
   }
   printf("bn_mask_raw filled\n");
-  // #pragma omp parallel for
+
   for (int64_t j = 0; j < Nbm; j++) {
     for (int64_t q = 0; q < 8; q++) { // avoid race conditions
       int64_t i = j * 8 + q;

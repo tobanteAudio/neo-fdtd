@@ -15,24 +15,15 @@
 
 #pragma once
 
-#include <algorithm>
-#include <cassert>
 #include <cstdint>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-
-#include <sys/stat.h>
 
 #ifndef DIV_CEIL
   #define DIV_CEIL(x, y) (((x) + (y)-1) / (y)) // this works for x≥0 and y>0
 #endif
-#define GET_BIT(var, pos)   (((var) >> (pos)) & 1)
-#define SET_BIT(var, pos)   ((var) |= (1ULL << (pos)))
-#define CLEAR_BIT(var, pos) ((var) &= ~(1ULL << (pos)))
+#define GET_BIT(var, pos) (((var) >> (pos)) & 1)
+#define SET_BIT(var, pos) ((var) |= (1ULL << (pos)))
 #define SET_BIT_VAL(var, pos, val)                                               \
   ((var) = ((var) & ~(1ULL << (pos))) | ((val) << (pos)))
 
 void allocate_zeros(void** arr, uint64_t Nbytes);
-int cmpfunc_int64_keys(void const* a, void const* b);
 void sort_keys(int64_t* val_arr, int64_t* key_arr, int64_t N);

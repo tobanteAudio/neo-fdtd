@@ -15,6 +15,11 @@
 
 #include "utility.hpp"
 
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
 // malloc check malloc, and initialise to zero
 // hard stop program if failed
 void allocate_zeros(void** arr, uint64_t Nbytes) {
@@ -34,7 +39,7 @@ struct sort_int64_struct {
 };
 
 // comparator with indice keys (for FCC ABC nodes)
-int cmpfunc_int64_keys(void const* a, void const* b) {
+static int cmpfunc_int64_keys(void const* a, void const* b) {
   if ((*(sort_int64_struct const*)a).val < (*(sort_int64_struct const*)b).val)
     return -1;
   if ((*(sort_int64_struct const*)a).val > (*(sort_int64_struct const*)b).val)
