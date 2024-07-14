@@ -8,6 +8,8 @@
 
 #include <fmt/format.h>
 
+#include <oneapi/tbb/global_control.h>
+
 #include <chrono>
 #include <filesystem>
 #include <span>
@@ -28,6 +30,11 @@ int main(int argc, char** argv) {
   app.add_flag("-v,--video", args.video, "Export video");
   CLI11_PARSE(app, argc, argv);
 
+  oneapi::tbb::global_control global_control = oneapi::tbb::global_control(
+      oneapi::tbb::global_control::max_allowed_parallelism,
+      16
+  );
+
   auto const start = std::chrono::steady_clock::now();
 
   auto filePath = std::filesystem::path{args.simDir};
@@ -36,7 +43,7 @@ int main(int argc, char** argv) {
   }
 
   auto const sim    = pffdtd::loadSimulation2D(filePath, args.video);
-  auto const engine = pffdtd::EngineSYCL{};
+  auto const engine = pffdtd::EngineNative{};
   auto const out    = engine(sim);
 
   auto dir     = filePath.parent_path();

@@ -12,6 +12,7 @@ target_link_libraries(pffdtd
         opencv_videoio
         OpenMP::OpenMP_CXX
         std::mdspan
+        TBB::tbb
 )
 
 target_sources(pffdtd
