@@ -59,17 +59,20 @@ auto summary(Simulation2D const& sim) -> void {
   fmt::println("loss_factor: {}", sim.loss_factor);
 }
 
-auto run(BackgroundVideoWriter& bw, Simulation2D const& sim) -> void {
+BackgroundVideoWriter::BackgroundVideoWriter(VideoWriter::Options const& opt)
+    : writer{opt} {}
+
+auto BackgroundVideoWriter::run(Simulation2D const& sim) -> void {
 
   auto frame      = std::vector<double>{};
   auto normalized = cv::Mat{};
   auto rotated    = cv::Mat{};
 
-  while (not bw.done or not bw.queue.empty()) {
+  while (not done or not queue.empty()) {
     auto shouldSleep = false;
     {
-      auto lock   = std::scoped_lock{bw.mutex};
-      shouldSleep = bw.queue.empty();
+      auto lock   = std::scoped_lock{mutex};
+      shouldSleep = queue.empty();
     }
 
     if (shouldSleep) {
@@ -78,9 +81,9 @@ auto run(BackgroundVideoWriter& bw, Simulation2D const& sim) -> void {
     }
 
     {
-      auto lock = std::scoped_lock{bw.mutex};
-      frame     = bw.queue.front();
-      bw.queue.pop();
+      auto lock = std::scoped_lock{mutex};
+      frame     = queue.front();
+      queue.pop();
     }
 
     auto input = cv::Mat{
@@ -103,15 +106,15 @@ auto run(BackgroundVideoWriter& bw, Simulation2D const& sim) -> void {
 
     cv::rotate(normalized, rotated, cv::ROTATE_90_COUNTERCLOCKWISE);
 
-    bw.writer.write(rotated);
+    writer.write(rotated);
   }
 }
 
-auto push(BackgroundVideoWriter& bw, std::vector<double> frame) -> void {
+auto BackgroundVideoWriter::push(std::vector<double> frame) -> void {
   while (true) {
     auto const wait = [&] {
-      auto lock = std::scoped_lock{bw.mutex};
-      return bw.queue.size() > 10;
+      auto lock = std::scoped_lock{mutex};
+      return queue.size() > 10;
     }();
 
     if (wait) {
@@ -122,8 +125,8 @@ auto push(BackgroundVideoWriter& bw, std::vector<double> frame) -> void {
   }
 
   {
-    auto lock = std::scoped_lock{bw.mutex};
-    bw.queue.push(std::move(frame));
+    auto lock = std::scoped_lock{mutex};
+    queue.push(std::move(frame));
   }
 }
 

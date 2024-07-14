@@ -38,13 +38,15 @@ auto loadSimulation2D(std::filesystem::path const& path, bool exportVideo)
 auto summary(Simulation2D const& sim) -> void;
 
 struct BackgroundVideoWriter {
+  explicit BackgroundVideoWriter(VideoWriter::Options const& opt);
+
+  auto run(Simulation2D const& sim) -> void;
+  auto push(std::vector<double> frame) -> void;
+
   VideoWriter writer;
   std::queue<std::vector<double>> queue;
   std::mutex mutex;
   std::atomic<bool> done{false};
 };
-
-auto run(BackgroundVideoWriter& bw, Simulation2D const& sim) -> void;
-auto push(BackgroundVideoWriter& bw, std::vector<double> frame) -> void;
 
 } // namespace pffdtd

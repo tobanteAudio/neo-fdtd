@@ -41,8 +41,8 @@ auto EngineNative::operator()(Simulation2D const& sim) const
 
   if (shouldRenderVideo) {
     auto opt    = sim.videoOptions.value();
-    auto func   = [&videoWriter, &sim] { run(*videoWriter, sim); };
-    videoWriter = std::make_unique<BackgroundVideoWriter>(VideoWriter{opt});
+    auto func   = [&videoWriter, &sim] { videoWriter->run(sim); };
+    videoWriter = std::make_unique<BackgroundVideoWriter>(opt);
     videoThread = std::make_unique<std::thread>(func);
   }
 
@@ -123,7 +123,7 @@ auto EngineNative::operator()(Simulation2D const& sim) const
       std::ranges::transform(frame, frame.begin(), [](auto v) {
         return std::abs(v);
       });
-      push(*videoWriter, frame);
+      videoWriter->push(frame);
     }
 
     auto tmp = u2;

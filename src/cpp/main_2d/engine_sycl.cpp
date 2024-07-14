@@ -104,8 +104,8 @@ auto EngineSYCL::operator()(Simulation2D const& sim) const
 
   if (shouldRenderVideo) {
     auto opt    = sim.videoOptions.value();
-    auto func   = [&videoWriter, &sim] { run(*videoWriter, sim); };
-    videoWriter = std::make_unique<BackgroundVideoWriter>(VideoWriter{opt});
+    auto func   = [&videoWriter, &sim] { videoWriter->run(sim); };
+    videoWriter = std::make_unique<BackgroundVideoWriter>(opt);
     videoThread = std::make_unique<std::thread>(func);
   }
 
@@ -220,7 +220,7 @@ auto EngineSYCL::operator()(Simulation2D const& sim) const
       for (auto i{0UL}; i < frame.size(); ++i) {
         frame[i] = std::abs(double(host.get_pointer()[i]));
       }
-      push(*videoWriter, frame);
+      videoWriter->push(frame);
     }
 
     auto tmp = u2;
