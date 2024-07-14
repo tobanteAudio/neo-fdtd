@@ -19,6 +19,31 @@ namespace pffdtd {
   return x * Ny + y;
 }
 
+static auto kernelAirUpdate(
+    sycl::id<2> id,
+    double* u0,
+    double const* u1,
+    double const* u2,
+    uint8_t const* inMask,
+    int64_t Ny
+) -> void {
+  auto const x   = id.get(0) + 1;
+  auto const y   = id.get(1) + 1;
+  auto const idx = to_ixy(x, y, 0, Ny);
+
+  if (inMask[idx] == 0) {
+    return;
+  }
+
+  auto const left   = u1[idx - 1];
+  auto const right  = u1[idx + 1];
+  auto const bottom = u1[idx - Ny];
+  auto const top    = u1[idx + Ny];
+  auto const last   = u2[idx];
+
+  u0[idx] = 0.5 * (left + right + bottom + top) - last;
+}
+
 static auto kernelBoundaryRigid(
     sycl::id<1> idx,
     double* u0,
@@ -69,7 +94,6 @@ auto run(Simulation2D const& sim)
   auto const Nb          = sim.adj_bn.size();
   auto const inx         = sim.inx;
   auto const iny         = sim.iny;
-  auto const N           = size_t(sim.Nx * sim.Ny);
   auto const Nr          = sim.out_ixy.size();
   auto const loss_factor = sim.loss_factor;
 
@@ -110,106 +134,87 @@ auto run(Simulation2D const& sim)
     std::fflush(stdout);
 
     queue.submit([&](sycl::handler& cgh) {
-      auto u0a        = sycl::accessor{u0, cgh};
-      auto u1a        = sycl::accessor{u1, cgh};
-      auto u2a        = sycl::accessor{u2, cgh};
-      auto inMask_acc = sycl::accessor{in_mask, cgh};
-      auto airRange   = sycl::range<2>(Nx - 2, Ny - 2);
+      auto u0a       = sycl::accessor{u0, cgh, sycl::write_only};
+      auto u1a       = sycl::accessor{u1, cgh, sycl::read_only};
+      auto u2a       = sycl::accessor{u2, cgh, sycl::read_only};
+      auto inMaskAcc = sycl::accessor{in_mask, cgh, sycl::read_only};
+      auto airRange  = sycl::range<2>(Nx - 2, Ny - 2);
 
       cgh.parallel_for<struct AirUpdate>(airRange, [=](sycl::id<2> id) {
-        auto const x   = id.get(0) + 1;
-        auto const y   = id.get(1) + 1;
-        auto const idx = x * Ny + y;
-
-        if (inMask_acc[idx] == 0) {
-          return;
-        }
-
-        auto const left   = u1a[x][y - 1];
-        auto const right  = u1a[x][y + 1];
-        auto const bottom = u1a[x - 1][y];
-        auto const top    = u1a[x + 1][y];
-        auto const last   = u2a[x][y];
-
-        u0a[x][y] = 0.5 * (left + right + bottom + top) - last;
-      });
-    });
-
-    queue.submit([&](sycl::handler& cgh) {
-      auto u0a        = sycl::accessor{u0, cgh};
-      auto u1a        = sycl::accessor{u1, cgh};
-      auto u2a        = sycl::accessor{u2, cgh};
-      auto bn_ixy_acc = sycl::accessor{bn_ixy, cgh};
-      auto adj_bn_acc = sycl::accessor{adj_bn, cgh};
-      auto rigidRange = sycl::range<1>(Nb);
-
-      cgh.parallel_for<struct BoundaryRigid>(rigidRange, [=](sycl::id<1> id) {
-        kernelBoundaryRigid(
+        kernelAirUpdate(
             id,
-            getPointer(u0a),
-            getPointer(u1a),
-            getPointer(u2a),
-            getPointer(bn_ixy_acc),
-            getPointer(adj_bn_acc),
+            getPtr(u0a),
+            getPtr(u1a),
+            getPtr(u2a),
+            getPtr(inMaskAcc),
             Ny
         );
       });
     });
 
     queue.submit([&](sycl::handler& cgh) {
-      auto u0a        = sycl::accessor{u0, cgh};
-      auto u2a        = sycl::accessor{u2, cgh};
-      auto bn_ixy_acc = sycl::accessor{bn_ixy, cgh};
-      auto adj_bn_acc = sycl::accessor{adj_bn, cgh};
+      auto u0a        = sycl::accessor{u0, cgh, sycl::write_only};
+      auto u1a        = sycl::accessor{u1, cgh, sycl::read_only};
+      auto u2a        = sycl::accessor{u2, cgh, sycl::read_only};
+      auto bn_ixy_acc = sycl::accessor{bn_ixy, cgh, sycl::read_only};
+      auto adj_bn_acc = sycl::accessor{adj_bn, cgh, sycl::read_only};
+      auto rigidRange = sycl::range<1>(Nb);
+
+      cgh.parallel_for<struct BoundaryRigid>(rigidRange, [=](sycl::id<1> id) {
+        kernelBoundaryRigid(
+            id,
+            getPtr(u0a),
+            getPtr(u1a),
+            getPtr(u2a),
+            getPtr(bn_ixy_acc),
+            getPtr(adj_bn_acc),
+            Ny
+        );
+      });
+    });
+
+    queue.submit([&](sycl::handler& cgh) {
+      auto u0a        = sycl::accessor{u0, cgh, sycl::write_only};
+      auto u2a        = sycl::accessor{u2, cgh, sycl::read_only};
+      auto bn_ixy_acc = sycl::accessor{bn_ixy, cgh, sycl::read_only};
+      auto adj_bn_acc = sycl::accessor{adj_bn, cgh, sycl::read_only};
       auto lossRange  = sycl::range<1>(Nb);
 
       cgh.parallel_for<struct BoundaryLoss>(lossRange, [=](sycl::id<1> id) {
         kernelBoundaryLoss(
             id,
-            getPointer(u0a),
-            getPointer(u2a),
-            getPointer(bn_ixy_acc),
-            getPointer(adj_bn_acc),
+            getPtr(u0a),
+            getPtr(u2a),
+            getPtr(bn_ixy_acc),
+            getPtr(adj_bn_acc),
             loss_factor
         );
       });
     });
 
     queue.submit([&](sycl::handler& cgh) {
-      auto u0a         = sycl::accessor{u0, cgh};
-      auto src_sig_acc = sycl::accessor{src_sig, cgh};
+      auto u0a         = sycl::accessor{u0, cgh, sycl::read_write};
+      auto src_sig_acc = sycl::accessor{src_sig, cgh, sycl::read_only};
       cgh.parallel_for<struct CopyInput>(sycl::range<1>(1), [=](sycl::id<1>) {
         u0a[inx][iny] += src_sig_acc[n];
       });
     });
 
     queue.submit([&](sycl::handler& cgh) {
-      auto u0a         = sycl::accessor{u0, cgh};
-      auto out_acc     = sycl::accessor{out, cgh};
-      auto out_ixy_acc = sycl::accessor{out_ixy, cgh};
+      auto u0a         = sycl::accessor{u0, cgh, sycl::read_only};
+      auto out_acc     = sycl::accessor{out, cgh, sycl::write_only};
+      auto out_ixy_acc = sycl::accessor{out_ixy, cgh, sycl::read_only};
       auto range       = sycl::range<1>(Nr);
 
       cgh.parallel_for<struct CopyOutput>(range, [=](sycl::id<1> id) {
         auto r        = id[0];
         auto r_ixy    = out_ixy_acc[r];
-        auto p0       = getPointer(u0a);
+        auto p0       = getPtr(u0a);
         out_acc[r][n] = p0[r_ixy];
       });
     });
 
-    queue.submit([&](sycl::handler& cgh) {
-      auto a0    = sycl::accessor{u0, cgh};
-      auto a1    = sycl::accessor{u1, cgh};
-      auto a2    = sycl::accessor{u2, cgh};
-      auto range = sycl::range<1>(N);
-      cgh.parallel_for<struct RotateBuffers>(range, [=](sycl::id<1> id) {
-        auto p0 = getPointer(a0);
-        auto p1 = getPointer(a1);
-        auto p2 = getPointer(a2);
-        p2[id]  = p1[id];
-        p1[id]  = p0[id];
-      });
-    });
+    queue.wait_and_throw();
 
     if (shouldRenderVideo) {
       auto host = sycl::host_accessor{u0, sycl::read_only};
@@ -218,6 +223,12 @@ auto run(Simulation2D const& sim)
       }
       push(*videoWriter, frame);
     }
+
+    auto tmp = u2;
+
+    u2 = u1;
+    u1 = u0;
+    u0 = tmp;
   }
 
   if (shouldRenderVideo) {

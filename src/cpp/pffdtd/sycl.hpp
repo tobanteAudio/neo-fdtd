@@ -2,10 +2,11 @@
 
 #include <sycl/sycl.hpp>
 
-#include <string>
-
 #include <fmt/format.h>
 #include <fmt/os.h>
+
+#include <string>
+#include <utility>
 
 namespace pffdtd {
 
@@ -41,8 +42,10 @@ inline auto summary(sycl::device dev) -> void {
 }
 
 template<typename Accessor>
-[[nodiscard]] auto getPointer(Accessor&& a) -> auto* {
-  return a.template get_multi_ptr<sycl::access::decorated::no>().get();
+[[nodiscard]] auto getPtr(Accessor&& a) -> auto* {
+  return std::forward<Accessor>(a)
+      .template get_multi_ptr<sycl::access::decorated::no>()
+      .get();
 }
 
 } // namespace pffdtd

@@ -2,7 +2,9 @@
 
 set -e
 
-build_dir=cmake-build-sycl
+build_dir=build
+# build_dir=cmake-build-sycl
+
 root_dir="$(cd "$(dirname "$0")" && pwd)"
 python_dir="$root_dir/src/python"
 engine_exe="$root_dir/$build_dir/src/cpp/main_2d/pffdtd_2d"
@@ -10,7 +12,7 @@ engine_exe="$root_dir/$build_dir/src/cpp/main_2d/pffdtd_2d"
 sim_name="Diffusor"
 sim_dir="$root_dir/data/sim_data/$sim_name/cpu"
 
-fmax=2000
+fmax=1000
 duration=0.050
 
 # Delete old sim
