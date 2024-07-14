@@ -103,10 +103,10 @@ auto run(Simulation2D const& sim)
   auto videoThread       = std::unique_ptr<std::thread>();
 
   if (shouldRenderVideo) {
-    auto opt    = sim.videoOptions.value();
-    auto func   = [&videoWriter, &sim] { run(*videoWriter, sim); };
-    videoWriter = std::make_unique<BackgroundVideoWriter>(VideoWriter{opt});
-    videoThread = std::make_unique<std::thread>(func);
+    // auto opt    = sim.videoOptions.value();
+    // auto func   = [&videoWriter, &sim] { run(*videoWriter, sim); };
+    // videoWriter = std::make_unique<BackgroundVideoWriter>(VideoWriter{opt});
+    // videoThread = std::make_unique<std::thread>(func);
   }
 
   auto prop   = sycl::property_list{sycl::property::queue::in_order()};

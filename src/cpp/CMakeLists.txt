@@ -10,6 +10,7 @@ target_link_libraries(pffdtd
         fmt::fmt
         HDF5::HDF5
         opencv_videoio
+        OpenMP::OpenMP_CXX
         std::mdspan
 )
 

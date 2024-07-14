@@ -20,6 +20,7 @@ find_package(CLI11 REQUIRED)
 find_package(fmt REQUIRED)
 find_package(HDF5 REQUIRED)
 find_package(OpenCV REQUIRED COMPONENTS core videoio)
+find_package(OpenMP REQUIRED)
 
 if(PFFDTD_ENABLE_ACPP_SYCL)
     find_package(AdaptiveCpp REQUIRED)

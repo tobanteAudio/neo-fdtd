@@ -8,6 +8,7 @@
 #include <cassert>
 #include <span>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace pffdtd {
@@ -99,8 +100,8 @@ struct H5FReader {
   }
 
   private:
-  auto checkErrorAndCloseDataset(char const* name, hid_t set, herr_t err)
-      -> void {
+  auto
+  checkErrorAndCloseDataset(char const* name, hid_t set, herr_t err) -> void {
     if (err != 0) {
       throw std::runtime_error{"dataset read in: " + std::string{name}};
     }
