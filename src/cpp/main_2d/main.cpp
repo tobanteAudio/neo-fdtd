@@ -1,3 +1,4 @@
+#include "engine_native.hpp"
 #include "engine_sycl.hpp"
 
 #include "pffdtd/hdf.hpp"
@@ -16,7 +17,7 @@
 struct Arguments {
   std::string simDir{};
   std::string out{"out.h5"};
-  std::string video{"out.avi"};
+  bool video{false};
 };
 
 int main(int argc, char** argv) {
@@ -24,7 +25,7 @@ int main(int argc, char** argv) {
   auto args = Arguments{};
   app.add_option("-s,--sim_dir", args.simDir, "Folder path");
   app.add_option("-o,--out", args.out, "Filename");
-  app.add_option("-v,--video", args.video, "Filename");
+  app.add_flag("-v,--video", args.video, "Export video");
   CLI11_PARSE(app, argc, argv);
 
   auto const start = std::chrono::steady_clock::now();
@@ -34,7 +35,7 @@ int main(int argc, char** argv) {
     throw std::runtime_error{"invalid file: " + filePath.string()};
   }
 
-  auto const sim    = pffdtd::loadSimulation2D(filePath);
+  auto const sim    = pffdtd::loadSimulation2D(filePath, args.video);
   auto const engine = pffdtd::EngineSYCL{};
   auto const out    = engine(sim);
 

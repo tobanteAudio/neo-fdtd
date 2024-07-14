@@ -33,7 +33,8 @@ struct Simulation2D {
   std::optional<VideoWriter::Options> videoOptions;
 };
 
-auto loadSimulation2D(std::filesystem::path const& path) -> Simulation2D;
+auto loadSimulation2D(std::filesystem::path const& path, bool exportVideo)
+    -> Simulation2D;
 auto summary(Simulation2D const& sim) -> void;
 
 struct BackgroundVideoWriter {
