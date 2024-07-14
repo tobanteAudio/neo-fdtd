@@ -31,13 +31,13 @@ jobs:
           - name: macOS-X64
             os: macos-13
             osx_target: "10.15"
-            cmake_flags: "-D CMAKE_C_COMPILER=/usr/local/opt/llvm/bin/clang -D CMAKE_CXX_COMPILER=/usr/local/opt/llvm/bin/clang++"
+            cmake_flags: '-D OpenMP_ROOT=`brew list libomp | grep libomp.a | sed -E "s/\/lib\/.*//"`'
             cxx_flags: "-march=x86-64-v2"
 
           - name: macOS-ARM64
             os: macos-14
             osx_target: "11.0"
-            cmake_flags: "-D CMAKE_C_COMPILER=/opt/homebrew/opt/llvm/bin/clang -D CMAKE_CXX_COMPILER=/opt/homebrew/opt/llvm/bin/clang++"
+            cmake_flags: '-D OpenMP_ROOT=`brew list libomp | grep libomp.a | sed -E "s/\/lib\/.*//"`'
             cxx_flags: ""
 
           # - name: Windows
@@ -61,7 +61,7 @@ jobs:
 
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew install conan ninja llvm
+        run: brew install conan libomp llvm ninja
 
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
