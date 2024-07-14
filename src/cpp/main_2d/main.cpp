@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
   auto dir     = filePath.parent_path();
   auto outfile = dir / args.out;
   auto results = pffdtd::H5FWriter{outfile.string().c_str()};
-  results.write("out", std::span{out}, sim.out_ixy.size(), sim.Nt);
+  results.write("out", out);
 
   auto const stop = std::chrono::steady_clock::now();
   auto const sec  = std::chrono::duration<double>(stop - start);

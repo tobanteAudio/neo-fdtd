@@ -11,16 +11,23 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(PFFDTD_ENABLE_SYCL "Build with sycl" OFF)
 
+include(FetchContent)
+FetchContent_Declare(mdspan GIT_REPOSITORY "https://github.com/kokkos/mdspan" GIT_TAG "stable" GIT_SHALLOW TRUE)
+FetchContent_MakeAvailable(mdspan)
+
 find_package(CLI11 REQUIRED)
 find_package(fmt REQUIRED)
 find_package(HDF5 REQUIRED)
 find_package(OpenCV REQUIRED COMPONENTS core videoio)
 find_package(OpenMP REQUIRED)
 
+if(PFFDTD_ENABLE_SYCL)
+    find_package(IntelSYCL REQUIRED)
+endif()
+
 add_subdirectory(src/cpp)
 add_subdirectory(src/cpp/main_3d)
 
 if(PFFDTD_ENABLE_SYCL)
-    find_package(IntelSYCL REQUIRED)
     add_subdirectory(src/cpp/main_2d)
 endif()

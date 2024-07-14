@@ -956,17 +956,17 @@ void writeOutputs(Simulation3D& sim) {
   auto Nt           = static_cast<size_t>(sim.Nt);
   auto Nr           = static_cast<size_t>(sim.Nr);
   auto* out_reorder = sim.out_reorder;
-  auto u_out        = std::vector<double>(Nr * Nt);
+  auto u_out        = stdex::mdarray<double, stdex::dextents<size_t, 2>>(Nr, Nt);
 
   // write outputs in correct order
   for (auto nr = size_t{0}; nr < Nr; ++nr) {
     for (auto n = size_t{0}; n < Nt; ++n) {
-      u_out[nr * Nt + n] = sim.u_out[out_reorder[nr] * Nt + n];
+      u_out(nr, n) = sim.u_out[out_reorder[nr] * Nt + n];
     }
   }
 
   auto writer = pffdtd::H5FWriter{"sim_outs.h5"};
-  writer.write("u_out", std::span{u_out}, Nr, Nt);
+  writer.write("u_out", u_out);
   std::puts("wrote output dataset");
 }
 

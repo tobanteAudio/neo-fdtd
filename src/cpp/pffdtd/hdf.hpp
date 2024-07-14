@@ -1,5 +1,7 @@
 #pragma once
 
+#include "pffdtd/mdspan.hpp"
+
 #include "hdf5.h"
 
 #include <array>
@@ -117,16 +119,21 @@ struct H5FWriter {
 
   ~H5FWriter() { H5Fclose(_handle); }
 
-  auto write(char const* name, std::span<double const> buf, size_t Nx, size_t Ny)
-      -> void {
-    hsize_t dims[2]{Nx, Ny};
+  auto write(
+      char const* name,
+      stdex::mdspan<double const, stdex::dextents<size_t, 2>> buf
+  ) -> void {
+    hsize_t dims[2]{
+        static_cast<hsize_t>(buf.extent(0)),
+        static_cast<hsize_t>(buf.extent(1)),
+    };
 
     auto def  = H5P_DEFAULT;
     auto type = H5T_NATIVE_DOUBLE;
 
     auto space  = H5Screate_simple(2, dims, NULL);
     auto set    = H5Dcreate(_handle, name, type, space, def, def, def);
-    auto status = H5Dwrite(set, type, H5S_ALL, H5S_ALL, def, buf.data());
+    auto status = H5Dwrite(set, type, H5S_ALL, H5S_ALL, def, buf.data_handle());
 
     if (status != 0) {
       throw std::runtime_error("error writing dataset\n");

@@ -119,7 +119,8 @@ static auto kernelBoundaryLoss(
   u0[ib] = (current + lossFactor * K4 * prev) / (1 + lossFactor * K4);
 }
 
-auto run(Simulation2D const& sim) -> std::vector<double> {
+auto run(Simulation2D const& sim)
+    -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
 
   auto const Nx          = sim.Nx;
   auto const Ny          = sim.Ny;
@@ -310,15 +311,14 @@ auto run(Simulation2D const& sim) -> std::vector<double> {
     videoThread->join();
   }
 
-  auto save = std::vector<double>(Nt * Nr);
-  auto host = sycl::host_accessor{out, sycl::read_only};
-  auto max  = 0.0;
-  auto min  = 0.0;
+  auto outputs = stdex::mdarray<double, stdex::dextents<size_t, 2>>(Nr, Nt);
+  auto host    = sycl::host_accessor{out, sycl::read_only};
+  auto max     = 0.0;
+  auto min     = 0.0;
   for (auto it{0UL}; it < static_cast<size_t>(Nt); ++it) {
     for (auto ir{0UL}; ir < Nr; ++ir) {
-      auto const idx    = to_ixy(ir, it, Nr, Nt);
-      auto const sample = host[ir][it];
-      save[idx]         = sample;
+      auto sample     = host[ir][it];
+      outputs(ir, it) = sample;
 
       max = std::max(max, sample);
       min = std::min(min, sample);
@@ -329,6 +329,6 @@ auto run(Simulation2D const& sim) -> std::vector<double> {
   fmt::println("MAX: {}", max);
   fmt::println("MIN: {}", min);
 
-  return save;
+  return outputs;
 }
 } // namespace pffdtd
