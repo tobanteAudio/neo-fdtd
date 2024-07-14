@@ -33,3 +33,7 @@ target_sources(pffdtd
         pffdtd/video.cpp
         pffdtd/video.hpp
 )
+
+if(PFFDTD_ENABLE_ACPP_SYCL OR PFFDTD_ENABLE_INTEL_SYCL)
+    target_compile_definitions(pffdtd PUBLIC PFFDTD_HAS_SYCL=1)
+endif()

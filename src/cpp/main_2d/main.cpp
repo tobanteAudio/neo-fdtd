@@ -1,5 +1,8 @@
 #include "engine_native.hpp"
-#include "engine_sycl.hpp"
+
+#if defined(PFFDTD_HAS_SYCL)
+  #include "engine_sycl.hpp"
+#endif
 
 #include "pffdtd/hdf.hpp"
 #include "pffdtd/simulation_2d.hpp"

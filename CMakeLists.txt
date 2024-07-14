@@ -32,8 +32,5 @@ if(PFFDTD_ENABLE_INTEL_SYCL)
 endif()
 
 add_subdirectory(src/cpp)
+add_subdirectory(src/cpp/main_2d)
 add_subdirectory(src/cpp/main_3d)
-
-if(PFFDTD_ENABLE_ACPP_SYCL OR PFFDTD_ENABLE_INTEL_SYCL)
-    add_subdirectory(src/cpp/main_2d)
-endif()
