@@ -20,8 +20,6 @@
 #include "pffdtd/utility.h"
 #include "pffdtd/progress.hpp"
 
-#include "omp.h"
-
 #include <stdio.h>
 #include <stdlib.h> //for malloc
 #include <stdint.h>

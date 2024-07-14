@@ -1,7 +1,5 @@
 #pragma once
 
-#include <omp.h>
-
 #include <cfloat>
 
 // flag passed in at compilation (see Makefile)

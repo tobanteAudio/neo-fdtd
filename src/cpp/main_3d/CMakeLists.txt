@@ -1,5 +1,7 @@
 project(pffdtd_3d)
 
+find_package(OpenMP REQUIRED)
+
 add_executable(pffdtd_3d)
 target_compile_definitions(pffdtd_3d PRIVATE USING_CUDA=0)
 target_sources(pffdtd_3d
@@ -8,7 +10,6 @@ target_sources(pffdtd_3d
         engine_cpu.hpp
         main.cpp
 )
-
 
 target_link_libraries(pffdtd_3d PRIVATE pffdtd::pffdtd OpenMP::OpenMP_CXX)
 
