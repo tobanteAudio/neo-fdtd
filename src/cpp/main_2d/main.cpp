@@ -1,4 +1,4 @@
-#include "engine.hpp"
+#include "engine_sycl.hpp"
 
 #include "pffdtd/hdf.hpp"
 #include "pffdtd/simulation_2d.hpp"
@@ -34,8 +34,9 @@ int main(int argc, char** argv) {
     throw std::runtime_error{"invalid file: " + filePath.string()};
   }
 
-  auto const sim = pffdtd::loadSimulation2D(filePath);
-  auto const out = pffdtd::run(sim);
+  auto const sim    = pffdtd::loadSimulation2D(filePath);
+  auto const engine = pffdtd::EngineSYCL{};
+  auto const out    = engine(sim);
 
   auto dir     = filePath.parent_path();
   auto outfile = dir / args.out;

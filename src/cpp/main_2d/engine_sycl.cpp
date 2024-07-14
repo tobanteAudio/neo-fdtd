@@ -1,4 +1,4 @@
-#include "engine.hpp"
+#include "engine_sycl.hpp"
 
 #include "pffdtd/sycl.hpp"
 #include "pffdtd/video.hpp"
@@ -84,7 +84,7 @@ static auto kernelBoundaryLoss(
   u0[ib] = (current + lossFactor * K4 * prev) / (1 + lossFactor * K4);
 }
 
-auto run(Simulation2D const& sim)
+auto EngineSYCL::operator()(Simulation2D const& sim) const
     -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
 
   auto const Nx          = sim.Nx;
@@ -103,10 +103,10 @@ auto run(Simulation2D const& sim)
   auto videoThread       = std::unique_ptr<std::thread>();
 
   if (shouldRenderVideo) {
-    // auto opt    = sim.videoOptions.value();
-    // auto func   = [&videoWriter, &sim] { run(*videoWriter, sim); };
-    // videoWriter = std::make_unique<BackgroundVideoWriter>(VideoWriter{opt});
-    // videoThread = std::make_unique<std::thread>(func);
+    auto opt    = sim.videoOptions.value();
+    auto func   = [&videoWriter, &sim] { run(*videoWriter, sim); };
+    videoWriter = std::make_unique<BackgroundVideoWriter>(VideoWriter{opt});
+    videoThread = std::make_unique<std::thread>(func);
   }
 
   auto prop   = sycl::property_list{sycl::property::queue::in_order()};
