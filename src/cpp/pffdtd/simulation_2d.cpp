@@ -3,7 +3,6 @@
 #include "pffdtd/hdf.hpp"
 
 #include <fmt/format.h>
-#include <fmt/os.h>
 
 namespace pffdtd {
 

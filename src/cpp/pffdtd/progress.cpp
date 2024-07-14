@@ -1,5 +1,7 @@
 #include "progress.hpp"
 
+#include <fmt/format.h>
+
 #include <cstdio>
 #include <ctime>
 #include <sys/ioctl.h> //terminal width
@@ -36,30 +38,30 @@ void print_progress(
   if (n > 0) {
     // back up
     for (int nl = 0; nl < nlines; nl++) {
-      printf("\033[1A");
+      fmt::print("\033[1A");
     }
     // clear lines
     for (int nl = 0; nl < nlines; nl++) {
       for (int cc = 0; cc < ncols; cc++) {
-        printf(" ");
+        fmt::print(" ");
       }
-      printf("\n");
+      fmt::print("\n");
     }
     // back up
     for (int nl = 0; nl < nlines; nl++) {
-      printf("\033[1A");
+      fmt::print("\033[1A");
     }
   }
-  printf("\n");
+  fmt::print("\n");
   // progress bar
-  printf("Running [%.1f%%]", pcnt);
+  fmt::print("Running [{:.1f}%]", pcnt);
   if (ncols >= ncolsl) {
     for (int cc = 0; cc < (0.01 * pcnt * ncolsl); cc++) {
-      printf("=");
+      fmt::print("=");
     }
-    printf(">");
+    fmt::print(">");
     for (int cc = (0.01 * pcnt * ncolsl); cc < ncolsl; cc++) {
-      printf(".");
+      fmt::print(".");
     }
   }
   double est_total = time_elapsed * Nt / n;
@@ -76,33 +78,33 @@ void print_progress(
   s_t = (sec - (3600 * h_t) - (m_t * 60));
 
   // clang-format off
-  printf("[");
-  printf("%02d:%02d:%02d<%02d:%02d:%02d]", h_e, m_e, s_e, h_t, m_t, s_t);
-  printf("\n");
-  printf("T: %06.1f", 1e-6 * Npts * n / time_elapsed); //"total" Mvox/s (averaged up to current time)
-  printf(" - ");
-  printf("I: %06.1f", 1e-6 * Npts / time_elapsed_sample); // instantaneous Mvox/s (per time-step)
-  printf(" | ");
-  printf("TPW: %06.1f", 1e-6 * Npts * n / time_elapsed / num_workers); // total per worker
-  printf(" - ");
-  printf("IPW: %06.1f", 1e-6 * Npts / time_elapsed_sample / num_workers); // inst per worker
-  printf("\n");
+  fmt::print("[");
+  fmt::print("{:02d}:{:02d}:{:02d}<{:02d}:{:02d}:{:02d}]", h_e, m_e, s_e, h_t, m_t, s_t);
+  fmt::println("");
+  fmt::print("T: {:06.1f}", 1e-6 * Npts * n / time_elapsed); //"total" Mvox/s (averaged up to current time)
+  fmt::print(" - ");
+  fmt::print("I: {:06.1f}", 1e-6 * Npts / time_elapsed_sample); // instantaneous Mvox/s (per time-step)
+  fmt::print(" | ");
+  fmt::print("TPW: {:06.1f}", 1e-6 * Npts * n / time_elapsed / num_workers); // total per worker
+  fmt::print(" - ");
+  fmt::print("IPW: {:06.1f}", 1e-6 * Npts / time_elapsed_sample / num_workers); // inst per worker
+  fmt::println("");
 
-  printf("TA: %06.1f", 1e-6 * Npts * n / time_elapsed_air); // total for air bit
-  printf(" - ");
-  printf("IA: %06.1f", 1e-6 * Npts / time_elapsed_sample_air); // inst for air bit
+  fmt::print("TA: {:06.1f}", 1e-6 * Npts * n / time_elapsed_air); // total for air bit
+  fmt::print(" - ");
+  fmt::print("IA: {:06.1f}", 1e-6 * Npts / time_elapsed_sample_air); // inst for air bit
 
-  printf("\n");
-  printf("TB: %06.1f", 1e-6 * Nb * n / time_elapsed_bn); // total for bn
-  printf(" - ");
-  printf("IB: %06.1f", 1e-6 * Nb / time_elapsed_sample_bn); // inst for bn
+  fmt::println("");
+  fmt::print("TB: {:06.1f}", 1e-6 * Nb * n / time_elapsed_bn); // total for bn
+  fmt::print(" - ");
+  fmt::print("IB: {:06.1f}", 1e-6 * Nb / time_elapsed_sample_bn); // inst for bn
 
-  printf("\n");
+  fmt::println("");
 
-  printf("T: %02.1f%%", 100.0 * time_elapsed_air / time_elapsed); //% for air (total)
-  printf(" - ");
-  printf("I: %02.1f%%", 100.0 * time_elapsed_sample_air / time_elapsed_sample); //% for air (inst)
-  printf("\n");
+  fmt::print("T: {:02.1f}%", 100.0 * time_elapsed_air / time_elapsed); //% for air (total)
+  fmt::print(" - ");
+  fmt::print("I: {:02.1f}%", 100.0 * time_elapsed_sample_air / time_elapsed_sample); //% for air (inst)
+  fmt::println("");
   // clang-format on
 
   fflush(stdout);

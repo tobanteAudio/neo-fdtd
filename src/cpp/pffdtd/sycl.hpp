@@ -3,7 +3,6 @@
 #include <sycl/sycl.hpp>
 
 #include <fmt/format.h>
-#include <fmt/os.h>
 
 #include <string>
 #include <utility>

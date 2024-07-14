@@ -26,7 +26,6 @@
 #endif
 
 #include <fmt/format.h>
-#include <fmt/os.h>
 
 #include <chrono>
 

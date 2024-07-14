@@ -15,8 +15,8 @@
 
 #include "utility.hpp"
 
-#include <cassert>
-#include <cstdio>
+#include "pffdtd/exception.hpp"
+
 #include <cstdlib>
 #include <cstring>
 
@@ -25,11 +25,10 @@
 void allocate_zeros(void** arr, uint64_t Nbytes) {
   *arr = malloc(Nbytes);
   if (*arr == NULL) {
-    printf("Memory allocation failed");
-    assert(true == false); // to break
+    pffdtd::raise<std::bad_alloc>();
   }
   // initialise to zero
-  memset(*arr, 0, (size_t)Nbytes);
+  std::memset(*arr, 0, (size_t)Nbytes);
 }
 
 // for sorting int64 arrays and returning keys
@@ -52,8 +51,7 @@ void sort_keys(int64_t* val_arr, int64_t* key_arr, int64_t N) {
   sort_int64_struct* struct_arr;
   struct_arr = (sort_int64_struct*)malloc(N * sizeof(sort_int64_struct));
   if (struct_arr == NULL) {
-    printf("Memory allocation failed");
-    assert(true == false); // to break
+    pffdtd::raise<std::bad_alloc>();
   }
   for (int64_t i = 0; i < N; i++) {
     struct_arr[i].val = val_arr[i];

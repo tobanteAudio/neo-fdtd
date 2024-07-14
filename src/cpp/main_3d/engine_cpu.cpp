@@ -18,7 +18,6 @@
 #include "pffdtd/utility.hpp"
 
 #include <fmt/format.h>
-#include <fmt/os.h>
 
 #include <omp.h>
 

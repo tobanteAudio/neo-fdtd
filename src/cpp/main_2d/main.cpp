@@ -6,7 +6,6 @@
 #include <CLI/CLI.hpp>
 
 #include <fmt/format.h>
-#include <fmt/os.h>
 
 #include <chrono>
 #include <filesystem>

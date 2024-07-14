@@ -15,6 +15,8 @@
 
 #include "simulation_3d.hpp"
 
+#include <fmt/format.h>
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -132,7 +134,6 @@ void loadSimulation3D(Simulation3D& sim) {
   readH5Constant(file, dset_str, (void*)&fcc_flag, INT8);
   printf("fcc_flag=%d\n", fcc_flag);
   assert((fcc_flag >= 0) && (fcc_flag <= 2));
-  // printf("%s", fcc>0 ? "fcc=true\n" : "fcc=false\n");
 
   if (H5Fclose(file) != 0) {
     printf("error closing file %s", filename);
@@ -213,12 +214,6 @@ void loadSimulation3D(Simulation3D& sim) {
   readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&bn_ixyz, INT64);
   assert((int64_t)dims[0] == Nb);
 
-  // printf("bn_ixyz=");
-  // for (int64_t i=0; i<Nb; i++) {
-  // printf("%ld, ",bn_ixyz[i]);
-  //}
-  // printf("\n");
-
   //////////////////
   // adj_bn dataset
   //////////////////
@@ -227,16 +222,6 @@ void loadSimulation3D(Simulation3D& sim) {
   readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&adj_bn_bool, BOOL);
   assert((int64_t)dims[0] == Nb);
   assert(dims[1] == (hsize_t)NN);
-
-  // printf("adj_bn=");
-  // for (int64_t i=0; i<Nb; i++) {
-  // printf("[");
-  // for (int8_t j=0; j<NN; j++) {
-  // printf("%d,",adj_bn_bool[i*NN+j]);
-  //}
-  // printf("] -- ");
-  //}
-  // printf("\n");
 
   //////////////////
   // mat_bn dataset
@@ -263,12 +248,6 @@ void loadSimulation3D(Simulation3D& sim) {
       ssaf_bn[i] = (Real)saf_bn[i]; // just cast
   }
   free(saf_bn);
-
-  // printf("saf=");
-  // for (int64_t i=0; i<Nb; i++) {
-  // printf("%.16g, ",saf_bn[i]);
-  //}
-  // printf("\n");
 
   if (H5Fclose(file) != 0) {
     printf("error closing file %s", filename);
@@ -318,12 +297,6 @@ void loadSimulation3D(Simulation3D& sim) {
   readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&in_ixyz, INT64);
   assert((int64_t)dims[0] == Ns);
 
-  // printf("in_ixyz=");
-  // for (int64_t i=0; i<Ns; i++) {
-  // printf("%ld, ",in_ixyz[i]);
-  //}
-  // printf("\n");
-
   //////////////////
   // out_ixyz dataset
   //////////////////
@@ -344,12 +317,6 @@ void loadSimulation3D(Simulation3D& sim) {
   );
   assert((int64_t)dims[0] == Nr);
 
-  // printf("out_ixyz=");
-  // for (int64_t i=0; i<Nr; i++) {
-  // printf("%ld, ",out_ixyz[i]);
-  //}
-  // printf("\n");
-
   //////////////////
   // in_sigs dataset
   //////////////////
@@ -358,16 +325,6 @@ void loadSimulation3D(Simulation3D& sim) {
   readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&in_sigs, FLOAT64);
   assert((int64_t)dims[0] == Ns);
   assert((int64_t)dims[1] == Nt);
-
-  // printf("in_sigs=");
-  // for (int64_t i=0; i<Ns; i++) {
-  // printf("in %ld: ",i);
-  // for (int64_t j=0; j<Nt; j++) {
-  // printf("%.16g, ",in_sigs[i*Nt + j]);
-  //}
-  // printf("\n");
-  //}
-  // printf("\n");
 
   if (H5Fclose(file) != 0) {
     printf("error closing file %s", filename);
@@ -418,9 +375,10 @@ void loadSimulation3D(Simulation3D& sim) {
   allocate_zeros((void**)&mat_beta, Nm * sizeof(Real));
   for (int8_t i = 0; i < Nm; i++) {
     double* DEF; // for one material
-    sprintf(dset_str, "mat_%02d_DEF", i);
+    // sprintf(dset_str, "mat_%02d_DEF", i);
+    auto id        = fmt::format("mat_{:02d}_DEF", i);
     expected_ndims = 2;
-    readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&DEF, FLOAT64);
+    readH5Dataset(file, id.data(), expected_ndims, dims, (void**)&DEF, FLOAT64);
     assert((int8_t)dims[0] == Mb[i]);
     assert((int8_t)dims[1] == 3);
     assert(Mb[i] <= MMb);
@@ -454,39 +412,6 @@ void loadSimulation3D(Simulation3D& sim) {
     }
     free(DEF);
   }
-  /*
-  for (int8_t i=0; i<Nm; i++) {
-     printf("b[%d]=",i);
-     for (int8_t j=0; j<Mb[i]; j++) {
-        int32_t mij = (int32_t)MMb*i+j;
-        printf(" %.16g, ",mat_quads[mij].b);
-     }
-     printf("\n");
-     printf("bd[%d]=",i);
-     for (int8_t j=0; j<Mb[i]; j++) {
-        int32_t mij = (int32_t)MMb*i+j;
-        printf(" %.16g, ",mat_quads[mij].bd);
-     }
-     printf("\n");
-     printf("bDh[%d]=",i);
-     for (int8_t j=0; j<Mb[i]; j++) {
-        int32_t mij = (int32_t)MMb*i+j;
-        printf(" %.16g, ",mat_quads[mij].bDh);
-     }
-     printf("\n");
-     printf("bFh[%d]=",i);
-     for (int8_t j=0; j<Mb[i]; j++) {
-        int32_t mij = (int32_t)MMb*i+j;
-        printf(" %.16g, ",mat_quads[mij].bFh);
-     }
-     printf("\n");
-     printf("mat_beta[%d]= %.16g \n",i,mat_beta[i]);
-  }
-
-  for (int8_t i=0; i<Nm; i++) {
-     printf("Mb[%d]=%d\n",i,Mb[i]);
-  }
-  */
 
   if (H5Fclose(file) != 0) {
     printf("error closing file %s", filename);

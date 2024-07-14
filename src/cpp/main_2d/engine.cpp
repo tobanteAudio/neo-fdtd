@@ -4,7 +4,6 @@
 #include "pffdtd/video.hpp"
 
 #include <fmt/format.h>
-#include <fmt/os.h>
 
 #include <concepts>
 
