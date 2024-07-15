@@ -14,7 +14,7 @@ room.with_colors({
     "Walls": [255, 255, 255],
 })
 
-offset = 0.075
+offset = 0.075*3
 
 room.add_source("S1", [offset, offset, offset])
 room.add_receiver("R1", [W-offset, L-offset, H-offset])

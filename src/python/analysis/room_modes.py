@@ -79,39 +79,7 @@ def main():
     directory = args.data_dir
     files = collect_wav_files(directory, "*_out_normalised.wav")
 
-    plt.rcParams.update(plot_styles)
-
-    for file in files:
-        fs, buf = wavfile.read(file)
-
-        nfft = (2**iceil(np.log2(buf.shape[0])))*2
-        spectrum = np.fft.rfft(buf, nfft)
-        freqs = np.fft.rfftfreq(nfft,1/fs)
-
-        dB = 20*np.log10(np.abs(spectrum)+np.spacing(1))
-        dB -= np.max(dB)
-        dB += 75.0
-
-        dB_max = np.max(dB)
-        peaks, _ = find_peaks(dB)
-
-        print(freqs[peaks][:10])
-
-        plt.plot(freqs, dB, linestyle='-', label=f'Receiver')
-        plt.plot(freqs[peaks], dB[peaks], 'r.', markersize=10, label='Peaks')
-        plt.title('Response')
-        plt.xlabel('Frequency [Hz]')
-        plt.ylabel('Amplitude [dB]')
-        plt.xscale('log')
-        plt.ylim((dB_max-80, dB_max+10))
-        plt.xlim((1, fs/2))
-        # plt.margins(0, 0.1)
-        plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
-        plt.minorticks_on()
-        plt.legend()
-        plt.show()
-
-    scale = 1.0
+    scale = 0.9
 
     # Tobi
     L = 6.0 * scale
@@ -124,9 +92,9 @@ def main():
     # H = 4.14 * scale
 
     # Optimal ratio B
-    # L = 7 * scale
-    # W = 5.19 * scale
-    # H = 3.70 * scale
+    L = 7 * scale
+    W = 5.19 * scale
+    H = 3.70 * scale
 
     # Worst ratio (Cube)
     # W = L
@@ -165,6 +133,44 @@ def main():
         note = hz_to_note(freq)
         kind = room_mode_kind(m, n, p)
         print(f"[{m},{n},{p}] = {freq:.2f}Hz ({note}) {kind}")
+
+    plt.rcParams.update(plot_styles)
+
+    mode_freqs = [mode['frequency'] for mode in modes][:25]
+    for file in files:
+        fs, buf = wavfile.read(file)
+
+        nfft = (2**iceil(np.log2(buf.shape[0])))*2
+        print(nfft)
+        spectrum = np.fft.rfft(buf, nfft)
+        freqs = np.fft.rfftfreq(nfft, 1/fs)
+
+        dB = 20*np.log10(np.abs(spectrum)+np.spacing(1))
+        dB -= np.max(dB)
+        dB += 75.0
+
+        dB_max = np.max(dB)
+        peaks, _ = find_peaks(dB) #, distance=5/(fs/nfft)
+
+        print(freqs[peaks][:10])
+
+        figManager = plt.get_current_fig_manager()
+        figManager.window.showMaximized()
+
+        plt.vlines(mode_freqs, dB_max-80, dB_max+10, colors='#AAAAAA', linestyles='--')
+        plt.plot(freqs, dB, linestyle='-', label=f'Receiver')
+        plt.plot(freqs[peaks], dB[peaks], 'r.', markersize=10, label='Peaks')
+        plt.title('Response')
+        plt.xlabel('Frequency [Hz]')
+        plt.ylabel('Amplitude [dB]')
+        plt.xscale('log')
+        plt.ylim((dB_max-80, dB_max+10))
+        plt.xlim((10, 150)) # fs/2
+        # plt.margins(0, 0.1)
+        plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
+        plt.minorticks_on()
+        plt.legend()
+        plt.show()
 
 
 if __name__ == "__main__":
