@@ -36,4 +36,4 @@ $engine_exe
 cd "$python_dir"
 python -m sim3d.process_outputs --data_dir="$sim_dir" --fcut_lowpass "$fmax" --N_order_lowpass=8 --symmetric --fcut_lowcut 20.0 --N_order_lowcut=4 --air_abs_filter="none" --save_wav --plot
 python -m analysis.t60 --data_dir="$sim_dir" --fmin=20 --fmax="$fmax"
-python -m analysis.room_modes --data_dir="$sim_dir"
+python -m analysis.room_modes --data_dir="$sim_dir" --fmin=10 --fmax=200 --modes=10

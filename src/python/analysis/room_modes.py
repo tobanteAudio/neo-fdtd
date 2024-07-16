@@ -75,6 +75,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir', type=str, help='run directory')
     parser.add_argument('--fmax', type=float, default=0.0)
+    parser.add_argument('--fmin', type=float, default=10.0)
     parser.add_argument('--modes', type=int, default=0)
     args = parser.parse_args()
 
@@ -141,7 +142,7 @@ def main():
     mode_freqs = [mode['frequency'] for mode in modes][:args.modes]
     for file in files:
         fs, buf = wavfile.read(file)
-        fmin = 1
+        fmin = args.fmin if args.fmin > 0 else 10
         fmax = args.fmax if args.fmax > 0 else fs/2
 
         nfft = (2**iceil(np.log2(buf.shape[0])))*2
@@ -170,7 +171,6 @@ def main():
         plt.xscale('log')
         plt.ylim((dB_max-80, dB_max+10))
         plt.xlim((fmin, fmax))
-        # plt.margins(0, 0.1)
         plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
         plt.minorticks_on()
         plt.legend()
