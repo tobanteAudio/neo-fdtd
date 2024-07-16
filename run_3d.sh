@@ -4,7 +4,7 @@ set -e
 
 root_dir="$(cd "$(dirname "$0")" && pwd)"
 python_dir="$root_dir/src/python"
-engine_exe="$root_dir/build/src/cpp/main_3d/pffdtd_3d"
+engine_exe="$root_dir/cmake-build-sycl/src/cpp/main_3d/pffdtd_3d"
 
 sim_name="Modes"
 sim_setup="${sim_name}_cpu.py"
@@ -14,7 +14,7 @@ sim_dir="$root_dir/data/sim_data/$sim_name/cpu"
 model_dir="$root_dir/data/models/$sim_name"
 materials_dir="$root_dir/data/materials"
 
-fmax=400
+fmax=1000
 
 # Delete old sim
 rm -rf "$sim_dir"

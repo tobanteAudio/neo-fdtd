@@ -13,6 +13,7 @@ def main():
     concrete_painted              = np.array([0.01, 0.01, 0.01, 0.05, 0.06, 0.07, 0.09, 0.08, 0.08, 0.08, 0.08])
     floor_wood                    = np.array([0.10, 0.11, 0.13, 0.15, 0.11, 0.10, 0.07, 0.06, 0.07, 0.07, 0.07])
     door_wood                     = np.array([0.06, 0.08, 0.14, 0.14, 0.10, 0.06, 0.08, 0.10, 0.10, 0.10, 0.08])
+    almost_rigid                  = np.array([0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03])
 
     fit_to_Sabs_oct_11(absorber_8000_100mm           , filename=Path(write_folder / 'absorber_8000_100mm.h5')           , plot=plot)
     fit_to_Sabs_oct_11(absorber_8000_200mm           , filename=Path(write_folder / 'absorber_8000_200mm.h5')           , plot=plot)
@@ -20,6 +21,7 @@ def main():
     fit_to_Sabs_oct_11(concrete_painted              , filename=Path(write_folder / 'concrete_painted.h5')              , plot=plot)
     fit_to_Sabs_oct_11(floor_wood                    , filename=Path(write_folder / 'floor_wood.h5')                    , plot=plot)
     fit_to_Sabs_oct_11(door_wood                     , filename=Path(write_folder / 'door_wood.h5')                     , plot=plot)
+    fit_to_Sabs_oct_11(almost_rigid                  , filename=Path(write_folder / 'almost_rigid.h5')                  , plot=plot)
 
     # #some examples to save admittance/impedance data
     # #these are Sabine coefficients, 16Hz to 16kHz centre frequencies
