@@ -20,4 +20,5 @@ sim_setup(
     save_folder='../../data/sim_data/Modes/cpu',
     save_folder_gpu='../../data/sim_data/Modes/gpu',
     compress=0,
+    rot_az_el=[0, 0],
 )
