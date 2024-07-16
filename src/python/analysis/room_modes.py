@@ -74,6 +74,8 @@ def frequency_spacing_index(modes):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir', type=str, help='run directory')
+    parser.add_argument('--fmax', type=float, default=0.0)
+    parser.add_argument('--modes', type=int, default=0)
     args = parser.parse_args()
 
     directory = args.data_dir
@@ -136,9 +138,11 @@ def main():
 
     plt.rcParams.update(plot_styles)
 
-    mode_freqs = [mode['frequency'] for mode in modes][:25]
+    mode_freqs = [mode['frequency'] for mode in modes][:args.modes]
     for file in files:
         fs, buf = wavfile.read(file)
+        fmin = 1
+        fmax = args.fmax if args.fmax > 0 else fs/2
 
         nfft = (2**iceil(np.log2(buf.shape[0])))*2
         print(nfft)
@@ -150,22 +154,22 @@ def main():
         dB += 75.0
 
         dB_max = np.max(dB)
-        peaks, _ = find_peaks(dB) #, distance=5/(fs/nfft)
+        peaks, _ = find_peaks(dB)
 
         print(freqs[peaks][:10])
 
-        figManager = plt.get_current_fig_manager()
-        figManager.window.showMaximized()
-
-        plt.vlines(mode_freqs, dB_max-80, dB_max+10, colors='#AAAAAA', linestyles='--')
         plt.plot(freqs, dB, linestyle='-', label=f'Receiver')
-        plt.plot(freqs[peaks], dB[peaks], 'r.', markersize=10, label='Peaks')
+        if args.modes > 0:
+            plt.vlines(mode_freqs, dB_max-80, dB_max+10,
+                       colors='#AAAAAA', linestyles='--')
+            plt.plot(freqs[peaks], dB[peaks], 'r.',
+                     markersize=10, label='Peaks')
         plt.title('Response')
         plt.xlabel('Frequency [Hz]')
         plt.ylabel('Amplitude [dB]')
         plt.xscale('log')
         plt.ylim((dB_max-80, dB_max+10))
-        plt.xlim((10, 150)) # fs/2
+        plt.xlim((fmin, fmax))
         # plt.margins(0, 0.1)
         plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
         plt.minorticks_on()
