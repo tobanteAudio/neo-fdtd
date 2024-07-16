@@ -8,15 +8,12 @@ class NeoFDTD(ConanFile):
     def requirements(self):
         self.requires("cli11/2.4.2")
         self.requires("fmt/11.0.1")
-        self.requires("hdf5/1.14.4.3")
 
         if self.settings.os != "Macos":
+            self.requires("hdf5/1.14.4.3")
             self.requires("opencv/4.10.0")
 
     def config_options(self):
-        if self.settings.os == "Macos":
-            self.options["hdf5"].with_zlib = False
-
         self.options["opencv"].calib3d = False
         self.options["opencv"].dnn = False
         self.options["opencv"].features2d = False

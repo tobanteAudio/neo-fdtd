@@ -74,7 +74,7 @@ jobs:
 
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew install conan libomp llvm ninja opencv tbb
+        run: brew install conan hdf5 libomp llvm ninja opencv tbb
 
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
