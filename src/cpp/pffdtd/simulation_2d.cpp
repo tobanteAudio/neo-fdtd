@@ -4,6 +4,8 @@
 
 #include <fmt/format.h>
 
+#include <opencv2/imgproc.hpp>
+
 namespace pffdtd {
 
 auto loadSimulation2D(std::filesystem::path const& path, bool exportVideo)
@@ -16,10 +18,11 @@ auto loadSimulation2D(std::filesystem::path const& path, bool exportVideo)
   auto const videoRatio   = static_cast<double>(Ny) / static_cast<double>(Nx);
   auto const videoWidth   = std::min<size_t>(2000, static_cast<size_t>(Nx));
   auto const videoOptions = VideoWriter::Options{
-      .file   = path.parent_path() / "out.avi",
-      .width  = videoWidth,
-      .height = static_cast<size_t>(videoWidth * videoRatio),
-      .fps    = file.read<double>("video_fps"),
+      .file      = path.parent_path() / "out.avi",
+      .width     = videoWidth,
+      .height    = static_cast<size_t>(videoWidth * videoRatio),
+      .fps       = file.read<double>("video_fps"),
+      .withColor = false,
   };
 
   return Simulation2D{
@@ -60,12 +63,14 @@ auto summary(Simulation2D const& sim) -> void {
 }
 
 BackgroundVideoWriter::BackgroundVideoWriter(VideoWriter::Options const& opt)
-    : writer{opt} {}
+    : writer{opt}
+    , useColor{opt.withColor} {}
 
 auto BackgroundVideoWriter::run(Simulation2D const& sim) -> void {
 
   auto frame      = std::vector<double>{};
   auto normalized = cv::Mat{};
+  auto colored    = cv::Mat{};
   auto rotated    = cv::Mat{};
 
   while (not done or not queue.empty()) {
@@ -86,6 +91,12 @@ auto BackgroundVideoWriter::run(Simulation2D const& sim) -> void {
       queue.pop();
     }
 
+    if (not useColor) {
+      std::ranges::transform(frame, frame.begin(), [](auto v) {
+        return std::abs(v);
+      });
+    }
+
     auto input = cv::Mat{
         static_cast<int>(sim.Nx),
         static_cast<int>(sim.Ny),
@@ -96,15 +107,27 @@ auto BackgroundVideoWriter::run(Simulation2D const& sim) -> void {
     cv::normalize(input, normalized, 0, 255, cv::NORM_MINMAX);
     normalized.convertTo(normalized, CV_8U);
 
-    for (auto ix{0L}; ix < sim.Nx; ++ix) {
-      for (auto iy{0L}; iy < sim.Ny; ++iy) {
-        if (not sim.in_mask[ix * sim.Ny + iy]) {
-          normalized.at<uint8_t>(ix, iy) = 255;
+    if (useColor) {
+      cv::applyColorMap(normalized, colored, cv::COLORMAP_VIRIDIS);
+      for (auto ix{0L}; ix < sim.Nx; ++ix) {
+        for (auto iy{0L}; iy < sim.Ny; ++iy) {
+          if (not sim.in_mask[ix * sim.Ny + iy]) {
+            colored.at<cv::Vec3b>(ix, iy) = cv::Vec3b(255, 255, 255);
+          }
+        }
+      }
+    } else {
+      colored = normalized;
+      for (auto ix{0L}; ix < sim.Nx; ++ix) {
+        for (auto iy{0L}; iy < sim.Ny; ++iy) {
+          if (not sim.in_mask[ix * sim.Ny + iy]) {
+            colored.at<uint8_t>(ix, iy) = 255;
+          }
         }
       }
     }
 
-    cv::rotate(normalized, rotated, cv::ROTATE_90_COUNTERCLOCKWISE);
+    cv::rotate(colored, rotated, cv::ROTATE_90_COUNTERCLOCKWISE);
 
     writer.write(rotated);
   }
@@ -129,5 +152,7 @@ auto BackgroundVideoWriter::push(std::vector<double> frame) -> void {
     queue.push(std::move(frame));
   }
 }
+
+auto BackgroundVideoWriter::finish() -> void { done.store(true); }
 
 } // namespace pffdtd

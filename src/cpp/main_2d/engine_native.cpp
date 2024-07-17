@@ -120,9 +120,6 @@ auto EngineNative::operator()(Simulation2D const& sim) const
 
     if (shouldRenderVideo) {
       auto frame = u0_buf.container();
-      std::ranges::transform(frame, frame.begin(), [](auto v) {
-        return std::abs(v);
-      });
       videoWriter->push(frame);
     }
 
@@ -133,7 +130,7 @@ auto EngineNative::operator()(Simulation2D const& sim) const
   }
 
   if (shouldRenderVideo) {
-    videoWriter->done.store(true);
+    videoWriter->finish();
     videoThread->join();
   }
 

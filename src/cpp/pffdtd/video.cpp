@@ -8,10 +8,9 @@ namespace pffdtd {
 
 VideoWriter::VideoWriter(Options const& options)
     : _size{int(options.width), int(options.height)} {
-  auto const isColor = false;
-  auto const file    = options.file.string();
-  auto const codec   = cv::VideoWriter::fourcc('M', 'J', 'P', 'G');
-  _writer.open(file, codec, options.fps, _size, isColor);
+  auto const file  = options.file.string();
+  auto const codec = cv::VideoWriter::fourcc('M', 'J', 'P', 'G');
+  _writer.open(file, codec, options.fps, _size, options.withColor);
   if (not _writer.isOpened()) {
     raisef<std::runtime_error>("could not open video writer for: {}", file);
   }

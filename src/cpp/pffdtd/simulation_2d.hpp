@@ -42,11 +42,14 @@ struct BackgroundVideoWriter {
 
   auto run(Simulation2D const& sim) -> void;
   auto push(std::vector<double> frame) -> void;
+  auto finish() -> void;
 
+  private:
   VideoWriter writer;
   std::queue<std::vector<double>> queue;
   std::mutex mutex;
   std::atomic<bool> done{false};
+  bool useColor;
 };
 
 } // namespace pffdtd

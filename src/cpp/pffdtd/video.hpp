@@ -12,6 +12,7 @@ struct VideoWriter {
     size_t width;
     size_t height;
     double fps;
+    bool withColor;
   };
 
   explicit VideoWriter(Options const& options);

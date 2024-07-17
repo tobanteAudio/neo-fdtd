@@ -218,7 +218,7 @@ auto EngineSYCL::operator()(Simulation2D const& sim) const
     if (shouldRenderVideo) {
       auto host = sycl::host_accessor{u0, sycl::read_only};
       for (auto i{0UL}; i < frame.size(); ++i) {
-        frame[i] = std::abs(double(host.get_pointer()[i]));
+        frame[i] = host.get_pointer()[i];
       }
       videoWriter->push(frame);
     }
@@ -231,7 +231,7 @@ auto EngineSYCL::operator()(Simulation2D const& sim) const
   }
 
   if (shouldRenderVideo) {
-    videoWriter->done.store(true);
+    videoWriter->finish();
     videoThread->join();
   }
 
