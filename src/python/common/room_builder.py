@@ -211,13 +211,6 @@ class RoomBuilder:
         W = self.width
         H = self.height
 
-        cabinet_spec = {
-            "tris": [],
-            "pts": [],
-            "color": [10, 10, 10],
-            "sides": []
-        }
-
         counter = 0
         for src in self.cabinet_sources:
             rot = [0, 0, 0]
