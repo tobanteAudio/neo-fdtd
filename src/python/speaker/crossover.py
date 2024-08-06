@@ -5,7 +5,7 @@ from scipy.signal import butter, filtfilt, firwin, lfilter
 
 def main():
     fc = 400
-    fs = 48000
+    fs = 96000
     dt = 1/fs
     n = fs
 
@@ -29,10 +29,12 @@ def main():
     lowpass_amplitude = np.abs(lowpass_spectrum)
     highpass_amplitude = np.abs(highpass_spectrum)
     mix_amplitude = lowpass_amplitude+highpass_amplitude
+    mix_db = 20*np.log10(mix_amplitude)
 
     # plt.semilogx(freqs, 20*np.log10(lowpass_amplitude), label="LP")
     # plt.semilogx(freqs, 20*np.log10(highpass_amplitude), label="HP")
-    plt.semilogx(freqs, 20*np.log10(mix_amplitude), label="LP+HP")
+    plt.semilogx(freqs, mix_db, label="LP+HP")
+    plt.vlines(fc, np.min(mix_db), np.max(mix_db),colors="red")
     plt.grid()
     plt.legend()
     plt.show()
