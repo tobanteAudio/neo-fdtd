@@ -1,6 +1,7 @@
 import glob
 import os
 import argparse
+import pathlib
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,7 +15,7 @@ from common.plot import plot_styles
 def collect_wav_files(directory, pattern="*.wav"):
     search_pattern = os.path.join(directory, pattern)
     wav_files = glob.glob(search_pattern)
-    return wav_files
+    return list(sorted(wav_files))
 
 
 def hz_to_note(frequency):
@@ -141,6 +142,7 @@ def main():
 
     mode_freqs = [mode['frequency'] for mode in modes][:args.modes]
     for file in files:
+        file = pathlib.Path(file)
         fs, buf = wavfile.read(file)
         fmin = args.fmin if args.fmin > 0 else 10
         fmax = args.fmax if args.fmax > 0 else fs/2
@@ -159,13 +161,13 @@ def main():
 
         print(freqs[peaks][:10])
 
-        plt.plot(freqs, dB, linestyle='-', label=f'Receiver')
+        plt.plot(freqs, dB, linestyle='-', label="Measurement")
         if args.modes > 0:
             plt.vlines(mode_freqs, dB_max-80, dB_max+10,
-                       colors='#AAAAAA', linestyles='--')
+                       colors='#AAAAAA', linestyles='--', label="Modes")
             plt.plot(freqs[peaks], dB[peaks], 'r.',
                      markersize=10, label='Peaks')
-        plt.title('Response')
+        plt.title(f'{file.stem[:4]}')
         plt.xlabel('Frequency [Hz]')
         plt.ylabel('Amplitude [dB]')
         plt.xscale('log')

@@ -17,7 +17,7 @@ sim_setup(
         'Table': 'door_wood.h5',
         'Walls': 'concrete_painted.h5',
     },
-    duration=1.5,
+    duration=2.0,
     Tc=20,
     rh=50,
     fcc_flag=False,

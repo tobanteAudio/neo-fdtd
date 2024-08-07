@@ -14,7 +14,8 @@ sim_dir="$root_dir/data/sim_data/$sim_name/cpu"
 model_dir="$root_dir/data/models/$sim_name"
 materials_dir="$root_dir/data/materials"
 
-fmax=1000
+fmin=20
+fmax=400
 
 # Delete old sim
 rm -rf "$sim_dir"
@@ -34,6 +35,7 @@ $engine_exe
 
 # Post-process
 cd "$python_dir"
-python -m sim3d.process_outputs --data_dir="$sim_dir" --fcut_lowpass "$fmax" --N_order_lowpass=8 --symmetric --fcut_lowcut 20.0 --N_order_lowcut=4 --air_abs_filter="none" --save_wav --plot
-python -m analysis.t60 --data_dir="$sim_dir" --fmin=20 --fmax="$fmax"
-python -m analysis.room_modes --data_dir="$sim_dir" --fmin=10 --fmax=200 --modes=10
+python -m sim3d.process_outputs --data_dir="$sim_dir" --fcut_lowpass "$fmax" --N_order_lowpass=8 --symmetric --fcut_lowcut $fmin --N_order_lowcut=4 --air_abs_filter="none" --save_wav --plot
+# python -m analysis.t60 --fmin=$fmin --fmax="$fmax" --target=0.25 ../../data/sim_data/$sim_name/cpu/R001_out_normalised.wav
+# python -m analysis.t60 --data_dir="$sim_dir" --fmin=$fmin --fmax="$fmax" --target=0.25
+python -m analysis.room_modes --data_dir="$sim_dir" --fmin=$fmin --fmax=$fmax --modes=20
