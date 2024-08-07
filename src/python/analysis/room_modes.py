@@ -12,10 +12,8 @@ from common.myfuncs import iceil
 from common.plot import plot_styles
 
 
-def collect_wav_files(directory, pattern="*.wav"):
-    search_pattern = os.path.join(directory, pattern)
-    wav_files = glob.glob(search_pattern)
-    return list(sorted(wav_files))
+def collect_wav_paths(dir, pattern="*.wav"):
+    return list(sorted(glob.glob(os.path.join(dir, pattern))))
 
 
 def hz_to_note(frequency):
@@ -74,14 +72,17 @@ def frequency_spacing_index(modes):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('filename', nargs='*')
     parser.add_argument('--data_dir', type=str, help='run directory')
-    parser.add_argument('--fmax', type=float, default=0.0)
-    parser.add_argument('--fmin', type=float, default=10.0)
-    parser.add_argument('--modes', type=int, default=0)
+    parser.add_argument('--fmax', type=float, default=200.0)
+    parser.add_argument('--fmin', type=float, default=1.0)
+    parser.add_argument('--modes', type=int, default=10)
     args = parser.parse_args()
 
     directory = args.data_dir
-    files = collect_wav_files(directory, "*_out_normalised.wav")
+    paths = args.filename
+    if not paths:
+        paths = collect_wav_paths(directory, "*_out_normalised.wav")
 
     scale = 0.9
 
@@ -140,15 +141,13 @@ def main():
 
     plt.rcParams.update(plot_styles)
 
-    mode_freqs = [mode['frequency'] for mode in modes][:args.modes]
-    for file in files:
+    for file in paths:
         file = pathlib.Path(file)
         fs, buf = wavfile.read(file)
-        fmin = args.fmin if args.fmin > 0 else 10
+        fmin = args.fmin if args.fmin > 0 else 1
         fmax = args.fmax if args.fmax > 0 else fs/2
 
         nfft = (2**iceil(np.log2(buf.shape[0])))*2
-        print(nfft)
         spectrum = np.fft.rfft(buf, nfft)
         freqs = np.fft.rfftfreq(nfft, 1/fs)
 
@@ -157,26 +156,30 @@ def main():
         dB += 75.0
 
         dB_max = np.max(dB)
-        peaks, _ = find_peaks(dB)
+        peaks, _ = find_peaks(dB, width=2)
 
-        print(freqs[peaks][:10])
+        print(freqs[peaks][5:10])
 
-        plt.plot(freqs, dB, linestyle='-', label="Measurement")
-        if args.modes > 0:
-            plt.vlines(mode_freqs, dB_max-80, dB_max+10,
-                       colors='#AAAAAA', linestyles='--', label="Modes")
+        plt.plot(freqs, dB, linestyle='-', label=f'{file.stem[:4]}')
+
+    if args.modes > 0:
+        mode_freqs = [mode['frequency'] for mode in modes][:args.modes]
+        plt.vlines(mode_freqs, dB_max-80, dB_max+10,
+                   colors='#AAAAAA', linestyles='--', label="Modes")
+        if len(paths) == 1:
             plt.plot(freqs[peaks], dB[peaks], 'r.',
                      markersize=10, label='Peaks')
-        plt.title(f'{file.stem[:4]}')
-        plt.xlabel('Frequency [Hz]')
-        plt.ylabel('Amplitude [dB]')
-        plt.xscale('log')
-        plt.ylim((dB_max-80, dB_max+10))
-        plt.xlim((fmin, fmax))
-        plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
-        plt.minorticks_on()
-        plt.legend()
-        plt.show()
+
+    plt.title("")
+    plt.xlabel('Frequency [Hz]')
+    plt.ylabel('Amplitude [dB]')
+    plt.xscale('log')
+    plt.ylim((dB_max-80, dB_max+5))
+    plt.xlim((fmin, fmax))
+    plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
+    plt.minorticks_on()
+    plt.legend()
+    plt.show()
 
 
 if __name__ == "__main__":
