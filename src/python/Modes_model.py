@@ -2,7 +2,7 @@ import numpy as np
 
 from common.room_builder import RoomBuilder
 
-S = 0.90
+S = 0.9
 L = 7.00*S
 W = 5.19*S
 H = 3.70*S

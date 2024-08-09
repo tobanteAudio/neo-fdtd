@@ -25,5 +25,8 @@ sim_setup(
     fmax=800.0,
     save_folder='../../data/sim_data/Studio/cpu',
     save_folder_gpu='../../data/sim_data/Studio/gpu',
+    draw_vox=True,
+    draw_backend='polyscope',
     compress=0,
+    rot_az_el=[0, 0],
 )

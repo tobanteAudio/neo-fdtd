@@ -55,8 +55,8 @@ def parse_file_label(filename: str, fallback: str):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('filename', nargs='*')
-    parser.add_argument('--fmin', type=float, default=20.0)
-    parser.add_argument('--fmax', type=float, default=0.0)
+    parser.add_argument('--fmin', type=float, default=1.0)
+    parser.add_argument('--fmax', type=float, default=1000.0)
     parser.add_argument('--label_a', type=str, default='A')
     parser.add_argument('--label_b', type=str, default='B')
     parser.add_argument('--smoothing', type=float, default=0.0)
@@ -82,13 +82,15 @@ def main():
     spectrum_a = np.fft.rfft(buf_a, nfft)
     spectrum_b = np.fft.rfft(buf_b, nfft)
 
-    dB_a = 20*np.log10(np.abs(spectrum_a)+np.spacing(1))
-    dB_a -= np.max(dB_a)
-    dB_a += 75.0
+    dB_a = 20*np.log10(np.abs(spectrum_a)/nfft+np.spacing(1))
+    dB_b = 20*np.log10(np.abs(spectrum_b)/nfft+np.spacing(1))
 
-    dB_b = 20*np.log10(np.abs(spectrum_b)+np.spacing(1))
-    dB_b -= np.max(dB_b)
-    dB_b += 75.0
+    # norm = max(np.max(dB_a), np.max(dB_b))
+    # dB_a -= norm
+    # dB_b -= norm
+
+    # dB_a += 75.0
+    # dB_b += 75.0
 
     if args.smoothing > 0.0:
         smoothing = args.smoothing
@@ -109,8 +111,8 @@ def main():
     ax[0].set_title('Spectrum')
     ax[0].set_xlabel('Frequency [Hz]')
     ax[0].set_ylabel('Amplitude [dB]')
-    ax[0].set_ylim((10, 80))
-    ax[0].set_xlim((args.fmin, fmax))
+    # ax[0].set_ylim((-100, -60))
+    # ax[0].set_xlim((args.fmin, fmax))
     ax[0].xaxis.set_major_formatter(formatter)
     ax[0].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
     ax[0].minorticks_on()
@@ -122,6 +124,8 @@ def main():
     ax[1].set_xlabel('Frequency [Hz]')
     ax[1].set_ylabel('Amplitude [dB]')
     ax[1].set_xlim((args.fmin, fmax))
+    ax[1].set_ylim((-np.max(np.abs(difference)), np.max(np.abs(difference))))
+    ax[1].set_ylim((-30, 30))
     ax[1].xaxis.set_major_formatter(formatter)
     ax[1].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
     ax[1].minorticks_on()

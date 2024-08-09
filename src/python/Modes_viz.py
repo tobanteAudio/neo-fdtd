@@ -21,9 +21,9 @@ sim_setup(
     save_folder='../../data/sim_data/Modes/viz',  # can run python from here
     compress=0,
     draw_vox=True,
-    draw_backend='mayavi',
+    draw_backend='polyscope',
     rot_az_el=[0, 0]
 )
 
 # then run with python and 3D visualization:
-#   python3 -m sim3d.sim_fdtd --data_dir='../../data/sim_data/Modes/viz' --plot --draw_backend='mayavi' --json_model='../../data/models/Modes/model.json'
+#   python3 -m sim3d.sim_fdtd --data_dir='../../data/sim_data/Modes/viz' --plot --draw_backend='polyscope' --json_model='../../data/models/Modes/model.json'

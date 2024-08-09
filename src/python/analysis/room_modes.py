@@ -158,7 +158,7 @@ def main():
         dB_max = np.max(dB)
         peaks, _ = find_peaks(dB, width=2)
 
-        print(freqs[peaks][5:10])
+        print(freqs[peaks][:10])
 
         plt.plot(freqs, dB, linestyle='-', label=f'{file.stem[:4]}')
 
