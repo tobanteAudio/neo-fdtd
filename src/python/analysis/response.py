@@ -85,19 +85,19 @@ def main():
     dB_a = 20*np.log10(np.abs(spectrum_a)/nfft+np.spacing(1))
     dB_b = 20*np.log10(np.abs(spectrum_b)/nfft+np.spacing(1))
 
-    # norm = max(np.max(dB_a), np.max(dB_b))
-    # dB_a -= norm
-    # dB_b -= norm
+    norm = max(np.max(dB_a), np.max(dB_b))
+    dB_a -= norm
+    dB_b -= norm
 
-    # dB_a += 75.0
-    # dB_b += 75.0
+    dB_a += 75.0
+    dB_b += 75.0
 
     if args.smoothing > 0.0:
         smoothing = args.smoothing
         dB_a = fractional_octave_smoothing(dB_a, fs_a, nfft, smoothing)
         dB_b = fractional_octave_smoothing(dB_b, fs_b, nfft, smoothing)
 
-    difference = dB_a-dB_b
+    difference = dB_b-dB_a
 
     plt.rcParams.update(plot_styles)
 
@@ -111,21 +111,21 @@ def main():
     ax[0].set_title('Spectrum')
     ax[0].set_xlabel('Frequency [Hz]')
     ax[0].set_ylabel('Amplitude [dB]')
-    # ax[0].set_ylim((-100, -60))
-    # ax[0].set_xlim((args.fmin, fmax))
+    ax[0].set_ylim((20, 80))
+    ax[0].set_xlim((args.fmin, fmax))
     ax[0].xaxis.set_major_formatter(formatter)
     ax[0].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
     ax[0].minorticks_on()
     ax[0].legend()
 
-    label = f'{label_a} - {label_b}'
+    label = f'{label_b}-{label_a}'
     ax[1].semilogx(freqs, difference, linestyle='-', label=label)
     ax[1].set_title('Difference')
     ax[1].set_xlabel('Frequency [Hz]')
     ax[1].set_ylabel('Amplitude [dB]')
     ax[1].set_xlim((args.fmin, fmax))
     ax[1].set_ylim((-np.max(np.abs(difference)), np.max(np.abs(difference))))
-    ax[1].set_ylim((-30, 30))
+    # ax[1].set_ylim((-10, 10))
     ax[1].xaxis.set_major_formatter(formatter)
     ax[1].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
     ax[1].minorticks_on()

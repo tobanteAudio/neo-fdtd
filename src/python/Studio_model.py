@@ -14,12 +14,14 @@ src_right = [W/2+src_distance/2, L-src_backwall, src_height]
 l1, l2 = find_third_vertex(src_left, src_right)
 listener = l1 if l1[1] < l2[1] else l2
 
-producer_sit = listener.copy()
-producer_sit[1] = 0.8
-producer_sit[2] = 0.9
+p1 = listener.copy()
+p1[2] = 0.9
 
-producer_stand = listener.copy()
-producer_stand[1] = 0.8
+p2 = p1.copy()
+p2[2] = 1.5
+
+p3 = p1.copy()
+p3[2] = 2.0
 
 room = RoomBuilder(W, L, H, wall_color=[255, 255, 255])
 room.with_colors({
@@ -60,8 +62,9 @@ room.add_cabinet_speaker("Speaker Right", src_right, speaker_box, speaker_mid)
 # room.add_source("Speaker Right", src_right)
 
 room.add_receiver("Engineer", listener.tolist())
-room.add_receiver("Producer Sitting", producer_sit.tolist())
-room.add_receiver("Producer Standing", producer_stand.tolist())
+room.add_receiver("P1", p1.tolist())
+room.add_receiver("P2", p2.tolist())
+room.add_receiver("P3", p3.tolist())
 
 model_file = '../../data/models/Studio/model.json'
 room.build(model_file)

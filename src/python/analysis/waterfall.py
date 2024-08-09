@@ -26,7 +26,7 @@ for i, freq in enumerate(frequencies):
 X, Y = np.meshgrid(times, frequencies)
 Z = 20 * np.log10(np.abs(Zxx)/nfft)
 Z -= np.max(Z)
-Z = np.clip(Z, -60, 0)
+# Z = np.clip(Z, -60, 0)
 # Z[Z<-60] = -100
 
 fig = go.Figure(data=[go.Surface(
@@ -52,7 +52,7 @@ Z = 20 * np.log10(np.abs(Zxx/nfft))
 Z -= np.max(Z)
 
 plt.figure(figsize=(10, 6))
-plt.pcolormesh(times, frequencies, Z, shading='gouraud', vmin=-96, vmax=0)
+plt.pcolormesh(times, frequencies, Z, shading='gouraud', vmin=-60, vmax=0)
 plt.colorbar(label='Amplitude [dB]')
 plt.title('Decay Times')
 plt.xlabel('Time [s]')

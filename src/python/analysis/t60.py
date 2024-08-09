@@ -23,7 +23,7 @@ def third_octave_filter(sig, fs, center):
     factor = 2 ** (1/6)  # One-third octave factor
     low = center / factor
     high = center * factor
-    sos = signal.butter(4, [low, high], btype='band', fs=fs, output='sos')
+    sos = signal.butter(2, [low, high], btype='band', fs=fs, output='sos')
     return signal.sosfilt(sos, sig)
 
 
