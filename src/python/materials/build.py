@@ -1,7 +1,7 @@
 import numpy as np
 from pathlib import Path
 
-from materials.adm_funcs import fit_to_Sabs_oct_11
+from materials.adm_funcs import fit_to_Sabs_oct_11,write_freq_ind_mat_from_Yn,convert_Sabs_to_Yn
 
 def main():
     plot=False
@@ -22,6 +22,19 @@ def main():
     fit_to_Sabs_oct_11(floor_wood                    , filename=Path(write_folder / 'floor_wood.h5')                    , plot=plot)
     fit_to_Sabs_oct_11(door_wood                     , filename=Path(write_folder / 'door_wood.h5')                     , plot=plot)
     fit_to_Sabs_oct_11(almost_rigid                  , filename=Path(write_folder / 'almost_rigid.h5')                  , plot=plot)
+
+    #freq-independent impedance from Sabine abs coefficient
+    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.01),filename=Path(write_folder / 'sabine_01.h5'))
+    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.1),filename=Path(write_folder / 'sabine_1.h5'))
+    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.2),filename=Path(write_folder / 'sabine_2.h5'))
+    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.3),filename=Path(write_folder / 'sabine_3.h5'))
+    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.4),filename=Path(write_folder / 'sabine_4.h5'))
+    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.6),filename=Path(write_folder / 'sabine_6.h5'))
+    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.5),filename=Path(write_folder / 'sabine_5.h5'))
+    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.7),filename=Path(write_folder / 'sabine_7.h5'))
+    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.8),filename=Path(write_folder / 'sabine_8.h5'))
+    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.9),filename=Path(write_folder / 'sabine_9.h5'))
+    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.9512),filename=Path(write_folder / 'sabine_9512.h5'))
 
     # #some examples to save admittance/impedance data
     # #these are Sabine coefficients, 16Hz to 16kHz centre frequencies
@@ -60,9 +73,6 @@ def main():
     #freq-independent impedance from reflection coefficients
     # write_freq_ind_mat_from_Yn(convert_R_to_Yn(0.90),filename=Path(write_folder / 'R90_mat.h5'))
     # write_freq_ind_mat_from_Yn(convert_R_to_Yn(0.5),filename=Path(write_folder / 'R50.h5'))
-
-    # #freq-independent impedance from Sabine abs coefficient
-    # write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.5),filename=Path(write_folder / 'a50.h5'))
 
     # #input DEF values directly
     # write_freq_dep_mat(npa([[0,1.0,0],[2,3,4]]),filename=Path(write_folder / 'ex_mat.h5'))

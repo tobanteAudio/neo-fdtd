@@ -35,12 +35,20 @@ def fractional_octave_smoothing(magnitudes, fs, nfft, fraction=3):
     fft_freqs = np.fft.rfftfreq(nfft, 1/fs)
     smoothed = np.zeros_like(magnitudes)
 
-    for fc in center_freqs:
+    # for fc in center_freqs:
+    #     fl = fc / 2**(1/(2*fraction))
+    #     fu = fc * 2**(1/(2*fraction))
+    #     indices = np.where((fft_freqs >= fl) & (fft_freqs <= fu))[0]
+    #     if len(indices) > 0:
+    #         smoothed[indices] = np.mean(magnitudes[indices])
+
+    for i in range(magnitudes.shape[-1]):
+        fc = fft_freqs[i]
         fl = fc / 2**(1/(2*fraction))
         fu = fc * 2**(1/(2*fraction))
         indices = np.where((fft_freqs >= fl) & (fft_freqs <= fu))[0]
         if len(indices) > 0:
-            smoothed[indices] = np.mean(magnitudes[indices])
+            smoothed[i] = np.mean(magnitudes[indices])
 
     return smoothed
 
@@ -124,8 +132,8 @@ def main():
     ax[1].set_xlabel('Frequency [Hz]')
     ax[1].set_ylabel('Amplitude [dB]')
     ax[1].set_xlim((args.fmin, fmax))
-    ax[1].set_ylim((-np.max(np.abs(difference)), np.max(np.abs(difference))))
-    # ax[1].set_ylim((-10, 10))
+    # ax[1].set_ylim((-np.max(np.abs(difference)), np.max(np.abs(difference))))
+    ax[1].set_ylim((-30, 30))
     ax[1].xaxis.set_major_formatter(formatter)
     ax[1].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
     ax[1].minorticks_on()
