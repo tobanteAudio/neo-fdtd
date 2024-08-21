@@ -68,6 +68,7 @@ def main():
     parser.add_argument('--label_a', type=str, default='A')
     parser.add_argument('--label_b', type=str, default='B')
     parser.add_argument('--smoothing', type=float, default=0.0)
+    parser.add_argument('--target', type=float, default=0.0)
 
     args = parser.parse_args()
 
@@ -128,6 +129,8 @@ def main():
 
     label = f'{label_b}-{label_a}'
     ax[1].semilogx(freqs, difference, linestyle='-', label=label)
+    if args.target != 0.0:
+        ax[1].hlines(args.target, args.fmin, fmax, linestyle='--', label=f"Target {args.target} dB")
     ax[1].set_title('Difference')
     ax[1].set_xlabel('Frequency [Hz]')
     ax[1].set_ylabel('Amplitude [dB]')
