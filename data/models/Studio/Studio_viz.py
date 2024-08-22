@@ -1,8 +1,8 @@
 from pffdtd.sim3d.sim_setup import sim_setup
 
 sim_setup(
-    model_json_file='../../data/models/Studio/model.json',
-    mat_folder='../../data/materials',
+    model_json_file='model.json',
+    mat_folder='../../materials',
     source_num=1,
     insig_type='dhann30',  # for viz
     diff_source=False,
@@ -23,7 +23,7 @@ sim_setup(
     fcc_flag=True,
     PPW=7.7,  # for 2% phase velocity error at fmax
     fmax=500.0,
-    save_folder='../../data/sim_data/Studio/viz',  # can run python from here
+    save_folder='../../sim_data/Studio/viz',  # can run python from here
     compress=0,
     draw_vox=True,
     # will draw 'voxelization' (spheres are active boundary nodes, cubes rigid boundary nodes)
@@ -31,4 +31,4 @@ sim_setup(
 )
 
 # then run with python and 3D visualization:
-#   python3 -m pffdtd.sim3d.sim_fdtd --data_dir='../../data/sim_data/Studio/viz' --plot --draw_backend='mayavi' --json_model='../../data/models/Studio/model.json'
+#   python3 -m pffdtd.sim3d.sim_fdtd --data_dir='../../sim_data/Studio/viz' --plot --draw_backend='mayavi' --json_model='model.json'

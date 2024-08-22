@@ -66,5 +66,5 @@ room.add_receiver("P1", p1.tolist())
 room.add_receiver("P2", p2.tolist())
 room.add_receiver("P3", p3.tolist())
 
-model_file = '../../data/models/Studio/model.json'
+model_file = 'model.json'
 room.build(model_file)

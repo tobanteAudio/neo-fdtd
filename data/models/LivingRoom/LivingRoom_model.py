@@ -4,7 +4,7 @@ L = 6.0
 W = 3.65
 H = 3.12
 
-model_file = '../../data/models/LivingRoom/model.json'
+model_file = 'model.json'
 
 builder = RoomBuilder(W, L, H, wall_color=[255, 255, 255])
 builder.with_colors({

@@ -19,5 +19,5 @@ offset = 0.075*3
 room.add_source("S1", [offset, offset, offset])
 room.add_receiver("R1", [W-offset, L-offset, H-offset])
 
-model_file = '../../data/models/Modes/model.json'
+model_file = 'model.json'
 room.build(model_file)

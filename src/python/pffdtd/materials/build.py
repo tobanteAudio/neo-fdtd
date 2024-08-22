@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 from pathlib import Path
 
@@ -5,7 +7,7 @@ from pffdtd.materials.adm_funcs import fit_to_Sabs_oct_11,write_freq_ind_mat_fro
 
 def main():
     plot=False
-    write_folder = Path('../../data/materials')
+    write_folder = Path(sys.argv[1])
                                              #  16,   31,   63,  125,  250,  500,   1K,   2K,   4K,   8K,  16K
     absorber_8000_100mm           = np.array([0.01, 0.01, 0.05, 0.30, 0.69, 0.92, 0.93, 0.94, 0.95, 0.93, 0.90])
     absorber_8000_200mm           = np.array([0.05, 0.10, 0.40, 0.85, 0.89, 0.92, 0.93, 0.94, 0.95, 0.93, 0.90])

@@ -2,8 +2,8 @@ from pffdtd.sim3d.sim_setup import sim_setup
 
 # will draw 'voxelization' (spheres are active boundary nodes, cubes rigid boundary nodes)
 sim_setup(
-    model_json_file='../../data/models/Modes/model.json',
-    mat_folder='../../data/materials',
+    model_json_file='model.json',
+    mat_folder='../../materials',
     source_num=1,
     insig_type='dhann30',  # for viz
     diff_source=False,
@@ -18,7 +18,7 @@ sim_setup(
     fcc_flag=False,
     PPW=10.5,
     fmax=500.0,
-    save_folder='../../data/sim_data/Modes/viz',  # can run python from here
+    save_folder='../../sim_data/Modes/viz',  # can run python from here
     compress=0,
     draw_vox=True,
     draw_backend='polyscope',
@@ -26,4 +26,4 @@ sim_setup(
 )
 
 # then run with python and 3D visualization:
-#   python3 -m pffdtd.sim3d.sim_fdtd --data_dir='../../data/sim_data/Modes/viz' --plot --draw_backend='polyscope' --json_model='../../data/models/Modes/model.json'
+#   python3 -m pffdtd.sim3d.sim_fdtd --data_dir='../../sim_data/Modes/viz' --plot --draw_backend='polyscope' --json_model='model.json'

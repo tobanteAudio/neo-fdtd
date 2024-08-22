@@ -14,9 +14,9 @@
 from pffdtd.sim3d.sim_setup import sim_setup
 
 sim_setup(
-    model_json_file='../../data/models/Musikverein_ConcertHall/model_export.json',
+    model_json_file='model_export.json',
     draw_backend='mayavi',
-    mat_folder='../../data/materials',
+    mat_folder='../../materials',
     source_num=3,
     insig_type='impulse',
     diff_source=True,
@@ -33,7 +33,7 @@ sim_setup(
     fcc_flag=True,
     PPW=7.7,  # for 1% phase velocity error at fmax
     fmax=2500.0,
-    save_folder='../../data/sim_data/mv_fcc/gpu',
-    save_folder_gpu='../../data/sim_data/mv_fcc/gpu',
+    save_folder='../../sim_data/mv_fcc/gpu',
+    save_folder_gpu='../../sim_data/mv_fcc/gpu',
     compress=3,  # apply level-3 GZIP compression to larger h5 files
 )

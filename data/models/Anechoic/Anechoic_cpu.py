@@ -1,8 +1,8 @@
 from pffdtd.sim3d.sim_setup import sim_setup
 
 sim_setup(
-    model_json_file='../../data/models/Anechoic/model.json',
-    mat_folder='../../data/materials',
+    model_json_file='model.json',
+    mat_folder='../../materials',
     source_num=1,
     insig_type='impulse',
     diff_source=True,
@@ -16,8 +16,8 @@ sim_setup(
     fcc_flag=False,
     PPW=12.0,
     fmax=1000.0,
-    save_folder='../../data/sim_data/Anechoic/cpu',
-    save_folder_gpu='../../data/sim_data/Anechoic/gpu',
+    save_folder='../../sim_data/Anechoic/cpu',
+    save_folder_gpu='../../sim_data/Anechoic/gpu',
     draw_vox=True,
     draw_backend='polyscope',
     compress=0,

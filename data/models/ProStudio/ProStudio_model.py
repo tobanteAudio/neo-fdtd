@@ -3,7 +3,7 @@ import pathlib
 
 import numpy as np
 
-from pffdtd.common.room_builder import find_third_vertex
+from pffdtd.sim3d.room_builder import find_third_vertex
 
 
 def load_mesh(obj_file, reverse=False):
@@ -50,7 +50,7 @@ def with_z(p: list, z):
 
 
 def main():
-    dir = pathlib.Path("../../data/models/ProStudio")
+    dir = pathlib.Path(".")
 
     ceiling_pts, ceiling_tris = load_mesh(dir / 'model_ceiling.obj')
     floor_pts, floor_tris = load_mesh(dir / 'model_floor.obj')
