@@ -16,7 +16,7 @@ materials_dir="$root_dir/data/materials"
 
 fmin=20
 fmax=800
-smoothing=12
+smoothing=0
 
 # Delete old sim
 rm -rf "$sim_dir"
