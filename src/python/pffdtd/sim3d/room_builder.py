@@ -139,7 +139,7 @@ def make_surface(W, H, translate, rotate=None, first_idx=0):
 
 
 class RoomBuilder:
-    def __init__(self, width, length, height, wall_color=None):
+    def __init__(self, length, width,  height):
         self.length = length
         self.width = width
         self.height = height
@@ -147,7 +147,6 @@ class RoomBuilder:
         self.cabinet_sources = []
         self.receivers = []
         self.boxes = defaultdict(list)
-        self.wall_color = wall_color
         self.colors = {}
 
     def get_color(self, material):

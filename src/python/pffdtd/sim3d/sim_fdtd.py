@@ -35,7 +35,7 @@ from pffdtd.common.myfuncs import ind2sub3d,rel_diff,get_default_nprocs
 
 MMb = 12 #max allowed number of branches
 
-class SimEngine:
+class EnginePython3D:
     def __init__(self,data_dir,energy_on=False,nthreads=None):
         self.data_dir = Path(data_dir)
         self.energy_on = energy_on #will calculate energy
@@ -926,7 +926,7 @@ def main():
     if args.json_model is not None:
         assert args.draw_backend=='mayavi'
 
-    eng = SimEngine(args.data_dir,energy_on=args.energy,nthreads=args.nthreads)
+    eng = EnginePython3D(args.data_dir,energy_on=args.energy,nthreads=args.nthreads)
     if args.plot:
         eng.run_plot(draw_backend=args.draw_backend,json_model=args.json_model)
     else:

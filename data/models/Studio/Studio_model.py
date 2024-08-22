@@ -23,7 +23,7 @@ p2[2] = 1.5
 p3 = p1.copy()
 p3[2] = 2.0
 
-room = RoomBuilder(W, L, H, wall_color=[255, 255, 255])
+room = RoomBuilder(L, W, H)
 room.with_colors({
     "Absorber M": [111, 55, 10],
     "Absorber L": [111, 55, 10],

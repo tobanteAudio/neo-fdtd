@@ -6,7 +6,7 @@ H = 3.12
 
 model_file = 'model.json'
 
-builder = RoomBuilder(W, L, H, wall_color=[255, 255, 255])
+builder = RoomBuilder(L, W, H)
 builder.with_colors({
     "Ceiling": [200, 200, 200],
     "Floor": [151, 134, 122],

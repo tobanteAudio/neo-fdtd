@@ -7,15 +7,15 @@ L = 7.00*S
 W = 5.19*S
 H = 3.70*S
 
-room = RoomBuilder(W, L, H, wall_color=[255, 255, 255])
+room = RoomBuilder(L, W, H)
 room.with_colors({
     "Ceiling": [200, 200, 200],
     "Floor": [151, 134, 122],
     "Walls": [255, 255, 255],
 })
 
-fmax=800
-ppw=10.5
+fmax = 800
+ppw = 10.5
 dx = 343/(fmax*ppw)
 offset = dx*2
 
