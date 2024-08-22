@@ -12,6 +12,12 @@ from pffdtd.common.myfuncs import iceil
 from pffdtd.common.plot import plot_styles
 
 
+def _find_nearest(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return array[idx]
+
+
 def collect_wav_paths(dir, pattern="*.wav"):
     return list(sorted(glob.glob(os.path.join(dir, pattern))))
 
@@ -84,7 +90,7 @@ def main():
     if not paths:
         paths = collect_wav_paths(directory, "*_out_normalised.wav")
 
-    scale = 0.9
+    scale = 0.4
 
     # Tobi
     L = 6.0 * scale
@@ -157,8 +163,9 @@ def main():
 
         dB_max = np.max(dB)
         peaks, _ = find_peaks(dB, width=2)
+        mode_peaks = freqs[peaks]
 
-        print(freqs[peaks][:10])
+        print(mode_peaks[:10])
 
         plt.plot(freqs, dB, linestyle='-', label=f'{file.stem[:4]}')
 
@@ -167,8 +174,12 @@ def main():
         plt.vlines(mode_freqs, dB_max-80, dB_max+10,
                    colors='#AAAAAA', linestyles='--', label="Modes")
         if len(paths) == 1:
-            plt.plot(freqs[peaks], dB[peaks], 'r.',
+            plt.plot(mode_peaks, dB[peaks], 'r.',
                      markersize=10, label='Peaks')
+
+        for mode in mode_freqs:
+            nearest = _find_nearest(mode_peaks, mode)
+            print(f"{mode=:03.3f} Hz - {nearest=:03.3f} Hz = {mode-nearest:03.3f} Hz")
 
     plt.title("")
     plt.xlabel('Frequency [Hz]')

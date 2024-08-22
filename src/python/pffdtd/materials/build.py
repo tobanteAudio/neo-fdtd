@@ -27,6 +27,10 @@ def main():
 
     #freq-independent impedance from Sabine abs coefficient
     write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.01),filename=Path(write_folder / 'sabine_01.h5'))
+    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.02),filename=Path(write_folder / 'sabine_02.h5'))
+    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.02),filename=Path(write_folder / 'sabine_03.h5'))
+    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.02),filename=Path(write_folder / 'sabine_04.h5'))
+    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.05),filename=Path(write_folder / 'sabine_05.h5'))
     write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.1),filename=Path(write_folder / 'sabine_1.h5'))
     write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.2),filename=Path(write_folder / 'sabine_2.h5'))
     write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.3),filename=Path(write_folder / 'sabine_3.h5'))
