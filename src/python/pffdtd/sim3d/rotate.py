@@ -6,7 +6,7 @@
 #
 # Copyright 2021 Brian Hamilton.
 #
-# File name: rotate_sim_data.py
+# File name: rotate.py
 #
 # Description: For multi-GPU execution:
 #       -best to permute dimensions for descending order (last dim continguous)
@@ -27,7 +27,7 @@ import shutil
 
 #NB: we keep cart_grid.h5 untouched and that has original Nx,Ny,Nz if needed
 
-def rotate_sim_data(data_dir,tr=None,compress=False):
+def rotate(data_dir,tr=None,compress=False):
     def _print(fstring):
         print(f'--ROTATE_DATA: {fstring}')
     timer = TimerDict()
@@ -285,7 +285,7 @@ def copy_sim_data(src_data_dir,dst_data_dir):
     #parser.set_defaults(data_dir=None)
 #
     #args = parser.parse_args()
-    #rotate_sim_data(args.data_dir)
+    #rotate(args.data_dir)
 #
 #if __name__ == '__main__':
     #main()

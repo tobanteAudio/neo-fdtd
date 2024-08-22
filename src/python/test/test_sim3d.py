@@ -4,8 +4,8 @@ from pffdtd.analysis.room_modes import find_nearest
 from pffdtd.analysis.room_modes import main as room_modes
 from pffdtd.materials.adm_funcs import write_freq_ind_mat_from_Yn, convert_Sabs_to_Yn
 from pffdtd.sim3d.room_builder import RoomBuilder
-from pffdtd.sim3d.sim_setup import sim_setup
-from pffdtd.sim3d.sim_fdtd import EnginePython3D
+from pffdtd.sim3d.setup import sim_setup
+from pffdtd.sim3d.engine import EnginePython3D
 from pffdtd.sim3d.process_outputs import process_outputs
 
 

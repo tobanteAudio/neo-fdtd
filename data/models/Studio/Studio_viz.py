@@ -1,4 +1,4 @@
-from pffdtd.sim3d.sim_setup import sim_setup
+from pffdtd.sim3d.setup import sim_setup
 
 sim_setup(
     model_json_file='model.json',
@@ -31,4 +31,4 @@ sim_setup(
 )
 
 # then run with python and 3D visualization:
-#   python3 -m pffdtd.sim3d.sim_fdtd --data_dir='../../sim_data/Studio/viz' --plot --draw_backend='mayavi' --json_model='model.json'
+#   python3 -m pffdtd.sim3d.engine --data_dir='../../sim_data/Studio/viz' --plot --draw_backend='mayavi' --json_model='model.json'

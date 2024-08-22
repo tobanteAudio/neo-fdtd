@@ -11,7 +11,7 @@
 # Description: this shows a simple setup with Cartesian scheme, for visualization purposes
 #
 ##############################################################################
-from pffdtd.sim3d.sim_setup import sim_setup
+from pffdtd.sim3d.setup import sim_setup
 
 sim_setup(
     model_json_file='model_export.json',
@@ -43,4 +43,4 @@ sim_setup(
 )
 
 # then run with python and 3D visualization:
-#   python3 -m pffdtd.sim3d.sim_fdtd --data_dir='../../sim_data/ctk_cart/viz' --plot --draw_backend='mayavi' --json_model='model_export.json'
+#   python3 -m pffdtd.sim3d.engine --data_dir='../../sim_data/ctk_cart/viz' --plot --draw_backend='mayavi' --json_model='model_export.json'

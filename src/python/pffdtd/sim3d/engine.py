@@ -6,7 +6,7 @@
 #
 # Copyright 2021 Brian Hamilton.
 #
-# File name: sim_fdtd.py
+# File name: engine.py
 #
 # Description: This is the main FDTD engine, which is re-implemented in C/CUDA
 #

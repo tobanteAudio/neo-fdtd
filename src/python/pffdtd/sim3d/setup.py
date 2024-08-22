@@ -16,15 +16,16 @@ import numpy as np
 import json as json
 from pathlib import Path
 from numpy import array as npa
+
 from pffdtd.common.room_geo import RoomGeo
 from pffdtd.voxelizer.cart_grid import CartGrid
 from pffdtd.voxelizer.vox_grid import VoxGrid
 from pffdtd.voxelizer.vox_scene import VoxScene
 from pffdtd.sim3d.sim_comms import SimComms
-from pffdtd.sim3d.sim_consts import SimConsts
+from pffdtd.sim3d.constants import SimConstants3D
 from pffdtd.sim3d.sim_mats import SimMats
-from pffdtd.sim3d.rotate_sim_data import rotate_sim_data,sort_sim_data,copy_sim_data,fold_fcc_sim_data
-from pffdtd.air_abs.get_air_absorption import get_air_absorption
+from pffdtd.sim3d.rotate import rotate, sort_sim_data, copy_sim_data, fold_fcc_sim_data
+
 
 def sim_setup(
     # The following are required but using None default so not positional
@@ -81,7 +82,7 @@ def sim_setup(
     Rxyz = room_geo.Rxyz #many receivers
 
     #some constants for the simulation, in one place
-    sim_consts = SimConsts(Tc=Tc,rh=rh,fmax=fmax,PPW=PPW,fcc=fcc_flag)
+    sim_consts = SimConstants3D(Tc=Tc,rh=rh,fmax=fmax,PPW=PPW,fcc=fcc_flag)
     sim_consts.save(save_folder)
 
     #link up the wall materials to impedance datasets
@@ -120,7 +121,7 @@ def sim_setup(
     if save_folder_gpu is not None and Path(save_folder_gpu) != Path(save_folder):
         copy_sim_data(save_folder,save_folder_gpu)
     if save_folder_gpu is not None:
-        rotate_sim_data(save_folder_gpu)
+        rotate(save_folder_gpu)
         if fcc_flag:
             fold_fcc_sim_data(save_folder_gpu)
         sort_sim_data(save_folder_gpu)
@@ -129,7 +130,7 @@ def sim_setup(
     #if save_folder_cpu is not None and Path(save_folder_cpu) != Path(save_folder):
         #copy_sim_data(save_folder,save_folder_cpu)
     #if save_folder_cpu is not None:
-        #rotate_sim_data(save_folder_cpu)
+        #rotate(save_folder_cpu)
         #if fcc_flag:
             #fold_fcc_sim_data(save_folder_gpu)
         #sort_sim_data(save_folder_cpu)

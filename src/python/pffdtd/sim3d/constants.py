@@ -16,7 +16,7 @@ import numpy as np
 from numpy import array as npa
 import h5py
 from pathlib import Path
-class SimConsts:
+class SimConstants3D:
     def __init__(self,Tc,rh,h=None,SR=None,fmax=None,PPW=None,fcc=False):
         #Tc is temperature, rh is relative humidity <- this gives c (speed of sound)
         assert Tc >= -20
