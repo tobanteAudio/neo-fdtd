@@ -74,3 +74,4 @@ class NeoFDTD(ConanFile):
         self.options["ffmpeg"].with_libsvtav1 = False
         self.options["ffmpeg"].with_libaom = False
         self.options["ffmpeg"].with_libdav1d = False
+        self.options["ffmpeg"].with_xlib = False
