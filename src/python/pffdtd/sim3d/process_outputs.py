@@ -303,6 +303,53 @@ class ProcessOutputs:
         h5f.create_dataset('Fs_f', data=self.Fs_f)
         h5f.close()
 
+
+def process_outputs(
+    *,
+    data_dir=None,
+    resample_Fs=None,
+    fcut_lowcut=None,
+    N_order_lowcut=None,
+    fcut_lowpass=None,
+    N_order_lowpass=None,
+    symmetric_lowpass=None,
+    air_abs_filter=None,
+    save_wav=None,
+    plot_raw=None,
+    plot=None,
+):
+    po = ProcessOutputs(data_dir)
+
+    po.initial_process(fcut=fcut_lowcut,N_order=N_order_lowcut)
+
+    if resample_Fs:
+        po.resample(resample_Fs)
+
+    if fcut_lowpass>0:
+        po.apply_lowpass(fcut=fcut_lowpass,N_order=N_order_lowpass,symmetric=symmetric_lowpass)
+
+    #these are only needed if you're simulating with fmax >1kHz, but generally fine to use
+    if air_abs_filter.lower() == 'modal': #best, but slowest
+        po.apply_modal_filter()
+    elif air_abs_filter.lower() == 'stokes': #generally fine for indoor air
+        po.apply_stokes_filter()
+    elif air_abs_filter.lower() == 'ola': #fastest, but not as recommended
+        po.apply_ola_filter()
+
+    po.save_h5()
+
+    if save_wav:
+        po.save_wav()
+
+    plt.rcParams.update(plot_styles)
+
+    if plot_raw:
+        po.plot_raw_outputs()
+
+    if plot or plot_raw:
+        po.plot_filtered_outputs()
+        po.show_plots()
+
 def main():
     import argparse
     parser = argparse.ArgumentParser()
@@ -331,37 +378,19 @@ def main():
 
     args = parser.parse_args()
 
-    po = ProcessOutputs(args.data_dir)
-
-    po.initial_process(fcut=args.fcut_lowcut,N_order=args.N_order_lowcut)
-
-    if args.resample_Fs:
-        po.resample(args.resample_Fs)
-
-    if args.fcut_lowpass>0:
-        po.apply_lowpass(fcut=args.fcut_lowpass,N_order=args.N_order_lowpass,symmetric=args.symmetric_lowpass)
-
-    #these are only needed if you're simulating with fmax >1kHz, but generally fine to use
-    if args.air_abs_filter.lower() == 'modal': #best, but slowest
-        po.apply_modal_filter()
-    elif args.air_abs_filter.lower() == 'stokes': #generally fine for indoor air
-        po.apply_stokes_filter()
-    elif args.air_abs_filter.lower() == 'ola': #fastest, but not as recommended
-        po.apply_ola_filter()
-
-    po.save_h5()
-
-    if args.save_wav:
-        po.save_wav()
-
-    plt.rcParams.update(plot_styles)
-
-    if args.plot_raw:
-        po.plot_raw_outputs()
-
-    if args.plot or args.plot_raw:
-        po.plot_filtered_outputs()
-        po.show_plots()
+    process_outputs(
+        data_dir=args.data_dir,
+        resample_Fs=args.resample_Fs,
+        fcut_lowcut=args.fcut_lowcut,
+        N_order_lowcut=args.N_order_lowcut,
+        fcut_lowpass=args.fcut_lowpass,
+        N_order_lowpass=args.N_order_lowpass,
+        symmetric_lowpass=args.symmetric_lowpass,
+        air_abs_filter=args.air_abs_filter,
+        save_wav=args.save_wav,
+        plot_raw=args.plot_raw,
+        plot=args.plot,
+    )
 
 if __name__ == '__main__':
     main()

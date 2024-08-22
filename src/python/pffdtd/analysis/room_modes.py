@@ -12,7 +12,7 @@ from pffdtd.common.myfuncs import iceil
 from pffdtd.common.plot import plot_styles
 
 
-def _find_nearest(array, value):
+def find_nearest(array, value):
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
     return array[idx]
@@ -61,6 +61,22 @@ def room_mode_kind(m, n, p):
     return "oblique"
 
 
+def room_modes(L, W, H, max_order=6):
+    modes = []
+    for m in range(max_order+1):
+        for n in range(max_order+1):
+            for p in range(max_order+1):
+                if m+n+p > 0:
+                    modes.append({
+                        "m": m,
+                        "n": n,
+                        "p": p,
+                        "frequency": room_mode(L, W, H, m, n, p)
+                    })
+
+    return sorted(modes, key=lambda x: x['frequency'])
+
+
 def frequency_spacing_index(modes):
     psi = 0.0
     num = len(modes)
@@ -76,59 +92,33 @@ def frequency_spacing_index(modes):
     return psi / (num-1)
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('filename', nargs='*')
-    parser.add_argument('--data_dir', type=str, help='run directory')
-    parser.add_argument('--fmax', type=float, default=200.0)
-    parser.add_argument('--fmin', type=float, default=1.0)
-    parser.add_argument('--modes', type=int, default=10)
-    args = parser.parse_args()
-
-    directory = args.data_dir
-    paths = args.filename
+def main(
+    *,
+    data_dir=None,
+    filename=None,
+    fmin=None,
+    fmax=None,
+    width=None,
+    length=None,
+    height=None,
+    num_modes=None,
+    plot=True,
+):
+    directory = data_dir
+    paths = filename
     if not paths:
         paths = collect_wav_paths(directory, "*_out_normalised.wav")
 
-    scale = 0.4
-
-    # Tobi
-    L = 6.0 * scale
-    W = 3.65 * scale
-    H = 3.12 * scale
-
-    # Optimal ratio A
-    # L = 6 * scale
-    # W = 4.96 * scale
-    # H = 4.14 * scale
-
-    # Optimal ratio B
-    L = 7 * scale
-    W = 5.19 * scale
-    H = 3.70 * scale
-
-    # Worst ratio (Cube)
-    # W = L
-    # H = L
+    L = length
+    W = width
+    H = height
 
     A = L*W
     V = A*H
     S = 2*(L*W+L*H+W*H)
 
-    modes = []
-    max_order = 6
-    for m in range(max_order+1):
-        for n in range(max_order+1):
-            for p in range(max_order+1):
-                if m+n+p > 0:
-                    modes.append({
-                        "m": m,
-                        "n": n,
-                        "p": p,
-                        "frequency": room_mode(L, W, H, m, n, p)
-                    })
-
-    modes = sorted(modes, key=lambda x: x['frequency'])[:25]
+    max_order = 8
+    modes = room_modes(L, W, H, max_order=max_order)[:25]
 
     print(f"{L=:.3f}m {W=:.3f}m {H=:.3f}m")
     print(f"{A=:.2f}m^2 {S=:.2f}m^2 {V=:.2f}m^3")
@@ -150,8 +140,8 @@ def main():
     for file in paths:
         file = pathlib.Path(file)
         fs, buf = wavfile.read(file)
-        fmin = args.fmin if args.fmin > 0 else 1
-        fmax = args.fmax if args.fmax > 0 else fs/2
+        fmin = fmin if fmin > 0 else 1
+        fmax = fmax if fmax > 0 else fs/2
 
         nfft = (2**iceil(np.log2(buf.shape[0])))*2
         spectrum = np.fft.rfft(buf, nfft)
@@ -163,22 +153,23 @@ def main():
 
         dB_max = np.max(dB)
         peaks, _ = find_peaks(dB, width=2)
-        mode_peaks = freqs[peaks]
+        measured_mode_freqs = freqs[peaks]
 
-        print(mode_peaks[:10])
+        print(measured_mode_freqs[:10])
 
         plt.plot(freqs, dB, linestyle='-', label=f'{file.stem[:4]}')
 
-    if args.modes > 0:
-        mode_freqs = [mode['frequency'] for mode in modes][:args.modes]
-        plt.vlines(mode_freqs, dB_max-80, dB_max+10,
+    if num_modes > 0:
+        calculated_mode_freqs = [mode['frequency']
+                                 for mode in modes][:num_modes]
+        plt.vlines(calculated_mode_freqs, dB_max-80, dB_max+10,
                    colors='#AAAAAA', linestyles='--', label="Modes")
         if len(paths) == 1:
-            plt.plot(mode_peaks, dB[peaks], 'r.',
+            plt.plot(measured_mode_freqs, dB[peaks], 'r.',
                      markersize=10, label='Peaks')
 
-        for mode in mode_freqs:
-            nearest = _find_nearest(mode_peaks, mode)
+        for mode in calculated_mode_freqs:
+            nearest = find_nearest(measured_mode_freqs, mode)
             print(f"{mode=:03.3f} Hz - {nearest=:03.3f} Hz = {mode-nearest:03.3f} Hz")
 
     plt.title("")
@@ -190,8 +181,27 @@ def main():
     plt.grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
     plt.minorticks_on()
     plt.legend()
-    plt.show()
+
+    if plot:
+        plt.show()
+
+    return calculated_mode_freqs, measured_mode_freqs
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('filename', nargs='*')
+    parser.add_argument('--data_dir', type=str, help='run directory')
+    parser.add_argument('--fmax', type=float, default=200.0)
+    parser.add_argument('--fmin', type=float, default=1.0)
+    parser.add_argument('--modes', type=int, default=10)
+    args = parser.parse_args()
+
+    main(
+        data_dir=args.data_dir,
+        filename=args.filename,
+        fmin=args.fmin,
+        fmax=args.fmax,
+        num_modes=args.modes,
+        plot=True
+    )

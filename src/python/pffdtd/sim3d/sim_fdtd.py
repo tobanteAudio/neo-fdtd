@@ -44,6 +44,12 @@ class SimEngine:
         self.print(f'numba set for {nthreads=}')
         nb.set_num_threads(nthreads)
 
+        self.load_h5_data()
+        self.setup_mask()
+        self.allocate_mem()
+        self.set_coeffs()
+        self.checks()
+
     def print(self,fstring):
         print(f'--ENGINE: {fstring}')
 
@@ -921,11 +927,6 @@ def main():
         assert args.draw_backend=='mayavi'
 
     eng = SimEngine(args.data_dir,energy_on=args.energy,nthreads=args.nthreads)
-    eng.load_h5_data()
-    eng.setup_mask()
-    eng.allocate_mem()
-    eng.set_coeffs()
-    eng.checks()
     if args.plot:
         eng.run_plot(draw_backend=args.draw_backend,json_model=args.json_model)
     else:
