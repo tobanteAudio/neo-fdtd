@@ -11,7 +11,7 @@
 # Description: this shows a simple setup with FCC scheme, for visualization purposes
 #
 ##############################################################################
-from sim_setup import sim_setup
+from pffdtd.sim3d.sim_setup import sim_setup
 
 sim_setup(
     model_json_file='../../data/models/Musikverein_ConcertHall/model_export.json',

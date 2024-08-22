@@ -12,7 +12,7 @@
 #
 ##############################################################################
 
-from sim_setup import sim_setup
+from pffdtd.sim3d.sim_setup import sim_setup
 
 sim_setup(
     model_json_file='../../data/models/CTK_Church/model_export.json',

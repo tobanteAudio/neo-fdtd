@@ -1,4 +1,4 @@
-from sim_setup import sim_setup
+from pffdtd.sim3d.sim_setup import sim_setup
 
 model_file = '../../data/models/LivingRoom/model.json'
 
