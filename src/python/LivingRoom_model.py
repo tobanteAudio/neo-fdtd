@@ -1,4 +1,4 @@
-from pffdtd.common.room_builder import RoomBuilder
+from pffdtd.sim3d.room_builder import RoomBuilder
 
 L = 6.0
 W = 3.65
