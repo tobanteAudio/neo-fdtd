@@ -15,9 +15,9 @@
 
 import numpy as np
 from numpy import array as npa
-from voxelizer.cart_grid import CartGrid
+from pffdtd.voxelizer.cart_grid import CartGrid
 from pathlib import Path
-from common.timerdict import TimerDict
+from pffdtd.common.timerdict import TimerDict
 import h5py
 
 class SimMats:

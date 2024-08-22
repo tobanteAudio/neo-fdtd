@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.ticker import ScalarFormatter
 
-from common.plot import plot_styles
+from pffdtd.common.plot import plot_styles
 
 
 def collect_wav_files(directory, pattern="*.wav"):

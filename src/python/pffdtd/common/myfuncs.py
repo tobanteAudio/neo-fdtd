@@ -17,7 +17,7 @@ from numpy import array as npa
 import numpy.linalg as npl
 from numpy import cos,sin,pi
 from typing import Any,Optional
-from common.myasserts import assert_np_array_float, assert_np_array_complex
+from pffdtd.common.myasserts import assert_np_array_float, assert_np_array_complex
 from pathlib import Path
 import struct
 import os

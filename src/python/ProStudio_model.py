@@ -3,7 +3,7 @@ import pathlib
 
 import numpy as np
 
-from common.room_builder import find_third_vertex
+from pffdtd.common.room_builder import find_third_vertex
 
 
 def load_mesh(obj_file, reverse=False):

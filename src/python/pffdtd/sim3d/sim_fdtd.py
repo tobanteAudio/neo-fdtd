@@ -26,12 +26,12 @@ import numpy as np
 from numpy import array as npa
 import numba as nb
 from pathlib import Path
-from common.timerdict import TimerDict
+from pffdtd.common.timerdict import TimerDict
 from tqdm import tqdm
 import time
 import h5py
 import json as json
-from common.myfuncs import ind2sub3d,rel_diff,get_default_nprocs
+from pffdtd.common.myfuncs import ind2sub3d,rel_diff,get_default_nprocs
 
 MMb = 12 #max allowed number of branches
 

@@ -21,12 +21,12 @@
 
 import numpy as np
 from numpy import array as npa
-from common.room_geo import RoomGeo
-from voxelizer.vox_grid_base import VoxGridBase,VoxBase
-from voxelizer.cart_grid import CartGrid
-from common.timerdict import TimerDict
+from pffdtd.common.room_geo import RoomGeo
+from pffdtd.voxelizer.vox_grid_base import VoxGridBase,VoxBase
+from pffdtd.voxelizer.cart_grid import CartGrid
+from pffdtd.common.timerdict import TimerDict
 from tqdm import tqdm
-from common.myfuncs import get_default_nprocs,iceil
+from pffdtd.common.myfuncs import get_default_nprocs,iceil
 
 class Voxel(VoxBase):
     #using cubic voxels for simplicity

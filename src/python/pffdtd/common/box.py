@@ -16,7 +16,7 @@ import numpy as np
 from numpy import array as npa
 import numpy.random as npr
 import numpy.linalg as npl
-from common.myfuncs import mydefault,rotmatrix_ax_ang
+from pffdtd.common.myfuncs import mydefault,rotmatrix_ax_ang
 
 class Box:
     def __init__(self,Lx=None,Ly=None,Lz=None,Rax=None,Rang=None,shift=None,centered=True):

@@ -23,11 +23,11 @@ from numpy import pi,sqrt
 from numpy.fft import rfft
 from numpy import log10,log2
 from resampy import resample
-from air_abs.visco_filter import apply_visco_filter
-from air_abs.modal_filter import apply_modal_filter
-from air_abs.ola_filter import apply_ola_filter
-from common.myfuncs import wavwrite,iceil,iround
-from common.plot import plot_styles
+from pffdtd.air_abs.visco_filter import apply_visco_filter
+from pffdtd.air_abs.modal_filter import apply_modal_filter
+from pffdtd.air_abs.ola_filter import apply_ola_filter
+from pffdtd.common.myfuncs import wavwrite,iceil,iround
+from pffdtd.common.plot import plot_styles
 
 #class to process sim_outs.h5 file
 class ProcessOutputs:

@@ -14,10 +14,10 @@
 
 import numpy as np
 from numpy import array as npa
-from voxelizer.cart_grid import CartGrid
+from pffdtd.voxelizer.cart_grid import CartGrid
 from pathlib import Path
-from common.timerdict import TimerDict
-from common.myfuncs import iceil
+from pffdtd.common.timerdict import TimerDict
+from pffdtd.common.myfuncs import iceil
 import h5py
 from scipy.signal import lfilter,bilinear_zpk
 from numpy import pi,cos,sin

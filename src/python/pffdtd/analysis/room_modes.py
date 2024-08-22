@@ -8,8 +8,8 @@ import numpy as np
 from scipy.signal import find_peaks
 import scipy.io.wavfile as wavfile
 
-from common.myfuncs import iceil
-from common.plot import plot_styles
+from pffdtd.common.myfuncs import iceil
+from pffdtd.common.plot import plot_styles
 
 
 def collect_wav_paths(dir, pattern="*.wav"):

@@ -17,12 +17,12 @@ import numba as nb
 from numpy import array as npa
 from numpy import exp, sqrt, log, pi
 import matplotlib.pyplot as plt
-from air_abs.get_air_absorption import get_air_absorption
-from air_abs.visco_filter import apply_visco_filter
-from air_abs.modal_filter import apply_modal_filter
-from air_abs.ola_filter import apply_ola_filter
+from pffdtd.air_abs.get_air_absorption import get_air_absorption
+from pffdtd.air_abs.visco_filter import apply_visco_filter
+from pffdtd.air_abs.modal_filter import apply_modal_filter
+from pffdtd.air_abs.ola_filter import apply_ola_filter
 from numpy.random import random_sample
-from common.myfuncs import iround, iceil
+from pffdtd.common.myfuncs import iround, iceil
 
 Tc = 20
 rh = 60

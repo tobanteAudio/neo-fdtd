@@ -15,15 +15,15 @@
 
 import numpy as np
 from numpy import array as npa
-from common.timerdict import TimerDict
-from common.tri_box_intersection import tri_box_intersection_vec
-from common.room_geo import RoomGeo
-from common.tris_precompute import tris_precompute
+from pffdtd.common.timerdict import TimerDict
+from pffdtd.common.tri_box_intersection import tri_box_intersection_vec
+from pffdtd.common.room_geo import RoomGeo
+from pffdtd.common.tris_precompute import tris_precompute
 import multiprocessing as mp
-from common.myfuncs import clear_dat_folder,clear_console
-from common.myfuncs import get_default_nprocs
+from pffdtd.common.myfuncs import clear_dat_folder,clear_console
+from pffdtd.common.myfuncs import get_default_nprocs
 from tqdm import tqdm
-import common.check_version as cv
+import pffdtd.common.check_version as cv
 import time
 
 assert cv.ATLEASTVERSION38 #for shared memory (but project needs 3.9 anyway)
@@ -207,7 +207,7 @@ class VoxGridBase:
 
     #draws non-empty boxes only
     def draw_boxes(self,tube_radius,backend='mayavi'):
-        from common.box import Box
+        from pffdtd.common.box import Box
         Nvox = self.Nvox
         self.print('drawing boxes..')
         boxtris = np.zeros((Nvox*12,3))

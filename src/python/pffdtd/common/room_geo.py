@@ -19,9 +19,9 @@
 import numpy as np
 import json as json
 from numpy import array as npa
-from common.tris_precompute import tris_precompute
-from common.myfuncs import dotv,vecnorm
-from common.myfuncs import rotate_az_el_deg
+from pffdtd.common.tris_precompute import tris_precompute
+from pffdtd.common.myfuncs import dotv,vecnorm
+from pffdtd.common.myfuncs import rotate_az_el_deg
 
 class RoomGeo:
     def __init__(self,json=None,az_el=[0.,0.],area_eps=1e-6,bmin=None,bmax=None):

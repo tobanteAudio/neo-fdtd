@@ -26,4 +26,4 @@ sim_setup(
 )
 
 # then run with python and 3D visualization:
-#   python3 -m sim3d.sim_fdtd --data_dir='../../data/sim_data/Modes/viz' --plot --draw_backend='polyscope' --json_model='../../data/models/Modes/model.json'
+#   python3 -m pffdtd.sim3d.sim_fdtd --data_dir='../../data/sim_data/Modes/viz' --plot --draw_backend='polyscope' --json_model='../../data/models/Modes/model.json'

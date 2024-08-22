@@ -23,8 +23,8 @@ import numba as nb
 from numpy import array as npa
 from numpy import exp, sqrt, log2, pi, ceil, cos
 from scipy.fft import rfft,irfft
-from air_abs.get_air_absorption import get_air_absorption
-from common.myfuncs import iround, iceil
+from pffdtd.air_abs.get_air_absorption import get_air_absorption
+from pffdtd.common.myfuncs import iround, iceil
 from tqdm import tqdm
 
 #apply the filter, x is (Nchannels,Nsamples) array

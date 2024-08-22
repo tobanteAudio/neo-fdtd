@@ -1,7 +1,7 @@
 import numpy as np
 from pathlib import Path
 
-from materials.adm_funcs import fit_to_Sabs_oct_11,write_freq_ind_mat_from_Yn,convert_Sabs_to_Yn
+from pffdtd.materials.adm_funcs import fit_to_Sabs_oct_11,write_freq_ind_mat_from_Yn,convert_Sabs_to_Yn
 
 def main():
     plot=False

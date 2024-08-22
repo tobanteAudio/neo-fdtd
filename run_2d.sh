@@ -19,8 +19,7 @@ duration=0.050
 rm -rf "$sim_dir"
 
 # Generate model
-cd "$python_dir"
-python -m sim2d.fdtd --verbose --save --data_dir="$sim_dir" --duration="$duration" --fmax="$fmax"
+python -m pffdtd.sim2d.fdtd --verbose --save --data_dir="$sim_dir" --duration="$duration" --fmax="$fmax"
 
 # Run sim
 DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=16 "$engine_exe" -s "$sim_dir/sim.h5"

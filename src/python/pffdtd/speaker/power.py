@@ -18,7 +18,7 @@ def power_for_target_spl(SPL_target, SPL_ref,  P_ref=1):
 
 
 def driver_spl_report(df, drivers, SPL_target=None):
-    from common.plot import plot_styles
+    from pffdtd.common.plot import plot_styles
     plt.rcParams.update(plot_styles)
     plt.title("SPL vs. Power")
     plt.xlabel("SPL [dB]")

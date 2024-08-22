@@ -1,6 +1,6 @@
 import numpy as np
 
-from common.room_builder import RoomBuilder
+from pffdtd.common.room_builder import RoomBuilder
 
 S = 0.9
 L = 7.00*S

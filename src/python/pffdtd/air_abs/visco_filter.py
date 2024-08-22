@@ -21,8 +21,8 @@ import numpy as np
 import numba as nb
 from numpy import array as npa
 from numpy import exp, sqrt, log, pi
-from common.myfuncs import iround, iceil
-from air_abs.get_air_absorption import get_air_absorption
+from pffdtd.common.myfuncs import iround, iceil
+from pffdtd.air_abs.get_air_absorption import get_air_absorption
 from tqdm import tqdm
 
 #function to apply filter, main input being x, np.ndarray (Nchannels,Nsamples)

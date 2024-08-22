@@ -34,16 +34,16 @@
 
 import numpy as np
 from numpy import array as npa
-from common.room_geo import RoomGeo
-from common.timerdict import TimerDict
-from common.tri_ray_intersection import tri_ray_intersection_vec
-from common.tri_box_intersection import tri_box_intersection_vec
-from voxelizer.cart_grid import CartGrid
-from voxelizer.vox_grid import VoxGrid
-from common.myfuncs import clear_dat_folder
-from common.myfuncs import yes_or_no,ind2sub3d
-from common.myfuncs import dotv
-from common.myfuncs import get_default_nprocs
+from pffdtd.common.room_geo import RoomGeo
+from pffdtd.common.timerdict import TimerDict
+from pffdtd.common.tri_ray_intersection import tri_ray_intersection_vec
+from pffdtd.common.tri_box_intersection import tri_box_intersection_vec
+from pffdtd.voxelizer.cart_grid import CartGrid
+from pffdtd.voxelizer.vox_grid import VoxGrid
+from pffdtd.common.myfuncs import clear_dat_folder
+from pffdtd.common.myfuncs import yes_or_no,ind2sub3d
+from pffdtd.common.myfuncs import dotv
+from pffdtd.common.myfuncs import get_default_nprocs
 from pathlib import Path
 import numba as nb
 import sys

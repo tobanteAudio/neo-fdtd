@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import ScalarFormatter
 
-from common.plot import plot_styles
-from common.myfuncs import iceil
+from pffdtd.common.plot import plot_styles
+from pffdtd.common.myfuncs import iceil
 
 
 def fractional_octave_smoothing(magnitudes, fs, nfft, fraction=3):

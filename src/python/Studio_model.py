@@ -1,4 +1,4 @@
-from common.room_builder import RoomBuilder, find_third_vertex
+from pffdtd.common.room_builder import RoomBuilder, find_third_vertex
 
 S = 0.90
 L = 7.00*S

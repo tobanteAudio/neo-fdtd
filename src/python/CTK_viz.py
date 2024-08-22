@@ -43,4 +43,4 @@ sim_setup(
 )
 
 # then run with python and 3D visualization:
-#   python3 -m sim3d.sim_fdtd --data_dir='../../data/sim_data/ctk_cart/viz' --plot --draw_backend='mayavi' --json_model='../../data/models/CTK_Church/model_export.json'
+#   python3 -m pffdtd.sim3d.sim_fdtd --data_dir='../../data/sim_data/ctk_cart/viz' --plot --draw_backend='mayavi' --json_model='../../data/models/CTK_Church/model_export.json'

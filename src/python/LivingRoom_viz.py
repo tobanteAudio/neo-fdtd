@@ -28,4 +28,4 @@ sim_setup(
 )
 
 # then run with python and 3D visualization:
-#   python3 -m sim3d.sim_fdtd --data_dir='../../data/sim_data/LivingRoom/viz' --plot --draw_backend='mayavi' --json_model='../../data/models/LivingRoom/model.json'
+#   python3 -m pffdtd.sim3d.sim_fdtd --data_dir='../../data/sim_data/LivingRoom/viz' --plot --draw_backend='mayavi' --json_model='../../data/models/LivingRoom/model.json'
