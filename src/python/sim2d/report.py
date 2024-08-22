@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.signal as signal
 
-from diffusor.measurement import polar_response
+from pffdtd.diffusor.measurement import polar_response
 
 
 def main():

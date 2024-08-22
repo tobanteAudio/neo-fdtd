@@ -7,9 +7,9 @@ import numpy as np
 import numba as nb
 from tqdm import tqdm
 
-from diffusor.design import diffusor_bandwidth
-from diffusor.qrd import quadratic_residue_diffuser
-from diffusor.prd import primitive_root_diffuser
+from pffdtd.diffusor.design import diffusor_bandwidth
+from pffdtd.diffusor.qrd import quadratic_residue_diffuser
+from pffdtd.diffusor.prd import primitive_root_diffuser
 
 
 def to_ixy(x, y, Nx, Ny, order="row"):

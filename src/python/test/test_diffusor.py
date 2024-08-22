@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..diffusor.qrd import quadratic_residue_diffuser
+from pffdtd.diffusor.qrd import quadratic_residue_diffuser
 
 
 def test_quadratic_residue_diffuser():

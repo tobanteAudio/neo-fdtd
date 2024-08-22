@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from diffusor.qrd import quadratic_residue_diffuser
+from pffdtd.diffusor.qrd import quadratic_residue_diffuser
 
 # fmax calculation matches multiple online calculators. Not sure about fmin
 
