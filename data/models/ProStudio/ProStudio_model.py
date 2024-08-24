@@ -6,7 +6,7 @@ import numpy as np
 from pffdtd.sim3d.room_builder import find_third_vertex
 
 
-def load_mesh(obj_file, reverse=False):
+def load_obj_mesh(obj_file, reverse=False):
     with open(obj_file) as f:
         lines = [line.rstrip() for line in f]
 
@@ -49,28 +49,46 @@ def with_z(p: list, z):
     return tmp
 
 
+class ModelBuilder:
+    def __init__(self) -> None:
+        self.root = {
+            "mats_hash": {},
+            "sources": [],
+            "receivers": []
+        }
+
+    def add(self, name, obj_file, color, reverse=False):
+        assert name not in self.root
+        pts, tris = load_obj_mesh(obj_file, reverse=reverse)
+        self.root["mats_hash"][name] = {
+            "tris": tris,
+            "pts": pts,
+            "color": color,
+            "sides": [1]*len(tris)
+        }
+
+    def add_receiver(self, name, pos):
+        self.root["receivers"].append({"name": name, "xyz": pos})
+
+    def add_source(self, name, pos):
+        self.root["sources"].append({"name": name, "xyz": pos})
+
+    def write(self, model_file):
+        src = np.array(self.root["sources"][0]["xyz"])
+        distance_ref = np.linalg.norm(
+            src - np.array(self.root["receivers"][0]["xyz"]))
+        for r in self.root["receivers"]:
+            distance = np.linalg.norm(src - np.array(r["xyz"]))
+            print(r["name"], 20*np.log10(distance_ref/distance))
+
+        with open(model_file, "w") as f:
+            json.dump(self.root, f)
+            print("", file=f)
+
+
 def main():
     dir = pathlib.Path(".")
-
-    ceiling_pts, ceiling_tris = load_mesh(dir / 'model_ceiling.obj')
-    floor_pts, floor_tris = load_mesh(dir / 'model_floor.obj')
-    walls_back_pts, walls_back_tris = load_mesh(dir / 'model_walls_back.obj')
-    walls_front_pts, walls_front_tris = load_mesh(
-        dir / 'model_walls_front.obj')
-    walls_side_pts, walls_side_tris = load_mesh(dir / 'model_walls_side.obj')
-
-    diffusor_pts, diffusor_tris = load_mesh(
-        dir / 'model_diffusor.obj', reverse=True)
-    atc_left_pts, atc_left_tris = load_mesh(
-        dir / 'model_atc_left.obj', reverse=True)
-    atc_right_pts, atc_right_tris = load_mesh(
-        dir / 'model_atc_right.obj', reverse=True)
-    couch_pts, couch_tris = load_mesh(dir / 'model_couch.obj', reverse=True)
-    rack_pts, rack_tris = load_mesh(dir / 'model_rack.obj', reverse=True)
-    raised_floor_pts, raised_floor_tris = load_mesh(
-        dir / 'model_raised_floor.obj', reverse=True)
-    console_pts, console_tris = load_mesh(
-        dir / 'model_console.obj', reverse=True)
+    obj = dir/"obj"
 
     offset = 0.07
 
@@ -89,127 +107,49 @@ def main():
     r1[1] += (1.0-0.0)
     r1[2] = 1.2
 
-    # r1 = [3.58, 5.5, 1.2]
-    # r2 = [3.58, 0.7+offset, 1.2]
-
     r2 = r1.copy()
-    r2[1] = 1.2
-    r2[2] = 1.3
+    r2[1] -= 1.0
 
-    # r3 = point_along_line(r2, r1, 0.1)
-    # r4 = point_along_line(r2, r1, 0.2)
-    # r5 = point_along_line(r2, r1, 0.3)
+    r3 = point_along_line(r2, r1, 0.20)
+    r4 = point_along_line(r2, r1, 0.40)
+    r5 = point_along_line(r2, r1, 0.60)
+    r6 = point_along_line(r2, r1, 0.80)
 
-    r3 = with_x_offset(r2, -0.73*1.5)
-    r4 = with_x_offset(r2, -0.73*0.5)
-    r5 = with_x_offset(r2, +0.73*0.5)
-    r6 = with_x_offset(r2, +0.73*1.5)
+    # # Couch
+    # r2 = r1.copy()
+    # r2[1] = 1.2
+    # r2[2] = 1.3
 
-    # r3 = with_z(r2, 1.0)
-    # r4 = with_z(r2, 1.5)
-    # r5 = with_z(r2, 2.1)
+    # r3 = with_x_offset(r2, -0.73*1.5)
+    # r4 = with_x_offset(r2, -0.73*0.5)
+    # r5 = with_x_offset(r2, +0.73*0.5)
+    # r6 = with_x_offset(r2, +0.73*1.5)
 
-    root = {
-        "mats_hash": {
-            "ATC Left": {
-                "tris": atc_left_tris,
-                "pts": atc_left_pts,
-                "color": [5, 5, 5],
-                "sides": [1]*len(atc_left_tris)
-            },
-            "ATC Right": {
-                "tris": atc_right_tris,
-                "pts": atc_right_pts,
-                "color": [5, 5, 5],
-                "sides": [1]*len(atc_right_tris)
-            },
-            "Ceiling": {
-                "tris": ceiling_tris,
-                "pts": ceiling_pts,
-                "color": [60, 60, 60],
-                "sides": [1]*len(ceiling_tris)
-            },
-            "Console": {
-                "tris": console_tris,
-                "pts": console_pts,
-                "color": [60, 60, 60],
-                "sides": [1]*len(console_tris)
-            },
-            # "Couch": {
-            #     "tris": couch_tris,
-            #     "pts": couch_pts,
-            #     "color": [5, 5, 48],
-            #     "sides": [1]*len(couch_tris)
-            # },
-            # "Diffusor": {
-            #     "tris": diffusor_tris,
-            #     "pts": diffusor_pts,
-            #     "color": [53, 33, 0],
-            #     "sides": [1]*len(diffusor_tris)
-            # },
-            "Floor": {
-                "tris": floor_tris,
-                "pts": floor_pts,
-                "color": [53, 33, 0],
-                "sides": [1]*len(floor_tris)
-            },
-            "Rack": {
-                "tris": rack_tris,
-                "pts": rack_pts,
-                "color": [25, 25, 25],
-                "sides": [1]*len(rack_tris)
-            },
-            "Raised Floor": {
-                "tris": raised_floor_tris,
-                "pts": raised_floor_pts,
-                "color": [25, 25, 25],
-                "sides": [1]*len(raised_floor_tris)
-            },
-            "Walls Back": {
-                "tris": walls_back_tris,
-                "pts": walls_back_pts,
-                "color": [100, 100, 100],
-                "sides": [1]*len(walls_back_tris)
-            },
-            "Walls Front": {
-                "tris": walls_front_tris,
-                "pts": walls_front_pts,
-                "color": [100, 100, 100],
-                "sides": [1]*len(walls_front_tris)
-            },
-            "Walls Side": {
-                "tris": walls_side_tris,
-                "pts": walls_side_pts,
-                "color": [180, 180, 180],
-                "sides": [1]*len(walls_side_tris)
-            },
-        },
-        "sources": [
-            {"name": "S1", "xyz": s1},
-            {"name": "S2", "xyz": s2},
-            {"name": "S3", "xyz": s3},
-            {"name": "SUB1", "xyz": sub1},
-            {"name": "SUB2", "xyz": sub2},
-        ],
-        "receivers": [
-            {"name": "R1", "xyz": r1},
-            {"name": "R2", "xyz": r2},
-            {"name": "R3", "xyz": r3},
-            {"name": "R4", "xyz": r4},
-            {"name": "R5", "xyz": r5},
-            {"name": "R6", "xyz": r6},
-        ]
-    }
-
-    src = np.array(root["sources"][0]["xyz"])
-    distance_ref = np.linalg.norm(src - np.array(root["receivers"][0]["xyz"]))
-    for r in root["receivers"]:
-        distance = np.linalg.norm(src - np.array(r["xyz"]))
-        print(r["name"], 20*np.log10(distance_ref/distance))
-
-    model_file = dir / 'model.json'
-    with open(model_file, "w") as f:
-        json.dump(root, f)
+    m = ModelBuilder()
+    m.add("ATC Left", obj / 'atc_left.obj', [5, 5, 5], reverse=True)
+    m.add("ATC Right", obj / 'atc_right.obj', [5, 5, 5], reverse=True)
+    m.add("Ceiling", obj / 'ceiling.obj', [60, 60, 60])
+    m.add("Console", obj / 'console.obj', [60, 60, 60], reverse=True)
+    # m.add("Couch", obj / 'couch.obj', [5, 5, 48], reverse=True)
+    # m.add("Diffusor", obj / 'diffusor.obj', [53, 33, 0], reverse=True)
+    m.add("Floor", obj / 'floor.obj', [53, 33, 0])
+    m.add("Rack", obj / 'rack.obj', [25, 25, 25], reverse=True)
+    m.add("Raised Floor", obj / 'raised_floor.obj', [25, 25, 25], reverse=True)
+    m.add("Walls Back", obj / 'walls_back.obj', [100, 100, 100])
+    m.add("Walls Front", obj / 'walls_front.obj', [100, 100, 100])
+    m.add("Walls Side", obj / 'walls_side.obj', [180, 180, 180])
+    m.add_source("S1", s1)
+    m.add_source("S2", s2)
+    m.add_source("S3", s3)
+    m.add_source("SUB1", sub1)
+    m.add_source("SUB2", sub2)
+    m.add_receiver("R1", r1)
+    m.add_receiver("R2", r2)
+    m.add_receiver("R3", r3)
+    m.add_receiver("R4", r4)
+    m.add_receiver("R5", r5)
+    m.add_receiver("R6", r6)
+    m.write(dir / "model.json")
 
 
 main()
