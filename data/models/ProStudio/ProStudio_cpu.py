@@ -14,6 +14,7 @@ sim_setup(
         # 'Couch': 'absorber_8000_50mm.h5',
         # 'Diffusor': 'floor_wood.h5',
         'Floor': 'floor_wood.h5',
+        'Outboard': 'floor_wood.h5',
         'Rack': 'floor_wood.h5',
         'Raised Floor': 'floor_wood.h5',
         'Walls Back': 'absorber_8000_200mm_gap_200mm.h5',

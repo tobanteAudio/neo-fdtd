@@ -133,6 +133,7 @@ def main():
     # m.add("Couch", obj / 'couch.obj', [5, 5, 48], reverse=True)
     # m.add("Diffusor", obj / 'diffusor.obj', [53, 33, 0], reverse=True)
     m.add("Floor", obj / 'floor.obj', [53, 33, 0])
+    m.add("Outboard", obj / 'outboard.obj', [0, 0, 0], reverse=True)
     m.add("Rack", obj / 'rack.obj', [25, 25, 25], reverse=True)
     m.add("Raised Floor", obj / 'raised_floor.obj', [25, 25, 25], reverse=True)
     m.add("Walls Back", obj / 'walls_back.obj', [100, 100, 100])
