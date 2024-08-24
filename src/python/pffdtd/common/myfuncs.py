@@ -262,8 +262,8 @@ def wavread(fname):
     SR,data = scipy.io.wavfile.read(fname) #reads in (Nsamples,Nchannels)
     if data.dtype == np.int16:
         data = data/32768.0
-        SR = np.float_(SR)
-    return SR,np.float_(data.T)
+        SR = np.float64(SR)
+    return SR,np.float64(data.T)
 
 def wavwrite(fname,SR,data):
     data = np.atleast_2d(data) #expects (Nchannels,Nsamples), this will also assert that
