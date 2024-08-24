@@ -9,6 +9,7 @@ a.out
 /CMakeUserPresets.json
 .polyscope.ini
 imgui.ini
+mmap_dat
 
 /venv
 __pycache__# Byte-compiled / optimized / DLL files

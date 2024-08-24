@@ -55,11 +55,16 @@ def main():
     ceiling_pts, ceiling_tris = load_mesh(dir / 'model_ceiling.obj')
     floor_pts, floor_tris = load_mesh(dir / 'model_floor.obj')
     walls_back_pts, walls_back_tris = load_mesh(dir / 'model_walls_back.obj')
-    walls_front_pts, walls_front_tris = load_mesh(dir / 'model_walls_front.obj')
+    walls_front_pts, walls_front_tris = load_mesh(
+        dir / 'model_walls_front.obj')
     walls_side_pts, walls_side_tris = load_mesh(dir / 'model_walls_side.obj')
 
-    atc_left_pts, atc_left_tris = load_mesh(dir / 'model_atc_left.obj', reverse=True)
-    atc_right_pts, atc_right_tris = load_mesh(dir / 'model_atc_right.obj', reverse=True)
+    diffusor_pts, diffusor_tris = load_mesh(
+        dir / 'model_diffusor.obj', reverse=True)
+    atc_left_pts, atc_left_tris = load_mesh(
+        dir / 'model_atc_left.obj', reverse=True)
+    atc_right_pts, atc_right_tris = load_mesh(
+        dir / 'model_atc_right.obj', reverse=True)
     couch_pts, couch_tris = load_mesh(dir / 'model_couch.obj', reverse=True)
     rack_pts, rack_tris = load_mesh(dir / 'model_rack.obj', reverse=True)
     raised_floor_pts, raised_floor_tris = load_mesh(
@@ -68,12 +73,17 @@ def main():
         dir / 'model_console.obj', reverse=True)
 
     offset = 0.07
+
     s1 = [3.38789-3.288/2, 6.90-offset, 1.062+0.332]
     sub1 = s1.copy()
     sub1[2] = 0.0 + offset
 
     s2 = s1.copy()
     s2[0] += 3.288
+    sub2 = s2.copy()
+    sub2[2] = 0.0 + offset
+
+    s3 = [2.25, 3.55, 0.4]
 
     r1 = list(find_third_vertex(s1, s2)[1])
     r1[1] += (1.0-0.0)
@@ -125,12 +135,18 @@ def main():
                 "color": [60, 60, 60],
                 "sides": [1]*len(console_tris)
             },
-            "Couch": {
-                "tris": couch_tris,
-                "pts": couch_pts,
-                "color": [5, 5, 48],
-                "sides": [1]*len(couch_tris)
-            },
+            # "Couch": {
+            #     "tris": couch_tris,
+            #     "pts": couch_pts,
+            #     "color": [5, 5, 48],
+            #     "sides": [1]*len(couch_tris)
+            # },
+            # "Diffusor": {
+            #     "tris": diffusor_tris,
+            #     "pts": diffusor_pts,
+            #     "color": [53, 33, 0],
+            #     "sides": [1]*len(diffusor_tris)
+            # },
             "Floor": {
                 "tris": floor_tris,
                 "pts": floor_pts,
@@ -171,7 +187,9 @@ def main():
         "sources": [
             {"name": "S1", "xyz": s1},
             {"name": "S2", "xyz": s2},
+            {"name": "S3", "xyz": s3},
             {"name": "SUB1", "xyz": sub1},
+            {"name": "SUB2", "xyz": sub2},
         ],
         "receivers": [
             {"name": "R1", "xyz": r1},

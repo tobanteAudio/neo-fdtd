@@ -9,17 +9,21 @@ def main():
     plot=False
     write_folder = Path(sys.argv[1])
                                              #  16,   31,   63,  125,  250,  500,   1K,   2K,   4K,   8K,  16K
-    absorber_8000_100mm           = np.array([0.01, 0.01, 0.05, 0.30, 0.69, 0.92, 0.93, 0.94, 0.95, 0.93, 0.90])
+    absorber_8000_50mm            = np.array([0.01, 0.02, 0.03, 0.05, 0.26, 0.59, 0.88, 0.94, 0.95, 0.93, 0.90])
+    absorber_8000_100mm           = np.array([0.02, 0.03, 0.05, 0.30, 0.69, 0.92, 0.93, 0.94, 0.95, 0.93, 0.90])
     absorber_8000_200mm           = np.array([0.05, 0.10, 0.40, 0.85, 0.89, 0.92, 0.93, 0.94, 0.95, 0.93, 0.90])
-    absorber_8000_200mm_gap_100mm = np.array([0.10, 0.30, 0.60, 0.78, 0.85, 0.85, 0.90, 0.91, 0.92, 0.90, 0.88])
+    absorber_8000_200mm_gap_100mm = np.array([0.10, 0.23, 0.59, 0.84, 0.91, 0.92, 0.95, 0.95, 0.94, 0.93, 0.90])
+    absorber_8000_200mm_gap_200mm = np.array([0.19, 0.38, 0.69, 0.84, 0.88, 0.93, 0.95, 0.95, 0.94, 0.93, 0.90])
     concrete_painted              = np.array([0.01, 0.01, 0.01, 0.05, 0.06, 0.07, 0.09, 0.08, 0.08, 0.08, 0.08])
     floor_wood                    = np.array([0.10, 0.11, 0.13, 0.15, 0.11, 0.10, 0.07, 0.06, 0.07, 0.07, 0.07])
     door_wood                     = np.array([0.06, 0.08, 0.14, 0.14, 0.10, 0.06, 0.08, 0.10, 0.10, 0.10, 0.08])
     almost_rigid                  = np.array([0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03])
 
+    fit_to_Sabs_oct_11(absorber_8000_50mm            , filename=Path(write_folder / 'absorber_8000_50mm.h5')            , plot=plot)
     fit_to_Sabs_oct_11(absorber_8000_100mm           , filename=Path(write_folder / 'absorber_8000_100mm.h5')           , plot=plot)
     fit_to_Sabs_oct_11(absorber_8000_200mm           , filename=Path(write_folder / 'absorber_8000_200mm.h5')           , plot=plot)
     fit_to_Sabs_oct_11(absorber_8000_200mm_gap_100mm , filename=Path(write_folder / 'absorber_8000_200mm_gap_100mm.h5') , plot=plot)
+    fit_to_Sabs_oct_11(absorber_8000_200mm_gap_200mm , filename=Path(write_folder / 'absorber_8000_200mm_gap_200mm.h5') , plot=plot)
     fit_to_Sabs_oct_11(concrete_painted              , filename=Path(write_folder / 'concrete_painted.h5')              , plot=plot)
     fit_to_Sabs_oct_11(floor_wood                    , filename=Path(write_folder / 'floor_wood.h5')                    , plot=plot)
     fit_to_Sabs_oct_11(door_wood                     , filename=Path(write_folder / 'door_wood.h5')                     , plot=plot)
