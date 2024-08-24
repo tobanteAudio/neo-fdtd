@@ -16,8 +16,11 @@ def main():
     absorber_8000_200mm_gap_200mm = np.array([0.19, 0.38, 0.69, 0.84, 0.88, 0.93, 0.95, 0.95, 0.94, 0.93, 0.90])
     concrete_painted              = np.array([0.01, 0.01, 0.01, 0.05, 0.06, 0.07, 0.09, 0.08, 0.08, 0.08, 0.08])
     floor_wood                    = np.array([0.10, 0.11, 0.13, 0.15, 0.11, 0.10, 0.07, 0.06, 0.07, 0.07, 0.07])
+    floor_wood_on_concrete        = np.array([0.01, 0.01, 0.01, 0.04, 0.04, 0.07, 0.06, 0.06, 0.07, 0.06, 0.06])
+    door_iron                     = np.array([0.01, 0.01, 0.01, 0.01, 0.01, 0.02, 0.02, 0.03, 0.03, 0.03, 0.02])
     door_wood                     = np.array([0.06, 0.08, 0.14, 0.14, 0.10, 0.06, 0.08, 0.10, 0.10, 0.10, 0.08])
-    almost_rigid                  = np.array([0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03])
+    glas_thick                    = np.array([0.15, 0.30, 0.27, 0.18, 0.06, 0.04, 0.03, 0.02, 0.02, 0.02, 0.01])
+    leather_arm_chair             = np.array([0.04, 0.08, 0.16, 0.20, 0.25, 0.29, 0.31, 0.29, 0.25, 0.22, 0.30])
 
     fit_to_Sabs_oct_11(absorber_8000_50mm            , filename=Path(write_folder / 'absorber_8000_50mm.h5')            , plot=plot)
     fit_to_Sabs_oct_11(absorber_8000_100mm           , filename=Path(write_folder / 'absorber_8000_100mm.h5')           , plot=plot)
@@ -25,9 +28,12 @@ def main():
     fit_to_Sabs_oct_11(absorber_8000_200mm_gap_100mm , filename=Path(write_folder / 'absorber_8000_200mm_gap_100mm.h5') , plot=plot)
     fit_to_Sabs_oct_11(absorber_8000_200mm_gap_200mm , filename=Path(write_folder / 'absorber_8000_200mm_gap_200mm.h5') , plot=plot)
     fit_to_Sabs_oct_11(concrete_painted              , filename=Path(write_folder / 'concrete_painted.h5')              , plot=plot)
-    fit_to_Sabs_oct_11(floor_wood                    , filename=Path(write_folder / 'floor_wood.h5')                    , plot=plot)
+    fit_to_Sabs_oct_11(door_iron                     , filename=Path(write_folder / 'door_iron.h5')                     , plot=plot)
     fit_to_Sabs_oct_11(door_wood                     , filename=Path(write_folder / 'door_wood.h5')                     , plot=plot)
-    fit_to_Sabs_oct_11(almost_rigid                  , filename=Path(write_folder / 'almost_rigid.h5')                  , plot=plot)
+    fit_to_Sabs_oct_11(floor_wood                    , filename=Path(write_folder / 'floor_wood.h5')                    , plot=plot)
+    fit_to_Sabs_oct_11(floor_wood_on_concrete        , filename=Path(write_folder / 'floor_wood_on_concrete.h5')        , plot=plot)
+    fit_to_Sabs_oct_11(glas_thick                    , filename=Path(write_folder / 'glas_thick.h5')                    , plot=plot)
+    fit_to_Sabs_oct_11(leather_arm_chair             , filename=Path(write_folder / 'leather_arm_chair.h5')             , plot=plot)
 
     #freq-independent impedance from Sabine abs coefficient
     write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.01),filename=Path(write_folder / 'sabine_01.h5'))

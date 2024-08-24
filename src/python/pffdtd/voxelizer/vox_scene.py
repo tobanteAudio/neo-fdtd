@@ -573,8 +573,12 @@ class VoxScene:
                             mode='sphere',resolution=8,scale_factor=sf)
 
             elif backend == 'polyscope':
-                ps_cloud_in = ps.register_point_cloud(mat,\
-                        np.c_[xv[bn_ix[qq]],yv[bn_iy[qq]],zv[bn_iz[qq]]], color=color)
+                ps_cloud_in = ps.register_point_cloud(
+                    mat,
+                    np.c_[xv[bn_ix[qq]],yv[bn_iy[qq]],zv[bn_iz[qq]]],
+                    color=color,
+                    point_render_mode="sphere"
+                )
                 ps_cloud_in.set_radius(sf/2, relative=False)
 
 
