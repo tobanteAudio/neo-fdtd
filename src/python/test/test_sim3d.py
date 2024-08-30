@@ -1,11 +1,14 @@
+from contextlib import chdir
 import json
+import pathlib
+import subprocess
 
 import pytest
 import numpy as np
 import scipy.io.wavfile as wavfile
 
 from pffdtd.analysis.room_modes import find_nearest
-from pffdtd.analysis.room_modes import main as room_modes
+from pffdtd.analysis.room_modes import detect_room_modes
 from pffdtd.materials.adm_funcs import write_freq_ind_mat_from_Yn, convert_Sabs_to_Yn
 from pffdtd.sim2d.fdtd import point_on_circle
 from pffdtd.sim3d.room_builder import RoomBuilder
@@ -15,7 +18,37 @@ from pffdtd.sim3d.process_outputs import process_outputs
 from pffdtd.localization.tdoa import locate_sound_source
 
 
-def test_sim3d_locate_sound_source(tmp_path):
+ENGINE_EXE = pathlib.Path("./build/src/cpp/main_3d/pffdtd_3d").absolute()
+
+
+def _run_engine(sim_dir, engine):
+    if engine == "python":
+        eng = EnginePython3D(sim_dir)
+        eng.run_all(1)
+        eng.save_outputs()
+    else:
+        assert engine == "native"
+        assert ENGINE_EXE.exists()
+
+        with chdir(sim_dir):
+            result = subprocess.run(
+                args=[str(ENGINE_EXE)],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            assert result.returncode == 0
+
+
+def _skip_if_native_engine_unavailable(engine):
+    if engine == "native" and not ENGINE_EXE.exists():
+        pytest.skip("Native engine not available")
+
+
+@pytest.mark.parametrize("engine", ["python", "native"])
+def test_sim3d_locate_sound_source(tmp_path, engine):
+    _skip_if_native_engine_unavailable(engine)
+
     fmin = 20
     fmax = 1000
     ppw = 10.5
@@ -69,9 +102,7 @@ def test_sim3d_locate_sound_source(tmp_path):
         save_folder=sim_dir,
     )
 
-    eng = EnginePython3D(sim_dir)
-    eng.run_all(1)
-    eng.save_outputs()
+    _run_engine(sim_dir=sim_dir, engine=engine)
 
     process_outputs(
         data_dir=sim_dir,
@@ -112,7 +143,10 @@ def test_sim3d_locate_sound_source(tmp_path):
     assert np.linalg.norm(actual-estimated) <= 0.1
 
 
-def test_sim3d_infinite_baffle(tmp_path):
+@pytest.mark.parametrize("engine", ["python", "native"])
+def test_sim3d_infinite_baffle(tmp_path, engine):
+    _skip_if_native_engine_unavailable(engine)
+
     fmin = 20
     fmax = 1000
     ppw = 10.5
@@ -184,9 +218,7 @@ def test_sim3d_infinite_baffle(tmp_path):
         bmin=[0, 0, 0],
     )
 
-    eng = EnginePython3D(sim_dir)
-    eng.run_all(1)
-    eng.save_outputs()
+    _run_engine(sim_dir=sim_dir, engine=engine)
 
     process_outputs(
         data_dir=sim_dir,
@@ -214,6 +246,7 @@ def test_sim3d_infinite_baffle(tmp_path):
     assert error_3 < -12.0
 
 
+@pytest.mark.parametrize("engine", ["python", "native"])
 @pytest.mark.parametrize(
     "size,fmax,ppw,fcc,dx_scale,tolerance",
     [
@@ -221,7 +254,9 @@ def test_sim3d_infinite_baffle(tmp_path):
         ((3.0, 1.0, 2.0), 800, 7.7, True, 3, 6),
     ]
 )
-def test_sim3d_detect_room_modes(tmp_path, size, fmax, ppw, fcc, dx_scale, tolerance):
+def test_sim3d_detect_room_modes(tmp_path, engine, size, fmax, ppw, fcc, dx_scale, tolerance):
+    _skip_if_native_engine_unavailable(engine)
+
     L = size[0]
     W = size[1]
     H = size[2]
@@ -258,9 +293,7 @@ def test_sim3d_detect_room_modes(tmp_path, size, fmax, ppw, fcc, dx_scale, toler
         save_folder=sim_dir,
     )
 
-    eng = EnginePython3D(sim_dir)
-    eng.run_all(1)
-    eng.save_outputs()
+    _run_engine(sim_dir=sim_dir, engine=engine)
 
     process_outputs(
         data_dir=sim_dir,
@@ -276,7 +309,8 @@ def test_sim3d_detect_room_modes(tmp_path, size, fmax, ppw, fcc, dx_scale, toler
         plot=False,
     )
 
-    actual, measured = room_modes(
+    actual, measured = detect_room_modes(
+        filename=None,
         data_dir=sim_dir,
         fmin=fmin,
         fmax=fmax,

@@ -29,6 +29,7 @@ jobs:
             cmake_prefix_path: "/opt/intel/oneapi/tbb/latest"
             cmake_flags: ""
             cxx_flags: "-march=x86-64-v2"
+            python_version: "3.12"
 
           - name: macOS-X64
             os: macos-13
@@ -36,6 +37,7 @@ jobs:
             cmake_prefix_path: ""
             cmake_flags: '-D OpenMP_ROOT=`brew list libomp | grep libomp.a | sed -E "s/\/lib\/.*//"`'
             cxx_flags: "-march=x86-64-v2"
+            python_version: "3.12"
 
           - name: macOS-ARM64
             os: macos-14
@@ -43,6 +45,7 @@ jobs:
             cmake_prefix_path: ""
             cmake_flags: '-D OpenMP_ROOT=`brew list libomp | grep libomp.a | sed -E "s/\/lib\/.*//"`'
             cxx_flags: ""
+            python_version: "3.12"
 
           # - name: Windows
           #   os: windows-latest
@@ -55,6 +58,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python_version }}
 
       - name: Install dependencies (Linux)
         if: runner.os == 'Linux'
@@ -105,5 +112,14 @@ jobs:
       - name: CMake build
         run: cmake --build build
 
-      # - name: CTest
-      #   run: ctest --test-dir build -C Release --output-on-failure -j 1
+      - name: Build and install (Python)
+        run: pip3 install --verbose .[test]
+
+      - name: Test (Python)
+        run: pytest --cov=pffdtd --cov-branch
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true

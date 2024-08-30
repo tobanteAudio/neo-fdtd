@@ -92,17 +92,7 @@ def frequency_spacing_index(modes):
     return psi / (num-1)
 
 
-@click.command(name="room-modes", help="Plot room modes.")
-@click.argument('filename', nargs=-1, type=click.Path(exists=True))
-@click.option('--data_dir', type=click.Path(exists=True))
-@click.option('--fmin', default=1.0, type=float)
-@click.option('--fmax', default=200.0, type=float)
-@click.option('--width', default=2.0, type=float)
-@click.option('--length', default=3.0, type=float)
-@click.option('--height', default=4.0, type=float)
-@click.option('--num_modes', default=10, type=int)
-@click.option('--plot/--no-plot', default=True)
-def main(
+def detect_room_modes(
     filename,
     data_dir,
     fmin,
@@ -195,3 +185,28 @@ def main(
         plt.show()
 
     return calculated_mode_freqs, measured_mode_freqs
+
+
+@click.command(name="room-modes", help="Plot room modes.")
+@click.argument('filename', nargs=-1, type=click.Path(exists=True))
+@click.option('--data_dir', type=click.Path(exists=True))
+@click.option('--fmin', default=1.0, type=float)
+@click.option('--fmax', default=200.0, type=float)
+@click.option('--width', default=2.0, type=float)
+@click.option('--length', default=3.0, type=float)
+@click.option('--height', default=4.0, type=float)
+@click.option('--num_modes', default=10, type=int)
+@click.option('--plot/--no-plot', default=True)
+def main(
+    filename,
+    data_dir,
+    fmin,
+    fmax,
+    width,
+    length,
+    height,
+    num_modes,
+    plot,
+):
+    detect_room_modes(filename, data_dir, fmin, fmax, width,
+                      length, height, num_modes, plot)
