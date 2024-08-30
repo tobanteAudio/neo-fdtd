@@ -2,12 +2,12 @@
 
 [![Build](https://github.com/tobanteAudio/pffdtd/actions/workflows/build.yml/badge.svg)](https://github.com/tobanteAudio/pffdtd/actions/workflows/build.yml)
 
+> [!WARNING]
+> Forked from github.com/bsxfun/pffdtd and updated to C++ & CMake (CPU only currently).
+
 ![PFFDTD Screenshot](./doc/screenshot.png)
 
 PFFDTD is an implementation of finite-difference time-domain (FDTD) simulation for 3D room acoustics, which includes an accompanying set of tools for simulation setup and processing of input/output signals. This software is intended for research use with powerful workstations or single-node remote servers with one or more Nvidia GPUs (using CUDA). PFFDTD was designed be "pretty fast" when run on GPUs – at least for FDTD simulations (the name is mostly intended as a pun).
-
-> [!NOTE]
-> Forked from github.com/bsxfun/pffdtd and updated to C++ & CMake (CPU only currently).
 
 ## Features
 
@@ -28,8 +28,12 @@ PFFDTD is designed to run on Linux & macOS systems.
 
 ### Installation (Python)
 
-PFFDTD requires at least Python 3.9 to run, with additional required packages in pip_requirements.txt (for pip) or
-conda_pffdtd.yml (for conda). Conda (or miniconda) is recommended to get started with a PFFDTD-specific conda environment (see .yml file).
+PFFDTD requires at least Python 3.11 to run, with additional required packages in `pyproject.toml`
+
+```shell
+pip install --verbose -e .[dev]
+pip install --verbose -e .[test]
+```
 
 ### Installation (C/CUDA)
 
