@@ -1,11 +1,12 @@
 # PFFDTD (pretty fast FDTD)
 
 [![Build](https://github.com/tobanteAudio/pffdtd/actions/workflows/build.yml/badge.svg)](https://github.com/tobanteAudio/pffdtd/actions/workflows/build.yml)
-
-> [!WARNING]
-> Forked from github.com/bsxfun/pffdtd and updated to C++ & CMake (CPU only currently).
+[![codecov](https://codecov.io/gh/tobanteAudio/pffdtd/graph/badge.svg?token=9XuWPI5EWu)](https://codecov.io/gh/tobanteAudio/pffdtd)
 
 ![PFFDTD Screenshot](./doc/screenshot.png)
+
+> [!WARNING]
+> Forked from <github.com/bsxfun/pffdtd> and updated to C++ & CMake (CPU only currently).
 
 PFFDTD is an implementation of finite-difference time-domain (FDTD) simulation for 3D room acoustics, which includes an accompanying set of tools for simulation setup and processing of input/output signals. This software is intended for research use with powerful workstations or single-node remote servers with one or more Nvidia GPUs (using CUDA). PFFDTD was designed be "pretty fast" when run on GPUs – at least for FDTD simulations (the name is mostly intended as a pun).
 
