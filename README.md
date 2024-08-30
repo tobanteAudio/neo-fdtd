@@ -1,6 +1,6 @@
 # PFFDTD (pretty fast FDTD)
 
-[![Build](https://github.com/tobanteAudio/neo-fdtd/actions/workflows/build.yml/badge.svg)](https://github.com/tobanteAudio/neo-fdtd/actions/workflows/build.yml)
+[![Build](https://github.com/tobanteAudio/pffdtd/actions/workflows/build.yml/badge.svg)](https://github.com/tobanteAudio/pffdtd/actions/workflows/build.yml)
 
 ![PFFDTD Screenshot](./doc/screenshot.png)
 
