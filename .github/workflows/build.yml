@@ -53,6 +53,7 @@ jobs:
             osx_target: ""
             cmake_flags: ""
             cxx_flags: "-march=x86-64-v2"
+            python_version: "3.12"
 
     steps:
       - name: Checkout code
