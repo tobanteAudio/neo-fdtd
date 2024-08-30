@@ -1,6 +1,7 @@
 name: Build
 
 on:
+  pull_request:
   push:
     branches:
       - main
@@ -47,11 +48,11 @@ jobs:
             cxx_flags: ""
             python_version: "3.12"
 
-          # - name: Windows
-          #   os: windows-latest
-          #   osx_target: ""
-          #   cmake_flags: ""
-          #   cxx_flags: "-march=x86-64-v2"
+          - name: Windows
+            os: windows-latest
+            osx_target: ""
+            cmake_flags: ""
+            cxx_flags: "-march=x86-64-v2"
 
     steps:
       - name: Checkout code
@@ -100,6 +101,7 @@ jobs:
           git clone https://github.com/conan-io/cmake-conan.git -b develop2 external/cmake-conan
 
       - name: CMake configure
+        if: runner.os != 'Windows'
         run: >
           cmake
           -B build
@@ -110,12 +112,13 @@ jobs:
           ${{ matrix.cmake_flags }}
 
       - name: CMake build
+        if: runner.os != 'Windows'
         run: cmake --build build
 
-      - name: Build and install (Python)
+      - name: PIP
         run: pip3 install --verbose .[test]
 
-      - name: Test (Python)
+      - name: Pytest
         run: pytest --cov=pffdtd --cov-branch
 
       - name: Upload coverage report
