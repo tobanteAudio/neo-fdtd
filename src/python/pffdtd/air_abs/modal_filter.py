@@ -1,22 +1,4 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: modal_filter.py
-#
-# Description: This is an implementation of an air absorption filter based on a
-# modal approach.  It solves a system of 1-d dissipative wave equations tune to
-# air attenuation curves using a soft-source boundary condition.
-#
-# See paper for details:
-# Hamilton, B. "Adding air attenuation to simulated room impulse responses: A
-# modal approach", to be presented at I3DA 2021 conference in Bologna Italy.
-#
-##############################################################################
+# SPDX-License-Identifier: MIT
 
 import numpy as np
 import numba as nb
@@ -32,6 +14,15 @@ from tqdm import tqdm
 #Tc is temperature in deg Celsius
 #rh is relative humidity
 def apply_modal_filter(x,Fs,Tc,rh,pad_t=0.0):
+    """
+    This is an implementation of an air absorption filter based on a modal approach.
+    It solves a system of 1-d dissipative wave equations tune to air attenuation
+    curves using a soft-source boundary condition.
+
+    See paper for details:
+    Hamilton, B. "Adding air attenuation to simulated room impulse responses: A
+    modal approach", to be presented at I3DA 2021 conference in Bologna Italy.
+    """
     Ts = 1/Fs
 
     x = np.atleast_2d(x)

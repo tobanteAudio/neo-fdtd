@@ -1,23 +1,12 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: get_air_absorption.py
-#
-# Description: This is an implementation of formulae in the ISO9613-1 standard
-# for air absorption
-#
-##############################################################################
+# SPDX-License-Identifier: MIT
 
 import numpy as np
 from numpy import array as npa
 from numpy import log10, exp, sqrt, log, pi
 
 def get_air_absorption(freq_vec,temperature_celsius,rel_humidity_pnct,pressure_atmospheric_kPa=101.325):
+    """This is an implementation of formulae in the ISO9613-1 standard for air absorption
+    """
     assert pressure_atmospheric_kPa<=200
     assert temperature_celsius >= -20
     assert temperature_celsius <= 50

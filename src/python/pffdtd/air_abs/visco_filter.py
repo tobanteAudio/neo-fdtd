@@ -1,21 +1,4 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: visco_filter.py
-#
-# Description: This is an implementation of an air absorption filter based on
-# approximate Green's function Stoke's equation (viscothermal wave equation)
-#
-# See paper for details:
-# Hamilton, B. "Air absorption filtering method based on approximate Green's
-# function for Stokes' equation", to be presented at the DAFx2021 e-conference.
-#
-##############################################################################
+# SPDX-License-Identifier: MIT
 
 import numpy as np
 import numba as nb
@@ -29,6 +12,14 @@ from tqdm import tqdm
 #enter temperature (Tc) and relative humidity (rh)
 #NdB should be above 60dB, that is for truncation of Gaussian kernel
 def apply_visco_filter(x,Fs,Tc,rh,NdB=120,t_start=None):
+    """
+    This is an implementation of an air absorption filter based on approximate
+    Green's function Stoke's equation (viscothermal wave equation)
+
+    See paper for details:
+    Hamilton, B. "Air absorption filtering method based on approximate Green's
+    function for Stokes' equation", to be presented at the DAFx2021 e-conference.
+    """
     rd = get_air_absorption(1,Tc,rh)
     c = rd['c']
     g = rd['gamma_p']

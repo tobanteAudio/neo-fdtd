@@ -1,22 +1,4 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: ola_filter.py
-#
-# Description: This is an implementation of overlap-add (STFT/iSTFT) air
-# absorption filtering.  Tuned for 75% overlap and 1024-sample Hann window at
-# 48kHz.
-#
-# Used in paper:
-# Hamilton, B. "Adding air attenuation to simulated room impulse responses: A
-# modal approach", to be presented at I3DA 2021 conference in Bologna Italy.
-#
-##############################################################################
+# SPDX-License-Identifier: MIT
 
 import numpy as np
 import numba as nb
@@ -31,6 +13,14 @@ from tqdm import tqdm
 #Tc is temperature degrees Celsius
 #rh is relative humidity
 def apply_ola_filter(x,Fs,Tc,rh,Nw=1024):
+    """
+    This is an implementation of overlap-add (STFT/iSTFT) air absorption filtering.
+    Tuned for 75% overlap and 1024-sample Hann window at 48kHz.
+
+    Used in paper:
+    Hamilton, B. "Adding air attenuation to simulated room impulse responses: A
+    modal approach", to be presented at I3DA 2021 conference in Bologna Italy.
+    """
     Ts = 1/Fs
 
     x = np.atleast_2d(x)
