@@ -1,14 +1,20 @@
-import sys
-
+import click
 import numpy as np
 from pathlib import Path
 
-from pffdtd.materials.adm_funcs import fit_to_Sabs_oct_11,write_freq_ind_mat_from_Yn,convert_Sabs_to_Yn
+from pffdtd.materials.adm_funcs import (
+    convert_Sabs_to_Yn,
+    fit_to_Sabs_oct_11,
+    write_freq_ind_mat_from_Yn,
+)
 
-def main():
-    plot=False
-    write_folder = Path(sys.argv[1])
-                                             #  16,   31,   63,  125,  250,  500,   1K,   2K,   4K,   8K,  16K
+
+@click.command(help="Build materials.")
+@click.option('--plot/--no-plot', default=False)
+@click.argument('write_folder', nargs=1, type=click.Path(exists=True))
+def build(write_folder, plot):
+    write_folder = Path(write_folder)
+
     absorber_8000_50mm            = np.array([0.01, 0.02, 0.03, 0.05, 0.26, 0.59, 0.88, 0.94, 0.95, 0.93, 0.90])
     absorber_8000_100mm           = np.array([0.02, 0.03, 0.05, 0.30, 0.69, 0.92, 0.93, 0.94, 0.95, 0.93, 0.90])
     absorber_8000_200mm           = np.array([0.05, 0.10, 0.40, 0.85, 0.89, 0.92, 0.93, 0.94, 0.95, 0.93, 0.90])
@@ -92,9 +98,3 @@ def main():
 
     # #input DEF values directly
     # write_freq_dep_mat(npa([[0,1.0,0],[2,3,4]]),filename=Path(write_folder / 'ex_mat.h5'))
-
-    #to read and plot a material file
-    #plot_DEF_admittance(np.logspace(np.log10(10),np.log10(20e3),4000),read_mat_DEF(write_folder/'chairs.h5'))
-
-if __name__ == '__main__':
-    main()

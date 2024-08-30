@@ -25,7 +25,7 @@ cd "$model_dir"
 python "$sim_model_gen"
 
 # Generate sim data
-python -m pffdtd.materials.build "$materials_dir"
+pffdtd materials build "$materials_dir"
 python "$sim_setup"
 
 # Run sim

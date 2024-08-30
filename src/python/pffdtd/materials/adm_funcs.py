@@ -14,11 +14,9 @@
 ##############################################################################
 
 import numpy as np
-from numpy import array as npa
 import h5py
 import matplotlib.pyplot as plt
 from pathlib import Path
-from numpy import sqrt,pi,log10,log
 import scipy.optimize as scpo
 
 #normal-incidence absorption to reflection coefficient
@@ -81,7 +79,7 @@ def write_freq_ind_mat_from_Zn(Zn,filename):
     assert Zn>=0
     filename = Path(filename)
     h5f = h5py.File(filename,'w')
-    DEF = npa([0,Zn,0])
+    DEF = np.array([0,Zn,0])
     assert np.all(np.sum(DEF>0,axis=-1)) #at least one non-zero
     _print(f'{DEF=}')
     h5f.create_dataset(f'DEF', data=np.atleast_2d(DEF))
@@ -128,12 +126,10 @@ def plot_RLC_admittance(RLC,Y0):
 
 #plot some admittance based on DEF triplets (specific admittance)
 def plot_DEF_admittance(fv,DEF,model_Rf=None,show=True):
-    from numpy import pi
-
     DEF = np.atleast_2d(DEF)
     assert DEF.shape[1] == 3
     D,E,F = DEF.T
-    jw = 1j*fv*2*pi
+    jw = 1j*fv*2*np.pi
 
     Rf,Yn,Zn_br,Rf_br = compute_Rf_from_DEF(jw,D,E,F)
 
@@ -243,8 +239,8 @@ def _from_DEF(D,E,F):
 def fit_to_Sabs_oct_11(Sabs,filename,plot=False):
     assert Sabs.size == 11
     Noct = Sabs.size
-    fv = np.logspace(log10(10),log10(20e3),1000) #frequency vector to fit over
-    jw = 1j*fv*2*pi
+    fv = np.logspace(np.log10(10),np.log10(20e3),1000) #frequency vector to fit over
+    jw = 1j*fv*2*np.pi
     fcv = 1000*(2.0**np.arange(-6,5))
     ymv = np.zeros(Noct)
     dwv = np.zeros(Noct)
@@ -257,15 +253,15 @@ def fit_to_Sabs_oct_11(Sabs,filename,plot=False):
         if j==0:
             i1=0
         else:
-            i1 = np.flatnonzero(fv>=fc/sqrt(2))[0]
+            i1 = np.flatnonzero(fv>=fc/np.sqrt(2))[0]
         if j==Noct-1:
             i2=fv.size
         else:
-            i2 = np.flatnonzero(fv>=fc*sqrt(2))[0]
+            i2 = np.flatnonzero(fv>=fc*np.sqrt(2))[0]
 
         Y_target[i1:i2] = Ynm
-        w0 = 2*pi*fc
-        dw = w0/sqrt(2) #using resonance with half-octave bandwidth
+        w0 = 2*np.pi*fc
+        dw = w0/np.sqrt(2) #using resonance with half-octave bandwidth
         ymv[j] = Ynm
         dwv[j] = dw
         w0v[j] = w0
