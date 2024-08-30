@@ -1,5 +1,6 @@
 import click
 
+from pffdtd.analysis.cli import analysis
 from pffdtd.materials.cli import materials
 
 
@@ -11,4 +12,5 @@ def main(ctx, verbose):
     ctx.obj['VERBOSE'] = verbose
 
 
+main.add_command(analysis)
 main.add_command(materials)

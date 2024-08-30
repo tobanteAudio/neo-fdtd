@@ -1,8 +1,8 @@
-import argparse
 import glob
 import os
 import pathlib
 
+import click
 import numpy as np
 import scipy.io.wavfile as wavfile
 import scipy.signal as signal
@@ -155,31 +155,25 @@ def run(files, fmin, fmax, show_all=False, show_tolerance=True, target=None):
     plt.show()
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('filename', nargs='*')
-    parser.add_argument('--data_dir', type=str)
-    parser.add_argument('--fmin', type=float, default=20.0)
-    parser.add_argument('--fmax', type=float, default=1000.0)
-    parser.add_argument('--target', type=float)
-
-    args = parser.parse_args()
-    if args.data_dir and len(args.filename) > 0:
+@click.command(name="t60", help="Plot RT60 decay times.")
+@click.argument('filename', nargs=-1, type=click.Path(exists=True))
+@click.option('--data_dir', type=click.Path(exists=True))
+@click.option('--fmin', default=1.0)
+@click.option('--fmax', default=1000.0)
+@click.option('--target', default=0.0)
+def main(filename, data_dir, fmin, fmax, target):
+    if data_dir and len(filename) > 0:
         raise RuntimeError("--data_dir not valid, when comparing IRs")
 
-    files = args.filename
-    if args.data_dir:
-        files = collect_wav_files(args.data_dir, "*_out_normalised.wav")
+    files = filename
+    if data_dir:
+        files = collect_wav_files(data_dir, "*_out_normalised.wav")
 
     run(
         list(sorted(files)),
-        args.fmin,
-        args.fmax,
+        fmin,
+        fmax,
         show_tolerance=True,
         show_all=True,
-        target=args.target
+        target=target
     )
-
-
-if __name__ == '__main__':
-    main()

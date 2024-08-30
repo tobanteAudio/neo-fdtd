@@ -1,8 +1,8 @@
 import glob
 import os
-import argparse
 import pathlib
 
+import click
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import find_peaks
@@ -92,17 +92,26 @@ def frequency_spacing_index(modes):
     return psi / (num-1)
 
 
+@click.command(name="room-modes", help="Plot room modes.")
+@click.argument('filename', nargs=-1, type=click.Path(exists=True))
+@click.option('--data_dir', type=click.Path(exists=True))
+@click.option('--fmin', default=1.0, type=float)
+@click.option('--fmax', default=200.0, type=float)
+@click.option('--width', default=2.0, type=float)
+@click.option('--length', default=3.0, type=float)
+@click.option('--height', default=4.0, type=float)
+@click.option('--num_modes', default=10, type=int)
+@click.option('--plot/--no-plot', default=True)
 def main(
-    *,
-    data_dir=None,
-    filename=None,
-    fmin=None,
-    fmax=None,
-    width=None,
-    length=None,
-    height=None,
-    num_modes=None,
-    plot=True,
+    filename,
+    data_dir,
+    fmin,
+    fmax,
+    width,
+    length,
+    height,
+    num_modes,
+    plot,
 ):
     directory = data_dir
     paths = filename
@@ -186,22 +195,3 @@ def main(
         plt.show()
 
     return calculated_mode_freqs, measured_mode_freqs
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('filename', nargs='*')
-    parser.add_argument('--data_dir', type=str, help='run directory')
-    parser.add_argument('--fmax', type=float, default=200.0)
-    parser.add_argument('--fmin', type=float, default=1.0)
-    parser.add_argument('--modes', type=int, default=10)
-    args = parser.parse_args()
-
-    main(
-        data_dir=args.data_dir,
-        filename=args.filename,
-        fmin=args.fmin,
-        fmax=args.fmax,
-        num_modes=args.modes,
-        plot=True
-    )

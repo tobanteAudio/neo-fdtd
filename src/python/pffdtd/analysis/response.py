@@ -1,5 +1,4 @@
-import argparse
-
+import click
 import scipy.io.wavfile as wavfile
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,60 +22,34 @@ def fractional_octave_smoothing(magnitudes, fs, nfft, fraction=3):
     - smoothed: Array of smoothed FFT magnitudes.
     """
 
-    # Define the reference frequency and calculate center frequencies
-    f0 = 1000  # Reference frequency (1 kHz)
-    start_freq = 15.625  # Start frequency (20 Hz)
-    end_freq = 20480  # End frequency (20.48 kHz)
-
-    # Calculate the number of bands needed to cover the frequency range
-    n_bands = int(np.ceil(np.log2(end_freq / start_freq) * fraction))
-
-    center_freqs = start_freq * 2**(np.arange(n_bands) / fraction)
-    fft_freqs = np.fft.rfftfreq(nfft, 1/fs)
+    frequencies = np.fft.rfftfreq(nfft, 1/fs)
     smoothed = np.zeros_like(magnitudes)
 
-    # for fc in center_freqs:
-    #     fl = fc / 2**(1/(2*fraction))
-    #     fu = fc * 2**(1/(2*fraction))
-    #     indices = np.where((fft_freqs >= fl) & (fft_freqs <= fu))[0]
-    #     if len(indices) > 0:
-    #         smoothed[indices] = np.mean(magnitudes[indices])
-
     for i in range(magnitudes.shape[-1]):
-        fc = fft_freqs[i]
+        fc = frequencies[i]
         fl = fc / 2**(1/(2*fraction))
         fu = fc * 2**(1/(2*fraction))
-        indices = np.where((fft_freqs >= fl) & (fft_freqs <= fu))[0]
+        indices = np.where((frequencies >= fl) & (frequencies <= fu))[0]
         if len(indices) > 0:
             smoothed[i] = np.mean(magnitudes[indices])
 
     return smoothed
 
 
-def parse_file_label(filename: str, fallback: str):
-    s = filename.split(';')
-    if len(s) == 1:
-        return filename, fallback
-    return s[0], s[1]
+@click.command(name="response", help="Plot frequency response.")
+@click.argument('filename', nargs=2, type=click.Path(exists=True))
+@click.option('--fmin', default=1.0)
+@click.option('--fmax', default=1000.0)
+@click.option('--label_a', default="A")
+@click.option('--label_b', default="B")
+@click.option('--smoothing', default=0.0)
+@click.option('--target', default=0.0)
+def main(filename, fmin, fmax, label_a, label_b, smoothing, target):
+    file_a = filename[0]
+    file_b = filename[1]
 
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('filename', nargs='*')
-    parser.add_argument('--fmin', type=float, default=1.0)
-    parser.add_argument('--fmax', type=float, default=1000.0)
-    parser.add_argument('--label_a', type=str, default='A')
-    parser.add_argument('--label_b', type=str, default='B')
-    parser.add_argument('--smoothing', type=float, default=0.0)
-    parser.add_argument('--target', type=float, default=0.0)
-
-    args = parser.parse_args()
-
-    file_a = args.filename[0]
-    file_b = args.filename[1]
-
-    label_a = args.label_a
-    label_b = args.label_b
+    label_a = label_a
+    label_b = label_b
 
     fs_a, buf_a = wavfile.read(file_a)
     fs_b, buf_b = wavfile.read(file_b)
@@ -84,7 +57,7 @@ def main():
     assert fs_a == fs_b
     assert buf_a.shape == buf_b.shape
 
-    fmax = args.fmax if args.fmax != 0.0 else fs_a/2
+    fmax = fmax if fmax != 0.0 else fs_a/2
     nfft = 2**iceil(np.log2(buf_a.shape[0]))
     freqs = np.fft.rfftfreq(nfft, 1/fs_a)
 
@@ -101,8 +74,8 @@ def main():
     dB_a += 75.0
     dB_b += 75.0
 
-    if args.smoothing > 0.0:
-        smoothing = args.smoothing
+    if smoothing > 0.0:
+        smoothing = smoothing
         dB_a = fractional_octave_smoothing(dB_a, fs_a, nfft, smoothing)
         dB_b = fractional_octave_smoothing(dB_b, fs_b, nfft, smoothing)
 
@@ -121,7 +94,7 @@ def main():
     ax[0].set_xlabel('Frequency [Hz]')
     ax[0].set_ylabel('Amplitude [dB]')
     ax[0].set_ylim((20, 80))
-    ax[0].set_xlim((args.fmin, fmax))
+    ax[0].set_xlim((fmin, fmax))
     ax[0].xaxis.set_major_formatter(formatter)
     ax[0].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
     ax[0].minorticks_on()
@@ -129,12 +102,13 @@ def main():
 
     label = f'{label_b}-{label_a}'
     ax[1].semilogx(freqs, difference, linestyle='-', label=label)
-    if args.target != 0.0:
-        ax[1].hlines(args.target, args.fmin, fmax, linestyle='--', label=f"Target {args.target} dB")
+    if target != 0.0:
+        ax[1].hlines(target, fmin, fmax, linestyle='--',
+                     label=f"Target {target} dB")
     ax[1].set_title('Difference')
     ax[1].set_xlabel('Frequency [Hz]')
     ax[1].set_ylabel('Amplitude [dB]')
-    ax[1].set_xlim((args.fmin, fmax))
+    ax[1].set_xlim((fmin, fmax))
     # ax[1].set_ylim((-np.max(np.abs(difference)), np.max(np.abs(difference))))
     ax[1].set_ylim((-30, 30))
     ax[1].xaxis.set_major_formatter(formatter)
@@ -143,7 +117,3 @@ def main():
     ax[1].legend()
 
     plt.show()
-
-
-if __name__ == '__main__':
-    main()
