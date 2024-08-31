@@ -398,10 +398,10 @@ void loadSimulation3D(Simulation3D& sim) {
       double bd  = b * (2.0 * Dh - Eh - 0.5 * Fh);
       double bDh = b * Dh;
       double bFh = b * Fh;
-      assert(!isinf(b));
-      assert(!isnan(b));
-      assert(!isinf(bd));
-      assert(!isnan(bd));
+      assert(not std::isinf(b));
+      assert(not std::isnan(b));
+      assert(not std::isinf(bd));
+      assert(not std::isnan(bd));
 
       int32_t mij        = (int32_t)MMb * i + j;
       mat_quads[mij].b   = (Real)b;
