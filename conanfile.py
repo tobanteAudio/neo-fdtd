@@ -7,7 +7,7 @@ class NeoFDTD(ConanFile):
 
     def requirements(self):
         self.requires("cli11/2.4.2")
-        self.requires("fmt/11.0.1")
+        self.requires("fmt/11.0.2")
 
         if self.settings.os != "Macos":
             self.requires("hdf5/1.14.4.3")
