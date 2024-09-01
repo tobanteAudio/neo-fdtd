@@ -342,7 +342,7 @@ namespace pffdtd {
   // Read materials HDF5 dataset
   //
   ////////////////////////////////////////////////////////////////////////
-  filename = simDir / "sim_mats.h5";
+  filename = simDir / "materials.h5";
   if (not std::filesystem::exists(filename))
     assert(true == false);
 

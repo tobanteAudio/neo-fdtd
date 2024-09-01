@@ -125,7 +125,7 @@ class EnginePython3D:
             assert (self.l2<=1/3)
 
 
-        h5f = h5py.File(Path(data_dir / Path('sim_mats.h5')),'r')
+        h5f = h5py.File(Path(data_dir / Path('materials.h5')),'r')
         Nmat = h5f['Nmat'][()]
         DEF = np.zeros((Nmat,MMb,3))
         Mb = h5f['Mb'][...]

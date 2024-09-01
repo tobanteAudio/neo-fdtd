@@ -23,7 +23,7 @@ from pffdtd.voxelizer.vox_grid import VoxGrid
 from pffdtd.voxelizer.vox_scene import VoxScene
 from pffdtd.sim3d.sim_signals import SimSignals
 from pffdtd.sim3d.constants import SimConstants3D
-from pffdtd.sim3d.sim_mats import SimMats
+from pffdtd.sim3d.sim_materials import SimMaterials
 from pffdtd.sim3d.rotate import rotate, sort_sim_data, copy_sim_data, fold_fcc_sim_data
 
 
@@ -86,8 +86,8 @@ def sim_setup(
     constants.save(save_folder)
 
     #link up the wall materials to impedance datasets
-    sim_mats = SimMats(save_folder=save_folder)
-    sim_mats.package(mat_files_dict=mat_files_dict,mat_list=room_geo.mat_str,read_folder=mat_folder)
+    materials = SimMaterials(save_folder=save_folder)
+    materials.package(mat_files_dict=mat_files_dict,mat_list=room_geo.mat_str,read_folder=mat_folder)
 
     #set the cartesian grid (also for FCC)
     cart_grid = CartGrid(h=constants.h,offset=3.5,bmin=room_geo.bmin,bmax=room_geo.bmax,fcc=fcc_flag)
