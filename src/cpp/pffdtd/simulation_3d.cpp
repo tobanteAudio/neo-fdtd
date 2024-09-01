@@ -66,7 +66,8 @@ void check_inside_grid(
 namespace pffdtd {
 
 // load the sim data from Python-written HDF5 files
-void loadSimulation3D(Simulation3D& sim) {
+[[nodiscard]] auto loadSimulation3D(std::filesystem::path const& simDir)
+    -> Simulation3D {
   // local values, to read in and attach to struct at end
   int64_t Nx, Ny, Nz;
   int64_t Nb, Nbl, Nba;
@@ -102,18 +103,18 @@ void loadSimulation3D(Simulation3D& sim) {
   hsize_t dims[2]; // HDF5 type
   int expected_ndims;
   char dset_str[80];
-  char filename[80];
+  // char filename[80];
 
   ////////////////////////////////////////////////////////////////////////
   //
   // Read sim_consts HDF5 dataset
   //
   ////////////////////////////////////////////////////////////////////////
-  strcpy(filename, "sim_consts.h5");
+  auto filename = simDir / "sim_consts.h5";
   if (not std::filesystem::exists(filename))
     assert(true == false);
 
-  file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
+  file = H5Fopen(filename.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 
   //////////////////
   // constants
@@ -136,10 +137,10 @@ void loadSimulation3D(Simulation3D& sim) {
   assert((fcc_flag >= 0) && (fcc_flag <= 2));
 
   if (H5Fclose(file) != 0) {
-    printf("error closing file %s", filename);
+    fmt::println("error closing file {}", filename.string());
     assert(true == false);
   } else
-    printf("closed file %s\n", filename);
+    fmt::println("closed file {}", filename.string());
 
   if (fcc_flag > 0) { // FCC (1 is CPU-based, 2 is CPU or GPU)
     assert(l2 <= 1.0);
@@ -178,11 +179,11 @@ void loadSimulation3D(Simulation3D& sim) {
   // Read vox HDF5 dataset
   //
   ////////////////////////////////////////////////////////////////////////
-  strcpy(filename, "vox_out.h5");
+  filename = simDir / "vox_out.h5";
   if (not std::filesystem::exists(filename))
     assert(true == false);
 
-  file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
+  file = H5Fopen(filename.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 
   //////////////////
   // integers
@@ -250,21 +251,21 @@ void loadSimulation3D(Simulation3D& sim) {
   free(saf_bn);
 
   if (H5Fclose(file) != 0) {
-    printf("error closing file %s", filename);
+    fmt::println("error closing file {}", filename.string());
     assert(true == false);
   } else
-    printf("closed file %s\n", filename);
+    fmt::println("closed file {}", filename.string());
 
   ////////////////////////////////////////////////////////////////////////
   //
   // Read comms HDF5 dataset
   //
   ////////////////////////////////////////////////////////////////////////
-  strcpy(filename, "comms_out.h5");
+  filename = simDir / "comms_out.h5";
   if (not std::filesystem::exists(filename))
     assert(true == false);
 
-  file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
+  file = H5Fopen(filename.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 
   //////////////////
   // integers
@@ -327,10 +328,10 @@ void loadSimulation3D(Simulation3D& sim) {
   assert((int64_t)dims[1] == Nt);
 
   if (H5Fclose(file) != 0) {
-    printf("error closing file %s", filename);
+    fmt::println("error closing file {}", filename.string());
     assert(true == false);
   } else
-    printf("closed file %s\n", filename);
+    fmt::println("closed file {}", filename.string());
 
   // not recommended to run single without differentiating input
   if (sizeof(Real) == 4)
@@ -341,11 +342,11 @@ void loadSimulation3D(Simulation3D& sim) {
   // Read materials HDF5 dataset
   //
   ////////////////////////////////////////////////////////////////////////
-  strcpy(filename, "sim_mats.h5");
+  filename = simDir / "sim_mats.h5";
   if (not std::filesystem::exists(filename))
     assert(true == false);
 
-  file = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
+  file = H5Fopen(filename.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 
   //////////////////
   // integers
@@ -414,10 +415,10 @@ void loadSimulation3D(Simulation3D& sim) {
   }
 
   if (H5Fclose(file) != 0) {
-    printf("error closing file %s", filename);
+    fmt::println("error closing file {}", filename.string());
     assert(true == false);
   } else
-    printf("closed file %s\n", filename);
+    fmt::println("closed file {}", filename.string());
 
   ////////////////////////////////////////////////////////////////////////
   //
@@ -601,9 +602,11 @@ void loadSimulation3D(Simulation3D& sim) {
 
   // for outputs
   allocate_zeros((void**)&u_out, Nr * Nt * sizeof(double));
+
   /*------------------------
    * ATTACH
   ------------------------*/
+  auto sim        = Simulation3D{};
   sim.Ns          = Ns;
   sim.Nr          = Nr;
   sim.Nt          = Nt;
@@ -640,6 +643,7 @@ void loadSimulation3D(Simulation3D& sim) {
   sim.u_out       = u_out;
   sim.mat_beta    = mat_beta;
   sim.mat_quads   = mat_quads;
+  return sim;
 }
 
 // free everything
@@ -878,7 +882,7 @@ void rescaleOutput(Simulation3D& sim) {
   });
 }
 
-void writeOutputs(Simulation3D& sim) {
+void writeOutputs(Simulation3D& sim, std::filesystem::path const& simDir) {
   auto Nt           = static_cast<size_t>(sim.Nt);
   auto Nr           = static_cast<size_t>(sim.Nr);
   auto* out_reorder = sim.out_reorder;
@@ -891,7 +895,7 @@ void writeOutputs(Simulation3D& sim) {
     }
   }
 
-  auto writer = pffdtd::H5FWriter{"sim_outs.h5"};
+  auto writer = pffdtd::H5FWriter{simDir / "sim_outs.h5"};
   writer.write("u_out", u_out);
   std::puts("wrote output dataset");
 }

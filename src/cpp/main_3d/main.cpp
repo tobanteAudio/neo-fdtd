@@ -29,21 +29,26 @@
 
 #include <chrono>
 
-auto main(int /*argc*/, char** /*argv*/) -> int {
-  auto const start = std::chrono::steady_clock::now();
+auto main(int argc, char** argv) -> int {
+  if (argc != 2) {
+    fmt::println(stderr, "USAGE: pffdtd_3d path/to/sim");
+    return EXIT_FAILURE;
+  }
 
-  auto sim = pffdtd::Simulation3D{};
-  loadSimulation3D(sim);
-  scaleInput(sim);
-  run(sim);
-  rescaleOutput(sim);
-  writeOutputs(sim);
-  printLastSample(sim);
-  freeSimulation3D(sim);
+  auto const simDir = std::filesystem::path{argv[1]};
+  auto const start  = std::chrono::steady_clock::now();
+
+  auto sim = pffdtd::loadSimulation3D(simDir);
+  pffdtd::scaleInput(sim);
+  pffdtd::run(sim);
+  pffdtd::rescaleOutput(sim);
+  pffdtd::writeOutputs(sim, simDir);
+  pffdtd::printLastSample(sim);
+  pffdtd::freeSimulation3D(sim);
 
   auto const stop = std::chrono::steady_clock::now();
   auto const sec  = std::chrono::duration<double>(stop - start);
   fmt::println("--Simulation time: {} s", sec.count());
 
-  return 0;
+  return EXIT_SUCCESS;
 }

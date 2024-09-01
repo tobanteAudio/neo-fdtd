@@ -29,8 +29,7 @@ pffdtd materials build "$materials_dir"
 python "$sim_setup"
 
 # Run sim
-cd "$sim_dir"
-$engine_exe
+$engine_exe "$sim_dir"
 
 # Post-process
 python -m pffdtd.sim3d.process_outputs --data_dir="$sim_dir" --fcut_lowpass "$fmax" --N_order_lowpass=8 --symmetric --fcut_lowcut "$fmin" --N_order_lowcut=4 --air_abs_filter="stokes" --save_wav --plot

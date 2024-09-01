@@ -6,6 +6,7 @@
 
 #include <array>
 #include <cassert>
+#include <filesystem>
 #include <span>
 #include <stdexcept>
 #include <string>
@@ -100,8 +101,8 @@ struct H5FReader {
   }
 
   private:
-  auto
-  checkErrorAndCloseDataset(char const* name, hid_t set, herr_t err) -> void {
+  auto checkErrorAndCloseDataset(char const* name, hid_t set, herr_t err)
+      -> void {
     if (err != 0) {
       throw std::runtime_error{"dataset read in: " + std::string{name}};
     }
@@ -115,8 +116,13 @@ struct H5FReader {
 };
 
 struct H5FWriter {
-  explicit H5FWriter(char const* path)
-      : _handle{H5Fcreate(path, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)} {}
+  explicit H5FWriter(std::filesystem::path const& path)
+      : _handle{H5Fcreate(
+          path.string().c_str(),
+          H5F_ACC_TRUNC,
+          H5P_DEFAULT,
+          H5P_DEFAULT
+      )} {}
 
   ~H5FWriter() { H5Fclose(_handle); }
 

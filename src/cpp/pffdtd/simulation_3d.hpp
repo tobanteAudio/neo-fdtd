@@ -20,6 +20,7 @@
 #include "pffdtd/utility.hpp"
 
 #include <cstdint>
+#include <filesystem>
 
 // maximum number of RLC branches in freq-dep (FD) boundaries (needed at
 // compile-time for CUDA kernels)
@@ -28,6 +29,14 @@
 #define MNm 64 // change as necssary
 
 namespace pffdtd {
+
+// see python code and 2016 ISMRA paper
+struct MatQuad {
+  Real b;   // b
+  Real bd;  // b*d
+  Real bDh; // b*D-hat
+  Real bFh; // b*F-hat
+};
 
 // main sim data, on host
 struct Simulation3D {
@@ -70,20 +79,13 @@ struct Simulation3D {
   Real a1;                   // update stencil coefficient
 };
 
-// see python code and 2016 ISMRA paper
-struct MatQuad {
-  Real b;   // b
-  Real bd;  // b*d
-  Real bDh; // b*D-hat
-  Real bFh; // b*F-hat
-};
-
-void loadSimulation3D(Simulation3D& sim);
+[[nodiscard]] auto loadSimulation3D(std::filesystem::path const& simDir)
+    -> Simulation3D;
 void freeSimulation3D(Simulation3D& sim);
 void printLastSample(Simulation3D& sim);
 void scaleInput(Simulation3D& sim);
 void rescaleOutput(Simulation3D& sim);
-void writeOutputs(Simulation3D& sim);
+void writeOutputs(Simulation3D& sim, std::filesystem::path const& simDir);
 
 void readH5Dataset(
     hid_t file,
