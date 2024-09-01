@@ -30,7 +30,7 @@ jobs:
             osx_target: ""
             cmake_prefix_path: "/opt/intel/oneapi/tbb/latest"
             cmake_flags: ""
-            cxx_flags: "-march=x86-64-v2"
+            cxx_flags: ""
             python_version: "3.12"
             pffdtd_engine: "build/src/cpp/main_3d/pffdtd_3d"
 
@@ -39,7 +39,7 @@ jobs:
             osx_target: "10.15"
             cmake_prefix_path: ""
             cmake_flags: '-D OpenMP_ROOT=`brew list libomp | grep libomp.a | sed -E "s/\/lib\/.*//"`'
-            cxx_flags: "-march=x86-64-v2"
+            cxx_flags: ""
             python_version: "3.12"
             pffdtd_engine: "build/src/cpp/main_3d/pffdtd_3d"
 
