@@ -1,60 +1,49 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: vox_scene.py
-#
-# Description: a scene voxelizer for FDTD
-#
-#  Sets up primary input for FDTD (adjacencies, materials, boundary nodes)
-#  CPU-based and uses multiprocessing.
-#  Tested up to ~10^10 points.  Meant for single-node use (no MPI)
-#
-# Notes:
-#  - Performance will depend on geometry, grid spacing, voxel size and # processes
-#  - Simple *heuristic* default auto-tuning (Nvox_est) provided (manual choice usually better)
-#  - This temporarily uses disk space for multiprocessing, will warn if not enough space
-#  - In single precision or with FCC, Disk usage relative to simulation size goes up
-#
-# About voxelisation:
-#  - despite the use of term 'voxelizer' this is not necessarily a solid or surface voxelizer
-#  - this computes a lower-level adjacency graph for points on a grid (a grid of voxels)
-#  - this allows for non-watertight scenes
-#  - expects sides of materials properly oriented, boundary conditions depend on this (also FDTD performance)
-#  - has surface-area corrections to mitigate staircasing errors
-#  - points too near boundary (within some eps) are set not adjacent to neighbours
-#  - this is meant for interpretation of FDTD grid as FVTD mesh of voxels/cells
-#  - this exports data just for boundary nodes (anything with non-adjacency to a neighbour)
-#
-##############################################################################
+# SPDX-License-Identifier: MIT
+
+"""A scene voxelizer for FDTD
+
+Sets up primary input for FDTD (adjacencies, materials, boundary nodes)
+CPU-based and uses multiprocessing.
+Tested up to ~10^10 points. Meant for single-node use (no MPI)
+
+Notes:
+ - Performance will depend on geometry, grid spacing, voxel size and # processes
+ - Simple *heuristic* default auto-tuning (Nvox_est) provided (manual choice usually better)
+ - This temporarily uses disk space for multiprocessing, will warn if not enough space
+ - In single precision or with FCC, Disk usage relative to simulation size goes up
+
+About voxelisation:
+ - despite the use of term 'voxelizer' this is not necessarily a solid or surface voxelizer
+ - this computes a lower-level adjacency graph for points on a grid (a grid of voxels)
+ - this allows for non-watertight scenes
+ - expects sides of materials properly oriented, boundary conditions depend on this (also FDTD performance)
+ - has surface-area corrections to mitigate staircasing errors
+ - points too near boundary (within some eps) are set not adjacent to neighbours
+ - this is meant for interpretation of FDTD grid as FVTD mesh of voxels/cells
+ - this exports data just for boundary nodes (anything with non-adjacency to a neighbour)
+"""
+
+from pathlib import Path
 
 import numpy as np
 from numpy import array as npa
+import numba as nb
+import h5py
+import psutil
+
+import multiprocessing as mp
+from multiprocessing import shared_memory
+from tqdm import tqdm
+
 from pffdtd.common.room_geo import RoomGeo
 from pffdtd.common.timerdict import TimerDict
 from pffdtd.common.tri_ray_intersection import tri_ray_intersection_vec
-from pffdtd.common.tri_box_intersection import tri_box_intersection_vec
 from pffdtd.voxelizer.cart_grid import CartGrid
 from pffdtd.voxelizer.vox_grid import VoxGrid
 from pffdtd.common.myfuncs import clear_dat_folder
 from pffdtd.common.myfuncs import yes_or_no,ind2sub3d
 from pffdtd.common.myfuncs import dotv
 from pffdtd.common.myfuncs import get_default_nprocs
-from pathlib import Path
-import numba as nb
-import sys
-import h5py
-
-import psutil
-
-import multiprocessing as mp
-from multiprocessing import shared_memory
-from tqdm import tqdm
-from memory_profiler import profile as memory_profile
 
 F_EPS = np.finfo(np.float64).eps
 R_EPS = 1e-6 #relative eps (to grid spacing) for near hits

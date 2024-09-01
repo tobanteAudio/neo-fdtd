@@ -15,7 +15,7 @@ def main(filename):
     frequencies, times, Zxx = stft(rir, fs=fs, nperseg=nfft)
 
     decay_time = np.zeros(frequencies.shape)
-    for i, freq in enumerate(frequencies):
+    for i, _ in enumerate(frequencies):
         magnitude = np.abs(Zxx[i, :])
         magnitude_db = 20 * np.log10(magnitude / np.max(magnitude))
         try:
@@ -39,15 +39,15 @@ def main(filename):
     )])
     fig.update_layout(
         title='Decay Times',
-        scene=dict(
-            xaxis_title='X: Time [s]',
-            yaxis_title='Y: Frequency [Hz]',
-            zaxis_title='Z: Amplitude [dB]',
+        scene={
+            "xaxis_title": 'X: Time [s]',
+            "yaxis_title": 'Y: Frequency [Hz]',
+            "zaxis_title": 'Z: Amplitude [dB]',
 
-            xaxis=dict(range=[0, 1],),
-            yaxis=dict(type='log',),
-            # zaxis=dict(range=[-60, 0],),
-        ),
+            "xaxis": {"range": [0, 1]},
+            "yaxis": {"type": "log"},
+            # "zaxis": {"range": [-60, 0]},
+        }
     )
 
     Z = 20 * np.log10(np.abs(Zxx/nfft))

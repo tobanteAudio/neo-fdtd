@@ -11,17 +11,16 @@
 # Description: Class for source/receiver positions and input signals
 #
 ##############################################################################
+from pathlib import Path
 
+import h5py
 import numpy as np
 from numpy import array as npa
-from pffdtd.voxelizer.cart_grid import CartGrid
-from pathlib import Path
+from numpy import pi,cos,sin
+from scipy.signal import lfilter
+
 from pffdtd.common.timerdict import TimerDict
 from pffdtd.common.myfuncs import iceil
-import h5py
-from scipy.signal import lfilter,bilinear_zpk
-from numpy import pi,cos,sin
-
 class SimSignals:
     def __init__(self,save_folder):
         #will read h,xv,yv,zv from h5 data
@@ -44,9 +43,9 @@ class SimSignals:
         self.fcc = (self.fcc_flag>0)
 
         if self.fcc:
-            assert (self.xv.size%2)==0
-            assert (self.yv.size%2)==0
-            assert (self.zv.size%2)==0
+            assert self.xv.size%2 == 0
+            assert self.yv.size%2 == 0
+            assert self.zv.size%2 == 0
 
         self.save_folder = save_folder
         self._diff = False
@@ -81,7 +80,7 @@ class SimSignals:
         elif sig_type=='dhann30': #symmetric, for viz
             N = 30
             n = np.arange(N)
-            in_sig[:N] = cos(pi*n/N)*sin(pi*n/N);
+            in_sig[:N] = cos(pi*n/N)*sin(pi*n/N)
         elif sig_type=='hann5ms': #for consistency checking
             N = iceil(5e-3/Ts)
             n = np.arange(N)
@@ -113,7 +112,7 @@ class SimSignals:
 
         b = 2/Ts*npa([1.0,-1.0]) #don't need Ts scaling but simpler to keep for receiver post-processing
         a = npa([1.0,1.0])
-        in_sigs = lfilter(b,a,in_sigs,axis=-1);
+        in_sigs = lfilter(b,a,in_sigs,axis=-1)
 
         self._diff = True
         self.in_sigs = in_sigs
@@ -236,14 +235,14 @@ class SimSignals:
             ixyz = np.unique(_ixyz) #can have duplicates in receivers
             #could speed this up with a numba routine (don't need to know clashes, just say yes or no)
             assert np.union1d(ixyz.flat[:],bn_ixyz).size == ixyz.size + bn_ixyz.size
-            self.print(f'intersection with boundaries: passed')
+            self.print('intersection with boundaries: passed')
 
         timer = TimerDict()
         timer.tic('check in_xyz')
-        self.print(f'boundary intersection check with in_ixyz..')
+        self.print('boundary intersection check with in_ixyz..')
         _check_for_clashes(self.in_ixyz,bn_ixyz)
         self.print(timer.ftoc('check in_xyz'))
         timer.tic('check in_xyz')
-        self.print(f'boundary intersection check with out_ixyz..')
+        self.print('boundary intersection check with out_ixyz..')
         _check_for_clashes(self.out_ixyz,bn_ixyz)
         self.print(timer.ftoc('check in_xyz'))

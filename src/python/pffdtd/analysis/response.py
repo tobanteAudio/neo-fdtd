@@ -1,5 +1,5 @@
 import click
-import scipy.io.wavfile as wavfile
+from scipy.io import wavfile
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import ScalarFormatter
@@ -48,9 +48,6 @@ def main(filename, fmin, fmax, label_a, label_b, smoothing, target):
     file_a = filename[0]
     file_b = filename[1]
 
-    label_a = label_a
-    label_b = label_b
-
     fs_a, buf_a = wavfile.read(file_a)
     fs_b, buf_b = wavfile.read(file_b)
 
@@ -75,7 +72,6 @@ def main(filename, fmin, fmax, label_a, label_b, smoothing, target):
     dB_b += 75.0
 
     if smoothing > 0.0:
-        smoothing = smoothing
         dB_a = fractional_octave_smoothing(dB_a, fs_a, nfft, smoothing)
         dB_b = fractional_octave_smoothing(dB_b, fs_b, nfft, smoothing)
 

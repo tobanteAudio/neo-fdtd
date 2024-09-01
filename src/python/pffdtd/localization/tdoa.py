@@ -24,9 +24,9 @@ def time_difference_of_arrival(signal1, signal2, fs):
 def tdoa_residuals(source_pos, mic_positions, tdoas, c):
     # Function to compute the residual between observed and estimated TDOAs
     estimated_tdoas = []
-    for i in range(len(mic_positions)):
+    for i, mic_i in enumerate(mic_positions):
         for j in range(i+1, len(mic_positions)):
-            di = np.linalg.norm(source_pos - mic_positions[i])
+            di = np.linalg.norm(source_pos - mic_i)
             dj = np.linalg.norm(source_pos - mic_positions[j])
             estimated_tdoas.append((di - dj) / c)
     return np.sum((np.array(estimated_tdoas) - tdoas)**2)

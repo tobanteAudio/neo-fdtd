@@ -1,32 +1,23 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: vox_grid.py
-#
-# Description: VoxGrid class for voxelizer
-#  Uses multiprocessing.
-#
-# Notes:
-#  - Performance will depend on geometry, grid spacing, voxel size and # processes
-#  - Simple *heuristic* default auto-tuning provided
-#  - Not designed for more than 10^6 voxels (initialisation becomes bottleneck)
-#  - Expected to run on a powerful CPU (+4 cores with SMT).
-#
-##############################################################################
+# SPDX-License-Identifier: MIT
+
+"""
+VoxGrid class for voxelizer. Uses multiprocessing.
+
+Notes:
+ - Performance will depend on geometry, grid spacing, voxel size and # processes
+ - Simple *heuristic* default auto-tuning provided
+ - Not designed for more than 10^6 voxels (initialisation becomes bottleneck)
+ - Expected to run on a powerful CPU (+4 cores with SMT).
+"""
 
 import numpy as np
 from numpy import array as npa
-from pffdtd.common.room_geo import RoomGeo
-from pffdtd.voxelizer.vox_grid_base import VoxGridBase,VoxBase
-from pffdtd.voxelizer.cart_grid import CartGrid
-from pffdtd.common.timerdict import TimerDict
 from tqdm import tqdm
+
 from pffdtd.common.myfuncs import get_default_nprocs,iceil
+from pffdtd.common.room_geo import RoomGeo
+from pffdtd.voxelizer.cart_grid import CartGrid
+from pffdtd.voxelizer.vox_grid_base import VoxGridBase,VoxBase
 
 class Voxel(VoxBase):
     #using cubic voxels for simplicity

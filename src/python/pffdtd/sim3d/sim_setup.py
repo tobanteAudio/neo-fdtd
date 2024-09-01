@@ -12,9 +12,9 @@
 #
 ##############################################################################
 
-import numpy as np
-import json as json
 from pathlib import Path
+
+import numpy as np
 from numpy import array as npa
 
 from pffdtd.common.room_geo import RoomGeo
@@ -69,74 +69,76 @@ def sim_setup(
     assert duration is not None
 
     if (bmin is not None) and (bmax is not None):
-        #custom bmin/bmax (for open scenes)
-        bmin = npa(bmin,dtype=np.float64)
-        bmax = npa(bmax,dtype=np.float64)
+        # custom bmin/bmax (for open scenes)
+        bmin = npa(bmin, dtype=np.float64)
+        bmax = npa(bmax, dtype=np.float64)
 
-    #set up room geometry (reads in JSON export, rotates scene)
-    room_geo = RoomGeo(model_json_file,az_el=rot_az_el,bmin=bmin,bmax=bmax)
+    # set up room geometry (reads in JSON export, rotates scene)
+    room_geo = RoomGeo(model_json_file, az_el=rot_az_el, bmin=bmin, bmax=bmax)
     room_geo.print_stats()
 
-    #sources have to be specified in advance (edit JSON if necessary)
-    Sxyz = room_geo.Sxyz[source_num-1] #one source (one-based indexing)
-    Rxyz = room_geo.Rxyz #many receivers
+    # sources have to be specified in advance (edit JSON if necessary)
+    Sxyz = room_geo.Sxyz[source_num-1]  # one source (one-based indexing)
+    Rxyz = room_geo.Rxyz  # many receivers
 
-    #some constants for the simulation, in one place
-    constants = SimConstants(Tc=Tc,rh=rh,fmax=fmax,PPW=PPW,fcc=fcc_flag)
+    # some constants for the simulation, in one place
+    constants = SimConstants(Tc=Tc, rh=rh, fmax=fmax, PPW=PPW, fcc=fcc_flag)
     constants.save(save_folder)
 
-    #link up the wall materials to impedance datasets
+    # link up the wall materials to impedance datasets
     materials = SimMaterials(save_folder=save_folder)
-    materials.package(mat_files_dict=mat_files_dict,mat_list=room_geo.mat_str,read_folder=mat_folder)
+    materials.package(mat_files_dict=mat_files_dict,
+                      mat_list=room_geo.mat_str, read_folder=mat_folder)
 
-    #set the cartesian grid (also for FCC)
-    cart_grid = CartGrid(h=constants.h,offset=3.5,bmin=room_geo.bmin,bmax=room_geo.bmax,fcc=fcc_flag)
+    # set the cartesian grid (also for FCC)
+    cart_grid = CartGrid(h=constants.h, offset=3.5,
+                         bmin=room_geo.bmin, bmax=room_geo.bmax, fcc=fcc_flag)
     cart_grid.print_stats()
     cart_grid.save(save_folder)
 
-    #set up source/receiver positions and input signals
-    sim_comms = SimSignals(save_folder=save_folder) #reads from cart_grid
+    # set up source/receiver positions and input signals
+    sim_comms = SimSignals(save_folder=save_folder)  # reads from cart_grid
     sim_comms.prepare_source_pts(Sxyz)
     sim_comms.prepare_receiver_pts(Rxyz)
-    sim_comms.prepare_source_signals(duration,sig_type=insig_type)
+    sim_comms.prepare_source_signals(duration, sig_type=insig_type)
     if diff_source:
         sim_comms.diff_source()
     sim_comms.save(compress=compress)
 
-    #set up the voxel grid (volume hierarchy for ray-triangle intersections)
-    vox_grid = VoxGrid(room_geo,cart_grid,Nvox_est=Nvox_est,Nh=Nh)
+    # set up the voxel grid (volume hierarchy for ray-triangle intersections)
+    vox_grid = VoxGrid(room_geo, cart_grid, Nvox_est=Nvox_est, Nh=Nh)
     vox_grid.fill(Nprocs=1)
     vox_grid.print_stats()
 
-    #'voxelize' the scene (calculate FDTD mesh adjacencies and identify/correct boundary surfaces)
-    vox_scene = VoxScene(room_geo,cart_grid,vox_grid,fcc=fcc_flag)
+    # 'voxelize' the scene (calculate FDTD mesh adjacencies and identify/correct boundary surfaces)
+    vox_scene = VoxScene(room_geo, cart_grid, vox_grid, fcc=fcc_flag)
     vox_scene.calc_adj(Nprocs=1)
     vox_scene.check_adj_full()
-    vox_scene.save(save_folder,compress=compress)
+    vox_scene.save(save_folder, compress=compress)
 
-    #check that source/receivers don't intersect with boundaries
+    # check that source/receivers don't intersect with boundaries
     sim_comms.check_for_clashes(vox_scene.bn_ixyz)
 
-    #make copy for sorting/rotation for gpu
+    # make copy for sorting/rotation for gpu
     if save_folder_gpu is not None and Path(save_folder_gpu) != Path(save_folder):
-        copy_sim_data(save_folder,save_folder_gpu)
+        copy_sim_data(save_folder, save_folder_gpu)
     if save_folder_gpu is not None:
         rotate(save_folder_gpu)
         if fcc_flag:
             fold_fcc_sim_data(save_folder_gpu)
         sort_sim_data(save_folder_gpu)
 
-    #extra folder for cpu version (if needed for testing)
-    #if save_folder_cpu is not None and Path(save_folder_cpu) != Path(save_folder):
-        #copy_sim_data(save_folder,save_folder_cpu)
-    #if save_folder_cpu is not None:
-        #rotate(save_folder_cpu)
-        #if fcc_flag:
-            #fold_fcc_sim_data(save_folder_gpu)
-        #sort_sim_data(save_folder_cpu)
+    # extra folder for cpu version (if needed for testing)
+    # if save_folder_cpu is not None and Path(save_folder_cpu) != Path(save_folder):
+        # copy_sim_data(save_folder,save_folder_cpu)
+    # if save_folder_cpu is not None:
+        # rotate(save_folder_cpu)
+        # if fcc_flag:
+        # fold_fcc_sim_data(save_folder_gpu)
+        # sort_sim_data(save_folder_cpu)
 
-    #draw the voxelisation (use polyscope for dense grids)
+    # draw the voxelisation (use polyscope for dense grids)
     if draw_vox:
-        room_geo.draw(wireframe=False,backend=draw_backend)
+        room_geo.draw(wireframe=False, backend=draw_backend)
         vox_scene.draw(backend=draw_backend)
         room_geo.show(backend=draw_backend)

@@ -21,16 +21,16 @@
 #   - Plots simulations (mayavi is best, matplotlib is fallback)
 #
 ##############################################################################
-
-import numpy as np
-from numpy import array as npa
-import numba as nb
-from pathlib import Path
-from pffdtd.common.timerdict import TimerDict
-from tqdm import tqdm
+import json
 import time
+from pathlib import Path
+
 import h5py
-import json as json
+import numpy as np
+import numba as nb
+from tqdm import tqdm
+
+from pffdtd.common.timerdict import TimerDict
 from pffdtd.common.myfuncs import ind2sub3d,rel_diff,get_default_nprocs
 
 MMb = 12 #max allowed number of branches
@@ -75,7 +75,7 @@ class EnginePython3D:
         saf_bn        = h5f['saf_bn'][...]
         h5f.close()
 
-        ii = (mat_bn>-1)
+        ii = mat_bn>-1
         self.saf_bnl = saf_bn[ii]
         self.mat_bnl = mat_bn[ii]
         self.bnl_ixyz = self.bn_ixyz[ii]
@@ -110,19 +110,19 @@ class EnginePython3D:
         self.print(f'Nr={self.Nr} Ns={self.Ns} Nt={self.Nt}')
 
         if self.fcc:
-            assert (self.Nx%2)==0
-            assert (self.Ny%2)==0
-            assert (self.Nz%2)==0
-            self.print(f'On FCC subgrid')
-            assert (self.adj_bn.shape[1] == 12)
+            assert self.Nx%2 ==0
+            assert self.Ny%2 ==0
+            assert self.Nz%2 ==0
+            self.print('On FCC subgrid')
+            assert self.adj_bn.shape[1] == 12
         if self.fcc:
             self.ssaf_bnl = self.saf_bnl*0.5/np.sqrt(2.0) #rescaled by S*h/V
-            assert (self.l<=1.0)
-            assert (self.l2<=1.0)
+            assert self.l<=1.0
+            assert self.l2<=1.0
         else:
             self.ssaf_bnl = self.saf_bnl
-            assert (self.l<=np.sqrt(1/3))
-            assert (self.l2<=1/3)
+            assert self.l<=np.sqrt(1/3)
+            assert self.l2<=1/3
 
 
         h5f = h5py.File(Path(data_dir / Path('materials.h5')),'r')
@@ -160,7 +160,7 @@ class EnginePython3D:
         self.bna_ixyz = bna_ixyz
         self.Nba = Nba
         if self.energy_on:
-            self.V_bna = (2.0**-Q_bna)
+            self.V_bna = 2.0**-Q_bna
 
     def allocate_mem(self):
         self.print('allocating mem..')
@@ -169,7 +169,6 @@ class EnginePython3D:
         Nx = self.Nx
         Ny = self.Ny
         Nz = self.Nz
-        Nm = self.Nm
 
         u0 = np.zeros((Nx,Ny,Nz),dtype=np.float64)
         u1 = np.zeros((Nx,Ny,Nz),dtype=np.float64)
@@ -214,7 +213,6 @@ class EnginePython3D:
         self.bn_mask = bn_mask
 
     def set_coeffs(self):
-        l = self.l
         l2 = self.l2
         Ts = self.Ts
         mat_bnl = self.mat_bnl
@@ -223,12 +221,12 @@ class EnginePython3D:
         Nm = self.Nm
 
         if self.fcc:
-            assert(l2<=1.0)
-            a1 = (2.0-l2*3.0) #0.25*12
+            assert l2<=1.0
+            a1 = 2.0-l2*3.0 #0.25*12
             a2 = 0.25*l2
         else:
-            assert(l2<=1/3)
-            a1 = (2.0-l2*6.0)
+            assert l2<=1/3
+            a1 = 2.0-l2*6.0
             a2 = l2
 
         av = np.array([a1,a2],dtype=np.float64)
@@ -251,7 +249,7 @@ class EnginePython3D:
             Fh = F*Ts
 
             b = 1.0/(2.0*Dh+Eh+0.5*Fh)
-            d = (2.0*Dh-Eh-0.5*Fh)
+            d = 2.0*Dh-Eh-0.5*Fh
             assert ~np.any(np.isnan(np.r_[b,d]))
             assert ~np.any(np.isinf(np.r_[b,d]))
 
@@ -306,8 +304,8 @@ class EnginePython3D:
         timer = TimerDict()
 
         pbar = {}
-        pbar['vox']= tqdm(total=Nt*Npts,desc=f'FDTD run',unit='vox',unit_scale=True,ascii=True,leave=False,position=0,dynamic_ncols=True)
-        pbar['samples'] = tqdm(total=Nt,desc=f'FDTD run',unit='samples',unit_scale=True,ascii=True,leave=False,position=1,ncols=0)
+        pbar['vox']= tqdm(total=Nt*Npts,desc='FDTD run',unit='vox',unit_scale=True,ascii=True,leave=False,position=0,dynamic_ncols=True)
+        pbar['samples'] = tqdm(total=Nt,desc='FDTD run',unit='samples',unit_scale=True,ascii=True,leave=False,position=1,ncols=0)
 
         timer.tic('run')
         for n in range(0,Nt,nsteps):
@@ -330,7 +328,6 @@ class EnginePython3D:
         Ny = self.Ny
         Nz = self.Nz
         Nt = self.Nt
-        Npts = Nx*Ny*Nz
         bn_mask = self.bn_mask
         in_ixyz = self.in_ixyz
         ix,iy,iz = ind2sub3d(in_ixyz,Nx,Ny,Nz)
@@ -401,15 +398,15 @@ class EnginePython3D:
                 mat_str = list(mats_dict.keys())
 
                 #for section cuts
-                edges_xy_0 = npa([[],[]]).T
-                edges_xy_1 = npa([[],[]]).T
-                edges_xz_0 = npa([[],[]]).T
-                edges_xz_1 = npa([[],[]]).T
-                edges_yz_0 = npa([[],[]]).T
-                edges_yz_1 = npa([[],[]]).T
+                edges_xy_0 = np.array([[],[]]).T
+                edges_xy_1 = np.array([[],[]]).T
+                edges_xz_0 = np.array([[],[]]).T
+                edges_xz_1 = np.array([[],[]]).T
+                edges_yz_0 = np.array([[],[]]).T
+                edges_yz_1 = np.array([[],[]]).T
                 for mat in mat_str:
-                    pts = npa(mats_dict[mat]['pts'],dtype=np.float64) #no rotation
-                    tris = npa(mats_dict[mat]['tris'],dtype=np.int64)
+                    pts = np.array(mats_dict[mat]['pts'],dtype=np.float64) #no rotation
+                    tris = np.array(mats_dict[mat]['tris'],dtype=np.int64)
                     for j in range(3):
                         ii = np.nonzero((pts[tris[:,j%3],2]>zv[iz_in]) ^ (pts[tris[:,(j+1)%3],2]>zv[iz_in]))[0]
                         edges_xy_0 = np.r_[edges_xy_0,pts[tris[ii,j%3]][:,[0,1]]]
@@ -426,18 +423,18 @@ class EnginePython3D:
                         edges_yz_1 = np.r_[edges_yz_1,pts[tris[ii,(j+1)%3]][:,[1,2]]]
                         del ii
 
-                    u = edges_xy_1[:,0]-edges_xy_0[:,0];
-                    v = edges_xy_1[:,1]-edges_xy_0[:,1];
+                    u = edges_xy_1[:,0]-edges_xy_0[:,0]
+                    v = edges_xy_1[:,1]-edges_xy_0[:,1]
                     w=np.zeros(u.shape)
                     mlab.quiver3d(edges_xy_0[:,0],edges_xy_0[:,1],np.full(u.shape,zv[iz_in]),u,v,w,mode='2ddash',scale_factor=1.,color=(0,0,0))
 
-                    u = edges_xz_1[:,0]-edges_xz_0[:,0];
+                    u = edges_xz_1[:,0]-edges_xz_0[:,0]
                     v=np.zeros(u.shape)
-                    w = edges_xz_1[:,1]-edges_xz_0[:,1];
+                    w = edges_xz_1[:,1]-edges_xz_0[:,1]
                     mlab.quiver3d(edges_xz_0[:,0],np.full(u.shape,yv[iy_in]),edges_xz_0[:,1],u,v,w,mode='2ddash',scale_factor=1.,color=(0,0,0))
 
-                    v = edges_yz_1[:,0]-edges_yz_0[:,0];
-                    w = edges_yz_1[:,1]-edges_yz_0[:,1];
+                    v = edges_yz_1[:,0]-edges_yz_0[:,0]
+                    w = edges_yz_1[:,1]-edges_yz_0[:,1]
                     u=np.zeros(w.shape)
                     mlab.quiver3d(np.full(u.shape,xv[ix_in]),edges_yz_0[:,0],edges_yz_0[:,1],u,v,w,mode='2ddash',scale_factor=1.,color=(0,0,0))
 
@@ -464,14 +461,24 @@ class EnginePython3D:
 
             mlab.orientation_axes()
 
-            fake_verts = np.c_[npa([xv[0],yv[0],zv[0]]),npa([xv[-1],yv[-1],zv[-1]])]
+            fake_verts = np.c_[np.array([xv[0],yv[0],zv[0]]),np.array([xv[-1],yv[-1],zv[-1]])]
             mlab.plot3d(*fake_verts,transparent=True,opacity=0)
             mlab.axes(xlabel='x', ylabel='y', zlabel='z', color=(0., 0., 0.))
 
             #fix z-up
             fig.scene.interactor.interactor_style = tvtk.InteractorStyleTerrain()
 
-        pbar = tqdm(total=Nt,desc=f'FDTD run',unit='samples',unit_scale=True,ascii=True,leave=False,position=1,ncols=0)
+        pbar = tqdm(
+            total=Nt,
+            desc='FDTD run',
+            unit='samples',
+            unit_scale=True,
+            ascii=True,
+            leave=False,
+            position=1,
+            ncols=0,
+        )
+
         for n in range(0,Nt,nsteps):
             nrun = min(nsteps,Nt-n)
             self.run_steps(n,nrun)
@@ -502,7 +509,7 @@ class EnginePython3D:
                 cmax_xy = np.max(np.abs(uxy.flat[:]))
                 cmax_xz = np.max(np.abs(uxz.flat[:]))
                 cmax_yz = np.max(np.abs(uyz.flat[:]))
-                cmax =  np.max(npa([cmax_xy,cmax_yz,cmax_xz]))
+                cmax =  np.max(np.array([cmax_xy,cmax_yz,cmax_xz]))
 
                 hh_xy.mlab_source.scalars = ldraw(uxy.T)
                 hh_xy.mlab_source.update()
@@ -549,7 +556,6 @@ class EnginePython3D:
         in_ixyz = self.in_ixyz
         out_ixyz = self.out_ixyz
         energy_on = self.energy_on
-        av = self.av
         l = self.l
         l2 = self.l2
         u2b = self.u2b
@@ -694,11 +700,10 @@ class EnginePython3D:
     def save_outputs(self):
         data_dir = self.data_dir
         u_out = self.u_out
-        Ts = self.Ts
         out_reorder = self.out_reorder
         #just raw outputs, recombine elsewhere
         h5f = h5py.File(data_dir / Path('sim_outs.h5'),'w')
-        h5f.create_dataset(f'u_out', data=u_out[out_reorder,:])
+        h5f.create_dataset('u_out', data=u_out[out_reorder,:])
         h5f.close()
         self.print('saved outputs in {data_dir}')
 
@@ -740,7 +745,7 @@ def nb_stencil_air_fcc(Lu1,u1,bn_mask):
 
 @nb.jit(nopython=True,parallel=True)
 def nb_stencil_bn_fcc(Lu1,u1,bn_ixyz,adj_bn):
-    Nx,Ny,Nz = u1.shape
+    _,Ny,Nz = u1.shape
     Nb = bn_ixyz.size
     for i in nb.prange(Nb):
         K = np.sum(adj_bn[i,:])
@@ -762,7 +767,7 @@ def nb_stencil_bn_fcc(Lu1,u1,bn_ixyz,adj_bn):
 
 @nb.jit(nopython=True,parallel=True)
 def nb_stencil_bn_cart(Lu1,u1,bn_ixyz,adj_bn):
-    Nx,Ny,Nz = u1.shape
+    _,Ny,Nz = u1.shape
     Nb = bn_ixyz.size
     for i in nb.prange(Nb):
         K = np.sum(adj_bn[i,:])
@@ -879,11 +884,11 @@ def nb_get_abc_ib(bna_ixyz,Q_bna,Nx,Ny,Nz,fcc):
                 if fcc and (ix+iy+iz)%2==1:
                     continue
                 Q = 0
-                if ((ix==1) or (ix==Nx-2)):
+                if ix in (1, Nx-2):
                     Q+=1
-                if ((iy==1) or (iy==Ny-2)):
+                if iy in (1, Ny-2):
                     Q+=1
-                if ((iz==1) or (iz==Nz-2)):
+                if iz in (1, Nz-2):
                     Q+=1
                 if Q>0:
                     bna_ixyz[ii] = ix*Ny*Nz + iy*Nz + iz

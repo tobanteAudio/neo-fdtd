@@ -6,7 +6,7 @@ import click
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import find_peaks
-import scipy.io.wavfile as wavfile
+from scipy.io import wavfile
 
 from pffdtd.common.myfuncs import iceil
 from pffdtd.common.plot import plot_styles
@@ -18,8 +18,8 @@ def find_nearest(array, value):
     return array[idx]
 
 
-def collect_wav_paths(dir, pattern="*.wav"):
-    return list(sorted(glob.glob(os.path.join(dir, pattern))))
+def collect_wav_paths(folder, pattern="*.wav"):
+    return list(sorted(glob.glob(os.path.join(folder, pattern))))
 
 
 def hz_to_note(frequency):

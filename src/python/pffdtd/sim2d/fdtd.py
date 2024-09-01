@@ -46,8 +46,7 @@ def quantize_point(pos, dx, ret_err=True, scale=False):
         i_q = low if err_low < err_high else high
         if scale:
             return i_q*dx, err
-        else:
-            return i_q, err
+        return i_q, err
 
     x, y = pos
     xq, yq = quantize(x), quantize(y)
@@ -89,7 +88,7 @@ def add_diffusor(prime, well_width, max_depth, room, in_mask, X, Y, dx, c, verbo
         print(f"  error_d={derr_q/depth*100:.2f}%")
 
     print('--SIM-SETUP: Locate diffusor')
-    depths, g = primitive_root_diffuser(prime, g=None, depth=depth_q)
+    depths, _ = primitive_root_diffuser(prime, g=None, depth=depth_q)
     depths = quadratic_residue_diffuser(prime, depth_q)
     prime = depths.shape[0]
     for w in range(n):
@@ -132,7 +131,7 @@ def stencil_air(u0, u1, u2, mask):
 
 @nb.njit(parallel=True)
 def stencil_boundary_rigid(u0, u1, u2, bn_ixy, adj_bn):
-    Nx, Ny = u1.shape
+    _, Ny = u1.shape
     Nb = bn_ixy.size
     for i in nb.prange(Nb):
         ib = bn_ixy[i]
@@ -173,7 +172,6 @@ def main():
     parser.add_argument('--save', action='store_true')
     parser.add_argument('--video', action='store_true')
     parser.add_argument('--verbose', action='store_true')
-    parser.add_argument('--apply_rigid', action=bool_action, default=True)
     parser.add_argument('--apply_loss', action=bool_action, default=True)
 
     args = parser.parse_args()
@@ -192,10 +190,7 @@ def main():
     duration = args.duration  # seconds
     refl_coeff = 0.99  # reflection coefficient
 
-    apply_rigid = args.apply_rigid
     apply_loss = args.apply_loss
-    if apply_loss:
-        assert apply_rigid
 
     Lx, Ly = room[0], room[1]  # box dims (with lower corner at origin)
     x_in, y_in = Lx*0.5, Ly*0.5  # source input position
@@ -233,17 +228,16 @@ def main():
     arc_center = (x_in, y_in-arc_radius)
     out_ixy, _ = make_receiver_arc(180, arc_center, arc_radius, dx, Nx, Ny)
 
-    if apply_rigid:
-        print('--SIM-SETUP: Create node ABCs')
-        # Calculate number of interior neighbours (for interior points only)
-        K_map = np.zeros((Nx, Ny), dtype=int)
-        K_map[1:-1, 1:-1] += in_mask[2:, 1:-1]
-        K_map[1:-1, 1:-1] += in_mask[:-2, 1:-1]
-        K_map[1:-1, 1:-1] += in_mask[1:-1, 2:]
-        K_map[1:-1, 1:-1] += in_mask[1:-1, :-2]
-        K_map[~in_mask] = 0
-        bn_ixy = np.where((K_map.flat > 0) & (K_map.flat < 4))[0]
-        adj_bn = K_map.flat[bn_ixy]
+    print('--SIM-SETUP: Create node ABCs')
+    # Calculate number of interior neighbours (for interior points only)
+    K_map = np.zeros((Nx, Ny), dtype=int)
+    K_map[1:-1, 1:-1] += in_mask[2:, 1:-1]
+    K_map[1:-1, 1:-1] += in_mask[:-2, 1:-1]
+    K_map[1:-1, 1:-1] += in_mask[1:-1, 2:]
+    K_map[1:-1, 1:-1] += in_mask[1:-1, :-2]
+    K_map[~in_mask] = 0
+    bn_ixy = np.where((K_map.flat > 0) & (K_map.flat < 4))[0]
+    adj_bn = K_map.flat[bn_ixy]
 
     # Grid forcing points
     inx = int(np.round(x_in / dx + 0.5) + 1)
@@ -324,10 +318,9 @@ def main():
     if args.video:
         for nt in tqdm(range(Nt)):
             stencil_air(u0, u1, u2, in_mask)
-            if apply_rigid:
-                stencil_boundary_rigid(u0, u1, u2, bn_ixy, adj_bn)
-                if apply_loss:
-                    stencil_boundary_loss(u0, u2, bn_ixy, adj_bn, loss_factor)
+            stencil_boundary_rigid(u0, u1, u2, bn_ixy, adj_bn)
+            if apply_loss:
+                stencil_boundary_loss(u0, u2, bn_ixy, adj_bn, loss_factor)
 
             u0[inx, iny] = u0[inx, iny] + src_sig[nt]
 

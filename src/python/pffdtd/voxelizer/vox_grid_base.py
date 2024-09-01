@@ -12,23 +12,15 @@
 #  Uses multiprocessing
 #
 ##############################################################################
+import multiprocessing as mp
+from multiprocessing import shared_memory
 
 import numpy as np
-from numpy import array as npa
+from tqdm import tqdm
+
 from pffdtd.common.timerdict import TimerDict
 from pffdtd.common.tri_box_intersection import tri_box_intersection_vec
-from pffdtd.common.room_geo import RoomGeo
-from pffdtd.common.tris_precompute import tris_precompute
-import multiprocessing as mp
-from pffdtd.common.myfuncs import clear_dat_folder,clear_console
-from pffdtd.common.myfuncs import get_default_nprocs
-from tqdm import tqdm
-import pffdtd.common.check_version as cv
-import time
-
-assert cv.ATLEASTVERSION38 #for shared memory (but project needs 3.9 anyway)
-
-from multiprocessing import shared_memory
+from pffdtd.common.myfuncs import clear_dat_folder, get_default_nprocs
 
 #base class for a voxel
 class VoxBase:

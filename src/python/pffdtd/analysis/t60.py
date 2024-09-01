@@ -4,11 +4,11 @@ import pathlib
 
 import click
 import numpy as np
-import scipy.io.wavfile as wavfile
-import scipy.signal as signal
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.ticker import ScalarFormatter
+from scipy import signal
+from scipy.io import wavfile
 
 from pffdtd.common.plot import plot_styles
 
@@ -73,7 +73,7 @@ def run(files, fmin, fmax, show_all=False, show_tolerance=True, target=None):
 
     plt.rcParams.update(plot_styles)
 
-    fig, axs = plt.subplots(2, 1)
+    _, axs = plt.subplots(2, 1)
     formatter = ScalarFormatter()
     formatter.set_scientific(False)
 
@@ -140,7 +140,7 @@ def run(files, fmin, fmax, show_all=False, show_tolerance=True, target=None):
             label="EBU Tech 3000"
         )
 
-        ax.set_title(f"Tolerance")
+        ax.set_title("Tolerance")
         ax.set_ylabel("Difference [s]")
         ax.set_xlabel("Frequency [Hz]")
         ax.xaxis.set_major_formatter(formatter)

@@ -2,7 +2,7 @@ import numpy as np
 
 
 def is_primitive_root(prime, g):
-    if g == 0 or g == 1:
+    if g in (0, 1):
         return False
     powers = set()
     for i in range(1, prime):

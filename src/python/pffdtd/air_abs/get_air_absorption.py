@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: MIT
 
 import numpy as np
-from numpy import array as npa
 from numpy import log10, exp, sqrt, log, pi
 
 def get_air_absorption(freq_vec,temperature_celsius,rel_humidity_pnct,pressure_atmospheric_kPa=101.325):

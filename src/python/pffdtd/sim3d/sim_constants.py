@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: MIT
+from pathlib import Path
 
 import numpy as np
-from numpy import array as npa
 import h5py
-from pathlib import Path
 
 
 class SimConstants:

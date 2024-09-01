@@ -1,5 +1,5 @@
 import numpy as np
-import scipy.signal as signal
+from scipy import signal
 
 
 def bandpass_filter(y, lowcut, highcut, fs, order=4):

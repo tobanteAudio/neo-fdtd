@@ -1,24 +1,13 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: box.py
-#
-# Description: This is a class for a box.  Used in a few places (vox_grid, tri_box).
-#
-##############################################################################
+# SPDX-License-Identifier: MIT
 
 import numpy as np
 from numpy import array as npa
 import numpy.random as npr
-import numpy.linalg as npl
 from pffdtd.common.myfuncs import mydefault,rotmatrix_ax_ang
 
 class Box:
+    """This is a class for a box. Used in a few places (vox_grid, tri_box).
+    """
     def __init__(self,Lx=None,Ly=None,Lz=None,Rax=None,Rang=None,shift=None,centered=True):
         #defaults
         Lx = mydefault(Lx,1.0)
@@ -133,7 +122,7 @@ def main():
     Lx = npr.random()
     Ly = npr.random()
     Lz = npr.random()
-    print('Lx = %.2f, Ly = %.2f, Lz = %.2f' % (Lx,Ly,Lz))
+    print(f'Lx = {Lx:.2f}, Ly = {Ly:.2f}, Lz = {Lz:.2f}')
 
     box = Box(Lx,Ly,Lz)
     print('box 0 ... bmin = %.2f,%.2f,%.2f' % (box.bmin[0],box.bmin[1],box.bmin[2]))

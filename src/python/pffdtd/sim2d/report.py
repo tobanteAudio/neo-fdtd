@@ -3,7 +3,7 @@ import argparse
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.signal as signal
+from scipy import signal
 
 from pffdtd.diffusor.measurement import polar_response
 
@@ -72,7 +72,7 @@ def main():
         constrained_layout=True,
         subplot_kw={'projection': 'polar'}
     )
-    fig.suptitle(f"Diffusion")
+    fig.suptitle("Diffusion")
 
     ax[0][0].plot(np.deg2rad(mic_angles), rms_values[0][0])
     ax[0][0].set_title(rms_values[0][1])
