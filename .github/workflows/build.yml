@@ -41,7 +41,7 @@ jobs:
             cmake_flags: '-D OpenMP_ROOT=`brew list libomp | grep libomp.a | sed -E "s/\/lib\/.*//"`'
             cxx_flags: ""
             python_version: "3.12"
-            pffdtd_engine: "build/src/cpp/main_3d/pffdtd_3d"
+            pffdtd_engine: ""
 
           - name: macOS-ARM64
             os: macos-14
