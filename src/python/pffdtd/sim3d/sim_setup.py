@@ -1,23 +1,11 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: sim_setup.py
-#
-# Description: Function to set up a PFFDTD simulation with single source and multiple receivers
-#
-##############################################################################
+"""Function to set up a PFFDTD simulation with single source and multiple receivers
+"""
 
 from pathlib import Path
 
 import numpy as np
-from numpy import array as npa
 
-from pffdtd.common.room_geo import RoomGeo
+from pffdtd.sim3d.room_geometry import RoomGeometry
 from pffdtd.voxelizer.cart_grid import CartGrid
 from pffdtd.voxelizer.vox_grid import VoxGrid
 from pffdtd.voxelizer.vox_scene import VoxScene
@@ -43,7 +31,6 @@ def sim_setup(
     rh=50, #relative humidity of air (configures air absorption post processing)
     source_num=1, #1-based indexing, source to simulate (in sources.csv)
     save_folder_gpu=None, #folder to save gpu-prepared .h5 data (sorted and rotated and FCC-folded)
-    #save_folder_cpu=None,
     draw_vox=False, #draw voxelization
     draw_backend='mayavi', #default, 'polyscope' better for larger grids
     diff_source=False, #use this for single precision runs
@@ -70,11 +57,11 @@ def sim_setup(
 
     if (bmin is not None) and (bmax is not None):
         # custom bmin/bmax (for open scenes)
-        bmin = npa(bmin, dtype=np.float64)
-        bmax = npa(bmax, dtype=np.float64)
+        bmin = np.array(bmin, dtype=np.float64)
+        bmax = np.array(bmax, dtype=np.float64)
 
     # set up room geometry (reads in JSON export, rotates scene)
-    room_geo = RoomGeo(model_json_file, az_el=rot_az_el, bmin=bmin, bmax=bmax)
+    room_geo = RoomGeometry(model_json_file, az_el=rot_az_el, bmin=bmin, bmax=bmax)
     room_geo.print_stats()
 
     # sources have to be specified in advance (edit JSON if necessary)
@@ -127,15 +114,6 @@ def sim_setup(
         if fcc_flag:
             fold_fcc_sim_data(save_folder_gpu)
         sort_sim_data(save_folder_gpu)
-
-    # extra folder for cpu version (if needed for testing)
-    # if save_folder_cpu is not None and Path(save_folder_cpu) != Path(save_folder):
-        # copy_sim_data(save_folder,save_folder_cpu)
-    # if save_folder_cpu is not None:
-        # rotate(save_folder_cpu)
-        # if fcc_flag:
-        # fold_fcc_sim_data(save_folder_gpu)
-        # sort_sim_data(save_folder_cpu)
 
     # draw the voxelisation (use polyscope for dense grids)
     if draw_vox:

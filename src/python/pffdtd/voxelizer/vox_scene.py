@@ -35,7 +35,7 @@ import multiprocessing as mp
 from multiprocessing import shared_memory
 from tqdm import tqdm
 
-from pffdtd.common.room_geo import RoomGeo
+from pffdtd.sim3d.room_geometry import RoomGeometry
 from pffdtd.common.timerdict import TimerDict
 from pffdtd.common.tri_ray_intersection import tri_ray_intersection_vec
 from pffdtd.voxelizer.cart_grid import CartGrid
@@ -695,7 +695,7 @@ def main():
     else:
         draw_backend='mayavi'
 
-    room_geo = RoomGeo(args.json,az_el=args.az_el,area_eps=args.area_eps)
+    room_geo = RoomGeometry(args.json,az_el=args.az_el,area_eps=args.area_eps)
     room_geo.print_stats()
 
     cart_grid = CartGrid(args.h,args.offset,room_geo.bmin,room_geo.bmax)

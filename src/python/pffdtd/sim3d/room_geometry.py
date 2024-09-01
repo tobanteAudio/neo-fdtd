@@ -1,30 +1,18 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: room_geo.py
-#
-# Description: Class for room geometry, source/receiver positions, and materials (labels)
-#
-# Reads JSON exported from Sketchup plugin
-#
-# Also prunes triangles, prints some stats (surface areas, volume), rotates scene, and draws
-#
-##############################################################################
 
 import numpy as np
 import json as json
 from numpy import array as npa
+from pffdtd.common.myfuncs import dotv,rotate_az_el_deg
 from pffdtd.common.tris_precompute import tris_precompute
-from pffdtd.common.myfuncs import dotv,vecnorm
-from pffdtd.common.myfuncs import rotate_az_el_deg
 
-class RoomGeo:
-    def __init__(self,json=None,az_el=[0.,0.],area_eps=1e-6,bmin=None,bmax=None):
+class RoomGeometry:
+    """Class for room geometry, source/receiver positions, and materials (labels)
+
+    - Reads JSON exported from Sketchup plugin
+    - Also prunes triangles, prints some stats (surface areas, volume), rotates scene, and draws
+    """
+
+    def __init__(self,model_file=None,az_el=[0.,0.],area_eps=1e-6,bmin=None,bmax=None):
         #main dict for room data
         self.mats_dict = None
         #bmin and bmax may take custom bounds of scene
@@ -46,7 +34,7 @@ class RoomGeo:
         self.mat_str = []
         self.vol = None
         self.colors = None
-        if json is None:
+        if model_file is None:
             raise
         self.area_eps = area_eps
 
@@ -56,7 +44,7 @@ class RoomGeo:
         if np.any(az_el!=0):
             self.print(f'az-el deg rotation: {az_el}')
 
-        self.load_json(json)
+        self.load_json(model_file)
         self.collapse_tris()
         self.calc_volume()
 
@@ -68,8 +56,8 @@ class RoomGeo:
         bmax = self.bmax
         R = self.R
 
-        with open(json_filename) as json_file:
-            data = json.load(json_file)
+        with open(json_filename) as model_file:
+            data = json.load(model_file)
         #print(data)
 
         #attach
@@ -316,7 +304,7 @@ def main():
 
     print(args)
 
-    room = RoomGeo(args.json,az_el=args.az_el)
+    room = RoomGeometry(args.json,az_el=args.az_el)
     room.print_stats()
 
     if not args.nodraw:

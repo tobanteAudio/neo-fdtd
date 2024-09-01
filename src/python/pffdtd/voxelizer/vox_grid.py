@@ -15,7 +15,7 @@ from numpy import array as npa
 from tqdm import tqdm
 
 from pffdtd.common.myfuncs import get_default_nprocs,iceil
-from pffdtd.common.room_geo import RoomGeo
+from pffdtd.sim3d.room_geometry import RoomGeometry
 from pffdtd.voxelizer.cart_grid import CartGrid
 from pffdtd.voxelizer.vox_grid_base import VoxGridBase,VoxBase
 
@@ -180,7 +180,7 @@ def main():
     assert args.h is not None
     assert args.json is not None
 
-    room_geo = RoomGeo(args.json,az_el=args.az_el)
+    room_geo = RoomGeometry(args.json,az_el=args.az_el)
     room_geo.print_stats()
 
     cart_grid = CartGrid(args.h,args.offset,room_geo.bmin,room_geo.bmax)
