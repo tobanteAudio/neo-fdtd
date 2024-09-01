@@ -1,41 +1,36 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: constants.py
-#
-# Description: Class to keep simulation constants mostly in one place, writes to HDF5
-#
-##############################################################################
+# SPDX-License-Identifier: MIT
 
 import numpy as np
 from numpy import array as npa
 import h5py
 from pathlib import Path
-class SimConstants3D:
-    def __init__(self,Tc,rh,h=None,SR=None,fmax=None,PPW=None,fcc=False):
-        #Tc is temperature, rh is relative humidity <- this gives c (speed of sound)
+
+
+class SimConstants:
+    """Class to keep simulation constants mostly in one place, writes to HDF5
+    """
+
+    def __init__(self, Tc, rh, h=None, SR=None, fmax=None, PPW=None, fcc=False):
+        # Tc is temperature, rh is relative humidity <- this gives c (speed of sound)
         assert Tc >= -20
         assert Tc <= 50
         assert rh <= 100
         assert rh >= 10
         c = 343.2*np.sqrt(Tc/20)
 
-        assert (h is not None) or (SR is not None) or (fmax is not None and PPW is not None)
+        assert (h is not None) or (SR is not None) or (
+            fmax is not None and PPW is not None)
+
         if fcc:
             l2 = 1.0
             l = np.sqrt(l2)
-            assert l<=1.0 #of course true
+            assert l <= 1.0  # of course true
         else:
             l2 = 1/3
             l = np.sqrt(l2)
-            assert l<=np.sqrt(1/3) #check with round-off errors
+            assert l <= np.sqrt(1/3)  # check with round-off errors
 
-        #back off to remove nyquist mode
+        # back off to remove nyquist mode
         l *= 0.999
         l2 = l*l
 
@@ -46,7 +41,7 @@ class SimConstants3D:
             Ts = 1/SR
             h = c*Ts/l
         elif fmax is not None and PPW is not None:
-            h = c/(fmax*PPW) #PPW is points per wavelength (on Cartesian grid)
+            h = c/(fmax*PPW)  # PPW is points per wavelength (on Cartesian grid)
             Ts = h/c*l
             SR = 1/Ts
         else:
@@ -70,11 +65,11 @@ class SimConstants3D:
         self.Tc = Tc
         self.rh = rh
 
-    def print(self,fstring):
+    def print(self, fstring):
         print(f'--CONSTS: {fstring}')
 
-    #save to HDF5 file
-    def save(self,save_folder):
+    # save to HDF5 file
+    def save(self, save_folder):
         c = self.c
         h = self.h
         Ts = self.Ts
@@ -92,7 +87,7 @@ class SimConstants3D:
         else:
             assert save_folder.is_dir()
 
-        h5f = h5py.File(save_folder / Path('constants.h5'),'w')
+        h5f = h5py.File(save_folder / Path('constants.h5'), 'w')
         h5f.create_dataset('c', data=np.float64(c))
         h5f.create_dataset('h', data=np.float64(h))
         h5f.create_dataset('Ts', data=np.float64(Ts))
