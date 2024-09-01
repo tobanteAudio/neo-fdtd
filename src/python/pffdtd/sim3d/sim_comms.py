@@ -28,7 +28,7 @@ class SimComms:
         save_folder = Path(save_folder)
         assert save_folder.exists()
         assert save_folder.is_dir()
-        h5f = h5py.File(save_folder / Path('sim_consts.h5'),'r')
+        h5f = h5py.File(save_folder / Path('constants.h5'),'r')
         self.h       = h5f['h'][()]
         self.Ts      = h5f['Ts'][()]
         self.l2      = h5f['l2'][()]

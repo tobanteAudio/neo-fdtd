@@ -82,15 +82,15 @@ def sim_setup(
     Rxyz = room_geo.Rxyz #many receivers
 
     #some constants for the simulation, in one place
-    sim_consts = SimConstants3D(Tc=Tc,rh=rh,fmax=fmax,PPW=PPW,fcc=fcc_flag)
-    sim_consts.save(save_folder)
+    constants = SimConstants3D(Tc=Tc,rh=rh,fmax=fmax,PPW=PPW,fcc=fcc_flag)
+    constants.save(save_folder)
 
     #link up the wall materials to impedance datasets
     sim_mats = SimMats(save_folder=save_folder)
     sim_mats.package(mat_files_dict=mat_files_dict,mat_list=room_geo.mat_str,read_folder=mat_folder)
 
     #set the cartesian grid (also for FCC)
-    cart_grid = CartGrid(h=sim_consts.h,offset=3.5,bmin=room_geo.bmin,bmax=room_geo.bmax,fcc=fcc_flag)
+    cart_grid = CartGrid(h=constants.h,offset=3.5,bmin=room_geo.bmin,bmax=room_geo.bmax,fcc=fcc_flag)
     cart_grid.print_stats()
     cart_grid.save(save_folder)
 

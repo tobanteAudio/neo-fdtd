@@ -43,8 +43,8 @@ class ProcessOutputs:
         diff = h5f['diff'][()]
         h5f.close()
 
-        #get some sim constants (floats) from sim_consts
-        h5f = h5py.File(data_dir / Path('sim_consts.h5'),'r')
+        #get some sim constants (floats) from constants
+        h5f = h5py.File(data_dir / Path('constants.h5'),'r')
         Ts = h5f['Ts'][()]
         c = h5f['c'][()]
         Tc = h5f['Tc'][()]

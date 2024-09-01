@@ -6,7 +6,7 @@
 #
 # Copyright 2021 Brian Hamilton.
 #
-# File name: sim_consts.py
+# File name: constants.py
 #
 # Description: Class to keep simulation constants mostly in one place, writes to HDF5
 #
@@ -92,7 +92,7 @@ class SimConstants3D:
         else:
             assert save_folder.is_dir()
 
-        h5f = h5py.File(save_folder / Path('sim_consts.h5'),'w')
+        h5f = h5py.File(save_folder / Path('constants.h5'),'w')
         h5f.create_dataset('c', data=np.float64(c))
         h5f.create_dataset('h', data=np.float64(h))
         h5f.create_dataset('Ts', data=np.float64(Ts))

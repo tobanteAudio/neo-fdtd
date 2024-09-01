@@ -211,7 +211,7 @@ def fold_fcc_sim_data(data_dir):
     out_ixyz     = h5f['out_ixyz'][...]
     h5f.close()
 
-    h5f = h5py.File(data_dir / Path('sim_consts.h5'),'r')
+    h5f = h5py.File(data_dir / Path('constants.h5'),'r')
     fcc_flag     = h5f['fcc_flag'][...]
     h5f.close()
 
@@ -256,7 +256,7 @@ def fold_fcc_sim_data(data_dir):
     h5f['Ny'][()] = Nyh
     h5f.close()
 
-    h5f = h5py.File(data_dir / Path('sim_consts.h5'),'r+')
+    h5f = h5py.File(data_dir / Path('constants.h5'),'r+')
     h5f['fcc_flag'][()] = 2
     h5f.close()
     _print(timer.ftoc('write'))

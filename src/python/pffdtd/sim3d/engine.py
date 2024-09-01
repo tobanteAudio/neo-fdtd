@@ -91,7 +91,7 @@ class EnginePython3D:
         self.Nt           = h5f['Nt'][()]
         h5f.close()
 
-        h5f = h5py.File(data_dir / Path('sim_consts.h5'),'r')
+        h5f = h5py.File(data_dir / Path('constants.h5'),'r')
         self.c       = h5f['c'][()]
         self.h       = h5f['h'][()]
         self.Ts      = h5f['Ts'][()]

@@ -107,10 +107,10 @@ namespace pffdtd {
 
   ////////////////////////////////////////////////////////////////////////
   //
-  // Read sim_consts HDF5 dataset
+  // Read constants HDF5 dataset
   //
   ////////////////////////////////////////////////////////////////////////
-  auto filename = simDir / "sim_consts.h5";
+  auto filename = simDir / "constants.h5";
   if (not std::filesystem::exists(filename))
     assert(true == false);
 
