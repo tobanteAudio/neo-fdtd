@@ -1,0 +1,334 @@
+# SPDX-License-Identifier: MIT
+
+import numba as nb
+import numpy as np
+from numpy import exp, pi, cos,sqrt, log
+from scipy.fft import dct, idct  # default type2
+from scipy.fft import rfft, irfft
+from tqdm import tqdm
+
+from pffdtd.common.myfuncs import iceil, iround
+
+def air_absorption(frequencies,temperature_celsius,rel_humidity_pnct,pressure_atmospheric_kPa=101.325):
+    """This is an implementation of formulae in the ISO9613-1 standard for air absorption
+    """
+    assert pressure_atmospheric_kPa<=200
+    assert temperature_celsius >= -20
+    assert temperature_celsius <= 50
+    assert rel_humidity_pnct <= 100
+    assert rel_humidity_pnct >= 10
+
+    f = frequencies
+    T = temperature_celsius
+    rh = rel_humidity_pnct
+
+    f2=f*f
+    pi2 = np.pi*np.pi
+
+    #convert temperature to kelvin
+    Tk=T+273.15
+
+    #triple point isothermal temperature (Section B)
+    T01=273.16 #kelvin
+
+    #standard temperature
+    T0=293.15
+
+    #ambient pressure
+    pa=101.325 #kPa
+    #reference pressure (standard)
+    pr=101.325 #kPa
+
+    #characteristic vibrational temperature (A.8)
+    thO=2239.1
+    thN=3352.0
+    #fractional molar concentrations (A.8)
+    XO=0.209
+    XN=0.781
+
+    #constant (A.9)
+    const=2*np.pi/35*(10*np.log10(np.exp(2))) #1.559
+
+    #(A.6)
+    almO=const*XO*(thO/Tk)**2*np.exp(-thO/Tk)
+    #(A.7)
+    almN=const*XN*(thN/Tk)**2*np.exp(-thN/Tk)
+
+    #pressure ratio
+    p=pa/pr
+    #temperature ratio
+    Tr=Tk/T0
+
+    #speed of sound
+    c=343.2*np.sqrt(Tr)
+    c2 = c*c
+
+    #(B.3)
+    C=-6.8346*(T01/Tk)**1.261 + 4.6151
+    #(B.1) and (B.2)
+    h=rh*(10**C)*p
+
+    #relaxation frequencies
+    #(3)
+    frO = p* (24 + 4.04e4 * h * (0.02 + h)/(0.391 + h))
+
+    #(4)
+    frN = p * Tr**(-0.5) * (9 + 280 * h * np.exp(-4.17 * (Tr**(-1/3) - 1)))
+
+    #(5)
+    absfull1=8.686*f2*(1.84e-11 * np.sqrt(Tr)/p + Tr**-2.5 * (0.01275*(np.exp(-2239.1/Tk)/(frO + f2/frO)) + 0.1068*(np.exp(-3352.0/Tk)/(frN + f2/frN))))
+
+    #(A.2)
+    absClRo=1.6e-10*np.sqrt(Tr)*f2/p
+
+    #derived
+    eta = np.log(10)*1.6e-11/(4*pi2)*(c2)*np.sqrt(Tr)/p
+
+    #(A.3)
+    absVibO=almO*(f/c)*(2*(f/frO)/(1+(f/frO)**2))
+    #(A.4)
+    absVibN=almN*(f/c)*(2*(f/frN)/(1+(f/frN)**2))
+    #(A.1)
+    absfull2 = absClRo + absVibO + absVibN
+
+    assert np.allclose(absfull1,absfull2,rtol=1e-2)
+
+    #modified viscothermal coefficient (see FA2014 or DAFx2021 papers)
+    etaO = almO*(c/pi2/frO)*np.log(10)/20
+
+    #return a dictionary of different constants
+    return_dict = {}
+    return_dict['gamma_p'] = etaO/c
+    return_dict['gamma'] = eta/c
+    return_dict['etaO'] = etaO
+    return_dict['eta'] = eta
+    return_dict['almN'] = almN
+    return_dict['almO'] = almO
+    return_dict['c'] = c
+    return_dict['frO'] = frO
+    return_dict['frN'] = frN
+
+    #frequency-dependent coefficeints in Np/m or dB/m
+    return_dict['absVibN_dB'] = absVibN
+    return_dict['absVibO_dB'] = absVibO
+    return_dict['absClRo_dB'] = absClRo
+    return_dict['absfull_dB'] = absfull2
+    return_dict['absVibN_Np'] = absVibN*np.log(10)/20
+    return_dict['absVibO_Np'] = absVibO*np.log(10)/20
+    return_dict['absClRo_Np'] = absClRo*np.log(10)/20
+    return_dict['absfull_Np'] = absfull2*np.log(10)/20
+
+    return return_dict
+
+
+def apply_modal_filter(x, Fs, Tc, rh, pad_t=0.0):
+    """
+    This is an implementation of an air absorption filter based on a modal approach.
+    It solves a system of 1-d dissipative wave equations tune to air attenuation
+    curves using a soft-source boundary condition.
+
+    See paper for details:
+    Hamilton, B. "Adding air attenuation to simulated room impulse responses: A
+    modal approach", to be presented at I3DA 2021 conference in Bologna Italy.
+    """
+
+    # apply filter, x is (Nchannel,Nsamples) array
+    # see I3DA paper for details
+    # Tc is temperature in deg Celsius
+    # rh is relative humidity
+
+    Ts = 1/Fs
+
+    x = np.atleast_2d(x)
+    Nt0 = x.shape[-1]
+    Nt = iceil(pad_t/Ts)+Nt0
+    xp = np.zeros((x.shape[0], Nt))
+    xp[:, :Nt0] = x
+    del x
+
+    y = np.zeros(xp.shape)
+
+    Nx = Nt
+    wqTs = pi*(np.arange(Nx)/Nx)
+    wq = wqTs/Ts
+
+    rd = air_absorption(wq/2/pi, Tc, rh)
+    alphaq = rd['absfull_Np']
+    c = rd['c']
+
+    P0 = np.zeros(xp.shape)
+    P1 = np.zeros(xp.shape)
+
+    fx = np.zeros(xp.shape)
+    fx[:, 0] = 1
+    Fm = dct(fx, type=2, norm='ortho', axis=-1)
+
+    sigqTs = c*alphaq*Ts
+    a1 = 2*exp(-sigqTs)*cos(wqTs)
+    a2 = -exp(-2*sigqTs)
+    Fmsig1 = Fm*(1+sigqTs/2)/(1+sigqTs)
+    Fmsig2 = Fm*(1-sigqTs/2)/(1+sigqTs)
+
+    u = np.zeros((xp.shape[0], Nt+1))
+    u[:, 1:] = xp[:, ::-1]  # flip
+
+    pbar = tqdm(total=Nt, desc='modal filter', ascii=True)
+
+    @nb.jit(nopython=True, parallel=True)
+    def _run_step(P0, P1, a1, a2, Fmsig1, Fmsig2, un1, un0):
+        P0[:] = a1*P1 + a2*P0 + Fmsig1*un1 - Fmsig2*un0
+
+    for n in range(Nt):
+        # P0 = a1*P1 + a2*P0 + Fmsig1*u[:,n+1] - Fmsig2*u[:,n]
+        for i in range(P0.shape[0]):
+            _run_step(P0[i], P1[i], a1, a2, Fmsig1[i],
+                      Fmsig2[i], u[i, n+1], u[i, n])
+        if n < Nt-1:  # dont swap on last sample
+            P1, P0 = P0, P1
+        pbar.update(1)
+    pbar.close()
+
+    y = idct(P0, type=2, norm='ortho', axis=-1)
+    return np.squeeze(y)  # squeeze to 1d in case
+
+
+def apply_ola_filter(x, Fs, Tc, rh, Nw=1024):
+    """
+    This is an implementation of overlap-add (STFT/iSTFT) air absorption filtering.
+    Tuned for 75% overlap and 1024-sample Hann window at 48kHz.
+
+    - x is (Nchannels,Nsamples) array
+    - Tc is temperature degrees Celsius
+    - rh is relative humidity
+
+    Used in paper:
+    Hamilton, B. "Adding air attenuation to simulated room impulse responses: A
+    modal approach", to be presented at I3DA 2021 conference in Bologna Italy.
+    """
+    Ts = 1/Fs
+
+    x = np.atleast_2d(x)
+    Nt0 = x.shape[-1]
+
+    OLF = 0.75
+    Ha = iround(Nw*(1-OLF))
+    Nfft = np.int_(2**np.ceil(np.log2(Nw)))
+    NF = iceil((Nt0+Nw)/Ha)
+    Np = (NF-1)*Ha-Nt0
+    assert Np >= Nw-Ha
+    assert Np < Nw
+    Nfft_h = np.int_(Nfft//2+1)
+
+    xp = np.zeros((x.shape[0], Nw+Nt0+Np))
+    xp[:, Nw:Nw+Nt0] = x
+    y = np.zeros((x.shape[0], Nt0+Np))
+    del x
+
+    wa = 0.5*(1-np.cos(2*np.pi*np.arange(Nw)/Nw))  # hann window
+    ws = wa/(3/8*Nw/Ha)  # scaled for COLA
+
+    fv = np.arange(Nfft_h)/Nfft*Fs
+    rd = air_absorption(fv, Tc, rh)
+    c = rd['c']
+    absNp = rd['absfull_Np']
+
+    for i in range(xp.shape[0]):
+        pbar = tqdm(total=NF, desc=f'OLA filter channel {i}', ascii=True)
+        yp = np.zeros((xp.shape[-1],))
+        for m in range(NF):
+            na0 = m*Ha
+            assert na0+Nw <= Nw+Nt0+Np
+            dist = c*Ts*(na0-Nw/2)
+            xf = xp[i, na0:na0+Nw]
+            if dist < 0:  # dont apply gain (negative times - pre-padding)
+                yp[na0:na0+Nw] += ws*xf
+            else:
+                Yf = rfft(wa*xf, Nfft)*np.exp(-absNp*dist)
+                yf = irfft(Yf, Nfft)[:Nw]
+                yp[na0:na0+Nw] += ws*yf
+
+            pbar.update(1)
+        y[i] = yp[Nw:]
+        pbar.close()
+    return np.squeeze(y)  # squeeze to 1d in case
+
+
+
+
+def apply_visco_filter(x, Fs, Tc, rh, NdB=120, t_start=None):
+    """
+    This is an implementation of an air absorption filter based on approximate
+    Green's function Stoke's equation (viscothermal wave equation)
+
+    Main input being x, np.ndarray (Nchannels,Nsamples)
+    enter temperature (Tc) and relative humidity (rh)
+    NdB should be above 60dB, that is for truncation of Gaussian kernel
+
+    See paper for details:
+    Hamilton, B. "Air absorption filtering method based on approximate Green's
+    function for Stokes' equation", to be presented at the DAFx2021 e-conference.
+    """
+    rd = air_absorption(1, Tc, rh)
+    g = rd['gamma_p']
+
+    Ts = 1/Fs
+    if t_start is None:
+        t_start = Ts**2/(2*pi*g)
+        print(f'{t_start=}')
+
+    x = np.atleast_2d(x)
+    Nt0 = x.shape[-1]
+
+    n_last = Nt0-1
+    dt_end = Fs*sqrt(0.1*log(10)*NdB*n_last*Ts*g)
+    Nt = Nt0+iceil(dt_end)
+
+    y = np.zeros((x.shape[0], Nt))
+    n_start = iceil(t_start*Fs)
+    assert n_start > 0
+
+    y[:, :n_start] = x[:, :n_start]
+    Tsg2 = 2*Ts*g
+    Tsg2pi = 2*Ts*g*pi
+    gTs = g*Ts
+    dt_fac = 0.1*log(10)*NdB*gTs
+    pbar = tqdm(total=Nt, desc='visco filter', ascii=True)
+    for n in range(n_start, Nt0):
+        dt = sqrt(dt_fac*n)/Ts
+        dt_int = iceil(dt)
+        nv = np.arange(n-dt_int, n+dt_int+1)
+        assert n >= dt_int
+        y[:, nv] += (Ts/sqrt(n*Tsg2pi))*x[:, n][:, None] * \
+            exp(-((n-nv)*Ts)**2/(n*Tsg2))[None, :]
+        pbar.update(1)
+    pbar.close()
+
+    return np.squeeze(y)  # squeeze to 1d in case
+
+def main():
+    f = np.logspace(np.log10(1),np.log10(80e3))
+    rh = 15
+    Tc = 10
+    print(f'{Tc=} {rh=}%')
+
+    rd = air_absorption(f,Tc,rh)
+    print(f"{rd['almO']=}")
+    print(f"{rd['almN']=}")
+    print(f"{rd['c']=}")
+    print(f"{rd['frO']=}")
+    print(f"{rd['frN']=}")
+    print(f"{rd['eta']=}")
+
+    rh = (100 - 10)*np.random.random_sample()+10
+    Tc = (50 - -20)*np.random.random_sample()-20
+    print(f'{Tc=} {rh=}%')
+    rd = air_absorption(f,Tc,rh)
+    print(f"{rd['almO']=}")
+    print(f"{rd['almN']=}")
+    print(f"{rd['c']=}")
+    print(f"{rd['frO']=}")
+    print(f"{rd['frN']=}")
+    print(f"{rd['eta']=}")
+
+if __name__ == '__main__':
+    main()
