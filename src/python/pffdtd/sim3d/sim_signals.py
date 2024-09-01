@@ -22,7 +22,7 @@ import h5py
 from scipy.signal import lfilter,bilinear_zpk
 from numpy import pi,cos,sin
 
-class SimComms:
+class SimSignals:
     def __init__(self,save_folder):
         #will read h,xv,yv,zv from h5 data
         save_folder = Path(save_folder)
@@ -154,7 +154,7 @@ class SimComms:
             kw = {'compression': "gzip", 'compression_opts': compress}
         else:
             kw = {}
-        h5f = h5py.File(save_folder / Path('comms_out.h5'),'w')
+        h5f = h5py.File(save_folder / Path('signals.h5'),'w')
         h5f.create_dataset('in_ixyz', data=in_ixyz, **kw)
         h5f.create_dataset('out_ixyz', data=out_ixyz, **kw)
         h5f.create_dataset('out_alpha', data=out_alpha, **kw)

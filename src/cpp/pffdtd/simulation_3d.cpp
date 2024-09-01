@@ -258,10 +258,10 @@ namespace pffdtd {
 
   ////////////////////////////////////////////////////////////////////////
   //
-  // Read comms HDF5 dataset
+  // Read signals HDF5 dataset
   //
   ////////////////////////////////////////////////////////////////////////
-  filename = simDir / "comms_out.h5";
+  filename = simDir / "signals.h5";
   if (not std::filesystem::exists(filename))
     assert(true == false);
 

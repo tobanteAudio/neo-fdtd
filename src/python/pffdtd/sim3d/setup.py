@@ -21,7 +21,7 @@ from pffdtd.common.room_geo import RoomGeo
 from pffdtd.voxelizer.cart_grid import CartGrid
 from pffdtd.voxelizer.vox_grid import VoxGrid
 from pffdtd.voxelizer.vox_scene import VoxScene
-from pffdtd.sim3d.sim_comms import SimComms
+from pffdtd.sim3d.sim_signals import SimSignals
 from pffdtd.sim3d.constants import SimConstants3D
 from pffdtd.sim3d.sim_mats import SimMats
 from pffdtd.sim3d.rotate import rotate, sort_sim_data, copy_sim_data, fold_fcc_sim_data
@@ -95,7 +95,7 @@ def sim_setup(
     cart_grid.save(save_folder)
 
     #set up source/receiver positions and input signals
-    sim_comms = SimComms(save_folder=save_folder) #reads from cart_grid
+    sim_comms = SimSignals(save_folder=save_folder) #reads from cart_grid
     sim_comms.prepare_source_pts(Sxyz)
     sim_comms.prepare_receiver_pts(Rxyz)
     sim_comms.prepare_source_signals(duration,sig_type=insig_type)

@@ -65,7 +65,7 @@ def rotate(data_dir,tr=None,compress=False):
         iVV = npa([[+1,+1,0],[-1,-1,0],[0,+1,+1],[0,-1,-1],[+1,0,+1],[-1,0,-1], \
                    [+1,-1,0],[-1,+1,0],[0,+1,-1],[0,-1,+1],[+1,0,-1],[-1,0,+1]])
 
-    h5f = h5py.File(data_dir / Path('comms_out.h5'),'r')
+    h5f = h5py.File(data_dir / Path('signals.h5'),'r')
     in_ixyz      = h5f['in_ixyz'][...]
     out_ixyz     = h5f['out_ixyz'][...]
     Nr      = h5f['Nr'][()]
@@ -108,7 +108,7 @@ def rotate(data_dir,tr=None,compress=False):
     else:
         kw = {}
     #overwrite
-    h5f = h5py.File(data_dir / Path('comms_out.h5'),'r+')
+    h5f = h5py.File(data_dir / Path('signals.h5'),'r+')
     h5f['in_ixyz'][...] = in_ixyzt
     h5f['out_ixyz'][...] = out_ixyzt
     h5f.close()
@@ -144,7 +144,7 @@ def sort_sim_data(data_dir):
     saf_bn  = h5f['saf_bn'][...]
     h5f.close()
 
-    h5f = h5py.File(data_dir / Path('comms_out.h5'),'r')
+    h5f = h5py.File(data_dir / Path('signals.h5'),'r')
     in_ixyz      = h5f['in_ixyz'][...]
     out_ixyz     = h5f['out_ixyz'][...]
     out_alpha    = h5f['out_alpha'][...]
@@ -172,7 +172,7 @@ def sort_sim_data(data_dir):
 
     timer.tic('write')
     #overwrite
-    h5f = h5py.File(data_dir / Path('comms_out.h5'),'r+')
+    h5f = h5py.File(data_dir / Path('signals.h5'),'r+')
     h5f['in_ixyz'][...] = in_ixyz
     h5f['in_sigs'][...] = in_sigs
     h5f['out_ixyz'][...] = out_ixyz
@@ -206,7 +206,7 @@ def fold_fcc_sim_data(data_dir):
     bn_ixyz = h5f['bn_ixyz'][...]
     h5f.close()
 
-    h5f = h5py.File(data_dir / Path('comms_out.h5'),'r')
+    h5f = h5py.File(data_dir / Path('signals.h5'),'r')
     in_ixyz      = h5f['in_ixyz'][...]
     out_ixyz     = h5f['out_ixyz'][...]
     h5f.close()
@@ -245,7 +245,7 @@ def fold_fcc_sim_data(data_dir):
 
     timer.tic('write')
     #write
-    h5f = h5py.File(data_dir / Path('comms_out.h5'),'r+')
+    h5f = h5py.File(data_dir / Path('signals.h5'),'r+')
     h5f['in_ixyz'][...] = in_ixyz
     h5f['out_ixyz'][...] = out_ixyz
     h5f.close()

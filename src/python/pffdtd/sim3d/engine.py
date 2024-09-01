@@ -80,7 +80,7 @@ class EnginePython3D:
         self.mat_bnl = mat_bn[ii]
         self.bnl_ixyz = self.bn_ixyz[ii]
 
-        h5f = h5py.File(data_dir / Path('comms_out.h5'),'r')
+        h5f = h5py.File(data_dir / Path('signals.h5'),'r')
         self.in_ixyz      = h5f['in_ixyz'][...]
         self.out_ixyz     = h5f['out_ixyz'][...]
         self.out_alpha    = h5f['out_alpha'][...]

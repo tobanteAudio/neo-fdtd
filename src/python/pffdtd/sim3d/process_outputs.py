@@ -34,9 +34,9 @@ class ProcessOutputs:
     def __init__(self,data_dir):
         self.print('loading...')
 
-        #get some integers from comms_out
+        #get some integers from signals
         self.data_dir = data_dir
-        h5f = h5py.File(data_dir / Path('comms_out.h5'),'r')
+        h5f = h5py.File(data_dir / Path('signals.h5'),'r')
         out_alpha = h5f['out_alpha'][...]
         Nr = h5f['Nr'][()]
         Nt = h5f['Nt'][()]
