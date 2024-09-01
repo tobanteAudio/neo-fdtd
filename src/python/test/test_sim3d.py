@@ -14,7 +14,7 @@ from pffdtd.analysis.room_modes import detect_room_modes
 from pffdtd.materials.adm_funcs import write_freq_ind_mat_from_Yn, convert_Sabs_to_Yn
 from pffdtd.sim2d.fdtd import point_on_circle
 from pffdtd.sim3d.room_builder import RoomBuilder
-from pffdtd.sim3d.setup import sim_setup
+from pffdtd.sim3d.sim_setup import sim_setup
 from pffdtd.sim3d.engine import EnginePython3D
 from pffdtd.sim3d.process_outputs import process_outputs
 from pffdtd.localization.tdoa import locate_sound_source
