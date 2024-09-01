@@ -20,6 +20,7 @@ jobs:
     env:
       CMAKE_PREFIX_PATH: ${{ matrix.cmake_prefix_path }}
       MACOSX_DEPLOYMENT_TARGET: ${{ matrix.osx_target }}
+      PFFDTD_ENGINE: ${{ matrix.pffdtd_engine }}
     strategy:
       fail-fast: false
       matrix:
@@ -31,6 +32,7 @@ jobs:
             cmake_flags: ""
             cxx_flags: "-march=x86-64-v2"
             python_version: "3.12"
+            pffdtd_engine: "build/src/cpp/main_3d/pffdtd_3d"
 
           - name: macOS-X64
             os: macos-13
@@ -39,6 +41,7 @@ jobs:
             cmake_flags: '-D OpenMP_ROOT=`brew list libomp | grep libomp.a | sed -E "s/\/lib\/.*//"`'
             cxx_flags: "-march=x86-64-v2"
             python_version: "3.12"
+            pffdtd_engine: "build/src/cpp/main_3d/pffdtd_3d"
 
           - name: macOS-ARM64
             os: macos-14
@@ -47,6 +50,7 @@ jobs:
             cmake_flags: '-D OpenMP_ROOT=`brew list libomp | grep libomp.a | sed -E "s/\/lib\/.*//"`'
             cxx_flags: ""
             python_version: "3.12"
+            pffdtd_engine: "build/src/cpp/main_3d/pffdtd_3d"
 
           - name: Windows
             os: windows-latest
@@ -54,6 +58,7 @@ jobs:
             cmake_flags: ""
             cxx_flags: "-march=x86-64-v2"
             python_version: "3.12"
+            pffdtd_engine: ""
 
     steps:
       - name: Checkout code
