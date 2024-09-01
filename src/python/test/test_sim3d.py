@@ -46,16 +46,16 @@ def _skip_if_native_engine_unavailable(engine):
             pytest.skip("Native engine not available")
 
 
-def _skip_if_not_enough_memory(engine):
-    if engine == "python":
-        if psutil.virtual_memory().available <= 6e9:
-            pytest.skip("Not enough memory")
+# def _skip_if_not_enough_memory(engine):
+#     if engine == "python":
+#         if psutil.virtual_memory().available <= 6e9:
+#             pytest.skip("Not enough memory")
 
 
 @pytest.mark.parametrize("engine", ["python", "native"])
 def test_sim3d_locate_sound_source(tmp_path, engine):
     _skip_if_native_engine_unavailable(engine)
-    _skip_if_not_enough_memory(engine)
+    # _skip_if_not_enough_memory(engine)
 
     fmin = 20
     fmax = 1000
@@ -154,7 +154,7 @@ def test_sim3d_locate_sound_source(tmp_path, engine):
 @pytest.mark.parametrize("engine", ["python", "native"])
 def test_sim3d_infinite_baffle(tmp_path, engine):
     _skip_if_native_engine_unavailable(engine)
-    _skip_if_not_enough_memory(engine)
+    # _skip_if_not_enough_memory(engine)
 
     fmin = 20
     fmax = 1000
@@ -265,7 +265,7 @@ def test_sim3d_infinite_baffle(tmp_path, engine):
 )
 def test_sim3d_detect_room_modes(tmp_path, engine, room, fmax, ppw, fcc, dx_scale, tolerance):
     _skip_if_native_engine_unavailable(engine)
-    _skip_if_not_enough_memory(engine)
+    # _skip_if_not_enough_memory(engine)
 
     L = room[0]
     W = room[1]

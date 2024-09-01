@@ -32,7 +32,7 @@ jobs:
             cmake_flags: ""
             cxx_flags: ""
             python_version: "3.12"
-            pffdtd_engine: "build/src/cpp/main_3d/pffdtd_3d"
+            pffdtd_engine: ""
 
           - name: macOS-X64
             os: macos-13
