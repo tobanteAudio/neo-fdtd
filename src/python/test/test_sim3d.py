@@ -1,5 +1,6 @@
 from contextlib import chdir
 import json
+import os
 import pathlib
 import subprocess
 
@@ -19,21 +20,19 @@ from pffdtd.sim3d.process_outputs import process_outputs
 from pffdtd.localization.tdoa import locate_sound_source
 
 
-ENGINE_EXE = pathlib.Path("./build/src/cpp/main_3d/pffdtd_3d").absolute()
-
-
 def _run_engine(sim_dir, engine):
     if engine == "python":
         eng = EnginePython3D(sim_dir)
         eng.run_all(1)
         eng.save_outputs()
     else:
+        exe = pathlib.Path(os.environ.get("PFFDTD_ENGINE")).absolute()
         assert engine == "native"
-        assert ENGINE_EXE.exists()
+        assert exe.exists()
 
         with chdir(sim_dir):
             result = subprocess.run(
-                args=[str(ENGINE_EXE)],
+                args=[str(exe)],
                 capture_output=True,
                 text=True,
                 check=True,
@@ -42,8 +41,9 @@ def _run_engine(sim_dir, engine):
 
 
 def _skip_if_native_engine_unavailable(engine):
-    if engine == "native" and not ENGINE_EXE.exists():
-        pytest.skip("Native engine not available")
+    if engine == "native":
+        if not os.environ.get("PFFDTD_ENGINE"):
+            pytest.skip("Native engine not available")
 
 
 def _skip_if_not_enough_memory(engine):
@@ -257,19 +257,19 @@ def test_sim3d_infinite_baffle(tmp_path, engine):
 
 @pytest.mark.parametrize("engine", ["python", "native"])
 @pytest.mark.parametrize(
-    "size,fmax,ppw,fcc,dx_scale,tolerance",
+    "room,fmax,ppw,fcc,dx_scale,tolerance",
     [
         ((2.8, 2.076, 1.48), 400, 10.5, False, 2, 3.0),
         ((3.0, 1.0, 2.0), 600, 7.7, True, 3, 6),
     ]
 )
-def test_sim3d_detect_room_modes(tmp_path, engine, size, fmax, ppw, fcc, dx_scale, tolerance):
+def test_sim3d_detect_room_modes(tmp_path, engine, room, fmax, ppw, fcc, dx_scale, tolerance):
     _skip_if_native_engine_unavailable(engine)
     _skip_if_not_enough_memory(engine)
 
-    L = size[0]
-    W = size[1]
-    H = size[2]
+    L = room[0]
+    W = room[1]
+    H = room[2]
     fmin = 20
     dx = 343/(fmax*ppw)
     root_dir = tmp_path
