@@ -40,17 +40,16 @@ int main(int argc, char** argv) {
 
   auto const start = std::chrono::steady_clock::now();
 
-  auto filePath = std::filesystem::path{args.simDir};
-  if (not std::filesystem::exists(filePath)) {
-    throw std::runtime_error{"invalid file: " + filePath.string()};
+  auto simDir = std::filesystem::path{args.simDir};
+  if (not std::filesystem::exists(simDir)) {
+    throw std::runtime_error{"invalid file: " + simDir.string()};
   }
 
-  auto const sim    = pffdtd::loadSimulation2D(filePath, args.video);
+  auto const sim    = pffdtd::loadSimulation2D(simDir, args.video);
   auto const engine = pffdtd::EngineNative{};
   auto const out    = engine(sim);
 
-  auto dir     = filePath.parent_path();
-  auto outfile = dir / args.out;
+  auto outfile = simDir / args.out;
   auto results = pffdtd::H5FWriter{outfile.string().c_str()};
   results.write("out", out);
 

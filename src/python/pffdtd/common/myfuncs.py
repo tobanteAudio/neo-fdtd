@@ -282,16 +282,16 @@ def iround(x):
 
 
 def wavread(fname):
-    SR, data = scipy.io.wavfile.read(fname)  # reads in (Nsamples,Nchannels)
+    fs, data = scipy.io.wavfile.read(fname)  # reads in (Nsamples,Nchannels)
     if data.dtype == np.int16:
         data = data/32768.0
-        SR = np.float64(SR)
-    return SR, np.float64(data.T)
+        fs = np.float64(fs)
+    return fs, np.float64(data.T)
 
 
-def wavwrite(fname, SR, data):
+def wavwrite(fname, fs, data):
     # expects (Nchannels,Nsamples), this will also assert that
     data = np.atleast_2d(data)
     # reads in (Nsamples,Nchannels)
-    scipy.io.wavfile.write(fname, int(SR), np.float32(data.T))
-    print(f'wrote {fname} at SR={SR/1000:.2f} kHz')
+    scipy.io.wavfile.write(fname, int(fs), np.float32(data.T))
+    print(f'wrote {fname} at fs={fs/1000:.2f} kHz')

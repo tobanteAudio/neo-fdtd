@@ -8,42 +8,43 @@
 
 namespace pffdtd {
 
-auto loadSimulation2D(std::filesystem::path const& path, bool exportVideo)
+auto loadSimulation2D(std::filesystem::path const& dir, bool video)
     -> Simulation2D {
-  auto file = H5FReader{path.string().c_str()};
+  // auto constants = H5FReader{(dir / "constants.h5").string().c_str()};
+  auto sim = H5FReader{(dir / "sim.h5").string().c_str()};
 
-  auto const Nx = file.read<int64_t>("Nx");
-  auto const Ny = file.read<int64_t>("Ny");
+  auto const Nx = sim.read<int64_t>("Nx");
+  auto const Ny = sim.read<int64_t>("Ny");
 
   auto const videoRatio   = static_cast<double>(Ny) / static_cast<double>(Nx);
   auto const videoWidth   = std::min<size_t>(2000, static_cast<size_t>(Nx));
   auto const videoOptions = VideoWriter::Options{
-      .file      = path.parent_path() / "out.avi",
+      .file      = dir.parent_path() / "out.avi",
       .width     = videoWidth,
       .height    = static_cast<size_t>(videoWidth * videoRatio),
-      .fps       = file.read<double>("video_fps"),
+      .fps       = sim.read<double>("video_fps"),
       .withColor = false,
   };
 
   return Simulation2D{
-      .file = path,
+      .dir = dir,
 
       .Nx = Nx,
       .Ny = Ny,
-      .Nt = file.read<int64_t>("Nt"),
+      .Nt = sim.read<int64_t>("Nt"),
 
-      .in_mask     = file.read<std::vector<uint8_t>>("in_mask"),
-      .adj_bn      = file.read<std::vector<int64_t>>("adj_bn"),
-      .bn_ixy      = file.read<std::vector<int64_t>>("bn_ixy"),
-      .loss_factor = file.read<double>("loss_factor"),
+      .in_mask     = sim.read<std::vector<uint8_t>>("in_mask"),
+      .adj_bn      = sim.read<std::vector<int64_t>>("adj_bn"),
+      .bn_ixy      = sim.read<std::vector<int64_t>>("bn_ixy"),
+      .loss_factor = sim.read<double>("loss_factor"),
 
-      .inx     = file.read<int64_t>("inx"),
-      .iny     = file.read<int64_t>("iny"),
-      .src_sig = file.read<std::vector<double>>("src_sig"),
+      .inx     = sim.read<int64_t>("inx"),
+      .iny     = sim.read<int64_t>("iny"),
+      .src_sig = sim.read<std::vector<double>>("src_sig"),
 
-      .out_ixy = file.read<std::vector<int64_t>>("out_ixy"),
+      .out_ixy = sim.read<std::vector<int64_t>>("out_ixy"),
 
-      .videoOptions = exportVideo ? std::optional{videoOptions} : std::nullopt,
+      .videoOptions = video ? std::optional{videoOptions} : std::nullopt,
   };
 }
 

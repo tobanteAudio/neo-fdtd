@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 
 import h5py
 import matplotlib.pyplot as plt
@@ -10,15 +11,16 @@ from pffdtd.diffusor.measurement import polar_response
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--sim_data', type=str)
+    parser.add_argument('--sim_dir', type=str)
     parser.add_argument('out_file', nargs='*')
 
     args = parser.parse_args()
     out_file = args.out_file[0]
+    sim_dir = Path(args.sim_dir)
 
-    sim_data = h5py.File(args.sim_data, 'r')
-    fs = float(sim_data['fs'][...])
-    fmax = float(sim_data['fmax'][...])
+    constants = h5py.File(sim_dir / "constants.h5", 'r')
+    fs = float(constants['fs'][...])
+    fmax = float(constants['fmax'][...])
     fmin = 125.0
     trim_ms = 20
     trim_samples = int(fs/1000*trim_ms)

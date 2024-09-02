@@ -22,4 +22,7 @@ rm -rf "$sim_dir"
 python -m pffdtd.sim2d.fdtd --verbose --save --data_dir="$sim_dir" --duration="$duration" --fmax="$fmax"
 
 # Run sim
-DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=16 "$engine_exe" -s "$sim_dir/sim.h5"
+DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=16 "$engine_exe" -s "$sim_dir"
+
+# Report
+python -m pffdtd.sim2d.report --sim_dir="$sim_dir" "$sim_dir/out.h5"

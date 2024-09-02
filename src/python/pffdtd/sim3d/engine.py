@@ -105,7 +105,7 @@ class EnginePython3D:
             assert self.fcc_flag==1
 
         self.print(f'Nx={self.Nx} Ny={self.Ny} Nz={self.Nz}')
-        self.print(f'h={self.h} Ts={self.Ts} c={self.c}, SR={1/self.Ts}')
+        self.print(f'h={self.h} Ts={self.Ts} c={self.c}, fs={1/self.Ts}')
         self.print(f'l={self.l} l2={self.l2} fcc={self.fcc}')
         self.print(f'Nr={self.Nr} Ns={self.Ns} Nt={self.Nt}')
 

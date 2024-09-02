@@ -9,7 +9,7 @@ class SimConstants:
     """Class to keep simulation constants mostly in one place, writes to HDF5
     """
 
-    def __init__(self, Tc, rh, h=None, SR=None, fmax=None, PPW=None, fcc=False):
+    def __init__(self, Tc, rh, h=None, fs=None, fmax=None, PPW=None, fcc=False):
         # Tc is temperature, rh is relative humidity <- this gives c (speed of sound)
         assert Tc >= -20
         assert Tc <= 50
@@ -17,7 +17,7 @@ class SimConstants:
         assert rh >= 10
         c = 343.2*np.sqrt(Tc/20)
 
-        assert (h is not None) or (SR is not None) or (
+        assert (h is not None) or (fs is not None) or (
             fmax is not None and PPW is not None)
 
         if fcc:
@@ -35,20 +35,21 @@ class SimConstants:
 
         if h is not None:
             Ts = h/c*l
-            SR = 1/Ts
-        elif SR is not None:
-            Ts = 1/SR
+            fs = 1/Ts
+        elif fs is not None:
+            Ts = 1/fs
             h = c*Ts/l
         elif fmax is not None and PPW is not None:
             h = c/(fmax*PPW)  # PPW is points per wavelength (on Cartesian grid)
             Ts = h/c*l
-            SR = 1/Ts
+            fs = 1/Ts
         else:
             raise
 
         self.print(f'{c=}')
         self.print(f'{Ts=}')
-        self.print(f'{SR=}')
+        self.print(f'{fs=}')
+        self.print(f'{fmax=}')
         self.print(f'{h=}')
         self.print(f'{l=}')
         self.print(f'{l2=}')
@@ -56,7 +57,8 @@ class SimConstants:
         self.h = h
         self.c = c
         self.Ts = Ts
-        self.SR = SR
+        self.fs = fs
+        self.fmax = fmax
         self.l = l
         self.l2 = l2
         self.fcc = fcc
@@ -74,7 +76,8 @@ class SimConstants:
         Ts = self.Ts
         l = self.l
         l2 = self.l2
-        SR = self.SR
+        fs = self.fs
+        fmax = self.fmax
         fcc = self.fcc
         Tc = self.Tc
         rh = self.rh
@@ -90,7 +93,8 @@ class SimConstants:
         h5f.create_dataset('c', data=np.float64(c))
         h5f.create_dataset('h', data=np.float64(h))
         h5f.create_dataset('Ts', data=np.float64(Ts))
-        h5f.create_dataset('SR', data=np.float64(SR))
+        h5f.create_dataset('fs', data=np.float64(fs))
+        h5f.create_dataset('fmax', data=np.float64(fmax))
         h5f.create_dataset('l', data=np.float64(l))
         h5f.create_dataset('l2', data=np.float64(l2))
         h5f.create_dataset('fcc_flag', data=np.int8(fcc))

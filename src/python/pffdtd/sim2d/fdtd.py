@@ -10,6 +10,7 @@ from tqdm import tqdm
 from pffdtd.diffusor.design import diffusor_bandwidth
 from pffdtd.diffusor.qrd import quadratic_residue_diffuser
 from pffdtd.diffusor.prd import primitive_root_diffuser
+from pffdtd.sim3d.sim_constants import SimConstants
 
 
 def to_ixy(x, y, Nx, Ny, order="row"):
@@ -162,6 +163,15 @@ def stencil_boundary_loss(u0, u2, bn_ixy, adj_bn, loss_factor):
         u0.flat[ib] = (current + lf * (4 - K) * prev) / (1 + lf * (4 - K))
 
 
+def write_model_image(in_mask, out_ixy, img_path):
+    img = np.zeros(in_mask.shape, dtype=np.uint8)
+    img[~in_mask] = 255
+    img.flat[out_ixy] = 255
+
+    img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    cv2.imwrite(img_path, img.astype(np.uint8))
+
+
 def main():
     bool_action = argparse.BooleanOptionalAction
     parser = argparse.ArgumentParser()
@@ -183,10 +193,15 @@ def main():
     if not data_dir.exists():
         data_dir.mkdir(parents=True)
 
-    c = 343  # speed of sound m/s (20degC)
+    constants = SimConstants(
+        Tc=20,
+        rh=50,
+        fmax=args.fmax,
+        PPW=args.ppw,
+        fcc=False,
+    )
+
     room = (30, 30)
-    fmax = args.fmax  # Hz
-    PPW = args.ppw  # points per wavelength at fmax
     duration = args.duration  # seconds
     refl_coeff = 0.99  # reflection coefficient
 
@@ -195,10 +210,8 @@ def main():
     Lx, Ly = room[0], room[1]  # box dims (with lower corner at origin)
     x_in, y_in = Lx*0.5, Ly*0.5  # source input position
 
-    # calculate grid spacing, time step, sample rate
-    dx = c/fmax/PPW  # grid spacing
-    dt = np.sqrt(0.5)*dx/c
-    fs = 1/dt
+    dx = constants.h
+    dt = constants.Ts
 
     print('--SIM-SETUP: Generate mesh & mask')
     Nx = int(np.ceil(Lx/dx)+2)  # number of points in x-dir
@@ -220,7 +233,7 @@ def main():
     depth = 0.35
     width = 0.048
     in_mask = add_diffusor(prime, width, depth, room,
-                           in_mask, X, Y, dx, c, verbose)
+                           in_mask, X, Y, dx, constants.c, verbose)
 
     # Receiver linear index
     print('--SIM-SETUP: Generate receivers')
@@ -256,35 +269,15 @@ def main():
     src_sig = np.zeros(Nt, dtype=np.float64)
     src_sig[0] = 1.0
 
-    # Nh = int(np.ceil(5 * fs / fmax))
-    # n = np.arange(Nh)
-    # src_sig[:Nh] = 0.5 - 0.5 * np.cos(2 * np.pi * n / Nh)
-    # src_sig[:Nh] *= np.sin(2 * np.pi * n / Nh)
-
-    print('--SIM-SETUP: Allocate python memory')
-    u0 = np.zeros((Nx, Ny), dtype=np.float64)
-    u1 = np.zeros((Nx, Ny), dtype=np.float64)
-    u2 = np.zeros((Nx, Ny), dtype=np.float64)
-
     sps30 = dt*30
     target_sps = 0.115
     fps = int(min(120, target_sps/sps30))
 
-    if args.video:
-        video_name = data_dir/'output_video.avi'
-        print(f'--SIM-SETUP: Create python video file: {video_name}')
-        height, width = 1000, 1000  # u0.shape
-        fourcc = cv2.VideoWriter_fourcc(*'DIVX')
-        video = cv2.VideoWriter(video_name, fourcc, fps,
-                                (width, height), isColor=False)
+    print('--SIM-SETUP: Writing simulation to h5 files')
+    constants.save(data_dir)
 
-    print('--SIM-SETUP: Writing dataset to h5 file')
     h5f = h5py.File(data_dir / pathlib.Path('sim.h5'), 'w')
-    h5f.create_dataset('fmax', data=np.float64(fmax))
-    h5f.create_dataset('fs', data=np.float64(fs))
     h5f.create_dataset('video_fps', data=np.float64(fps))
-    h5f.create_dataset('dx', data=np.float64(dx))
-    h5f.create_dataset('dt', data=np.float64(dt))
     h5f.create_dataset('Nt', data=np.int64(Nt))
     h5f.create_dataset('Nx', data=np.int64(Nx))
     h5f.create_dataset('Ny', data=np.int64(Ny))
@@ -298,24 +291,30 @@ def main():
     h5f.create_dataset('src_sig', data=src_sig)
     h5f.close()
 
-    print(f'  fmax = {fmax:.3f} Hz')
-    print(f'  fs   = {fs:.3f} Hz')
+    write_model_image(in_mask, out_ixy, data_dir / 'model.png')
+
+    print(f'  fmax = {constants.fmax:.3f} Hz')
+    print(f'  fs   = {constants.fs:.3f} Hz')
     print(f'  Δx   = {dx*100:.5f} cm / {dx*1000:.2f} mm')
-    print(f'  fps  = {fps}')
     print(f'  Nb   = {bn_ixy.shape[0]}')
     print(f'  Nt   = {int(Nt)}')
     print(f'  Nx   = {int(Nx)}')
     print(f'  Ny   = {int(Ny)}')
     print(f'  N    = {int(Nx)*int(Ny)}')
 
-    model_img = np.zeros((Nx, Ny), dtype=np.uint8)
-    model_img[~in_mask] = 255
-    model_img.flat[out_ixy] = 255
-
-    model_img = cv2.rotate(model_img, cv2.ROTATE_90_COUNTERCLOCKWISE)
-    cv2.imwrite(data_dir / 'model.png', model_img.astype(np.uint8))
-
     if args.video:
+        print('--SIM-SETUP: Allocate python memory')
+        u0 = np.zeros((Nx, Ny), dtype=np.float64)
+        u1 = np.zeros((Nx, Ny), dtype=np.float64)
+        u2 = np.zeros((Nx, Ny), dtype=np.float64)
+
+        video_name = data_dir/'output_video.avi'
+        print(f'--SIM-SETUP: Create python video file: {video_name}')
+        height, width = 1000, 1000  # u0.shape
+        fourcc = cv2.VideoWriter_fourcc(*'DIVX')
+        video = cv2.VideoWriter(video_name, fourcc, fps,
+                                (width, height), isColor=False)
+
         for nt in tqdm(range(Nt)):
             stencil_air(u0, u1, u2, in_mask)
             stencil_boundary_rigid(u0, u1, u2, bn_ixy, adj_bn)
