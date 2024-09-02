@@ -20,17 +20,18 @@ from pffdtd.common.myasserts import assert_np_array_complex
 EPS = np.finfo(np.float64).eps
 
 
-def rotmatrix_ax_ang(Rax:Any, Rang:float):
-    assert isinstance(Rax,np.ndarray)
+def rotmatrix_ax_ang(Rax: Any, Rang: float):
+    assert isinstance(Rax, np.ndarray)
     assert Rax.shape == (3,)
     assert type(Rang) is float
 
-    Rax = Rax/npl.norm(Rax) #to be sure
+    Rax = Rax/npl.norm(Rax)  # to be sure
 
-    theta = Rang/180.0*pi #in rad
-    #see https://en.wikipedia.org/wiki/Rotation_matrix
-    R = np.array([[cos(theta) + Rax[0]*Rax[0]*(1-cos(theta)), Rax[0]*Rax[1]*(1-cos(theta)) - Rax[2]*sin(theta), Rax[0]*Rax[2]*(1-cos(theta)) + Rax[1]*sin(theta)],\
-                  [Rax[1]*Rax[0]*(1-cos(theta)) + Rax[2]*sin(theta), cos(theta) + Rax[1]*Rax[1]*(1-cos(theta)), Rax[1]*Rax[2]*(1-cos(theta)) - Rax[0]*sin(theta)],\
+    theta = Rang/180.0*pi  # in rad
+    # see https://en.wikipedia.org/wiki/Rotation_matrix
+    R = np.array([[cos(theta) + Rax[0]*Rax[0]*(1-cos(theta)), Rax[0]*Rax[1]*(1-cos(theta)) - Rax[2]*sin(theta), Rax[0]*Rax[2]*(1-cos(theta)) + Rax[1]*sin(theta)],
+                  [Rax[1]*Rax[0]*(1-cos(theta)) + Rax[2]*sin(theta), cos(theta) + Rax[1]*Rax[1]*(
+                      1-cos(theta)), Rax[1]*Rax[2]*(1-cos(theta)) - Rax[0]*sin(theta)],
                   [Rax[2]*Rax[0]*(1-cos(theta)) - Rax[1]*sin(theta), Rax[2]*Rax[1]*(1-cos(theta)) + Rax[0]*sin(theta), cos(theta) + Rax[2]*Rax[2]*(1-cos(theta))]])
     assert npl.norm(npl.inv(R)-R.T) < 1e-8
     return R
@@ -45,16 +46,16 @@ def rotate_xyz_deg(thx_d, thy_d, thz_d):
     thz = np.deg2rad(thz_d)
 
     Rx = np.array([[1, 0, 0],
-                    [0, np.cos(thx), -np.sin(thx)],
-                    [0, np.sin(thx), np.cos(thx)]])
+                   [0, np.cos(thx), -np.sin(thx)],
+                   [0, np.sin(thx), np.cos(thx)]])
 
     Ry = np.array([[np.cos(thy), 0, np.sin(thy)],
-                    [0, 1, 0],
-                    [-np.sin(thy), 0, np.cos(thy)]])
+                   [0, 1, 0],
+                   [-np.sin(thy), 0, np.cos(thy)]])
 
     Rz = np.array([[np.cos(thz), -np.sin(thz), 0],
-                    [np.sin(thz), np.cos(thz), 0],
-                    [0, 0, 1]])
+                   [np.sin(thz), np.cos(thz), 0],
+                   [0, 0, 1]])
 
     R = Rx @ Ry @ Rz
 
@@ -295,3 +296,27 @@ def wavwrite(fname, fs, data):
     # reads in (Nsamples,Nchannels)
     scipy.io.wavfile.write(fname, int(fs), np.float32(data.T))
     print(f'wrote {fname} at fs={fs/1000:.2f} kHz')
+
+
+def to_ixy(x, y, Nx, Ny, order="row"):
+    if order == "row":
+        return x*Ny+y
+    return y*Nx+x
+
+
+def point_on_circle(center, radius: float, angle: float):
+    """
+    Calculate the coordinates of a point on a circle arc.
+
+    Parameters:
+    center (tuple): (x, y) coordinates of the center of the circle.
+    radius: Radius of the circle.
+    angle: Angle in radians.
+
+    Returns:
+    tuple: (p_x, p_y) coordinates of the point on the circle arc.
+    """
+    x, y = center
+    p_x = x + radius * np.cos(angle)
+    p_y = y + radius * np.sin(angle)
+    return (p_x, p_y)

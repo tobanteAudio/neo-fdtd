@@ -19,7 +19,7 @@ auto loadSimulation2D(std::filesystem::path const& dir, bool video)
   auto const videoRatio   = static_cast<double>(Ny) / static_cast<double>(Nx);
   auto const videoWidth   = std::min<size_t>(2000, static_cast<size_t>(Nx));
   auto const videoOptions = VideoWriter::Options{
-      .file      = dir.parent_path() / "out.avi",
+      .file      = dir / "out.avi",
       .width     = videoWidth,
       .height    = static_cast<size_t>(videoWidth * videoRatio),
       .fps       = sim.read<double>("video_fps"),
