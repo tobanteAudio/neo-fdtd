@@ -9,9 +9,9 @@ from pffdtd.sim3d.room_geometry import RoomGeometry
 from pffdtd.voxelizer.cart_grid import CartGrid
 from pffdtd.voxelizer.vox_grid import VoxGrid
 from pffdtd.voxelizer.vox_scene import VoxScene
-from pffdtd.sim3d.sim_signals import SimSignals
-from pffdtd.sim3d.sim_constants import SimConstants
-from pffdtd.sim3d.sim_materials import SimMaterials
+from pffdtd.sim3d.signals import SimSignals
+from pffdtd.sim3d.constants import SimConstants
+from pffdtd.sim3d.materials import SimMaterials
 from pffdtd.sim3d.rotate import rotate, sort_sim_data, copy_sim_data, fold_fcc_sim_data
 
 

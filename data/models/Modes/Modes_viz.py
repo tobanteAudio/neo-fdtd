@@ -1,4 +1,4 @@
-from pffdtd.sim3d.sim_setup import sim_setup
+from pffdtd.sim3d.setup import sim_setup
 
 # will draw 'voxelization' (spheres are active boundary nodes, cubes rigid boundary nodes)
 sim_setup(

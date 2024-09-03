@@ -6,7 +6,7 @@ import numpy as np
 from scipy.signal import lfilter
 
 from pffdtd.geometry.math import to_ixy
-from pffdtd.sim3d.sim_constants import SimConstants
+from pffdtd.sim3d.constants import SimConstants
 
 
 def write_model_image(in_mask, in_ixy, out_ixy, img_path):
