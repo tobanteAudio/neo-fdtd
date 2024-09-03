@@ -12,26 +12,25 @@
 # This gets called from command line with cmdline arguments (run after simulation)
 #
 ##############################################################################
-
-import numpy as np
-from numpy import array as npa
 from pathlib import Path
+
 import h5py
 import matplotlib.pyplot as plt
-from scipy.signal import butter,bilinear_zpk,zpk2sos,sosfilt,lfilter
-from numpy import pi,sqrt
-from numpy.fft import rfft
+import numpy as np
 from numpy import log10,log2
+from numpy.fft import rfft
 from resampy import resample
+
 from pffdtd.absorption.air import apply_visco_filter
 from pffdtd.absorption.air import apply_modal_filter
 from pffdtd.absorption.air import apply_ola_filter
-from pffdtd.common.wavfile import save_as_wav_files
+from pffdtd.common.filter import apply_lowcut, apply_lowpass
 from pffdtd.common.plot import plot_styles
+from pffdtd.common.wavfile import save_as_wav_files
 from pffdtd.geometry.math import iceil
 
-#class to process sim_outs.h5 file
 class ProcessOutputs:
+    #class to process sim_outs.h5 file
     def __init__(self,data_dir):
         self.print('loading...')
 
@@ -84,8 +83,8 @@ class ProcessOutputs:
     def print(self,fstring):
         print(f'--PROCESS_OUTPUTS: {fstring}')
 
-    #initial process: consolidate receivers with linterp weights, and integrate/low-cut
     def initial_process(self,fcut=10.0,N_order=4):
+        #initial process: consolidate receivers with linterp weights, and integrate/low-cut
         self.print('initial process...')
         u_out = self.u_out
         out_alpha = self.out_alpha
@@ -105,55 +104,18 @@ class ProcessOutputs:
         h5f.create_dataset('r_out', data=r_out)
         h5f.close()
 
-        if fcut>0:
-            if apply_int:
-                #design combined butter filter with integrator
-                z,p,k=butter(N_order,fcut*2*pi,btype='high',analog=True,output='zpk')
-                assert(np.all(z==0.0))
-                z = z[1:] #remove one zero
-                #p = np.r_[p,0] #adds integrator (bilinear routine handles p-z cancellation)
-                zd,pd,kd=bilinear_zpk(z,p,k,1/Ts)
-                sos = zpk2sos(zd,pd,kd)
-                self.print('applying lowcut-integrator')
-            else:
-                #design digital high-pass
-                sos=butter(N_order,2*Ts*fcut,btype='high',output='sos')
-                self.print('applying lowcut')
-            r_out_f = sosfilt(sos,r_out)
-        elif apply_int: #shouldn't really use this without lowcut, but here in case
-            b = Ts/2*npa([1,1])
-            a = npa([1,1])
-            r_out_f = lfilter(b,a,r_out)
-            self.print('applying integrator')
-        else:
-            r_out_f = np.copy(r_out)
+        r_out_f =  apply_lowcut(r_out,1/Ts,fcut,N_order,apply_int)
         self.print('initial process done')
 
         self.r_out = r_out
         self.r_out_f = r_out_f
 
-    #lowpass filter for fmax (to remove freqs with too much numerical dispersion)
     def apply_lowpass(self,fcut,N_order=8,symmetric=True):
-        Ts_f = self.Ts_f
-        r_out_f = self.r_out_f
+        #lowpass filter for fmax (to remove freqs with too much numerical dispersion)
+        self.r_out_f = apply_lowpass(self.r_out_f,self.Fs_f,fcut,N_order,symmetric)
 
-        if symmetric: #will be run twice
-            assert N_order%2==0
-            N_order= int(N_order//2)
-            self.print(f'{N_order=} for symmetric IIR filtering')
-
-        #design digital high-pass
-        sos=butter(N_order,2*Ts_f*fcut,btype='low',output='sos')
-        self.print('applying lowpass to filtered output')
-        r_out_f = sosfilt(sos,r_out_f)
-        if symmetric: #runs again, time reversed
-            self.print('applying second time in reverse to remove phase shift')
-            r_out_f = sosfilt(sos,r_out_f[:,::-1])[:,::-1]
-
-        self.r_out_f = r_out_f
-
-    #resample with resampy, 48kHz default
     def resample(self,Fs_f=48e3):
+        #resample with resampy, 48kHz default
         Fs = self.Fs #raw Fs
         if Fs==Fs_f:
             return
