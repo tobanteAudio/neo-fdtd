@@ -9,7 +9,6 @@ target_link_libraries(pffdtd
     PUBLIC
         fmt::fmt
         HDF5::HDF5
-        opencv_videoio
         std::mdspan
         TBB::tbb
 )
@@ -29,8 +28,6 @@ target_sources(pffdtd
         pffdtd/sycl.hpp
         pffdtd/utility.cpp
         pffdtd/utility.hpp
-        pffdtd/video.cpp
-        pffdtd/video.hpp
 )
 
 if(PFFDTD_ENABLE_ACPP_SYCL OR PFFDTD_ENABLE_INTEL_SYCL)

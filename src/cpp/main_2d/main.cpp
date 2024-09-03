@@ -15,7 +15,6 @@
 
 #include <chrono>
 #include <filesystem>
-#include <span>
 #include <stdexcept>
 #include <string>
 
@@ -23,7 +22,6 @@ struct Arguments {
   std::string simDir{};
   std::string out{"out.h5"};
   int jobs{-1};
-  bool video{false};
 };
 
 int main(int argc, char** argv) {
@@ -32,7 +30,6 @@ int main(int argc, char** argv) {
   app.add_option("-s,--sim_dir", args.simDir, "Folder path");
   app.add_option("-o,--out", args.out, "Filename");
   app.add_option("-j,--jobs", args.jobs, "Num threads to use");
-  app.add_flag("-v,--video", args.video, "Export video");
   CLI11_PARSE(app, argc, argv);
 
   if (args.jobs > 0) {
@@ -50,12 +47,12 @@ int main(int argc, char** argv) {
     throw std::runtime_error{"invalid file: " + simDir.string()};
   }
 
-  auto const sim    = pffdtd::loadSimulation2D(simDir, args.video);
+  auto const sim    = pffdtd::loadSimulation2D(simDir);
   auto const engine = pffdtd::EngineNative{};
   auto const out    = engine(sim);
 
   auto outfile = simDir / args.out;
-  auto results = pffdtd::H5FWriter{outfile.string().c_str()};
+  auto results = pffdtd::H5FWriter{outfile};
   results.write("out", out);
 
   auto const stop = std::chrono::steady_clock::now();

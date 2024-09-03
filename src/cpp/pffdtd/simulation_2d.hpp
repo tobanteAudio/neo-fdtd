@@ -1,13 +1,7 @@
 #pragma once
 
-#include "pffdtd/video.hpp"
-
-#include <atomic>
 #include <cstdint>
 #include <filesystem>
-#include <optional>
-#include <queue>
-#include <thread>
 #include <vector>
 
 namespace pffdtd {
@@ -29,27 +23,9 @@ struct Simulation2D {
   std::vector<double> src_sig; // Source signal
 
   std::vector<int64_t> out_ixy; // Receiver nodes
-
-  std::optional<VideoWriter::Options> videoOptions;
 };
 
-auto loadSimulation2D(std::filesystem::path const& dir, bool video)
-    -> Simulation2D;
+auto loadSimulation2D(std::filesystem::path const& dir) -> Simulation2D;
 auto summary(Simulation2D const& sim) -> void;
-
-struct BackgroundVideoWriter {
-  explicit BackgroundVideoWriter(VideoWriter::Options const& opt);
-
-  auto run(Simulation2D const& sim) -> void;
-  auto push(std::vector<double> frame) -> void;
-  auto finish() -> void;
-
-  private:
-  VideoWriter writer;
-  std::queue<std::vector<double>> queue;
-  std::mutex mutex;
-  std::atomic<bool> done{false};
-  bool useColor;
-};
 
 } // namespace pffdtd

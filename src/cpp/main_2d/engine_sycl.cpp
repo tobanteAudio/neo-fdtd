@@ -98,17 +98,6 @@ auto EngineSYCL::operator()(Simulation2D const& sim) const
 
   pffdtd::summary(sim);
 
-  auto shouldRenderVideo = sim.videoOptions.has_value();
-  auto videoWriter       = std::unique_ptr<BackgroundVideoWriter>();
-  auto videoThread       = std::unique_ptr<std::thread>();
-
-  if (shouldRenderVideo) {
-    auto opt    = sim.videoOptions.value();
-    auto func   = [&videoWriter, &sim] { videoWriter->run(sim); };
-    videoWriter = std::make_unique<BackgroundVideoWriter>(opt);
-    videoThread = std::make_unique<std::thread>(func);
-  }
-
   auto prop   = sycl::property_list{sycl::property::queue::in_order()};
   auto queue  = sycl::queue{prop};
   auto device = queue.get_device();
@@ -215,24 +204,11 @@ auto EngineSYCL::operator()(Simulation2D const& sim) const
 
     queue.wait_and_throw();
 
-    if (shouldRenderVideo) {
-      auto host = sycl::host_accessor{u0, sycl::read_only};
-      for (auto i{0UL}; i < frame.size(); ++i) {
-        frame[i] = host.get_pointer()[i];
-      }
-      videoWriter->push(frame);
-    }
-
     auto tmp = u2;
 
     u2 = u1;
     u1 = u0;
     u0 = tmp;
-  }
-
-  if (shouldRenderVideo) {
-    videoWriter->finish();
-    videoThread->join();
   }
 
   auto outputs = stdex::mdarray<double, stdex::dextents<size_t, 2>>(Nr, Nt);

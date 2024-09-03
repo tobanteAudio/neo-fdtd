@@ -1,7 +1,5 @@
 #include "engine_native.hpp"
 
-#include "pffdtd/video.hpp"
-
 #include <fmt/format.h>
 
 #include <oneapi/tbb.h>
@@ -34,17 +32,6 @@ auto EngineNative::operator()(Simulation2D const& sim) const
   auto const lossFactor = sim.loss_factor;
 
   pffdtd::summary(sim);
-
-  auto shouldRenderVideo = sim.videoOptions.has_value();
-  auto videoWriter       = std::unique_ptr<BackgroundVideoWriter>();
-  auto videoThread       = std::unique_ptr<std::thread>();
-
-  if (shouldRenderVideo) {
-    auto opt    = sim.videoOptions.value();
-    auto func   = [&videoWriter, &sim] { videoWriter->run(sim); };
-    videoWriter = std::make_unique<BackgroundVideoWriter>(opt);
-    videoThread = std::make_unique<std::thread>(func);
-  }
 
   auto u0_buf  = stdex::mdarray<double, stdex::dextents<size_t, 2>>(Nx, Ny);
   auto u1_buf  = stdex::mdarray<double, stdex::dextents<size_t, 2>>(Nx, Ny);
@@ -118,20 +105,10 @@ auto EngineNative::operator()(Simulation2D const& sim) const
       out(i, n)  = u0.data_handle()[r_ixy];
     }
 
-    if (shouldRenderVideo) {
-      auto frame = u0_buf.container();
-      videoWriter->push(frame);
-    }
-
     auto tmp = u2;
     u2       = u1;
     u1       = u0;
     u0       = tmp;
-  }
-
-  if (shouldRenderVideo) {
-    videoWriter->finish();
-    videoThread->join();
   }
 
   fmt::println("");
