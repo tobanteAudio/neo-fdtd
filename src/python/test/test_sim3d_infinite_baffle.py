@@ -2,8 +2,8 @@ import json
 
 import numpy as np
 import pytest
-import scipy.io.wavfile as wavfile
 
+from pffdtd.common.myfuncs import wavread
 from pffdtd.common.myfuncs import point_on_circle
 from pffdtd.materials.adm_funcs import write_freq_ind_mat_from_Yn, convert_Sabs_to_Yn
 from pffdtd.sim3d.sim_setup import sim_setup
@@ -102,9 +102,9 @@ def test_sim3d_infinite_baffle(tmp_path, engine):
         plot=False,
     )
 
-    fs_1, buf_1 = wavfile.read(sim_dir / "R001_out_normalised.wav")
-    fs_2, buf_2 = wavfile.read(sim_dir / "R002_out_normalised.wav")
-    fs_3, buf_3 = wavfile.read(sim_dir / "R003_out_normalised.wav")
+    fs_1, buf_1 = wavread(sim_dir / "R001_out_normalised.wav")
+    fs_2, buf_2 = wavread(sim_dir / "R002_out_normalised.wav")
+    fs_3, buf_3 = wavread(sim_dir / "R003_out_normalised.wav")
     assert fs_1 == fs_2
     assert fs_1 == fs_3
 

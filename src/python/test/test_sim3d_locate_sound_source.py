@@ -2,8 +2,8 @@ import json
 
 import numpy as np
 import pytest
-import scipy.io.wavfile as wavfile
 
+from pffdtd.common.myfuncs import wavread
 from pffdtd.materials.adm_funcs import write_freq_ind_mat_from_Yn, convert_Sabs_to_Yn
 from pffdtd.sim3d.room_builder import RoomBuilder
 from pffdtd.sim3d.sim_setup import sim_setup
@@ -85,10 +85,10 @@ def test_sim3d_locate_sound_source(tmp_path, engine):
         plot=False,
     )
 
-    fs1, mic1 = wavfile.read(sim_dir/"R001_out_normalised.wav")
-    fs2, mic2 = wavfile.read(sim_dir/"R002_out_normalised.wav")
-    fs3, mic3 = wavfile.read(sim_dir/"R003_out_normalised.wav")
-    fs4, mic4 = wavfile.read(sim_dir/"R004_out_normalised.wav")
+    fs1, mic1 = wavread(sim_dir/"R001_out_normalised.wav")
+    fs2, mic2 = wavread(sim_dir/"R002_out_normalised.wav")
+    fs3, mic3 = wavread(sim_dir/"R003_out_normalised.wav")
+    fs4, mic4 = wavread(sim_dir/"R004_out_normalised.wav")
     assert fs1 == fs2
     assert fs1 == fs3
     assert fs1 == fs4
