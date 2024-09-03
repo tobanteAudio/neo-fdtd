@@ -22,7 +22,7 @@ cd "$model_dir"
 python "$sim_setup"
 
 # Run sim
-DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=16 "$engine_exe" -s "$sim_dir"
+DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=16 "$engine_exe" -s "$sim_dir" -j 16
 # pffdtd sim2d run --sim_dir "$sim_dir"
 
 # Report

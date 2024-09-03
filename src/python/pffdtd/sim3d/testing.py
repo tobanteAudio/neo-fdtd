@@ -15,7 +15,7 @@ def run_engine(sim_dir, engine):
     else:
         assert engine == "native"
 
-        exe = pathlib.Path(os.environ.get("PFFDTD_ENGINE")).absolute()
+        exe = pathlib.Path(os.environ.get("PFFDTD_ENGINE_3D")).absolute()
         assert exe.exists()
         assert exe.is_file()
 
@@ -30,5 +30,5 @@ def run_engine(sim_dir, engine):
 
 def skip_if_native_engine_unavailable(engine):
     if engine == "native":
-        if not os.environ.get("PFFDTD_ENGINE"):
+        if not os.environ.get("PFFDTD_ENGINE_3D"):
             pytest.skip("Native engine not available")

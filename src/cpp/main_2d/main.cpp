@@ -22,6 +22,7 @@
 struct Arguments {
   std::string simDir{};
   std::string out{"out.h5"};
+  int jobs{-1};
   bool video{false};
 };
 
@@ -30,13 +31,16 @@ int main(int argc, char** argv) {
   auto args = Arguments{};
   app.add_option("-s,--sim_dir", args.simDir, "Folder path");
   app.add_option("-o,--out", args.out, "Filename");
+  app.add_option("-j,--jobs", args.jobs, "Num threads to use");
   app.add_flag("-v,--video", args.video, "Export video");
   CLI11_PARSE(app, argc, argv);
 
-  oneapi::tbb::global_control global_control = oneapi::tbb::global_control(
-      oneapi::tbb::global_control::max_allowed_parallelism,
-      16
-  );
+  if (args.jobs > 0) {
+    oneapi::tbb::global_control global_control = oneapi::tbb::global_control(
+        oneapi::tbb::global_control::max_allowed_parallelism,
+        args.jobs
+    );
+  }
 
   auto const start = std::chrono::steady_clock::now();
 

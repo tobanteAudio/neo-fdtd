@@ -82,8 +82,8 @@ class Engine2D:
 
         print(f"last: u0={u0[inx, iny]} u1={u1[inx, iny]} u2={u2[inx, iny]}")
 
-    def save_output(self):
-        h5f = h5py.File(self.sim_dir / "out.h5", 'w')
+    def save_output(self, filename="out.h5"):
+        h5f = h5py.File(self.sim_dir / filename, 'w')
         h5f.create_dataset('out', data=self.out)
         h5f.close()
 
