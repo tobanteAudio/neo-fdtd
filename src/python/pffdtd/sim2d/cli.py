@@ -10,8 +10,9 @@ def sim2d():
 
 @sim2d.command(help="Run simulation.")
 @click.option('--sim_dir', type=click.Path(exists=True))
+@click.option('--out', default="out.h5")
 @click.option('--video', is_flag=True)
-def run(sim_dir, video):
-    engine = Engine2D(sim_dir=sim_dir, video=video)
+def run(sim_dir, out, video):
+    engine = Engine2D(sim_dir=sim_dir, out=out, video=video)
     engine.run()
     engine.save_output()

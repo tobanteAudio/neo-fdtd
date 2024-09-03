@@ -8,9 +8,10 @@ from tqdm import tqdm
 
 
 class Engine2D:
-    def __init__(self, sim_dir, video):
+    def __init__(self, sim_dir, out="out.h5", video=False):
         self.sim_dir = Path(sim_dir)
         self.video = video
+        self.output_file = out
 
         h5f = h5py.File(self.sim_dir / 'sim.h5', 'r')
         self.fps = h5f['video_fps'][()]
@@ -82,8 +83,8 @@ class Engine2D:
 
         print(f"last: u0={u0[inx, iny]} u1={u1[inx, iny]} u2={u2[inx, iny]}")
 
-    def save_output(self, filename="out.h5"):
-        h5f = h5py.File(self.sim_dir / filename, 'w')
+    def save_output(self):
+        h5f = h5py.File(self.sim_dir / self.output_file, 'w')
         h5f.create_dataset('out', data=self.out)
         h5f.close()
 
