@@ -49,6 +49,10 @@ class Engine2D:
         u2 = np.zeros((Nx, Ny), dtype=np.float64)
         self.out = np.zeros((out_ixy.shape[0], Nt), dtype=np.float64)
 
+        print(f"{self.out.shape}")
+        print(f"{out_ixy.shape}")
+        print(f"{u0.shape}")
+
         if self.video:
             video_name = self.sim_dir/'out.avi'
             print(f'--SIM-ENGINE: Create python video file: {video_name}')
@@ -65,7 +69,7 @@ class Engine2D:
 
             u0[inx, iny] = u0[inx, iny] + src_sig[nt]
 
-            self.out[:, nt] = u0.flat[out_ixy]
+            self.out[:, nt] = u0.flat[[out_ixy]]
 
             u2 = u1.copy()
             u1 = u0.copy()
@@ -74,6 +78,7 @@ class Engine2D:
                 img = np.abs(u0)
                 img = cv2.normalize(img, None, 0, 255,
                                     cv2.NORM_MINMAX).astype(np.uint8)
+                img.flat[bn_ixy] = 255
                 img.flat[~in_mask] = 255
                 img = cv2.resize(img, (1000, 1000))
                 video.write(cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE))
