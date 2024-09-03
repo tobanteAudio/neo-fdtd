@@ -60,11 +60,11 @@ def test_sim3d_detect_room_modes(tmp_path, engine, room, fmax, ppw, fcc, dx_scal
 
     process_outputs(
         data_dir=sim_dir,
-        resample_Fs=48_000,
+        resample_fs=48_000,
         fcut_lowcut=fmin,
-        N_order_lowcut=4,
+        order_lowcut=4,
         fcut_lowpass=fmax,
-        N_order_lowpass=8,
+        order_lowpass=8,
         symmetric_lowpass=True,
         air_abs_filter="none",
         save_wav=True,
