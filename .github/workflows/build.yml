@@ -112,7 +112,6 @@ jobs:
           git clone https://github.com/conan-io/cmake-conan.git -b develop2 external/cmake-conan
 
       - name: CMake configure
-        if: runner.os != 'Windows'
         run: >
           cmake
           -B build
@@ -123,7 +122,6 @@ jobs:
           ${{ matrix.cmake_flags }}
 
       - name: CMake build
-        if: runner.os != 'Windows'
         run: cmake --build build
 
       - name: PIP
