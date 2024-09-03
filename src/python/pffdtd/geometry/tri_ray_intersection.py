@@ -23,7 +23,7 @@
 import numpy as np
 from numpy import array as npa
 from pffdtd.geometry.math import dotv,normalise,vecnorm
-from pffdtd.common.myasserts import assert_np_array_float
+from pffdtd.common.asserts import assert_np_array_float
 from pffdtd.geometry.tris_precompute import tris_precompute
 
 #d_eps is a distance eps, cp is for coplanarity (non-dimensional)

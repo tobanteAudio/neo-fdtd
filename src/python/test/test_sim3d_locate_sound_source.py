@@ -3,13 +3,13 @@ import json
 import numpy as np
 import pytest
 
-from pffdtd.geometry.math import wavread
+from pffdtd.common.wavfile import wavread
+from pffdtd.localization.tdoa import locate_sound_source
 from pffdtd.materials.adm_funcs import write_freq_ind_mat_from_Yn, convert_Sabs_to_Yn
 from pffdtd.sim3d.room_builder import RoomBuilder
 from pffdtd.sim3d.sim_setup import sim_setup
 from pffdtd.sim3d.testing import run_engine, skip_if_native_engine_unavailable
 from pffdtd.sim3d.process_outputs import process_outputs
-from pffdtd.localization.tdoa import locate_sound_source
 
 
 @pytest.mark.parametrize("engine", ["python", "native"])

@@ -18,9 +18,9 @@ from multiprocessing import shared_memory
 import numpy as np
 from tqdm import tqdm
 
+from pffdtd.common.misc import clear_dat_folder, get_default_nprocs
 from pffdtd.common.timerdict import TimerDict
 from pffdtd.geometry.tri_box_intersection import tri_box_intersection_vec
-from pffdtd.geometry.math import clear_dat_folder, get_default_nprocs
 
 #base class for a voxel
 class VoxBase:

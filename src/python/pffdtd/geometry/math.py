@@ -1,21 +1,13 @@
 # SPDX-License-Identifier: MIT
 """Miscellaneous python/numpy functions.  Not all used or useful.
 """
-import argparse
-import hashlib
-import multiprocessing as mp
-import os
-from pathlib import Path
 from typing import Any
-import struct
 
 
 import numpy as np
 import numpy.linalg as npl
 from numpy import cos, sin, pi
-import scipy.io.wavfile
 
-from pffdtd.common.myasserts import assert_np_array_complex
 
 EPS = np.finfo(np.float64).eps
 
@@ -76,38 +68,6 @@ def rotate_az_el_deg(az_d, el_d):
     return R, Raz, Rel
 
 
-def mydefault(a: Any, default: Any):
-    # only used in box
-    if a is None:
-        a = default
-    return a
-
-
-def s2dhms(time: int):
-    # seconds to day/hour/min/s
-    # give time in seconds
-    day = time // (24 * 3600)
-    time = time % (24 * 3600)
-    hour = time // 3600
-    time %= 3600
-    minutes = time // 60
-    time %= 60
-    seconds = time
-    return (day, hour, minutes, seconds)
-
-
-def clamp(x: Any, xmin: Any, xmax: Any):
-    assert isinstance(x, (np.ndarray, int, np.integer, float))
-    assert isinstance(xmin, (np.ndarray, int, np.integer, float))
-    assert isinstance(xmax, (np.ndarray, int, np.integer, float))
-    return np.where(x < xmin, xmin, np.where(x > xmax, xmax, x))
-
-
-def vclamp(x, xmin, xmax):
-    # only this works for vectorized xmin,xmax
-    return np.where(x < xmin, xmin, np.where(x > xmax, xmax, x))
-
-
 def dot2(v):
     return dotv(v, v)
 
@@ -120,49 +80,8 @@ def vecnorm(v1):
     return np.sqrt(dot2(v1))
 
 
-def vecnorm2(v1):
-    return np.sum(v1**2, axis=-1)
-
-
 def normalise(v1, eps=EPS):
     return (v1.T/(vecnorm(v1)+eps)).T
-
-
-def ceilint(x: float):
-    assert isinstance(x, float)
-    return np.int_(np.ceil(x))
-
-
-def roundint(x: float):
-    assert isinstance(x, float)
-    return np.int_(np.round(x))
-
-
-def floorint(x: float):
-    assert isinstance(x, float)
-    return np.int_(np.floor(x))
-
-
-def maxabs(x: Any):
-    assert_np_array_complex(x)
-    if x.ndim == 2:
-        return np.amax(np.abs(x), axis=-1)[:, None]
-    else:
-        return np.amax(np.abs(x))
-
-
-def to_col_2d(x: Any):
-    assert x.ndim < 3
-    x = x.reshape(x.shape[-1], -1)
-    assert x.shape[0] > x.shape[1]
-    return x
-
-
-def to_row_2d(x: Any):
-    assert x.ndim < 3
-    x = x.reshape(-1, x.shape[-1])
-    assert x.shape[1] > x.shape[0]
-    return x
 
 
 def ind2sub3d(ii, Nx, Ny, Nz):
@@ -177,125 +96,12 @@ def rel_diff(x0, x1):
     return (x0-x1)/(2.0**np.floor(np.log2(x0)))
 
 
-def get_default_nprocs():
-    return max(1, int(0.8*mp.cpu_count()))
-
-
-def str2bool(v: str):
-    # taken from SO, for argparse bool problem
-    assert isinstance(v, str)
-    if v.lower() in ('true'):
-        return True
-    elif v.lower() in ('false'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
-
-
-def clear_dat_folder(dat_folder_str=None):
-    # clear dat folder
-    dat_path = Path(dat_folder_str)
-    if not dat_path.exists():
-        dat_path.mkdir(parents=True)
-    else:
-        assert dat_path.is_dir()
-
-    assert dat_path.exists()
-    assert dat_path.is_dir()
-    for f in dat_path.glob('*'):
-        try:
-            f.unlink()
-        except OSError as e:
-            print("Error: %s : %s" % (f, e.strerror))
-
-
-def clear_folder(folder_str):
-    print(f'clearing {folder_str}...')
-    os.system('rm -rf ' + str(Path(folder_str)) + '/*')
-    print(f'{folder_str} cleared')
-
-
-def double_to_hex(d):
-    return hex(struct.unpack('<Q', struct.pack('<d', d))[0])
-
-
-def hex_to_double(s):
-    s_list = list(s)
-    assert s_list[0] == '0'
-    assert s_list[1] == 'x'
-    return struct.unpack('!d', bytes.fromhex(s.split('0x')[1]))[0]
-
-
-def clear_console(lines):
-    _, columns = os.popen('stty size', 'r').read().split()
-    for n in range(lines):
-        print(' ' * int(columns))
-    for n in range(lines):
-        print("\033[F", end='')
-
-
-def read_txt_values(filepath_str):
-    assert Path(filepath_str).exists()
-    rdict = {}
-    print(f'reading {filepath_str}...')
-    with open(Path(filepath_str)) as tfile:
-        lines = tfile.readlines()
-        keyvals = [line.rstrip('\n').split(' ') for line in lines]
-        for keyval in keyvals:
-            assert len(keyval) == 2
-            key = keyval[0]
-            val = keyval[1]  # still a string
-            rdict[key] = val
-            print(f'key = {key}, val = {val}')
-    return rdict
-
-
-def gen_md5hash(*args):
-    hash_list = []
-    out_hash = ''
-    for arg in args:
-        if isinstance(arg, np.ndarray):
-            tmp_hash = hashlib.md5(arg.tobytes()).hexdigest()
-        elif isinstance(arg, str):
-            tmp_hash = hashlib.md5(arg.encode()).hexdigest()
-        else:
-            tmp_hash = hashlib.md5(str(arg).encode()).hexdigest()
-        out_hash = hashlib.md5((tmp_hash + out_hash).encode()).hexdigest()
-
-    return out_hash
-
-
-def yes_or_no(question):
-    while "the answer is invalid":
-        reply = str(input(question+' (y/n): ')).lower().strip()
-        if reply[:1] == 'y':
-            return True
-        if reply[:1] == 'n':
-            return False
-
-
 def iceil(x):
     return np.int_(np.ceil(x))
 
 
 def iround(x):
     return np.int_(np.round(x))
-
-
-def wavread(fname):
-    fs, data = scipy.io.wavfile.read(fname)  # reads in (Nsamples,Nchannels)
-    if data.dtype == np.int16:
-        data = data/32768.0
-        fs = np.float64(fs)
-    return fs, np.float64(data.T)
-
-
-def wavwrite(fname, fs, data):
-    # expects (Nchannels,Nsamples), this will also assert that
-    data = np.atleast_2d(data)
-    # reads in (Nsamples,Nchannels)
-    scipy.io.wavfile.write(fname, int(fs), np.float32(data.T))
-    print(f'wrote {fname} at fs={fs/1000:.2f} kHz')
 
 
 def to_ixy(x, y, Nx, Ny, order="row"):

@@ -14,7 +14,8 @@ import numpy as np
 from numpy import array as npa
 from tqdm import tqdm
 
-from pffdtd.geometry.math import get_default_nprocs,iceil
+from pffdtd.common.misc import get_default_nprocs
+from pffdtd.geometry.math import iceil
 from pffdtd.sim3d.room_geometry import RoomGeometry
 from pffdtd.voxelizer.cart_grid import CartGrid
 from pffdtd.voxelizer.vox_grid_base import VoxGridBase,VoxBase

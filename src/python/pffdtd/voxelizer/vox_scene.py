@@ -35,15 +35,13 @@ import multiprocessing as mp
 from multiprocessing import shared_memory
 from tqdm import tqdm
 
-from pffdtd.sim3d.room_geometry import RoomGeometry
+from pffdtd.common.misc import get_default_nprocs, clear_dat_folder,yes_or_no
 from pffdtd.common.timerdict import TimerDict
+from pffdtd.geometry.math import ind2sub3d, dotv
 from pffdtd.geometry.tri_ray_intersection import tri_ray_intersection_vec
+from pffdtd.sim3d.room_geometry import RoomGeometry
 from pffdtd.voxelizer.cart_grid import CartGrid
 from pffdtd.voxelizer.vox_grid import VoxGrid
-from pffdtd.geometry.math import clear_dat_folder
-from pffdtd.geometry.math import yes_or_no,ind2sub3d
-from pffdtd.geometry.math import dotv
-from pffdtd.geometry.math import get_default_nprocs
 
 F_EPS = np.finfo(np.float64).eps
 R_EPS = 1e-6 #relative eps (to grid spacing) for near hits
