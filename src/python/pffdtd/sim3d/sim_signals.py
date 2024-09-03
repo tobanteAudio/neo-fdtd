@@ -20,7 +20,7 @@ from numpy import pi,cos,sin
 from scipy.signal import lfilter
 
 from pffdtd.common.timerdict import TimerDict
-from pffdtd.common.myfuncs import iceil
+from pffdtd.geometry.math import iceil
 class SimSignals:
     def __init__(self,save_folder):
         #will read h,xv,yv,zv from h5 data

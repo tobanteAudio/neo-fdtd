@@ -8,7 +8,7 @@ import numpy as np
 from scipy.signal import find_peaks
 from scipy.io import wavfile
 
-from pffdtd.common.myfuncs import iceil
+from pffdtd.geometry.math import iceil
 from pffdtd.common.plot import plot_styles
 
 

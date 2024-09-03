@@ -26,7 +26,7 @@ from resampy import resample
 from pffdtd.absorption.air import apply_visco_filter
 from pffdtd.absorption.air import apply_modal_filter
 from pffdtd.absorption.air import apply_ola_filter
-from pffdtd.common.myfuncs import wavwrite,iceil,iround
+from pffdtd.geometry.math import wavwrite,iceil,iround
 from pffdtd.common.plot import plot_styles
 
 #class to process sim_outs.h5 file

@@ -31,7 +31,7 @@ import numba as nb
 from tqdm import tqdm
 
 from pffdtd.common.timerdict import TimerDict
-from pffdtd.common.myfuncs import ind2sub3d,rel_diff,get_default_nprocs
+from pffdtd.geometry.math import ind2sub3d,rel_diff,get_default_nprocs
 
 MMb = 12 #max allowed number of branches
 

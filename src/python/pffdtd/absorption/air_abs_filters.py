@@ -5,7 +5,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from pffdtd.common.myfuncs import iround
+from pffdtd.geometry.math import iround
 from pffdtd.absorption.air import (
     apply_modal_filter,
     apply_ola_filter,

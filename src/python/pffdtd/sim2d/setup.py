@@ -5,7 +5,7 @@ import h5py
 import numpy as np
 from scipy.signal import lfilter
 
-from pffdtd.common.myfuncs import to_ixy
+from pffdtd.geometry.math import to_ixy
 from pffdtd.sim3d.sim_constants import SimConstants
 
 

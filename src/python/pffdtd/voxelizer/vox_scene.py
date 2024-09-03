@@ -37,13 +37,13 @@ from tqdm import tqdm
 
 from pffdtd.sim3d.room_geometry import RoomGeometry
 from pffdtd.common.timerdict import TimerDict
-from pffdtd.common.tri_ray_intersection import tri_ray_intersection_vec
+from pffdtd.geometry.tri_ray_intersection import tri_ray_intersection_vec
 from pffdtd.voxelizer.cart_grid import CartGrid
 from pffdtd.voxelizer.vox_grid import VoxGrid
-from pffdtd.common.myfuncs import clear_dat_folder
-from pffdtd.common.myfuncs import yes_or_no,ind2sub3d
-from pffdtd.common.myfuncs import dotv
-from pffdtd.common.myfuncs import get_default_nprocs
+from pffdtd.geometry.math import clear_dat_folder
+from pffdtd.geometry.math import yes_or_no,ind2sub3d
+from pffdtd.geometry.math import dotv
+from pffdtd.geometry.math import get_default_nprocs
 
 F_EPS = np.finfo(np.float64).eps
 R_EPS = 1e-6 #relative eps (to grid spacing) for near hits

@@ -20,8 +20,8 @@
 
 import numpy as np
 from numpy import array as npa
-from pffdtd.common.myfuncs import dotv
-from pffdtd.common.tris_precompute import tris_precompute
+from pffdtd.geometry.math import dotv
+from pffdtd.geometry.tris_precompute import tris_precompute
 
 #p is lower corner of box
 #dp is distance to upper corner of box
@@ -121,7 +121,7 @@ def tri_box_intersection_vec(bbmin,bbmax,tris_pre):
 
 def main():
     import numpy.random as npr
-    from pffdtd.common.box import Box
+    from pffdtd.geometry.box import Box
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--nodraw', action='store_true',help='don''t draw')

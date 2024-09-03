@@ -1,4 +1,4 @@
-from pffdtd.common.myfuncs import to_ixy
+from pffdtd.geometry.math import to_ixy
 from pffdtd.sim2d.setup import sim_setup_2d
 
 

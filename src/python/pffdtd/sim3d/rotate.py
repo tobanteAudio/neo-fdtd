@@ -21,7 +21,7 @@ import numba as nb
 from pathlib import Path
 import time
 import h5py
-from pffdtd.common.myfuncs import ind2sub3d
+from pffdtd.geometry.math import ind2sub3d
 from pffdtd.common.timerdict import TimerDict
 import shutil
 

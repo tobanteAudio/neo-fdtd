@@ -1,6 +1,6 @@
 import numpy as np
 
-from pffdtd.common.myfuncs import to_ixy, point_on_circle
+from pffdtd.geometry.math import to_ixy, point_on_circle
 from pffdtd.diffusor.design import diffusor_bandwidth
 from pffdtd.diffusor.qrd import quadratic_residue_diffuser
 from pffdtd.diffusor.prd import primitive_root_diffuser

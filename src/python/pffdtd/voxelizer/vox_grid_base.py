@@ -19,8 +19,8 @@ import numpy as np
 from tqdm import tqdm
 
 from pffdtd.common.timerdict import TimerDict
-from pffdtd.common.tri_box_intersection import tri_box_intersection_vec
-from pffdtd.common.myfuncs import clear_dat_folder, get_default_nprocs
+from pffdtd.geometry.tri_box_intersection import tri_box_intersection_vec
+from pffdtd.geometry.math import clear_dat_folder, get_default_nprocs
 
 #base class for a voxel
 class VoxBase:
@@ -199,7 +199,7 @@ class VoxGridBase:
 
     #draws non-empty boxes only
     def draw_boxes(self,tube_radius,backend='mayavi'):
-        from pffdtd.common.box import Box
+        from pffdtd.geometry.box import Box
         Nvox = self.Nvox
         self.print('drawing boxes..')
         boxtris = np.zeros((Nvox*12,3))

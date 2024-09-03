@@ -7,7 +7,7 @@ from scipy.fft import dct, idct  # default type2
 from scipy.fft import rfft, irfft
 from tqdm import tqdm
 
-from pffdtd.common.myfuncs import iceil, iround
+from pffdtd.geometry.math import iceil, iround
 
 def air_absorption(frequencies,temperature_celsius,rel_humidity_pnct,pressure_atmospheric_kPa=101.325):
     """This is an implementation of formulae in the ISO9613-1 standard for air absorption

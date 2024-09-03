@@ -2,8 +2,8 @@
 import numpy as np
 import json as json
 from numpy import array as npa
-from pffdtd.common.myfuncs import dotv,rotate_az_el_deg
-from pffdtd.common.tris_precompute import tris_precompute
+from pffdtd.geometry.math import dotv,rotate_az_el_deg
+from pffdtd.geometry.tris_precompute import tris_precompute
 
 class RoomGeometry:
     """Class for room geometry, source/receiver positions, and materials (labels)

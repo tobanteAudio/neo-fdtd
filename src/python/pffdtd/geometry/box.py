@@ -3,7 +3,7 @@
 import numpy as np
 from numpy import array as npa
 import numpy.random as npr
-from pffdtd.common.myfuncs import mydefault,rotmatrix_ax_ang
+from pffdtd.geometry.math import mydefault,rotmatrix_ax_ang
 
 class Box:
     """This is a class for a box. Used in a few places (vox_grid, tri_box).

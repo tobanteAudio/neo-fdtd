@@ -15,7 +15,7 @@
 
 import numpy as np
 from numpy import array as npa
-from pffdtd.common.myfuncs import normalise,dot2,vecnorm
+from pffdtd.geometry.math import normalise,dot2,vecnorm
 
 #N.B. careful with slicing tris_pre[idx]['var'] (bad) vs tris_pre['var'][idx] (good)
 def tris_precompute(pts=None,tris=None):

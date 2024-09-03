@@ -3,7 +3,7 @@ import json
 import numpy as np
 import pytest
 
-from pffdtd.common.myfuncs import wavread
+from pffdtd.geometry.math import wavread
 from pffdtd.materials.adm_funcs import write_freq_ind_mat_from_Yn, convert_Sabs_to_Yn
 from pffdtd.sim3d.room_builder import RoomBuilder
 from pffdtd.sim3d.sim_setup import sim_setup
