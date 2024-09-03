@@ -1,7 +1,6 @@
 #include "engine_sycl.hpp"
 
 #include "pffdtd/sycl.hpp"
-#include "pffdtd/video.hpp"
 
 #include <fmt/format.h>
 
