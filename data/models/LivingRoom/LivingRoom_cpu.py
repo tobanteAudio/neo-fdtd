@@ -1,8 +1,8 @@
-from pffdtd.sim3d.setup import sim_setup
+from pffdtd.sim3d.setup import sim_setup_3d
 
 model_file = 'model.json'
 
-sim_setup(
+sim_setup_3d(
     model_json_file=model_file,
     mat_folder='../../materials',
     source_num=1,

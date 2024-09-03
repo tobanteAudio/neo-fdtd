@@ -5,17 +5,17 @@ from pathlib import Path
 
 import numpy as np
 
+from pffdtd.sim3d.constants import SimConstants
+from pffdtd.sim3d.materials import SimMaterials
 from pffdtd.sim3d.room_geometry import RoomGeometry
+from pffdtd.sim3d.rotate import rotate, sort_sim_data, copy_sim_data, fold_fcc_sim_data
+from pffdtd.sim3d.signals import SimSignals
 from pffdtd.voxelizer.cart_grid import CartGrid
 from pffdtd.voxelizer.vox_grid import VoxGrid
 from pffdtd.voxelizer.vox_scene import VoxScene
-from pffdtd.sim3d.signals import SimSignals
-from pffdtd.sim3d.constants import SimConstants
-from pffdtd.sim3d.materials import SimMaterials
-from pffdtd.sim3d.rotate import rotate, sort_sim_data, copy_sim_data, fold_fcc_sim_data
 
 
-def sim_setup(
+def sim_setup_3d(
     # The following are required but using None default so not positional
     insig_type=None, #sig type (see sig_comms.py)
     fmax=None, #fmax for simulation (to set grid spacing)

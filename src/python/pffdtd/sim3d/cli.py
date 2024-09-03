@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 import click
 
 from pffdtd.sim3d import process_outputs

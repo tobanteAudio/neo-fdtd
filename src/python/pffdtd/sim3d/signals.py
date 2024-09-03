@@ -1,27 +1,19 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: sim_comms.py
-#
-# Description: Class for source/receiver positions and input signals
-#
-##############################################################################
+# SPDX-License-Identifier: MIT
+
 from pathlib import Path
 
 import h5py
 import numpy as np
-from numpy import array as npa
 from numpy import pi,cos,sin
 from scipy.signal import lfilter
 
 from pffdtd.common.timerdict import TimerDict
 from pffdtd.geometry.math import iceil
+
 class SimSignals:
+    """Class for source/receiver positions and input signals
+    """
+
     def __init__(self,save_folder):
         #will read h,xv,yv,zv from h5 data
         save_folder = Path(save_folder)
@@ -110,8 +102,8 @@ class SimSignals:
         if self._diff:
             return #do nothing if already applied
 
-        b = 2/Ts*npa([1.0,-1.0]) #don't need Ts scaling but simpler to keep for receiver post-processing
-        a = npa([1.0,1.0])
+        b = 2/Ts*np.array([1.0,-1.0]) #don't need Ts scaling but simpler to keep for receiver post-processing
+        a = np.array([1.0,1.0])
         in_sigs = lfilter(b,a,in_sigs,axis=-1)
 
         self._diff = True
@@ -190,7 +182,7 @@ class SimSignals:
             alpha_xyz[j] = (xyzv_list[j][ix_iy_iz[j]] - pos_xyz[j])/h
 
         #look back
-        ix_iy_iz8_off = npa([[0,0,0],\
+        ix_iy_iz8_off = np.array([[0,0,0],\
                              [-1,0,0],\
                              [0,-1,0],\
                              [0,0,-1],\
@@ -222,7 +214,7 @@ class SimSignals:
         assert np.allclose(np.sum(alpha8*xyz8.T,-1),pos_xyz)
 
         ix_iy_iz8 = ix_iy_iz + ix_iy_iz8_off
-        ixyz8 = ix_iy_iz8 @ npa([Nz*Ny,Nz,1])
+        ixyz8 = ix_iy_iz8 @ np.array([Nz*Ny,Nz,1])
 
         if self.fcc:
             assert np.all(np.mod(np.sum(ix_iy_iz8,axis=-1),2)==0)

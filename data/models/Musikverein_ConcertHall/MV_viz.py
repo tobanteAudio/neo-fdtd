@@ -11,9 +11,9 @@
 # Description: this shows a simple setup with FCC scheme, for visualization purposes
 #
 ##############################################################################
-from pffdtd.sim3d.setup import sim_setup
+from pffdtd.sim3d.setup import sim_setup_3d
 
-sim_setup(
+sim_setup_3d(
     model_json_file='model_export.json',
     mat_folder='../../materials',
     source_num=3,

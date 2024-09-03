@@ -1,7 +1,7 @@
-from pffdtd.sim3d.setup import sim_setup
+from pffdtd.sim3d.setup import sim_setup_3d
 
 # will draw 'voxelization' (spheres are active boundary nodes, cubes rigid boundary nodes)
-sim_setup(
+sim_setup_3d(
     model_json_file='model.json',
     mat_folder='../../materials',
     source_num=1,

@@ -4,7 +4,7 @@ from pffdtd.analysis.room_modes import find_nearest
 from pffdtd.analysis.room_modes import detect_room_modes
 from pffdtd.materials.adm_funcs import write_freq_ind_mat_from_Yn, convert_Sabs_to_Yn
 from pffdtd.sim3d.room_builder import RoomBuilder
-from pffdtd.sim3d.setup import sim_setup
+from pffdtd.sim3d.setup import sim_setup_3d
 from pffdtd.sim3d.testing import run_engine, skip_if_native_engine_unavailable
 from pffdtd.sim3d.process_outputs import process_outputs
 
@@ -39,7 +39,7 @@ def test_sim3d_detect_room_modes(tmp_path, engine, room, fmax, ppw, fcc, dx_scal
 
     write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.02), root_dir / material)
 
-    sim_setup(
+    sim_setup_3d(
         model_json_file=model_file,
         mat_folder=root_dir,
         mat_files_dict={

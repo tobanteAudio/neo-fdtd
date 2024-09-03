@@ -1,26 +1,17 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: engine.py
-#
-# Description: This is the main FDTD engine, which is re-implemented in C/CUDA
-#
-# Notes:
-#   - This does FVTD-inspired FDTD simulation with frequenency-dependent boundaries
-#   - Lossless air (use air absorption filter after)
-#   - sided materials (keep one side rigid to save memory and compute time
-#   - uses surface area corrections
-#   - 13-point FCC (CCP here) or 7-point cartesian schemes
-#   - This implementation is straightforward with few optimisations (optimisations in C/CUDA)
-#   - Optional numerical energy calculation (energy balance to machine precision)
-#   - Plots simulations (mayavi is best, matplotlib is fallback)
-#
-##############################################################################
+# SPDX-License-Identifier: MIT
+"""This is the main FDTD engine, which is re-implemented in C/CUDA
+
+Notes:
+  - This does FVTD-inspired FDTD simulation with frequenency-dependent boundaries
+  - Lossless air (use air absorption filter after)
+  - sided materials (keep one side rigid to save memory and compute time
+  - uses surface area corrections
+  - 13-point FCC (CCP here) or 7-point cartesian schemes
+  - This implementation is straightforward with few optimisations (optimisations in C/CUDA)
+  - Optional numerical energy calculation (energy balance to machine precision)
+  - Plots simulations (mayavi is best, matplotlib is fallback)
+"""
+
 import json
 import time
 from pathlib import Path

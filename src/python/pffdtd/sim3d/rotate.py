@@ -1,33 +1,24 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: rotate.py
-#
-# Description: For multi-GPU execution:
-#       -best to permute dimensions for descending order (last dim continguous)
-#       -indices all need to be sorted (and corresponding data reordered)
-#       -fold FCC subgrid onto itself here (fills half Cartesian grid)
-#
-##############################################################################
+# SPDX-License-Identifier: MIT
+"""
+For multi-GPU execution:
+    - best to permute dimensions for descending order (last dim continguous)
+    - indices all need to be sorted (and corresponding data reordered)
+    - fold FCC subgrid onto itself here (fills half Cartesian grid)
+"""
 
-import numpy as np
-from numpy import array as npa
-import numba as nb
 from pathlib import Path
-import time
-import h5py
-from pffdtd.geometry.math import ind2sub3d
-from pffdtd.common.timerdict import TimerDict
 import shutil
 
-#NB: we keep cart_grid.h5 untouched and that has original Nx,Ny,Nz if needed
+import h5py
+import numpy as np
+from numpy import array as npa
+
+from pffdtd.common.timerdict import TimerDict
+from pffdtd.geometry.math import ind2sub3d
+
 
 def rotate(data_dir,tr=None,compress=False):
+    #NB: we keep cart_grid.h5 untouched and that has original Nx,Ny,Nz if needed
     def _print(fstring):
         print(f'--ROTATE_DATA: {fstring}')
     timer = TimerDict()

@@ -11,9 +11,9 @@
 # Description: this shows a simple setup with FCC scheme, for a larger single-precision GPU run (<12GB VRAM)
 #
 ##############################################################################
-from pffdtd.sim3d.setup import sim_setup
+from pffdtd.sim3d.setup import sim_setup_3d
 
-sim_setup(
+sim_setup_3d(
     model_json_file='model_export.json',
     draw_backend='mayavi',
     mat_folder='../../materials',

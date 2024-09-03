@@ -1,17 +1,8 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: process_outputs.py
-#
-# Description: Read in sim_outs.h5 and process (integrate, low-cut, low-pass, etc.)
-# This gets called from command line with cmdline arguments (run after simulation)
-#
-##############################################################################
+# SPDX-License-Identifier: MIT
+"""Read in sim_outs.h5 and process (integrate, low-cut, low-pass, etc.)
+This gets called from command line with cmdline arguments (run after simulation)
+"""
+
 from pathlib import Path
 
 import click
