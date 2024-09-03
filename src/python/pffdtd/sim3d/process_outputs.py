@@ -26,7 +26,7 @@ from resampy import resample
 from pffdtd.absorption.air import apply_visco_filter
 from pffdtd.absorption.air import apply_modal_filter
 from pffdtd.absorption.air import apply_ola_filter
-from pffdtd.common.wavfile import wavwrite
+from pffdtd.common.wavfile import save_as_wav_files
 from pffdtd.common.plot import plot_styles
 from pffdtd.geometry.math import iceil
 
@@ -279,27 +279,17 @@ class ProcessOutputs:
     def show_plots(self):
         plt.show()
 
-    #save in WAV files, with native scaling and normalised across group of receivers
     def save_wav(self):
-        #saves processed outputs
-        Fs_f = self.Fs_f
-        data_dir = self.data_dir
-        r_out_f = self.r_out_f
-        r_out_f = np.atleast_2d(r_out_f)
-        n_fac = np.max(np.abs(r_out_f.flat[:]))
-        self.print(f'headroom = {-20*np.log10(n_fac):.1}dB')
-        for i in range(r_out_f.shape[0]):
-            fname = Path(data_dir / Path(f'R{i+1:03d}_out_normalised.wav')) #normalised across receivers
-            wavwrite(fname,int(Fs_f),r_out_f[i]/n_fac)
-            if n_fac<1.0:
-                fname = Path(data_dir / Path(f'R{i+1:03d}_out_native.wav')) #not scaled, direct sound amplitude ~1/4πR
-                wavwrite(fname,int(Fs_f),r_out_f[i])
+        # save in WAV files, with native scaling and normalised across group of receivers
+        # saves processed outputs
+        save_as_wav_files(self.r_out_f, self.Fs_f, self.data_dir, True)
 
-    #saw processed outputs in .h5 (with native scaling)
+
     def save_h5(self):
-        #saves processed outputs
+        # saw processed outputs in .h5 (with native scaling)
+        # saves processed outputs
         self.print('saving H5 data..')
-        h5f = h5py.File(self.data_dir / Path('sim_outs_processed.h5'),'w')
+        h5f = h5py.File(self.data_dir / Path('sim_outs_processed.h5'), 'w')
         h5f.create_dataset('r_out_f', data=self.r_out_f)
         h5f.create_dataset('Fs_f', data=self.Fs_f)
         h5f.close()

@@ -117,7 +117,7 @@ sim_setup_2d(
     room=(30, 30),
     Tc=20,
     rh=50,
-    fmax=4000,
+    fmax=2000,
     ppw=10.5,
     duration=0.050,
     refl_coeff=0.99,

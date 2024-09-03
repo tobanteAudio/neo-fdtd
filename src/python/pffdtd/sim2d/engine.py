@@ -74,7 +74,7 @@ class Engine2D:
                 img = np.abs(u0)
                 img = cv2.normalize(img, None, 0, 255,
                                     cv2.NORM_MINMAX).astype(np.uint8)
-                img[~in_mask] = 255
+                img.flat[~in_mask] = 255
                 img = cv2.resize(img, (1000, 1000))
                 video.write(cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE))
 

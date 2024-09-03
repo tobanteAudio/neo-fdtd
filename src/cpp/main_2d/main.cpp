@@ -36,6 +36,7 @@ int main(int argc, char** argv) {
   CLI11_PARSE(app, argc, argv);
 
   if (args.jobs > 0) {
+    fmt::println("Using {} threads", args.jobs);
     oneapi::tbb::global_control global_control = oneapi::tbb::global_control(
         oneapi::tbb::global_control::max_allowed_parallelism,
         args.jobs

@@ -25,5 +25,6 @@ python "$sim_setup"
 DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=16 "$engine_exe" -s "$sim_dir" -j 16
 # pffdtd sim2d run --sim_dir "$sim_dir"
 
-# Report
+# Post-process
+pffdtd sim2d process-outputs --diff --fmin=20 --sim_dir="$sim_dir" "$sim_dir/out.h5"
 python -m pffdtd.sim2d.report --sim_dir="$sim_dir" "$sim_dir/out.h5"
