@@ -1,14 +1,19 @@
 # ToDo
 
-- Scaling/Norm for both float32 & float64 is 4.0!?
+- Multiple sources
+- Directional sources
+- Optimal PPW (calculate phase error at fmax)
+- Higher order cartesian stencil
+- Simulation plugin
+
+## Questions
+
+- What are ABCs?
+- The input signals are scaled multiple times + diff/integrate filter
 - Why does diff/integrate help with float32?
-- 2D room modes don't match theoretical results
+- Scaling/Norm for both float32 & float64 is 4.0!?
 - Absorption over 0.9512 Sabs
 - Symmetric filters (LP&HP)
-- Multiple sources
 - Sources with only one voxel
 - Multiprocess voxels disabled
-- Simulation plugin
-- Higher order cartesian stencil
-- Optimal PPW (calculate phase error at fmax)
-- Directional sources
+- 2D room modes don't match theoretical results
