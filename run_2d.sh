@@ -14,6 +14,8 @@ sim_dir="$root_dir/data/sim_data/$sim_name/cpu"
 sim_setup="${sim_name}.py"
 model_dir="$root_dir/data/models/$sim_name"
 
+jobs=16
+
 # Delete old sim
 rm -rf "$sim_dir"
 
@@ -22,7 +24,7 @@ cd "$model_dir"
 python "$sim_setup"
 
 # Run sim
-DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=16 "$engine_exe" -s "$sim_dir" -j 16
+DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=$jobs OMP_NUM_THREADS=$jobs "$engine_exe" -s "$sim_dir"
 # pffdtd sim2d run --sim_dir "$sim_dir" --video
 
 # Post-process

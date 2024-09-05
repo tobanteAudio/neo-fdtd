@@ -19,7 +19,6 @@
 struct Arguments {
   std::string simDir{};
   std::string out{"out.h5"};
-  int jobs{-1};
 };
 
 int main(int argc, char** argv) {
@@ -27,7 +26,6 @@ int main(int argc, char** argv) {
   auto args = Arguments{};
   app.add_option("-s,--sim_dir", args.simDir, "Folder path");
   app.add_option("-o,--out", args.out, "Filename");
-  app.add_option("-j,--jobs", args.jobs, "Num threads to use");
   CLI11_PARSE(app, argc, argv);
 
 
