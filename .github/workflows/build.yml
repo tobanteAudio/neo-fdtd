@@ -59,8 +59,9 @@ jobs:
           - name: Windows
             os: windows-latest
             osx_target: ""
+            cmake_prefix_path: C:\Program Files (x86)\Intel\oneAPI\tbb\latest
             cmake_flags: ""
-            cxx_flags: "-march=x86-64-v2"
+            cxx_flags: ""
             python_version: "3.12"
             pffdtd_engine_2d: ""
             pffdtd_engine_3d: ""
@@ -102,9 +103,21 @@ jobs:
           choco install ninja
           pip3 install --upgrade conan
 
+      - name: Install TBB (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          curl --output oneapi.exe https://registrationcenter-download.intel.com/akdlm/IRC_NAS/d91caaa0-7306-46ea-a519-79a0423e1903/w_BaseKit_p_2024.2.1.101_offline.exe
+          ./oneapi.exe -s -x -f oneapi
+          ./oneapi/bootstrapper.exe -s -c --action install --components=intel.oneapi.win.tbb.devel --eula=accept -p=NEED_VS2022_INTEGRATION=1 --log-dir=.
+
       - name: Install clang
-        if: runner.os != 'macOS'
+        if: runner.os == 'Linux'
         uses: egor-tensin/setup-clang@v1
+
+      - name: Set up Visual Studio shell
+        if: runner.os == 'Windows'
+        uses: egor-tensin/vs-shell@v2
 
       - name: Setup conan
         run: |
@@ -112,7 +125,6 @@ jobs:
           git clone https://github.com/conan-io/cmake-conan.git -b develop2 external/cmake-conan
 
       - name: CMake configure
-        if: runner.os != 'Windows'
         run: >
           cmake
           -B build
@@ -123,7 +135,6 @@ jobs:
           ${{ matrix.cmake_flags }}
 
       - name: CMake build
-        if: runner.os != 'Windows'
         run: cmake --build build
 
       - name: PIP
