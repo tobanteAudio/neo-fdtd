@@ -21,7 +21,7 @@ DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=16 ./build
 ## Windows
 
 - Visual Studio
-- Intel oneAPI DPCPP/TBB
+- Intel oneAPI DPCPP
 
 ```shell
 winget install -e --id Kitware.CMake

@@ -29,7 +29,7 @@ jobs:
           - name: Linux
             os: ubuntu-24.04
             osx_target: ""
-            cmake_prefix_path: "/opt/intel/oneapi/tbb/latest"
+            cmake_prefix_path: ""
             cmake_flags: ""
             cxx_flags: ""
             python_version: "3.12"
@@ -59,12 +59,12 @@ jobs:
           - name: Windows
             os: windows-latest
             osx_target: ""
-            cmake_prefix_path: C:\Program Files (x86)\Intel\oneAPI\tbb\latest
+            cmake_prefix_path: ""
             cmake_flags: ""
             cxx_flags: ""
             python_version: "3.12"
-            pffdtd_engine_2d: ""
-            pffdtd_engine_3d: ""
+            pffdtd_engine_2d: "build/src/cpp/main_2d/pffdtd_2d.exe"
+            pffdtd_engine_3d: "build/src/cpp/main_3d/pffdtd_3d.exe"
 
     steps:
       - name: Checkout code
@@ -83,18 +83,9 @@ jobs:
           sudo apt install -y libomp-dev ninja-build
           pip3 install --break-system-packages conan
 
-      - name: Install TBB (Linux)
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
-          echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
-          sudo apt update -y
-          sudo apt install -y intel-oneapi-tbb-devel
-
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
-        run: brew install conan hdf5 libomp llvm ninja tbb
+        run: brew install conan hdf5 libomp llvm ninja
 
       - name: Install dependencies (Windows)
         if: runner.os == 'Windows'
@@ -102,14 +93,6 @@ jobs:
         run: |
           choco install ninja
           pip3 install --upgrade conan
-
-      - name: Install TBB (Windows)
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          curl --output oneapi.exe https://registrationcenter-download.intel.com/akdlm/IRC_NAS/d91caaa0-7306-46ea-a519-79a0423e1903/w_BaseKit_p_2024.2.1.101_offline.exe
-          ./oneapi.exe -s -x -f oneapi
-          ./oneapi/bootstrapper.exe -s -c --action install --components=intel.oneapi.win.tbb.devel --eula=accept -p=NEED_VS2022_INTEGRATION=1 --log-dir=.
 
       - name: Install clang
         if: runner.os == 'Linux'

@@ -11,8 +11,6 @@
 
 #include <fmt/format.h>
 
-#include <oneapi/tbb/global_control.h>
-
 #include <chrono>
 #include <filesystem>
 #include <stdexcept>
@@ -32,13 +30,6 @@ int main(int argc, char** argv) {
   app.add_option("-j,--jobs", args.jobs, "Num threads to use");
   CLI11_PARSE(app, argc, argv);
 
-  if (args.jobs > 0) {
-    fmt::println("Using {} threads", args.jobs);
-    oneapi::tbb::global_control global_control = oneapi::tbb::global_control(
-        oneapi::tbb::global_control::max_allowed_parallelism,
-        args.jobs
-    );
-  }
 
   auto const start = std::chrono::steady_clock::now();
 

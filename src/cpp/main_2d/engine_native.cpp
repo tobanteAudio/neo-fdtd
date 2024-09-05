@@ -2,7 +2,7 @@
 
 #include <fmt/format.h>
 
-#include <oneapi/tbb.h>
+#include <omp.h>
 
 #include <algorithm>
 #include <concepts>
@@ -49,22 +49,20 @@ auto EngineNative::operator()(Simulation2D const& sim) const
     std::fflush(stdout);
 
     // Air Update
-    auto rng = oneapi::tbb::blocked_range<int64_t>(1, Nx - 1);
-    oneapi::tbb::parallel_for(rng, [&](auto r) {
-      for (int64_t x = r.begin(); x < r.end(); ++x) {
-        for (int64_t y = 1; y < Ny - 1; ++y) {
-          auto const idx    = to_ixy(x, y, 0, Ny);
-          auto const left   = u1.data_handle()[idx - 1];
-          auto const right  = u1.data_handle()[idx + 1];
-          auto const bottom = u1.data_handle()[idx - Ny];
-          auto const top    = u1.data_handle()[idx + Ny];
-          auto const last   = u2.data_handle()[idx];
-          auto const tmp    = 0.5 * (left + right + bottom + top) - last;
+    #pragma omp parallel for
+    for (int64_t x = 1; x < Nx-1; ++x) {
+      for (int64_t y = 1; y < Ny - 1; ++y) {
+        auto const idx    = to_ixy(x, y, 0, Ny);
+        auto const left   = u1.data_handle()[idx - 1];
+        auto const right  = u1.data_handle()[idx + 1];
+        auto const bottom = u1.data_handle()[idx - Ny];
+        auto const top    = u1.data_handle()[idx + Ny];
+        auto const last   = u2.data_handle()[idx];
+        auto const tmp    = 0.5 * (left + right + bottom + top) - last;
 
-          u0.data_handle()[idx] = sim.in_mask[idx] * tmp;
-        }
+        u0.data_handle()[idx] = sim.in_mask[idx] * tmp;
       }
-    });
+    }
 
     // Boundary Rigid
     for (size_t i = 0; i < Nb; ++i) {
