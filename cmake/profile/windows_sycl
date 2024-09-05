@@ -1,0 +1,12 @@
+[settings]
+arch=x86_64
+os=Windows
+compiler=intel-cc
+compiler.mode=icx
+compiler.version=2024.2
+compiler.cppstd=20
+build_type=Release
+
+[conf]
+tools.intel:installation_path="C:\Program Files (x86)\Intel\oneAPI"
+tools.cmake.cmaketoolchain:generator=Ninja

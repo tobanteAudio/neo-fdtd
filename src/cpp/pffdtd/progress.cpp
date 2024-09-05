@@ -4,9 +4,33 @@
 
 #include <cstdio>
 #include <ctime>
-#include <sys/ioctl.h> //terminal width
+
+#if defined(_WIN32)
+    #include <windows.h>
+#else
+    #include <sys/ioctl.h>
+#endif
 
 namespace pffdtd {
+
+namespace {
+
+[[nodiscard]] auto getConsoleWidth() -> int {
+#if defined(_WIN32)
+    auto info = CONSOLE_SCREEN_BUFFER_INFO{};
+    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info)) {
+        return info.srWindow.Right - info.srWindow.Left + 1;
+    } else {
+        return 80;
+    }
+#else
+    struct winsize w;
+    ioctl(0, TIOCGWINSZ, &w);
+    return w.ws_col;
+#endif
+}
+
+}  // namespace
 
 // hacky print progress (like tqdm)..
 // N.B. this conflicts with tmux scrolling (stdout needs to flush)
@@ -26,10 +50,8 @@ void print_progress(
     int num_workers
 ) {
   // progress bar (doesn't impact performance unless simulation is really tiny)
-  struct winsize w;
-  ioctl(0, TIOCGWINSZ, &w);
-  int ncols  = w.ws_col;
-  int ncolsl = 80;
+  auto const ncols  = getConsoleWidth();
+  auto const ncolsl = 80;
   // int ncolsl = 120;
   // int ncolsp = w.ws_col-ncolsl;
 

@@ -86,6 +86,8 @@ static auto kernelBoundaryLoss(
 auto EngineSYCL::operator()(Simulation2D const& sim) const
     -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
 
+  for (auto device : sycl::device::get_devices()) { pffdtd::summary(device); }
+
   auto const Nx          = sim.Nx;
   auto const Ny          = sim.Ny;
   auto const Nt          = sim.Nt;
