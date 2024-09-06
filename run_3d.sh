@@ -17,19 +17,19 @@ fmin=25
 fmax=800
 smoothing=0
 
-# # Delete old sim
-# rm -rf "$sim_dir"
+# Delete old sim
+rm -rf "$sim_dir"
 
-# # Generate model
-# cd "$model_dir"
-# python "$sim_model_gen"
+# Generate model
+cd "$model_dir"
+python "$sim_model_gen"
 
-# # Generate sim data
-# pffdtd materials build "$materials_dir"
-# python "$sim_setup"
+# Generate sim data
+pffdtd materials build "$materials_dir"
+python "$sim_setup"
 
-# # Run sim
-# $engine_exe "$sim_dir"
+# Run sim
+$engine_exe "$sim_dir"
 
 # Post-process
 pffdtd sim3d process-outputs --data_dir="$sim_dir" --fcut_lowpass "$fmax" --order_lowpass=8 --symmetric_lowpass --fcut_lowcut "$fmin" --order_lowcut=4 --air_abs_filter="stokes" --save_wav --plot
