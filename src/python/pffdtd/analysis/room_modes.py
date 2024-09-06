@@ -94,7 +94,7 @@ def frequency_spacing_index(modes):
 
 def detect_room_modes(
     filename,
-    data_dir,
+    sim_dir,
     fmin,
     fmax,
     width,
@@ -103,7 +103,7 @@ def detect_room_modes(
     num_modes,
     plot,
 ):
-    directory = data_dir
+    directory = sim_dir
     paths = filename
     if not paths:
         paths = collect_wav_paths(directory, "*_out_normalised.wav")
@@ -189,7 +189,7 @@ def detect_room_modes(
 
 @click.command(name="room-modes", help="Plot room modes.")
 @click.argument('filename', nargs=-1, type=click.Path(exists=True))
-@click.option('--data_dir', type=click.Path(exists=True))
+@click.option('--sim_dir', type=click.Path(exists=True))
 @click.option('--fmin', default=1.0, type=float)
 @click.option('--fmax', default=200.0, type=float)
 @click.option('--width', default=2.0, type=float)
@@ -199,7 +199,7 @@ def detect_room_modes(
 @click.option('--plot/--no-plot', default=True)
 def main(
     filename,
-    data_dir,
+    sim_dir,
     fmin,
     fmax,
     width,
@@ -208,5 +208,5 @@ def main(
     num_modes,
     plot,
 ):
-    detect_room_modes(filename, data_dir, fmin, fmax, width,
+    detect_room_modes(filename, sim_dir, fmin, fmax, width,
                       length, height, num_modes, plot)

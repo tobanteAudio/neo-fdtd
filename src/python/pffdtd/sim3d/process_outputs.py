@@ -22,12 +22,12 @@ from pffdtd.geometry.math import iceil
 
 class ProcessOutputs:
     # class to process sim_outs.h5 file
-    def __init__(self, data_dir):
+    def __init__(self, sim_dir):
         self.print('loading...')
 
         # get some integers from signals
-        self.data_dir = data_dir
-        h5f = h5py.File(data_dir / Path('signals.h5'), 'r')
+        self.sim_dir = sim_dir
+        h5f = h5py.File(sim_dir / Path('signals.h5'), 'r')
         out_alpha = h5f['out_alpha'][...]
         Nr = h5f['Nr'][()]
         Nt = h5f['Nt'][()]
@@ -35,7 +35,7 @@ class ProcessOutputs:
         h5f.close()
 
         # get some sim constants (floats) from constants
-        h5f = h5py.File(data_dir / Path('constants.h5'), 'r')
+        h5f = h5py.File(sim_dir / Path('constants.h5'), 'r')
         Ts = h5f['Ts'][()]
         c = h5f['c'][()]
         Tc = h5f['Tc'][()]
@@ -43,7 +43,7 @@ class ProcessOutputs:
         h5f.close()
 
         # read the raw outputs from sim_outs
-        h5f = h5py.File(data_dir / Path('sim_outs.h5'), 'r')
+        h5f = h5py.File(sim_dir / Path('sim_outs.h5'), 'r')
         u_out = h5f['u_out'][...]
         h5f.close()
         self.print('loading done...')
@@ -66,7 +66,7 @@ class ProcessOutputs:
         self.u_out = u_out
         self.diff = diff
         self.out_alpha = out_alpha
-        self.data_dir = data_dir
+        self.sim_dir = sim_dir
 
         self.Tc = Tc
         self.rh = rh
@@ -79,7 +79,7 @@ class ProcessOutputs:
         self.print('initial process...')
         u_out = self.u_out
         out_alpha = self.out_alpha
-        data_dir = self.data_dir
+        sim_dir = self.sim_dir
         apply_int = self.diff
         Ts = self.Ts
 
@@ -87,7 +87,7 @@ class ProcessOutputs:
         r_out = np.sum(
             (u_out*out_alpha.flat[:][:, None]).reshape((*out_alpha.shape, -1)), axis=1)
 
-        h5f = h5py.File(data_dir / Path('sim_outs.h5'), 'r+')
+        h5f = h5py.File(sim_dir / Path('sim_outs.h5'), 'r+')
         try:
             del h5f['r_out']
             self.print('overwrite r_out dataset (native sample rate)')
@@ -238,13 +238,13 @@ class ProcessOutputs:
     def save_wav(self):
         # save in WAV files, with native scaling and normalised across group of receivers
         # saves processed outputs
-        save_as_wav_files(self.r_out_f, self.Fs_f, self.data_dir, True)
+        save_as_wav_files(self.r_out_f, self.Fs_f, self.sim_dir, True)
 
     def save_h5(self):
         # saw processed outputs in .h5 (with native scaling)
         # saves processed outputs
         self.print('saving H5 data..')
-        h5f = h5py.File(self.data_dir / Path('sim_outs_processed.h5'), 'w')
+        h5f = h5py.File(self.sim_dir / Path('sim_outs_processed.h5'), 'w')
         h5f.create_dataset('r_out_f', data=self.r_out_f)
         h5f.create_dataset('Fs_f', data=self.Fs_f)
         h5f.close()
@@ -252,7 +252,7 @@ class ProcessOutputs:
 
 def process_outputs(
     *,
-    data_dir=None,
+    sim_dir=None,
     resample_fs=None,
     fcut_lowcut=None,
     order_lowcut=None,
@@ -264,7 +264,7 @@ def process_outputs(
     plot_raw=None,
     plot=None,
 ):
-    po = ProcessOutputs(data_dir)
+    po = ProcessOutputs(sim_dir)
 
     po.initial_process(fcut=fcut_lowcut, N_order=order_lowcut)
 
@@ -299,7 +299,7 @@ def process_outputs(
 
 
 @click.command(name="process-outputs", help="Process raw simulation output.")
-@click.option('--data_dir', type=click.Path(exists=True))
+@click.option('--sim_dir', type=click.Path(exists=True))
 @click.option('--plot', is_flag=True)
 @click.option('--plot_raw', is_flag=True)
 @click.option('--save_wav', is_flag=True)
@@ -310,9 +310,9 @@ def process_outputs(
 @click.option('--order_lowpass', default=8)
 @click.option('--symmetric_lowpass', is_flag=True)
 @click.option('--air_abs_filter', default="none")
-def main(data_dir, plot, plot_raw, save_wav, resample_fs, fcut_lowcut, fcut_lowpass, order_lowcut, order_lowpass, symmetric_lowpass, air_abs_filter):
+def main(sim_dir, plot, plot_raw, save_wav, resample_fs, fcut_lowcut, fcut_lowpass, order_lowcut, order_lowpass, symmetric_lowpass, air_abs_filter):
     process_outputs(
-        data_dir=data_dir,
+        sim_dir=sim_dir,
         resample_fs=resample_fs,
         fcut_lowcut=fcut_lowcut,
         order_lowcut=order_lowcut,

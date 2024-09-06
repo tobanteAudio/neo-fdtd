@@ -59,7 +59,7 @@ def test_sim3d_detect_room_modes(tmp_path, engine, room, fmax, ppw, fcc, dx_scal
     run_engine(sim_dir=sim_dir, engine=engine)
 
     process_outputs(
-        data_dir=sim_dir,
+        sim_dir=sim_dir,
         resample_fs=48_000,
         fcut_lowcut=fmin,
         order_lowcut=4,
@@ -74,7 +74,7 @@ def test_sim3d_detect_room_modes(tmp_path, engine, room, fmax, ppw, fcc, dx_scal
 
     actual, measured = detect_room_modes(
         filename=None,
-        data_dir=sim_dir,
+        sim_dir=sim_dir,
         fmin=fmin,
         fmax=fmax,
         num_modes=num_modes,

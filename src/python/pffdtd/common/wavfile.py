@@ -20,7 +20,7 @@ def wavwrite(fname, fs, data):
     print(f'wrote {fname} at fs={fs/1000:.2f} kHz')
 
 
-def save_as_wav_files(y, fs, data_dir, verbose=True):
+def save_as_wav_files(y, fs, sim_dir, verbose=True):
     """save in WAV files, with native scaling and normalised across group of receivers
     """
     # saves processed outputs
@@ -31,9 +31,9 @@ def save_as_wav_files(y, fs, data_dir, verbose=True):
 
     for i in range(y.shape[0]):
         # normalised across receivers
-        fname = Path(data_dir / Path(f'R{i+1:03d}_out_normalised.wav'))
+        fname = Path(sim_dir / Path(f'R{i+1:03d}_out_normalised.wav'))
         wavwrite(fname, int(fs), y[i]/n_fac)
         if n_fac < 1.0:
             # not scaled, direct sound amplitude ~1/4πR
-            fname = Path(data_dir / Path(f'R{i+1:03d}_out_native.wav'))
+            fname = Path(sim_dir / Path(f'R{i+1:03d}_out_native.wav'))
             wavwrite(fname, int(fs), y[i])

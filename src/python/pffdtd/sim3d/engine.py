@@ -28,8 +28,8 @@ from pffdtd.geometry.math import ind2sub3d,rel_diff
 MMb = 12 #max allowed number of branches
 
 class EnginePython3D:
-    def __init__(self,data_dir,energy_on=False,nthreads=None):
-        self.data_dir = Path(data_dir)
+    def __init__(self,sim_dir,energy_on=False,nthreads=None):
+        self.sim_dir = Path(sim_dir)
         self.energy_on = energy_on #will calculate energy
         if nthreads is None:
             nthreads = get_default_nprocs()
@@ -47,14 +47,14 @@ class EnginePython3D:
 
     def load_h5_data(self):
         self.print('loading data..')
-        data_dir = self.data_dir
+        sim_dir = self.sim_dir
         #here:
         #bn: bn (full)
         #bnr: bn-rigid
         #bnl: bn-lossy (fd updates)
         #bnl ∩ bnr = ø , bnl ∪ bnr = bn
 
-        h5f = h5py.File(data_dir / Path('vox_out.h5'),'r')
+        h5f = h5py.File(sim_dir / Path('vox_out.h5'),'r')
         self.adj_bn   = h5f['adj_bn'][...] #full
         self.bn_ixyz  = h5f['bn_ixyz'][...] #full
         self.Nx       = h5f['Nx'][()]
@@ -72,7 +72,7 @@ class EnginePython3D:
         self.mat_bnl = mat_bn[ii]
         self.bnl_ixyz = self.bn_ixyz[ii]
 
-        h5f = h5py.File(data_dir / Path('signals.h5'),'r')
+        h5f = h5py.File(sim_dir / Path('signals.h5'),'r')
         self.in_ixyz      = h5f['in_ixyz'][...]
         self.out_ixyz     = h5f['out_ixyz'][...]
         self.out_alpha    = h5f['out_alpha'][...]
@@ -83,7 +83,7 @@ class EnginePython3D:
         self.Nt           = h5f['Nt'][()]
         h5f.close()
 
-        h5f = h5py.File(data_dir / Path('constants.h5'),'r')
+        h5f = h5py.File(sim_dir / Path('constants.h5'),'r')
         self.c       = h5f['c'][()]
         self.h       = h5f['h'][()]
         self.Ts      = h5f['Ts'][()]
@@ -117,7 +117,7 @@ class EnginePython3D:
             assert self.l2<=1/3
 
 
-        h5f = h5py.File(Path(data_dir / Path('materials.h5')),'r')
+        h5f = h5py.File(Path(sim_dir / Path('materials.h5')),'r')
         Nmat = h5f['Nmat'][()]
         DEF = np.zeros((Nmat,MMb,3))
         Mb = h5f['Mb'][...]
@@ -690,14 +690,14 @@ class EnginePython3D:
         #plt.show()
 
     def save_outputs(self):
-        data_dir = self.data_dir
+        sim_dir = self.sim_dir
         u_out = self.u_out
         out_reorder = self.out_reorder
         #just raw outputs, recombine elsewhere
-        h5f = h5py.File(data_dir / Path('sim_outs.h5'),'w')
+        h5f = h5py.File(sim_dir / Path('sim_outs.h5'),'w')
         h5f.create_dataset('u_out', data=u_out[out_reorder,:])
         h5f.close()
-        self.print('saved outputs in {data_dir}')
+        self.print('saved outputs in {sim_dir}')
 
 @nb.jit(nopython=True,parallel=True)
 def nb_stencil_air_cart(Lu1,u1,bn_mask):
@@ -901,7 +901,7 @@ def nb_fcc_fill_plot_holes(uslice,i3):
 def main():
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_dir', type=str,help='run directory')
+    parser.add_argument('--sim_dir', type=str,help='run directory')
     parser.add_argument('--json_model', type=str,help='json to plot section cuts')
     parser.add_argument('--plot', action='store_true',help='plot 2d slice')
     parser.add_argument('--draw_backend',type=str,help='matplotlib or mayavi')
@@ -914,7 +914,7 @@ def main():
     parser.set_defaults(energy=False)
     parser.set_defaults(json_model=None)
     parser.set_defaults(abc=False)
-    parser.set_defaults(data_dir=None)
+    parser.set_defaults(sim_dir=None)
     parser.set_defaults(nthreads=get_default_nprocs())
     parser.set_defaults(nsteps=1)
 
@@ -923,7 +923,7 @@ def main():
     if args.json_model is not None:
         assert args.draw_backend=='mayavi'
 
-    eng = EnginePython3D(args.data_dir,energy_on=args.energy,nthreads=args.nthreads)
+    eng = EnginePython3D(args.sim_dir,energy_on=args.energy,nthreads=args.nthreads)
     if args.plot:
         eng.run_plot(draw_backend=args.draw_backend,json_model=args.json_model)
     else:

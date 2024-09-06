@@ -40,4 +40,4 @@ sim_setup_3d(
 )
 
 # then run with python and 3D visualization:
-#   python3 -m pffdtd.sim3d.engine --data_dir='../../sim_data/mv_fcc/viz' --plot --draw_backend='mayavi' --json_model='model_export.json'
+#   python3 -m pffdtd.sim3d.engine --sim_dir='../../sim_data/mv_fcc/viz' --plot --draw_backend='mayavi' --json_model='model_export.json'

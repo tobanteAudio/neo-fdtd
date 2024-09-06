@@ -157,17 +157,17 @@ def run(files, fmin, fmax, show_all=False, show_tolerance=True, target=None):
 
 @click.command(name="t60", help="Plot RT60 decay times.")
 @click.argument('filename', nargs=-1, type=click.Path(exists=True))
-@click.option('--data_dir', type=click.Path(exists=True))
+@click.option('--sim_dir', type=click.Path(exists=True))
 @click.option('--fmin', default=1.0)
 @click.option('--fmax', default=1000.0)
 @click.option('--target', default=0.0)
-def main(filename, data_dir, fmin, fmax, target):
-    if data_dir and len(filename) > 0:
-        raise RuntimeError("--data_dir not valid, when comparing IRs")
+def main(filename, sim_dir, fmin, fmax, target):
+    if sim_dir and len(filename) > 0:
+        raise RuntimeError("--sim_dir not valid, when comparing IRs")
 
     files = filename
-    if data_dir:
-        files = collect_wav_files(data_dir, "*_out_normalised.wav")
+    if sim_dir:
+        files = collect_wav_files(sim_dir, "*_out_normalised.wav")
 
     run(
         list(sorted(files)),

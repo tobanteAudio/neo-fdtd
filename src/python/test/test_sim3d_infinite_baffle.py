@@ -89,7 +89,7 @@ def test_sim3d_infinite_baffle(tmp_path, engine):
     run_engine(sim_dir=sim_dir, engine=engine)
 
     process_outputs(
-        data_dir=sim_dir,
+        sim_dir=sim_dir,
         resample_fs=48_000,
         fcut_lowcut=fmin,
         order_lowcut=4,

@@ -31,4 +31,4 @@ sim_setup_3d(
 )
 
 # then run with python and 3D visualization:
-#   python3 -m pffdtd.sim3d.engine --data_dir='../../sim_data/Studio/viz' --plot --draw_backend='mayavi' --json_model='model.json'
+#   python3 -m pffdtd.sim3d.engine --sim_dir='../../sim_data/Studio/viz' --plot --draw_backend='mayavi' --json_model='model.json'

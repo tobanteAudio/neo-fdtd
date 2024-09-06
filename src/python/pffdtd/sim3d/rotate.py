@@ -17,15 +17,15 @@ from pffdtd.common.timerdict import TimerDict
 from pffdtd.geometry.math import ind2sub3d
 
 
-def rotate(data_dir,tr=None,compress=False):
+def rotate(sim_dir,tr=None,compress=False):
     #NB: we keep cart_grid.h5 untouched and that has original Nx,Ny,Nz if needed
     def _print(fstring):
         print(f'--ROTATE_DATA: {fstring}')
     timer = TimerDict()
-    data_dir = Path(data_dir)
+    sim_dir = Path(sim_dir)
 
     timer.tic('read')
-    h5f = h5py.File(data_dir / Path('vox_out.h5'),'r')
+    h5f = h5py.File(sim_dir / Path('vox_out.h5'),'r')
     Nx      = h5f['Nx'][()]
     Ny      = h5f['Ny'][()]
     Nz      = h5f['Nz'][()]
@@ -41,7 +41,7 @@ def rotate(data_dir,tr=None,compress=False):
         return #no op
 
     #read
-    h5f = h5py.File(data_dir / Path('vox_out.h5'),'r')
+    h5f = h5py.File(sim_dir / Path('vox_out.h5'),'r')
     xv      = h5f['xv'][()]
     yv      = h5f['yv'][()]
     zv      = h5f['zv'][()]
@@ -56,7 +56,7 @@ def rotate(data_dir,tr=None,compress=False):
         iVV = npa([[+1,+1,0],[-1,-1,0],[0,+1,+1],[0,-1,-1],[+1,0,+1],[-1,0,-1], \
                    [+1,-1,0],[-1,+1,0],[0,+1,-1],[0,-1,+1],[+1,0,-1],[-1,0,+1]])
 
-    h5f = h5py.File(data_dir / Path('signals.h5'),'r')
+    h5f = h5py.File(sim_dir / Path('signals.h5'),'r')
     in_ixyz      = h5f['in_ixyz'][...]
     out_ixyz     = h5f['out_ixyz'][...]
     Nr      = h5f['Nr'][()]
@@ -99,12 +99,12 @@ def rotate(data_dir,tr=None,compress=False):
     else:
         kw = {}
     #overwrite
-    h5f = h5py.File(data_dir / Path('signals.h5'),'r+')
+    h5f = h5py.File(sim_dir / Path('signals.h5'),'r+')
     h5f['in_ixyz'][...] = in_ixyzt
     h5f['out_ixyz'][...] = out_ixyzt
     h5f.close()
 
-    h5f = h5py.File(data_dir / Path('vox_out.h5'),'r+')
+    h5f = h5py.File(sim_dir / Path('vox_out.h5'),'r+')
     h5f['bn_ixyz'][...] = bn_ixyzt
     h5f['adj_bn'][...] = adj_bnt
     h5f['Nx'][()] = Nxt
@@ -120,22 +120,22 @@ def rotate(data_dir,tr=None,compress=False):
     h5f.close()
     _print(timer.ftoc('write'))
 
-def sort_sim_data(data_dir):
+def sort_sim_data(sim_dir):
     def _print(fstring):
         print(f'--SORT_DATA: {fstring}')
     timer = TimerDict()
-    data_dir = Path(data_dir)
+    sim_dir = Path(sim_dir)
 
     timer.tic('read')
     #read
-    h5f = h5py.File(data_dir / Path('vox_out.h5'),'r')
+    h5f = h5py.File(sim_dir / Path('vox_out.h5'),'r')
     adj_bn  = h5f['adj_bn'][...]
     bn_ixyz = h5f['bn_ixyz'][...]
     mat_bn  = h5f['mat_bn'][...]
     saf_bn  = h5f['saf_bn'][...]
     h5f.close()
 
-    h5f = h5py.File(data_dir / Path('signals.h5'),'r')
+    h5f = h5py.File(sim_dir / Path('signals.h5'),'r')
     in_ixyz      = h5f['in_ixyz'][...]
     out_ixyz     = h5f['out_ixyz'][...]
     out_alpha    = h5f['out_alpha'][...]
@@ -163,7 +163,7 @@ def sort_sim_data(data_dir):
 
     timer.tic('write')
     #overwrite
-    h5f = h5py.File(data_dir / Path('signals.h5'),'r+')
+    h5f = h5py.File(sim_dir / Path('signals.h5'),'r+')
     h5f['in_ixyz'][...] = in_ixyz
     h5f['in_sigs'][...] = in_sigs
     h5f['out_ixyz'][...] = out_ixyz
@@ -171,7 +171,7 @@ def sort_sim_data(data_dir):
     h5f['out_reorder'][...] = out_reorder
     h5f.close()
 
-    h5f = h5py.File(data_dir / Path('vox_out.h5'),'r+')
+    h5f = h5py.File(sim_dir / Path('vox_out.h5'),'r+')
     h5f['bn_ixyz'][...] = bn_ixyz
     h5f['adj_bn'][...] = adj_bn
     h5f['mat_bn'][...] = mat_bn
@@ -179,30 +179,30 @@ def sort_sim_data(data_dir):
     h5f.close()
     _print(timer.ftoc('write'))
 
-def fold_fcc_sim_data(data_dir):
+def fold_fcc_sim_data(sim_dir):
     def _print(fstring):
         print(f'--FOLD_FCC_DATA: {fstring}')
 
     timer = TimerDict()
-    data_dir = Path(data_dir)
-    h5f = h5py.File(data_dir / Path('vox_out.h5'),'r')
+    sim_dir = Path(sim_dir)
+    h5f = h5py.File(sim_dir / Path('vox_out.h5'),'r')
     Nx      = h5f['Nx'][()]
     Ny      = h5f['Ny'][()]
     Nz      = h5f['Nz'][()]
     h5f.close()
     assert (Ny%2)==0
 
-    h5f = h5py.File(data_dir / Path('vox_out.h5'),'r')
+    h5f = h5py.File(sim_dir / Path('vox_out.h5'),'r')
     adj_bn  = h5f['adj_bn'][...]
     bn_ixyz = h5f['bn_ixyz'][...]
     h5f.close()
 
-    h5f = h5py.File(data_dir / Path('signals.h5'),'r')
+    h5f = h5py.File(sim_dir / Path('signals.h5'),'r')
     in_ixyz      = h5f['in_ixyz'][...]
     out_ixyz     = h5f['out_ixyz'][...]
     h5f.close()
 
-    h5f = h5py.File(data_dir / Path('constants.h5'),'r')
+    h5f = h5py.File(sim_dir / Path('constants.h5'),'r')
     fcc_flag     = h5f['fcc_flag'][...]
     h5f.close()
 
@@ -236,47 +236,47 @@ def fold_fcc_sim_data(data_dir):
 
     timer.tic('write')
     #write
-    h5f = h5py.File(data_dir / Path('signals.h5'),'r+')
+    h5f = h5py.File(sim_dir / Path('signals.h5'),'r+')
     h5f['in_ixyz'][...] = in_ixyz
     h5f['out_ixyz'][...] = out_ixyz
     h5f.close()
 
-    h5f = h5py.File(data_dir / Path('vox_out.h5'),'r+')
+    h5f = h5py.File(sim_dir / Path('vox_out.h5'),'r+')
     h5f['bn_ixyz'][...] = bn_ixyz
     h5f['adj_bn'][...] = adj_bn
     h5f['Ny'][()] = Nyh
     h5f.close()
 
-    h5f = h5py.File(data_dir / Path('constants.h5'),'r+')
+    h5f = h5py.File(sim_dir / Path('constants.h5'),'r+')
     h5f['fcc_flag'][()] = 2
     h5f.close()
     _print(timer.ftoc('write'))
 
-def copy_sim_data(src_data_dir,dst_data_dir):
+def copy_sim_data(src_sim_dir,dst_sim_dir):
     def _print(fstring):
         print(f'--COPY DATA: {fstring}')
-    src_data_dir = Path(src_data_dir)
-    _print(f'{src_data_dir=}')
-    assert src_data_dir.is_dir()
+    src_sim_dir = Path(src_sim_dir)
+    _print(f'{src_sim_dir=}')
+    assert src_sim_dir.is_dir()
 
-    dst_data_dir = Path(dst_data_dir)
-    _print(f'{dst_data_dir=}')
-    if not dst_data_dir.exists():
-        dst_data_dir.mkdir(parents=True)
+    dst_sim_dir = Path(dst_sim_dir)
+    _print(f'{dst_sim_dir=}')
+    if not dst_sim_dir.exists():
+        dst_sim_dir.mkdir(parents=True)
     else:
-        assert dst_data_dir.is_dir()
-    for file in src_data_dir.glob('*.h5'):
+        assert dst_sim_dir.is_dir()
+    for file in src_sim_dir.glob('*.h5'):
         _print(f'copying {file}')
-        shutil.copy(file, dst_data_dir)
+        shutil.copy(file, dst_sim_dir)
 
 #def main():
     #import argparse
     #parser = argparse.ArgumentParser()
-    #parser.add_argument('--data_dir', type=str,help='run directory')
-    #parser.set_defaults(data_dir=None)
+    #parser.add_argument('--sim_dir', type=str,help='run directory')
+    #parser.set_defaults(sim_dir=None)
 #
     #args = parser.parse_args()
-    #rotate(args.data_dir)
+    #rotate(args.sim_dir)
 #
 #if __name__ == '__main__':
     #main()
