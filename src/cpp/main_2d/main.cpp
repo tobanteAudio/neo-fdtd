@@ -4,6 +4,7 @@
   #include "engine_sycl.hpp"
 #endif
 
+#include "pffdtd/exception.hpp"
 #include "pffdtd/hdf.hpp"
 #include "pffdtd/simulation_2d.hpp"
 
@@ -17,6 +18,7 @@
 #include <string>
 
 struct Arguments {
+  std::string engine{"native"};
   std::string simDir{};
   std::string out{"out.h5"};
 };
@@ -24,24 +26,33 @@ struct Arguments {
 int main(int argc, char** argv) {
   auto app  = CLI::App{"pffdtd-2d"};
   auto args = Arguments{};
-  app.add_option("-s,--sim_dir", args.simDir, "Folder path");
-  app.add_option("-o,--out", args.out, "Filename");
+  app.add_option("-e,--engine", args.engine);
+  app.add_option("-s,--sim_dir", args.simDir)->check(CLI::ExistingDirectory);
+  app.add_option("-o,--out", args.out);
   CLI11_PARSE(app, argc, argv);
 
-
-  auto const start = std::chrono::steady_clock::now();
-
-  auto simDir = std::filesystem::path{args.simDir};
-  if (not std::filesystem::exists(simDir)) {
-    throw std::runtime_error{"invalid file: " + simDir.string()};
-  }
-
+  auto const start  = std::chrono::steady_clock::now();
+  auto const simDir = std::filesystem::path{args.simDir};
   auto const sim    = pffdtd::loadSimulation2D(simDir);
-  auto const engine = pffdtd::EngineNative{};
-  auto const out    = engine(sim);
+  auto const out    = [&] {
+    if (args.engine == "native") {
+      fmt::println("Using engine: NATIVE");
+      auto const engine = pffdtd::EngineNative{};
+      return engine(sim);
+    } else if (args.engine == "sycl") {
+#if defined(PFFDTD_HAS_SYCL)
+      fmt::println("Using engine: SYCL");
+      auto const engine = pffdtd::EngineSYCL{};
+      return engine(sim);
+#else
+      pffdtd::raisef<std::runtime_error>("pffdtd built without SYCL support");
+#endif
+    } else {
+      pffdtd::raisef<std::runtime_error>("invalid engine '{}'", args.engine);
+    }
+  }();
 
-  auto outfile = simDir / args.out;
-  auto results = pffdtd::H5FWriter{outfile};
+  auto results = pffdtd::H5FWriter{simDir / args.out};
   results.write("out", out);
 
   auto const stop = std::chrono::steady_clock::now();
