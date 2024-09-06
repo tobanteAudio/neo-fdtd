@@ -4,6 +4,7 @@ set -e
 
 build_dir=build
 # build_dir=cmake-build-sycl
+# build_dir=cmake-build-sycl-intel
 
 root_dir="$(cd "$(dirname "$0")" && pwd)"
 python_dir="$root_dir/src/python"
