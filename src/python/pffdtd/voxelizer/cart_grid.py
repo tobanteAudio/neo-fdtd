@@ -1,9 +1,8 @@
 # SPDX-License-Identifier: MIT
-
-import numpy as np
-from numpy import array as npa
 from pathlib import Path
+
 import h5py
+import numpy as np
 
 
 class CartGrid():
@@ -25,7 +24,9 @@ class CartGrid():
 
         # 64-bit ints signed (for simplicity and numpy indexing)
         Nx, Ny, Nz = np.int_(np.ceil((xyzmax0 - xyzmin0)/h))+1
-        if fcc:  # make all dims even (so we can rotate any and halve)
+
+        # make all dims even (so we can rotate any and halve)
+        if fcc:
             Nx += (Nx % 2)
             Ny += (Ny % 2)
             Nz += (Nz % 2)
@@ -44,14 +45,7 @@ class CartGrid():
         assert np.all(xyzmin == xyzmin0)
         assert np.all(xyzmax >= xyzmax0)
 
-        self.print(f'{Nx=}, {Ny=}, {Nz=}, N_grid_pts={Nx*Ny*Nz:g}')
-        if fcc:
-            self.print(f'{Nx*Ny*Nz/(2**28):.3f}GB in two-grid fcc single')
-            self.print(f'{Nx*Ny*Nz/(2**27):.3f}GB in two-grid fcc double')
-        else:
-            self.print(f'{Nx*Ny*Nz/(2**27):.3f}GB in two-grid cart single')
-            self.print(f'{Nx*Ny*Nz/(2**26):.3f}GB in two-grid cart double')
-
+        self.fcc = fcc
         self.h = h
         self.offset = offset
         self.xv = xv
@@ -60,16 +54,39 @@ class CartGrid():
         self.Nx = Nx
         self.Ny = Ny
         self.Nz = Nz
-        self.Nxyz = npa([Nx, Ny, Nz])
+        self.Nxyz = np.array([Nx, Ny, Nz])
         self.Npts = np.prod(self.Nxyz)
         self.xyzmin = xyzmin
         self.xyzmax = xyzmax
 
-    def print(self, fstring):
-        print(f'--CART_GRID: {fstring}')
+        self.print_stats()
 
-    # don't use this unless grid is small
+    def save(self, folder, filename="cart_grid.h5"):
+        """Save to HDF5 file
+        """
+        xv = self.xv
+        yv = self.yv
+        zv = self.zv
+        h = self.h
+
+        folder = Path(folder)
+        self.print(f'{folder=}')
+        if not folder.exists():
+            folder.mkdir(parents=True)
+        else:
+            assert folder.is_dir()
+
+        compression = {'compression': "gzip", 'compression_opts': 9}
+        file = h5py.File(folder / filename, 'w')
+        file.create_dataset('xv', data=xv, **compression)
+        file.create_dataset('yv', data=yv, **compression)
+        file.create_dataset('zv', data=zv, **compression)
+        file.create_dataset('h', data=np.float64(h))
+        file.close()
+
     def draw_gridpoints(self, backend='mayavi'):
+        """Don't use this unless grid is small
+        """
         xv = self.xv
         yv = self.yv
         zv = self.zv
@@ -97,24 +114,12 @@ class CartGrid():
         self.print(f'{cg.xyzmin=}')
         self.print(f'{cg.xyzmax=}')
 
-    # save in HDF5 file
-    def save(self, save_folder):
-        xv = self.xv
-        yv = self.yv
-        zv = self.zv
-        h = self.h
-
-        save_folder = Path(save_folder)
-        self.print(f'{save_folder=}')
-        if not save_folder.exists():
-            save_folder.mkdir(parents=True)
+        if cg.fcc:
+            self.print(f'{cg.Npts/(2**28):.3f}GB in two-grid fcc single')
+            self.print(f'{cg.Npts/(2**27):.3f}GB in two-grid fcc double')
         else:
-            assert save_folder.is_dir()
+            self.print(f'{cg.Npts/(2**27):.3f}GB in two-grid cart single')
+            self.print(f'{cg.Npts/(2**26):.3f}GB in two-grid cart double')
 
-        kw = {'compression': "gzip", 'compression_opts': 9}
-        h5f = h5py.File(save_folder / Path('cart_grid.h5'), 'w')
-        h5f.create_dataset('xv', data=xv, **kw)
-        h5f.create_dataset('yv', data=yv, **kw)
-        h5f.create_dataset('zv', data=zv, **kw)
-        h5f.create_dataset('h', data=np.float64(h))
-        h5f.close()
+    def print(self, fstring):
+        print(f'--CART_GRID: {fstring}')

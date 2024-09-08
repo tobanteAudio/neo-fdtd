@@ -9,7 +9,7 @@ class SimConstants:
     """Class to keep simulation constants mostly in one place, writes to HDF5
     """
 
-    def __init__(self, Tc, rh, h=None, fs=None, fmax=None, PPW=None, fcc=False):
+    def __init__(self, Tc, rh, h=None, fs=None, fmax=None, PPW=None, fcc=False, verbose=True):
         # Tc is temperature, rh is relative humidity <- this gives c (speed of sound)
         assert Tc >= -20
         assert Tc <= 50
@@ -46,14 +46,6 @@ class SimConstants:
         else:
             raise
 
-        self.print(f'{c=}')
-        self.print(f'{Ts=}')
-        self.print(f'{fs=}')
-        self.print(f'{fmax=}')
-        self.print(f'{h=}')
-        self.print(f'{l=}')
-        self.print(f'{l2=}')
-
         self.h = h
         self.c = c
         self.Ts = Ts
@@ -65,6 +57,15 @@ class SimConstants:
 
         self.Tc = Tc
         self.rh = rh
+
+        if verbose:
+            self.print(f'c    = {c}')
+            self.print(f'Ts   = {Ts}')
+            self.print(f'fs   = {fs}')
+            self.print(f'fmax = {fmax}')
+            self.print(f'h    = {h}')
+            self.print(f'l    = {l}')
+            self.print(f'l2   = {l2}')
 
     def print(self, fstring):
         print(f'--CONSTS: {fstring}')

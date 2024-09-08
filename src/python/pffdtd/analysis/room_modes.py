@@ -5,7 +5,7 @@ import pathlib
 import click
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.signal import find_peaks
+from scipy.signal import find_peaks, windows
 from scipy.io import wavfile
 
 from pffdtd.geometry.math import iceil
@@ -142,6 +142,9 @@ def detect_room_modes(
         fmin = fmin if fmin > 0 else 1
         fmax = fmax if fmax > 0 else fs/2
 
+        window = windows.hann(buf.shape[0])
+        buf *= window
+
         nfft = (2**iceil(np.log2(buf.shape[0])))*2
         spectrum = np.fft.rfft(buf, nfft)
         freqs = np.fft.rfftfreq(nfft, 1/fs)
@@ -169,7 +172,9 @@ def detect_room_modes(
 
         for mode in calculated_mode_freqs:
             nearest = find_nearest(measured_mode_freqs, mode)
-            print(f"{mode=:03.3f} Hz - {nearest=:03.3f} Hz = {mode-nearest:03.3f} Hz")
+            error = mode-nearest
+            error_pct = np.abs(error)/mode*100
+            print(f"{mode=:03.3f} Hz - {nearest=:03.3f} Hz = {error:03.3f} Hz / {error_pct:.3f} %")
 
     plt.title("")
     plt.xlabel('Frequency [Hz]')
