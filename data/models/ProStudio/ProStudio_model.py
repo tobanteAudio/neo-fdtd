@@ -3,6 +3,7 @@ import pathlib
 
 import numpy as np
 
+from pffdtd.sim3d.constants import SimConstants
 from pffdtd.sim3d.room_builder import find_third_vertex
 
 
@@ -90,7 +91,10 @@ def main():
     dir = pathlib.Path(".")
     obj = dir/"obj"
 
-    offset = 0.07
+    fcc = True
+    constants = SimConstants(Tc=20, rh=50, fmax=800, PPW=10.5, fcc=fcc)
+    mul = 4.0 if fcc else 2.0
+    offset = constants.h * mul
 
     s1 = [3.38789-3.288/2, 6.90-offset, 1.062+0.332]
     sub1 = s1.copy()
@@ -142,9 +146,9 @@ def main():
     m.add("Windows", obj / 'windows.obj', [137, 207, 240], reverse=True)
     m.add_source("S1", s1)
     m.add_source("S2", s2)
-    m.add_source("S3", s3)
-    m.add_source("SUB1", sub1)
-    m.add_source("SUB2", sub2)
+    # m.add_source("S3", s3)
+    # m.add_source("SUB1", sub1)
+    # m.add_source("SUB2", sub2)
     m.add_receiver("R1", r1)
     m.add_receiver("R2", r2)
     m.add_receiver("R3", r3)

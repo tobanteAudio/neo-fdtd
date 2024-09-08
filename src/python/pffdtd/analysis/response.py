@@ -52,10 +52,9 @@ def main(filename, fmin, fmax, label_a, label_b, smoothing, target):
     fs_b, buf_b = wavfile.read(file_b)
 
     assert fs_a == fs_b
-    assert buf_a.shape == buf_b.shape
 
     fmax = fmax if fmax != 0.0 else fs_a/2
-    nfft = 2**iceil(np.log2(buf_a.shape[0]))
+    nfft = 2**iceil(np.log2(max(buf_a.shape[0], buf_b.shape[0])))
     freqs = np.fft.rfftfreq(nfft, 1/fs_a)
 
     spectrum_a = np.fft.rfft(buf_a, nfft)

@@ -251,7 +251,15 @@ class RoomGeometry:
                 else:
                     color = tuple(npa(mats_dict[mat]['color'])/255.0)
 
-                ps.register_surface_mesh(mat, pts, tris,color=color,edge_color=(0,0,0),edge_width=1)
+                ps.register_surface_mesh(
+                    name=mat,
+                    vertices=pts,
+                    faces=tris,
+                    color=color,
+                    edge_color=(0,0,0),
+                    edge_width=1,
+                    enabled=False,
+                )
 
         else:
             raise
