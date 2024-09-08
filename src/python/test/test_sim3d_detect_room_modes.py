@@ -1,7 +1,7 @@
+import numpy as np
 import pytest
 
-from pffdtd.analysis.room_modes import find_nearest
-from pffdtd.analysis.room_modes import detect_room_modes
+from pffdtd.analysis.room_modes import detect_room_modes, find_nearest
 from pffdtd.materials.adm_funcs import write_freq_ind_mat_from_Yn, convert_Sabs_to_Yn
 from pffdtd.sim3d.room_builder import RoomBuilder
 from pffdtd.sim3d.setup import sim_setup_3d
@@ -11,13 +11,13 @@ from pffdtd.sim3d.process_outputs import process_outputs
 
 @pytest.mark.parametrize("engine", ["python", "native"])
 @pytest.mark.parametrize(
-    "room,fmax,ppw,fcc,dx_scale,tolerance",
+    "room,fmax,ppw,fcc,dx_scale,tolerance_pct",
     [
-        ((2.8, 2.076, 1.48), 400, 10.5, False, 2, 3.0),
-        ((3.0, 1.0, 2.0), 600, 7.7, True, 3, 6),
+        ((2.8, 2.076, 1.48), 400, 10.5, False, 2, 1.7),
+        ((3.0, 1.0, 2.0), 600, 7.7, True, 3, 3.4),
     ]
 )
-def test_sim3d_detect_room_modes(tmp_path, engine, room, fmax, ppw, fcc, dx_scale, tolerance):
+def test_sim3d_detect_room_modes(tmp_path, engine, room, fmax, ppw, fcc, dx_scale, tolerance_pct):
     skip_if_native_engine_unavailable(engine)
 
     L = room[0]
@@ -37,7 +37,7 @@ def test_sim3d_detect_room_modes(tmp_path, engine, room, fmax, ppw, fcc, dx_scal
     room.add_receiver("R1", [W-offset, L-offset, H-offset])
     room.build(model_file)
 
-    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.02), root_dir / material)
+    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.03), root_dir / material)
 
     sim_setup_3d(
         model_json_file=model_file,
@@ -84,6 +84,7 @@ def test_sim3d_detect_room_modes(tmp_path, engine, room, fmax, ppw, fcc, dx_scal
         height=H,
     )
 
-    for mode in actual[:num_modes]:
-        nearest = find_nearest(measured, mode)
-        assert abs(mode-nearest) < tolerance
+    actual = np.array(actual[:num_modes])
+    nearest = np.array([find_nearest(measured, mode) for mode in actual])
+    rel_error_pct = np.abs(actual-nearest)/actual*100
+    assert np.max(rel_error_pct) <= tolerance_pct
