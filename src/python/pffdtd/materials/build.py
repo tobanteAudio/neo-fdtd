@@ -42,6 +42,8 @@ def build(write_folder, plot):
     fit_to_Sabs_oct_11(leather_arm_chair             , filename=Path(write_folder / 'leather_arm_chair.h5')             , plot=plot)
 
     #freq-independent impedance from Sabine abs coefficient
+    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.0001),filename=Path(write_folder / 'sabine_0001.h5'))
+    write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.001),filename=Path(write_folder / 'sabine_001.h5'))
     write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.01),filename=Path(write_folder / 'sabine_01.h5'))
     write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.02),filename=Path(write_folder / 'sabine_02.h5'))
     write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.03),filename=Path(write_folder / 'sabine_03.h5'))
