@@ -1,28 +1,34 @@
 from pffdtd.sim3d.setup import sim_setup_3d
 
-model_file = 'model.json'
-
 sim_setup_3d(
-    model_json_file=model_file,
+    model_json_file='model.json',
     mat_folder='../../materials',
     source_num=1,
-    insig_type='impulse',  # for RIR
-    diff_source=True,  # for single precision
+    insig_type='impulse',
+    diff_source=True,
     mat_files_dict={
+        'Book Shelf': 'floor_wood.h5',
         'Ceiling': 'concrete_painted.h5',
+        'Coffee Table': 'mv_wood.h5',
+        'Couch': 'absorber_8000_100mm.h5',
+        'Desk': 'mv_wood.h5',
         'Floor': 'floor_wood.h5',
+        'Kallax': 'mv_wood.h5',
         'Table': 'mv_wood.h5',
-        'TV_Stand': 'mv_wood.h5',
-        'Sofa': 'absorber_8000_100mm.h5',
+        'TV 42': 'mv_wood.h5',
+        'TV 55': 'mv_wood.h5',
+        'TV Table': 'mv_wood.h5',
         'Walls': 'concrete_painted.h5',
     },
-    duration=1.5,
+    duration=2.0,
     Tc=20,
     rh=50,
-    fcc_flag=True,
-    PPW=7.7,
-    fmax=1000.0,
+    fcc_flag=False,
+    PPW=10.5,
+    fmax=2500.0,
     save_folder='../../sim_data/LivingRoom/cpu',
     save_folder_gpu='../../sim_data/LivingRoom/gpu',
     compress=0,
+    draw_vox=True,
+    draw_backend='polyscope',
 )

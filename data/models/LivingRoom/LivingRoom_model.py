@@ -1,31 +1,35 @@
-from pffdtd.sim3d.room_builder import RoomBuilder
+import pathlib
 
-L = 6.0
-W = 3.65
-H = 3.12
+from pffdtd.sim3d.constants import SimConstants
+from pffdtd.sim3d.model_builder import ModelBuilder
 
-model_file = 'model.json'
 
-builder = RoomBuilder(L, W, H)
-builder.with_colors({
-    "Ceiling": [200, 200, 200],
-    "Floor": [151, 134, 122],
-    "Table": [130, 75, 25],
-    "TV_Stand": [80, 80, 80],
-    "Sofa": [25, 25, 25],
-    "Walls": [255, 255, 255],
-})
+def main():
+    dir = pathlib.Path(".")
+    obj = dir/"obj"
 
-builder.add_box("Sofa", [0.98, 2.52, 0.48], [0.05, L-2.52-0.05, 0.06])
-builder.add_box("Table", [0.75, 1.25, 0.02], [0.05, L-2.52-0.1-1.25, 0.66])
-builder.add_box("Table", [0.8, 1.8, 0.02], [W-0.8-0.05, 1, 0.7])
-builder.add_box("Table", [0.8, 0.8, 0.02], [W/2-0.4, L-1-0.4, 0.3])
-builder.add_box("TV_Stand", [0.5, 1.6, 0.35], [W-0.5-0.05, L-2, 0.03])
+    fcc = False
+    constants = SimConstants(Tc=20, rh=50, fmax=2500, PPW=10.5, fcc=fcc)
+    mul = 4.0 if fcc else 2.0
+    offset = constants.h * mul
 
-builder.add_source("PC Speaker Left", [0.2, L-2.52-1.25+0.1, 0.8])
-builder.add_source("PC Speaker Right", [0.2, L-2.52-0.2, 0.8])
-builder.add_receiver("PC Listener", [1.0, L-2.52-1.4/2, 1.2])
+    m = ModelBuilder()
+    m.add("Book Shelf", obj / 'book_shelf.obj', [90, 90, 90], reverse=True)
+    m.add("Ceiling", obj / 'ceiling.obj', [150, 150, 150], reverse=True)
+    m.add("Coffee Table", obj / 'coffee_table.obj', [10, 10, 10], reverse=True)
+    m.add("Couch", obj / 'couch.obj', [29, 50, 112], reverse=True)
+    m.add("Desk", obj / 'desk.obj', [103, 70, 55], reverse=True)
+    m.add("Floor", obj / 'floor.obj', [133, 94, 66], reverse=True)
+    m.add("Kallax", obj / 'kallax.obj', [200, 200, 200], reverse=True)
+    m.add("Table", obj / 'table.obj', [200, 200, 200], reverse=True)
+    m.add("TV 42", obj / 'tv_42.obj', [10, 10, 10], reverse=True)
+    m.add("TV 55", obj / 'tv_55.obj', [10, 10, 10], reverse=True)
+    m.add("TV Table", obj / 'tv_table.obj', [120, 120, 120], reverse=True)
+    m.add("Walls", obj / 'walls.obj', [175, 175, 175], reverse=True)
+    m.add_source("S1", [offset, offset, 3.12-offset])
+    m.add_receiver("R1", [3.65-offset, 6-offset, offset])
+    m.add_receiver("R2", [3.65-offset, 6-offset, offset+1.0])
+    m.write(dir / "model.json")
 
-builder.add_receiver("TV Listener", [2.0, L-2.52-1.4/2, 1.2])
 
-builder.build(model_file)
+main()
