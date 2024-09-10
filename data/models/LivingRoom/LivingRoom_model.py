@@ -1,7 +1,7 @@
 import pathlib
 
 from pffdtd.sim3d.constants import SimConstants
-from pffdtd.sim3d.model_builder import ModelBuilder
+from pffdtd.sim3d.model_builder import MeshModelBuilder
 
 
 def main():
@@ -13,7 +13,7 @@ def main():
     mul = 4.0 if fcc else 2.0
     offset = constants.h * mul
 
-    m = ModelBuilder()
+    m = MeshModelBuilder()
     m.add("Book Shelf", obj / 'book_shelf.obj', [90, 90, 90], reverse=True)
     m.add("Ceiling", obj / 'ceiling.obj', [150, 150, 150], reverse=True)
     m.add("Coffee Table", obj / 'coffee_table.obj', [10, 10, 10], reverse=True)

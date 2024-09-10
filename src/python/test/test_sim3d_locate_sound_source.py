@@ -6,7 +6,7 @@ import pytest
 from pffdtd.common.wavfile import wavread
 from pffdtd.localization.tdoa import locate_sound_source
 from pffdtd.materials.adm_funcs import write_freq_ind_mat_from_Yn, convert_Sabs_to_Yn
-from pffdtd.sim3d.room_builder import RoomBuilder
+from pffdtd.sim3d.model_builder import RoomModelBuilder
 from pffdtd.sim3d.setup import sim_setup_3d
 from pffdtd.sim3d.testing import run_engine, skip_if_native_engine_unavailable
 from pffdtd.sim3d.process_outputs import process_outputs
@@ -36,7 +36,7 @@ def test_sim3d_locate_sound_source(tmp_path, engine):
         np.array([0.5, np.sqrt(3)/6, np.sqrt(6)/3]),
     ]
 
-    builder = RoomBuilder(length, width, height)
+    builder = RoomModelBuilder(length, width, height)
     builder.with_colors({
         "Ceiling": [200, 200, 200],
         "Floor": [151, 134, 122],

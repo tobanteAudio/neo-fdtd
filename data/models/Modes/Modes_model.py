@@ -1,5 +1,5 @@
-from pffdtd.sim3d.room_builder import RoomBuilder
 from pffdtd.sim3d.constants import SimConstants
+from pffdtd.sim3d.model_builder import RoomModelBuilder
 
 S = 0.4
 L = 7.00*S
@@ -20,7 +20,7 @@ constants = SimConstants(Tc=Tc, rh=rh, fmax=fmax,
 mul = 3.5 if fcc else 2.0
 offset = constants.h * mul
 
-room = RoomBuilder(L, W, H)
+room = RoomModelBuilder(L, W, H)
 room.with_colors({
     "Ceiling": [200, 200, 200],
     "Floor": [151, 134, 122],

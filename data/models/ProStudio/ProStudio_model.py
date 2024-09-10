@@ -1,8 +1,8 @@
 import pathlib
 
+from pffdtd.geometry.math import find_third_vertex, point_along_line
 from pffdtd.sim3d.constants import SimConstants
-from pffdtd.sim3d.room_builder import find_third_vertex
-from pffdtd.sim3d.model_builder import point_along_line, ModelBuilder
+from pffdtd.sim3d.model_builder import MeshModelBuilder
 
 
 def main():
@@ -47,7 +47,7 @@ def main():
     # r5 = with_x_offset(r2, +0.73*0.5)
     # r6 = with_x_offset(r2, +0.73*1.5)
 
-    m = ModelBuilder()
+    m = MeshModelBuilder()
     m.add("ATC Left", obj / 'atc_left.obj', [5, 5, 5], reverse=True)
     m.add("ATC Right", obj / 'atc_right.obj', [5, 5, 5], reverse=True)
     m.add("Ceiling", obj / 'ceiling.obj', [60, 60, 60])

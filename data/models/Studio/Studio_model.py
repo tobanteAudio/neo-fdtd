@@ -1,4 +1,5 @@
-from pffdtd.sim3d.room_builder import RoomBuilder, find_third_vertex
+from pffdtd.geometry.math import find_third_vertex
+from pffdtd.sim3d.model_builder import RoomModelBuilder
 
 S = 0.90
 L = 7.00*S
@@ -23,7 +24,7 @@ p2[2] = 1.5
 p3 = p1.copy()
 p3[2] = 2.0
 
-room = RoomBuilder(L, W, H)
+room = RoomModelBuilder(L, W, H)
 room.with_colors({
     "Absorber M": [111, 55, 10],
     "Absorber L": [111, 55, 10],
