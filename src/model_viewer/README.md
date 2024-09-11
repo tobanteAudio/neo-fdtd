@@ -1,3 +1,6 @@
+<!-- SPDX-License-Identifier: MIT -->
+<!-- SPDX-FileCopyrightText: 2021 Brian Hamilton -->
+
 # Model viewer for JSON Sketchup exports (using three.js)
 
 ![PFFDTD Screenshot](./doc/screenshot.png)

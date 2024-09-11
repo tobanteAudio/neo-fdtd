@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2024 Tobias Hienzsch
+
 import pathlib
 
 from pffdtd.geometry.math import find_third_vertex, point_along_line

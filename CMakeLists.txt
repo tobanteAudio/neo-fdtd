@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2024 Tobias Hienzsch
+
 cmake_minimum_required(VERSION 3.24)
 project(pffdtd VERSION 1.0.0 LANGUAGES C CXX)
 

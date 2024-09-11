@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2024 Tobias Hienzsch
+
 from pffdtd.geometry.math import to_ixy
 from pffdtd.sim2d.setup import sim_setup_2d
 

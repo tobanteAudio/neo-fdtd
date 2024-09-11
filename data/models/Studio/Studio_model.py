@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2024 Tobias Hienzsch
+
 from pffdtd.geometry.math import find_third_vertex
 from pffdtd.sim3d.model_builder import RoomModelBuilder
 

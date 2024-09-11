@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2024 Tobias Hienzsch
+
 project(pffdtd_2d)
 
 add_executable(pffdtd_2d main.cpp engine_native.cpp)

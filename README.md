@@ -1,3 +1,6 @@
+<!-- SPDX-License-Identifier: MIT -->
+<!-- SPDX-FileCopyrightText: 2024 Tobias Hienzsch -->
+
 # PFFDTD (pretty fast FDTD)
 
 [![Build](https://github.com/tobanteAudio/pffdtd/actions/workflows/build.yml/badge.svg)](https://github.com/tobanteAudio/pffdtd/actions/workflows/build.yml)

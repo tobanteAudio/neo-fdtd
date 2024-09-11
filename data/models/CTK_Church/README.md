@@ -1,3 +1,6 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+<!-- SPDX-FileCopyrightText: 2021 Brian Hamilton -->
+
 ## Christ the King (CTK) Church Sketchup Model
 
 This model was created by Heather Lai, and was further modified by Brian Hamilton.

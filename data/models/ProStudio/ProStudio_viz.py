@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2024 Tobias Hienzsch
+
 from pffdtd.sim3d.setup import sim_setup_3d
 
 sim_setup_3d(

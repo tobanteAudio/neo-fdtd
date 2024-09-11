@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2024 Tobias Hienzsch
+
 from pffdtd.sim3d.constants import SimConstants
 from pffdtd.sim3d.model_builder import RoomModelBuilder
 

@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2024 Tobias Hienzsch
+
 set -e
 
 root_dir="$(cd "$(dirname "$0")" && pwd)"

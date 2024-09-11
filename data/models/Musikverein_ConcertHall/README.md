@@ -1,3 +1,6 @@
+<!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
+<!-- SPDX-FileCopyrightText: 2021 Brian Hamilton -->
+
 ## Musikverein Concert Hall Sketchup Model
 
 This model was created by Nathaniel Fletcher, and was further modified by Brian Hamilton.  It is a derivative work (with permission) of the [Musikverein model](https://odeon.dk/mozart-wien-musikverein/) provided with the [Odeon room acoustics software](https://odeon.dk).

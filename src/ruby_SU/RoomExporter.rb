@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2021 Brian Hamilton
 # encoding: UTF-8
 
 require 'sketchup.rb'

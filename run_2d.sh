@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2024 Tobias Hienzsch
+
+
 set -e
 
 build_dir=build

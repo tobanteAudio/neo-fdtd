@@ -1,13 +1,9 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2021 Brian Hamilton
 # vim: set expandtab
 # vim: set tabstop=2
+
 ##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
 # File name: RoomExport.rb
 #
 # Description: Functions called by SU plugin (RoomExporter) to export geometry and materials
