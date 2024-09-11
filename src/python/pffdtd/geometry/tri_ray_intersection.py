@@ -1,24 +1,17 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: tri_ray_intersection.py
-#
-# Description: Triangle-ray intersection routines.
-# One single ray / triangle, and one vectorised for one-ray-many-tri or one-tri-many-ray
-# some tests (__main__ entry)
-#
-# returns boolean for hit. distance is Inf when no hit
-#
-# N.B. these intersection routines are customised for their purposes in PFFDTD
-# you may need to tailor for other uses (e..g, may fail for degenerate
-# triangles, pruned first here)
-#
-##############################################################################
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2021 Brian Hamilton
+
+"""Triangle-ray intersection routines.
+
+One single ray / triangle, and one vectorised for one-ray-many-tri or one-tri-many-ray
+some tests (__main__ entry)
+
+returns boolean for hit. distance is Inf when no hit
+
+N.B. these intersection routines are customised for their purposes in PFFDTD
+you may need to tailor for other uses (e..g, may fail for degenerate
+triangles, pruned first here)
+"""
 
 import numpy as np
 from numpy import array as npa

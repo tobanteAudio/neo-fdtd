@@ -1,17 +1,7 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: vox_grid_base.py
-#
-# Description: Class for a voxel-grid for ray-tri / tri-box intersections
-#  Uses multiprocessing
-#
-##############################################################################
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2021 Brian Hamilton
+"""Class for a voxel-grid for ray-tri / tri-box intersections. Uses multiprocessing
+"""
 import multiprocessing as mp
 from multiprocessing import shared_memory
 

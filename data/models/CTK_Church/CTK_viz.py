@@ -1,16 +1,7 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: CTK_viz.py
-#
-# Description: this shows a simple setup with Cartesian scheme, for visualization purposes
-#
-##############################################################################
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2021 Brian Hamilton
+"""This shows a simple setup with Cartesian scheme, for visualization purposes.
+"""
 from pffdtd.sim3d.setup import sim_setup_3d
 
 sim_setup_3d(

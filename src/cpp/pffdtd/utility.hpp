@@ -1,18 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// This file is a part of PFFDTD.
-//
-// PFFTD is released under the MIT License.
-// For details see the LICENSE file.
-//
-// Copyright 2021 Brian Hamilton.
-//
-// File name: utility.hpp
-//
-// Description: Header-only misc function definitions not specific to FDTD
-// simulation
-//
-///////////////////////////////////////////////////////////////////////////////
-
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2021 Brian Hamilton
+// Misc function definitions not specific to FDTD simulation
 #pragma once
 
 #include <cstdint>

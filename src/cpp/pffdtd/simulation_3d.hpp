@@ -1,18 +1,7 @@
-///////////////////////////////////////////////////////////////////////////////
-// This file is a part of PFFDTD.
-//
-// PFFTD is released under the MIT License.
-// For details see the LICENSE file.
-//
-// Copyright 2021 Brian Hamilton.
-//
-// File name: simulation_3d.hpp
-//
-// Description: Header-only function definitions for handling loading of
-// simulation data from HDF5 files, preparing for simulation, and writing outputs
-//
-///////////////////////////////////////////////////////////////////////////////
-
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2021 Brian Hamilton
+// Function definitions for handling loading of simulation data from HDF5 files,
+// preparing for simulation, and writing outputs
 #pragma once
 
 #include "pffdtd/config.hpp"

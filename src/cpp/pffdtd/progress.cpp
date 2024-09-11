@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2021 Brian Hamilton
+
 #include "progress.hpp"
 
 #include <fmt/format.h>

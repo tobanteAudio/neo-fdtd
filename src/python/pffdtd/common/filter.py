@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2021 Brian Hamilton
+
 import numpy as np
 from scipy.signal import butter, bilinear_zpk, zpk2sos, sosfilt, lfilter
 

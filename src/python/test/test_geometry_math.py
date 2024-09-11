@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2024 Tobias Hienzsch
+
 import numpy as np
 
 from pffdtd.geometry.math import find_third_vertex, transform_point

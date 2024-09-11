@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2024 Tobias Hienzsch
+
 import click
 from scipy.io import wavfile
 import matplotlib.pyplot as plt

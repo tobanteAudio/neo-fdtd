@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2024 Tobias Hienzsch
+
 """fmax calculation matches multiple online calculators. Not sure about fmin
 """
 

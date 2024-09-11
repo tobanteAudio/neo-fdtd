@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2021 Brian Hamilton
+
 """Read in sim_outs.h5 and process (integrate, low-cut, low-pass, etc.)
 This gets called from command line with cmdline arguments (run after simulation)
 """

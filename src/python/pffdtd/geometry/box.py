@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2021 Brian Hamilton
+
 from typing import Any
 
 import numpy as np

@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2021 Brian Hamilton
+
 """
 For multi-GPU execution:
     - best to permute dimensions for descending order (last dim continguous)

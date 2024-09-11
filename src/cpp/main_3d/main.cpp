@@ -1,16 +1,6 @@
-///////////////////////////////////////////////////////////////////////////////
-// This file is a part of PFFDTD.
-//
-// PFFTD is released under the MIT License.
-// For details see the LICENSE file.
-//
-// Copyright 2021 Brian Hamilton.
-//
-// File name: fdtd_main.c
-//
-// Description: Main entry point of the CPU/GPU PFFDTD engines.
-//
-///////////////////////////////////////////////////////////////////////////////
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2021 Brian Hamilton
+// Main entry point of the CPU/GPU PFFDTD engines.
 
 #include "pffdtd/simulation_3d.hpp"
 #include "pffdtd/utility.hpp"

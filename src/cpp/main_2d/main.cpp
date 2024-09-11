@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// SPDX-FileCopyrightText: 2024 Tobias Hienzsch
+
 #include "engine_native.hpp"
 
 #if defined(PFFDTD_HAS_SYCL)

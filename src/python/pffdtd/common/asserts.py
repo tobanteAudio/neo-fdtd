@@ -1,17 +1,7 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: myasserts.py
-#
-# Description: Miscellaneous python/numpy assertions (mostly vestigial)
-#
-##############################################################################
-
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2021 Brian Hamilton
+"""Miscellaneous python/numpy assertions (mostly vestigial)
+"""
 import numpy as np
 
 

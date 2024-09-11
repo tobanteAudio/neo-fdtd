@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: MIT
-"""Miscellaneous python/numpy functions.  Not all used or useful.
+# SPDX-FileCopyrightText: 2021 Brian Hamilton
+
+"""Miscellaneous python/numpy functions.
 """
 from typing import Any
 

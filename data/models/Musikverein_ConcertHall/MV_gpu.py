@@ -1,16 +1,7 @@
-##############################################################################
-# This file is a part of PFFDTD.
-#
-# PFFTD is released under the MIT License.
-# For details see the LICENSE file.
-#
-# Copyright 2021 Brian Hamilton.
-#
-# File name: MV_gpu.py
-#
-# Description: this shows a simple setup with FCC scheme, for a larger single-precision GPU run (<12GB VRAM)
-#
-##############################################################################
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2021 Brian Hamilton
+"""This shows a simple setup with FCC scheme, for a larger single-precision GPU run (<12GB VRAM)
+"""
 from pffdtd.sim3d.setup import sim_setup_3d
 
 sim_setup_3d(

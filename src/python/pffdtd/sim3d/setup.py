@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2021 Brian Hamilton
+
 """Function to set up a PFFDTD simulation with single source and multiple receivers
 """
 

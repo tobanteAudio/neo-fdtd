@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: 2021 Brian Hamilton
+
 """Miscellaneous functions for dealing with wall admittances (materials)
 DEF is normalised RLC triplet (i.e., for specific admittance)
 """
