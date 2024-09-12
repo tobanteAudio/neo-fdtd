@@ -6,7 +6,7 @@ from pathlib import Path
 import h5py
 import numpy as np
 from numpy import pi,cos,sin
-from scipy.signal import lfilter
+from scipy.signal import butter,lfilter, sosfilt
 
 from pffdtd.common.timerdict import TimerDict
 from pffdtd.geometry.math import iceil
@@ -44,7 +44,7 @@ class SimSignals:
         self._diff = False
 
     def print(self,fstring):
-        print(f'--COMMS: {fstring}')
+        print(f'--SIGNALS: {fstring}')
 
     def prepare_source_pts(self,Sxyz):
         in_alpha,in_ixyz = self.get_linear_interp_weights(Sxyz)
@@ -62,6 +62,10 @@ class SimSignals:
 
         if sig_type=='impulse': #for RIRs
             in_sig[0] = 1.0
+        if sig_type=='impulse-highpass': #for RIRs
+            in_sig[0] = 1.0
+            sos = butter(4, 40, 'highpass', fs=1/Ts, output='sos')
+            in_sig = sosfilt(sos, in_sig)
         elif sig_type=='hann10': #for viz
             N = 10
             n = np.arange(N)
