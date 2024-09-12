@@ -61,16 +61,16 @@ class SimConstants:
         self.rh = rh
 
         if verbose:
-            self.print(f'c    = {c}')
-            self.print(f'Ts   = {Ts}')
-            self.print(f'fs   = {fs}')
-            self.print(f'fmax = {fmax}')
-            self.print(f'h    = {h}')
+            self.print(f'c    = {c:.2f} m/s')
+            self.print(f'Ts   = {Ts*1000:.6f} ms')
+            self.print(f'fs   = {fs:.2f} Hz')
+            self.print(f'fmax = {fmax:.2f} Hz')
+            self.print(f'h    = {h:.5f} m / {h*1000:.2f} mm')
             self.print(f'l    = {l}')
             self.print(f'l2   = {l2}')
 
     def print(self, fstring):
-        print(f'--CONSTS: {fstring}')
+        print(f'--CONSTANTS: {fstring}')
 
     # save to HDF5 file
     def save(self, save_folder):

@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2021 Brian Hamilton
+import json
 
+import click
 import numpy as np
-import json as json
 from numpy import array as npa
+
 from pffdtd.geometry.math import dotv,rotate_az_el_deg
 from pffdtd.geometry.tris_precompute import tris_precompute
 
@@ -182,7 +184,7 @@ class RoomGeometry:
         self.vol = vol
         self.area = area
 
-    def draw(self,backend='mayavi',plot_normals=False,wireframe=False):
+    def draw(self,backend='mayavi',plot_normals=False,wireframe=False, enable_surface=False):
         mats_dict = self.mats_dict
         mat_str = self.mat_str
         Nmat = self.Nmat
@@ -259,7 +261,7 @@ class RoomGeometry:
                     color=color,
                     edge_color=(0,0,0),
                     edge_width=1,
-                    enabled=False,
+                    enabled=enable_surface,
                 )
 
         else:
@@ -293,33 +295,17 @@ class RoomGeometry:
         for i in range(rg.Nmat):
             self.print(f'mat {i}: {rg.mat_str[i]}, {rg.mat_area[i]:.3f}m²')
 
-def main():
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--json', type=str,help='json file to import')
-    parser.add_argument('--backend', type=str,help='backend')
-    parser.add_argument('--nodraw', action='store_true',help='draw')
-    parser.add_argument('--drawnormals', action='store_true',help='draw normals')
-    parser.add_argument('--az_el', nargs=2, type=float, help='two angles in deg')
-    parser.set_defaults(nodraw=False)
-    parser.set_defaults(drawnormals=False)
-    parser.set_defaults(json=None)
-    parser.set_defaults(backend='mayavi')
-    parser.set_defaults(az_el=[0.,0.])
 
-    args = parser.parse_args()
-
-    assert args.json is not None
-    assert args.backend in ['mayavi','polyscope']
-
-    print(args)
-
-    room = RoomGeometry(args.json,az_el=args.az_el)
+@click.command(name="room-geometry", help="Draw room geometry.")
+@click.option('--model', type=click.Path(exists=True))
+@click.option('--backend', default="polyscope", type=click.Choice(["mayavi", "polyscope"]))
+@click.option('--nodraw', is_flag=True)
+@click.option('--drawnormals', is_flag=True)
+@click.option('--az_el', nargs=2, type=float, default=(0,0))
+def main(model, backend, nodraw, drawnormals, az_el):
+    az_el = list(az_el)
+    room = RoomGeometry(model, az_el=az_el)
     room.print_stats()
-
-    if not args.nodraw:
-        room.draw(args.backend,plot_normals=args.drawnormals)
-        room.show(args.backend)
-
-if __name__ == '__main__':
-    main()
+    if not nodraw:
+        room.draw(backend, plot_normals=drawnormals, enable_surface=True)
+        room.show(backend)
