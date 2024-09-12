@@ -30,7 +30,7 @@ class TimerDict:
         delta = time.time()-self.d[key]
         self.t[key] = True
         if print_elapsed:
-            print('*TIMER %s: elapsed = %.4f s' % (key,delta))
+            print(f'*TIMER {key}: elapsed = {delta:.4f} s')
         return delta
 
     #toc and pass back f-string

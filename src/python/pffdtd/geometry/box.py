@@ -184,19 +184,16 @@ def main():
     Lx = npr.random()
     Ly = npr.random()
     Lz = npr.random()
-    print('Lx = %.2f, Ly = %.2f, Lz = %.2f' % (Lx, Ly, Lz))
+    print(f'Lx = f{Lx:.2f}, Ly = f{Ly:.2f}, Lz = f{Lz:.2f}')
     Rax = npr.rand(3)
     Rang = (-1.0 + 2.0*npr.random())*90
-    print('Rax = %.2f,%.2f,%.2f, Rang = %.2f degrees' %
-          (Rax[0], Rax[1], Rax[2], Rang))
+    print(f'Rax = {Rax[0]:.2f},{Rax[1]:.2f},{Rax[2]:.2f}, {Rang=:.2f} degrees')
     shift = npr.rand(3)*100
-    print('shift = %.2f,%.2f,%.2f' % (shift[0], shift[1], shift[2]))
+    print(f'shift = {shift[0]:.2f},{shift[1]:.2f},{shift[2]:.2f}')
 
     box = Box(Lx, Ly, Lz, Rax, Rang, shift)
-    print('box 2 ... bmin = %.2f,%.2f,%.2f' %
-          (box.bmin[0], box.bmin[1], box.bmin[2]))
-    print('box 2 ... bmax =  %.2f,%.2f,%.2f' %
-          (box.bmax[0], box.bmax[1], box.bmax[2]))
+    print(f'box 2 ... bmin = {box.bmin[0]:.2f}, {box.bmin[1]:.2f}, {box.bmin[2]:.2f}')
+    print(f'box 2 ... bmax = {box.bmax[0]:.2f}, {box.bmax[1]:.2f}, {box.bmax[2]:.2f}')
     assert np.all(np.mean(box.verts, 0).dot(box.A.T) < box.b)
     assert np.all((((box.verts-shift)*(1-1e-4))+shift).dot(box.A.T) < box.b)
     assert np.any((((box.verts-shift)*(1+1e-4))+shift).dot(box.A.T) > box.b)

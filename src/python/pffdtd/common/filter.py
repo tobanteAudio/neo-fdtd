@@ -14,7 +14,7 @@ def apply_lowcut(y, fs, fcut, order, apply_int):
             Wn = fcut*2*np.pi
             z, p, k = butter(order, Wn, btype='high',
                              analog=True, output='zpk')
-            assert (np.all(z == 0.0))
+            assert np.all(z == 0.0)
             z = z[1:]  # remove one zero
             zd, pd, kd = bilinear_zpk(z, p, k, 1/dt)
             sos = zpk2sos(zd, pd, kd)

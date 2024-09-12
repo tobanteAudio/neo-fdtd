@@ -10,10 +10,12 @@ from tqdm import tqdm
 
 from pffdtd.common.misc import clear_dat_folder, get_default_nprocs
 from pffdtd.common.timerdict import TimerDict
+from pffdtd.geometry.box import Box
 from pffdtd.geometry.tri_box_intersection import tri_box_intersection_vec
 
-#base class for a voxel
 class VoxBase:
+    """Base class for a voxel
+    """
     def __init__(self,bmin,bmax):
         self.bmin = bmin
         self.bmax = bmax
@@ -21,8 +23,9 @@ class VoxBase:
         self.tris_pre = None
         self.tris_mat = None
 
-#base class for a voxel grid
 class VoxGridBase:
+    """Base class for a voxel grid
+    """
     def __init__(self,room_geo):
         tris = room_geo.tris
         pts = room_geo.pts
@@ -189,7 +192,6 @@ class VoxGridBase:
 
     #draws non-empty boxes only
     def draw_boxes(self,tube_radius,backend='mayavi'):
-        from pffdtd.geometry.box import Box
         Nvox = self.Nvox
         self.print('drawing boxes..')
         boxtris = np.zeros((Nvox*12,3))

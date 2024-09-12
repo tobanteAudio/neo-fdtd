@@ -129,7 +129,7 @@ def main():
         from tvtk.api import tvtk #only for z-up
         assert args.trials<4
 
-    for tt in range(args.trials):
+    for _ in range(args.trials):
         ####################
         #one ray many tris
         ####################

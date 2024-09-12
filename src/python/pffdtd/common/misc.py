@@ -23,7 +23,7 @@ def clear_dat_folder(dat_folder_str=None):
         try:
             f.unlink()
         except OSError as e:
-            print("Error: %s : %s" % (f, e.strerror))
+            print(f"Error: {f} : {e.strerror}")
 
 
 def yes_or_no(question):

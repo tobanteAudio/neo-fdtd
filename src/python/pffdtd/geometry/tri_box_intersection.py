@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2021 Brian Hamilton
 
-"""
-Triangle-box intersection routines.
+"""Triangle-box intersection routines.
 
 One single box / triangle, and one vectorised for one-ray-many-box or one-tri-many-box
 some tests (__main__ entry). Returns boolean for hit
@@ -45,7 +44,7 @@ def tri_box_intersection(bbmin, bbmax, tri_pre, debug=False):
     vc = tri_pre['cent']
     d1 = np.dot(n, c-vc)
     d2 = np.dot(n, (dp-c)-vc)
-    if ((np.dot(n, p) + d1)*(np.dot(n, p) + d2) > 0):
+    if (np.dot(n, p) + d1)*(np.dot(n, p) + d2) > 0:
         if debug:
             print('tri-plane fail')
         return False
@@ -63,9 +62,9 @@ def tri_box_intersection(bbmin, bbmax, tri_pre, debug=False):
                 neixy *= -1
             deixy = -np.dot(neixy, vixy) + \
                 np.amax([0, dp[xq]*neixy[0]]) + np.amax([0, dp[yq]*neixy[1]])
-            if ((np.dot(neixy, p[[xq, yq]]) + deixy) < 0):
+            if (np.dot(neixy, p[[xq, yq]]) + deixy) < 0:
                 if debug:
-                    print('2d q=%d fail' % q)
+                    print(f'2d {q=} fail')
                 return False
     if debug:
         print('intersects!')
@@ -90,7 +89,7 @@ def tri_box_intersection_vec(bbmin, bbmax, tris_pre):
     vc = tris_pre['cent']
     d1 = dotv(nor, c-vc)
     d2 = dotv(nor, (dp-c)-vc)
-    fail2 = ((dotv(nor, p) + d1)*(dotv(nor, p) + d2) > 0)
+    fail2 = (dotv(nor, p) + d1)*(dotv(nor, p) + d2) > 0
 
     fail3 = np.full(fail2.shape, False)
 

@@ -46,7 +46,7 @@ class SimConstants:
             Ts = h/c*l
             fs = 1/Ts
         else:
-            raise
+            raise Exception("Invalid combination of h, fs, fmax & PPW")
 
         self.h = h
         self.c = c

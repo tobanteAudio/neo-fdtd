@@ -17,7 +17,7 @@ EPS = np.finfo(np.float64).eps
 def rotmatrix_ax_ang(Rax: Any, Rang: float):
     assert isinstance(Rax, np.ndarray)
     assert Rax.shape == (3,)
-    assert type(Rang) is float
+    assert isinstance(Rang, float)
 
     Rax = Rax/npl.norm(Rax)  # to be sure
 
