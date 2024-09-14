@@ -8,15 +8,15 @@ from pffdtd.sim3d.constants import SimConstants
 
 def main():
     fcc = False
-    fmax = 2000
-    ppw = 10.5
+    fmax = 16000.0
+    ppw = 7.7
     constants = SimConstants(20, 50, fmax=fmax, PPW=ppw, fcc=fcc)
     mul = 3.0 if fcc else 2.0
     offset = constants.h * mul
 
-    width = 5.0
+    width = 3.0
     length = 2.0
-    height = 5.0
+    height = 3.0
 
     model = {
         "mats_hash": {
