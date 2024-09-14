@@ -112,9 +112,8 @@ class VoxScene:
         min_vox_shape = (Nh,Nh,Nh) #for memory calculation
 
         #set up shared memory
-        # Nb_proc_shm = shared_memory.SharedMemory(create=True,size=Nprocs*np.dtype(np.int64).itemsize)
-        # Nb_proc = np.frombuffer(Nb_proc_shm.buf,dtype=np.int64)
-        Nb_proc = np.ndarray(Nprocs,dtype=np.int64)
+        Nb_proc_shm = shared_memory.SharedMemory(create=True,size=Nprocs*np.dtype(np.int64).itemsize)
+        Nb_proc = np.ndarray((Nprocs,), dtype=np.int64, buffer=Nb_proc_shm.buf)
         Nb_proc[:] = 0
 
         NN = self.NN
@@ -311,9 +310,8 @@ class VoxScene:
         self.print(f'{Nbt=}')
 
         #clean up shared memory
-        # Nb_proc_shm.close()
-        # Nb_proc_shm.unlink()
-        #self.print(f'unlink')
+        Nb_proc_shm.close()
+        Nb_proc_shm.unlink()
 
         #unified arrays
         bn_ixyz = np.full((Nbt,),-1,dtype=np.int64)

@@ -97,12 +97,12 @@ def sim_setup_3d(
 
     # set up the voxel grid (volume hierarchy for ray-triangle intersections)
     vox_grid = VoxGrid(room_geo, cart_grid, Nvox_est=Nvox_est, Nh=Nh)
-    vox_grid.fill(Nprocs=1)
+    vox_grid.fill(Nprocs=Nprocs)
     vox_grid.print_stats()
 
     # 'voxelize' the scene (calculate FDTD mesh adjacencies and identify/correct boundary surfaces)
     vox_scene = VoxScene(room_geo, cart_grid, vox_grid, fcc=fcc_flag)
-    vox_scene.calc_adj(Nprocs=1)
+    vox_scene.calc_adj(Nprocs=Nprocs)
     vox_scene.check_adj_full()
     vox_scene.save(save_folder, compress=compress)
 

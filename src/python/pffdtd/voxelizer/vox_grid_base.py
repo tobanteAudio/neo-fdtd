@@ -81,18 +81,13 @@ class VoxGridBase:
                 clear_dat_folder('mmap_dat')
 
             #create shared memory
-            # Ntris_vox_shm = shared_memory.SharedMemory(create=True,size=Nvox*np.dtype(np.int64).itemsize)
-            # Ntris_vox = np.frombuffer(Ntris_vox_shm.buf, dtype=np.int64)
-            Ntris_vox = np.ndarray(Nvox, dtype=np.int64)
-            #alternative syntax
-            #Ntris_vox = np.ndarray((Nvox,), dtype=np.int64, buffer=Ntris_vox_shm.buf)
+            Ntris_vox_shm = shared_memory.SharedMemory(create=True,size=Nvox*np.dtype(np.int64).itemsize)
+            Ntris_vox = np.ndarray((Nvox,), dtype=np.int64, buffer=Ntris_vox_shm.buf)
+            Ntris_vox[:] = 0
 
             #use as buffer view to np array
-            # N_tribox_tests_shm = shared_memory.SharedMemory(create=True,size=Nvox*np.dtype(np.int64).itemsize)
-            # N_tribox_tests = np.frombuffer(N_tribox_tests_shm.buf, dtype=np.int64)
-            N_tribox_tests = np.ndarray(Nvox, dtype=np.int64)
-
-            Ntris_vox[:] = 0
+            N_tribox_tests_shm = shared_memory.SharedMemory(create=True,size=Nvox*np.dtype(np.int64).itemsize)
+            N_tribox_tests = np.ndarray((Nvox,), dtype=np.int64, buffer=N_tribox_tests_shm.buf)
             N_tribox_tests[:] = 0
 
             #looping through boxes makes more sense because we append to voxels (for multithreading)
@@ -174,11 +169,11 @@ class VoxGridBase:
             self.print(f'tribox checks={N_tribox_tests_tot} for {Ntris} tris and {Nvox} vox ({N_tribox_tests_tot/(Nvox*Ntris)*100.0:.2f} %)')
 
             #cleanup shared memory
-            # Ntris_vox_shm.close()
-            # Ntris_vox_shm.unlink()
+            Ntris_vox_shm.close()
+            Ntris_vox_shm.unlink()
 
-            # N_tribox_tests_shm.close()
-            # N_tribox_tests_shm.unlink()
+            N_tribox_tests_shm.close()
+            N_tribox_tests_shm.unlink()
 
             self.print(f'tris redundant={Ntris_vox_tot}, {100.*Ntris_vox_tot/self.Ntris:.2f} %')
             self.print(f'avg tris per voxel={Ntris_vox_tot/Nvox:.2f}')
