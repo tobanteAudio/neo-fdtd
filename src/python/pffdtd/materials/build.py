@@ -18,6 +18,7 @@ from pffdtd.materials.adm_funcs import (
 def build(write_folder, plot):
     write_folder = Path(write_folder)
 
+    # autopep8: off
     absorber_8000_50mm            = np.array([0.01, 0.02, 0.03, 0.05, 0.26, 0.59, 0.88, 0.94, 0.95, 0.93, 0.90])
     absorber_8000_100mm           = np.array([0.02, 0.03, 0.05, 0.30, 0.69, 0.92, 0.93, 0.94, 0.95, 0.93, 0.90])
     absorber_8000_200mm           = np.array([0.05, 0.10, 0.40, 0.85, 0.89, 0.92, 0.93, 0.94, 0.95, 0.93, 0.90])
@@ -103,3 +104,5 @@ def build(write_folder, plot):
 
     # #input DEF values directly
     # write_freq_dep_mat(npa([[0,1.0,0],[2,3,4]]),filename=Path(write_folder / 'ex_mat.h5'))
+
+    # autopep8: on

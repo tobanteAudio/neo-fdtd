@@ -39,7 +39,7 @@ def main():
     print(f"plate     = {plate_frequency:.2f} Hz")
     print("")
 
-    print(f"wells     = {np.round(w*100,2)} cm")
+    print(f"wells     = {np.round(w*100, 2)} cm")
     print(f"max depth = {np.max(w)*100:.2f} cm")
 
 
