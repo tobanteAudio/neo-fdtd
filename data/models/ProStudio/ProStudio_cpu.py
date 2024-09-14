@@ -32,7 +32,7 @@ sim_setup_3d(
     PPW=10.5,
     fmax=800.0,
     save_folder='../../sim_data/ProStudio/cpu',
-    # save_folder_gpu='../../sim_data/ProStudio/gpu',
+    save_folder_gpu='../../sim_data/ProStudio/gpu',
     draw_vox=True,
     draw_backend='polyscope',
     compress=0,
