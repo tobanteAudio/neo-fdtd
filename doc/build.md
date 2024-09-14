@@ -23,6 +23,7 @@ sudo apt install libomp-dev ninja-build   # Ubuntu
 
 # Can be skipped if building with conan package manager
 sudo dnf install hdf5-devel fmt-devel cli11-devel # Fedora
+sudo apt install libhdf5-dev libfmt-dev libcli11-dev # Ubuntu
 ```
 
 ### GCC or Clang
@@ -41,6 +42,12 @@ cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=cla
 
 ### Intel oneAPI
 
+- <https://www.intel.com/content/www/us/en/developer/tools/oneapi/toolkits.html#base-kit>
+- Nvidia:
+  - Drivers
+  - <https://developer.codeplay.com/products/oneapi/nvidia/2024.2.1/guides/get-started-guide-nvidia>
+  - <https://www.server-world.info/en/note?os=Ubuntu_24.04&p=nvidia&f=2>
+
 ```shell
 source /opt/intel/oneapi/setvars.sh
 
@@ -52,6 +59,12 @@ export DPCPP_CPU_PLACES=cores
 export DPCPP_CPU_CU_AFFINITY=spread
 export DPCPP_CPU_NUM_CUS=16
 ./run_2d.sh
+```
+
+### CUDA
+
+```shell
+cmake -S. -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -D PFFDTD_ENABLE_CUDA=ON -D CMAKE_PROJECT_TOP_LEVEL_INCLUDES=external/cmake-conan/conan_provider.cmake
 ```
 
 ## Windows

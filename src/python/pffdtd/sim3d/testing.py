@@ -25,7 +25,6 @@ def run_engine(sim_dir, engine):
         result = subprocess.run(
             args=[str(exe), sim_dir],
             capture_output=True,
-            text=True,
             check=True,
         )
         assert result.returncode == 0
