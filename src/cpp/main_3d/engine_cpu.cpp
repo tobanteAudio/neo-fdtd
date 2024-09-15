@@ -18,6 +18,68 @@
 
 namespace pffdtd {
 
+  namespace {
+
+// function that does freq-dep RLC boundaries.  See 2016 ISMRA paper and
+// accompanying webpage (slightly improved here)
+double process_bnl_pts_fd(
+    Real* u0b,
+    Real const* u2b,
+    Real const* ssaf_bnl,
+    int8_t const* mat_bnl,
+    int64_t Nbl,
+    int8_t* Mb,
+    Real lo2,
+    Real* vh1,
+    Real* gh1,
+    MatQuad const* mat_quads,
+    Real const* mat_beta
+) {
+  auto const start = omp_get_wtime();
+#pragma omp parallel for schedule(static)
+  for (int64_t nb = 0; nb < Nbl; nb++) {
+    Real _1   = 1.0;
+    Real _2   = 2.0;
+    int32_t k = mat_bnl[nb];
+
+    Real lo2Kbg = lo2 * ssaf_bnl[nb] * mat_beta[k];
+    Real fac    = _2 * lo2 * ssaf_bnl[nb] / (_1 + lo2Kbg);
+
+    Real u0bint = u0b[nb];
+    Real u2bint = u2b[nb];
+
+    u0bint = (u0bint + lo2Kbg * u2bint) / (_1 + lo2Kbg);
+
+    Real vh1nb[MMb];
+    for (int8_t m = 0; m < Mb[k]; m++) {
+      int64_t nbm = nb * MMb + m;
+      int32_t mbk = k * MMb + m;
+      MatQuad const* tm;
+      tm       = &(mat_quads[mbk]);
+      vh1nb[m] = vh1[nbm];
+      u0bint -= fac * (_2 * (tm->bDh) * vh1nb[m] - (tm->bFh) * gh1[nbm]);
+    }
+
+    Real du = u0bint - u2bint;
+
+    for (int8_t m = 0; m < Mb[k]; m++) {
+      int64_t nbm = nb * MMb + m;
+      int32_t mbk = k * MMb + m;
+      MatQuad const* tm;
+      tm = &(mat_quads[mbk]);
+      Real vh0nbm
+          = (tm->b) * du + (tm->bd) * vh1nb[m] - _2 * (tm->bFh) * gh1[nbm];
+      gh1[nbm] += (vh0nbm + vh1nb[m]) / _2;
+      vh1[nbm] = vh0nbm;
+    }
+
+    u0b[nb] = u0bint;
+  }
+  return omp_get_wtime() - start;
+}
+
+  }
+
 auto run(Simulation3D& sd) -> double {
   // keep local ints, scalars
   int64_t Ns   = sd.Ns;
@@ -347,64 +409,6 @@ auto run(Simulation3D& sd) -> double {
   );
 
   return timeElapsed;
-}
-
-// function that does freq-dep RLC boundaries.  See 2016 ISMRA paper and
-// accompanying webpage (slightly improved here)
-double process_bnl_pts_fd(
-    Real* u0b,
-    Real const* u2b,
-    Real const* ssaf_bnl,
-    int8_t const* mat_bnl,
-    int64_t Nbl,
-    int8_t* Mb,
-    Real lo2,
-    Real* vh1,
-    Real* gh1,
-    MatQuad const* mat_quads,
-    Real const* mat_beta
-) {
-  auto const start = omp_get_wtime();
-#pragma omp parallel for schedule(static)
-  for (int64_t nb = 0; nb < Nbl; nb++) {
-    Real _1   = 1.0;
-    Real _2   = 2.0;
-    int32_t k = mat_bnl[nb];
-
-    Real lo2Kbg = lo2 * ssaf_bnl[nb] * mat_beta[k];
-    Real fac    = _2 * lo2 * ssaf_bnl[nb] / (_1 + lo2Kbg);
-
-    Real u0bint = u0b[nb];
-    Real u2bint = u2b[nb];
-
-    u0bint = (u0bint + lo2Kbg * u2bint) / (_1 + lo2Kbg);
-
-    Real vh1nb[MMb];
-    for (int8_t m = 0; m < Mb[k]; m++) {
-      int64_t nbm = nb * MMb + m;
-      int32_t mbk = k * MMb + m;
-      MatQuad const* tm;
-      tm       = &(mat_quads[mbk]);
-      vh1nb[m] = vh1[nbm];
-      u0bint -= fac * (_2 * (tm->bDh) * vh1nb[m] - (tm->bFh) * gh1[nbm]);
-    }
-
-    Real du = u0bint - u2bint;
-
-    for (int8_t m = 0; m < Mb[k]; m++) {
-      int64_t nbm = nb * MMb + m;
-      int32_t mbk = k * MMb + m;
-      MatQuad const* tm;
-      tm = &(mat_quads[mbk]);
-      Real vh0nbm
-          = (tm->b) * du + (tm->bd) * vh1nb[m] - _2 * (tm->bFh) * gh1[nbm];
-      gh1[nbm] += (vh0nbm + vh1nb[m]) / _2;
-      vh1[nbm] = vh0nbm;
-    }
-
-    u0b[nb] = u0bint;
-  }
-  return omp_get_wtime() - start;
 }
 
 } // namespace pffdtd

@@ -7,7 +7,7 @@ set -e
 
 root_dir="$(cd "$(dirname "$0")" && pwd)"
 engine_exe="$root_dir/build/src/cpp/main_3d/pffdtd_3d"
-engine_exe="/home/tobante/Developer/lib/pffdtd/c_cuda/bin/pffdtd_gpu_f32.x"
+engine_exe="$root_dir/cmake-build-cuda/src/cpp/main_3d/pffdtd_3d"
 
 sim_name="LivingRoom"
 sim_setup="${sim_name}_setup.py"

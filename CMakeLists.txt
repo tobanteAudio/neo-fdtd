@@ -4,6 +4,10 @@
 cmake_minimum_required(VERSION 3.24)
 project(pffdtd VERSION 1.0.0 LANGUAGES C CXX)
 
+option(PFFDTD_ENABLE_ACPP_SYCL "Build with AdaptiveCpp SYCL" OFF)
+option(PFFDTD_ENABLE_INTEL_SYCL "Build with Intel SYCL" OFF)
+option(PFFDTD_ENABLE_CUDA "Build with CUDA" OFF)
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
@@ -12,8 +16,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(PFFDTD_ENABLE_ACPP_SYCL "Build with AdaptiveCpp SYCL" OFF)
-option(PFFDTD_ENABLE_INTEL_SYCL "Build with Intel SYCL" OFF)
+if(PFFDTD_ENABLE_CUDA)
+    enable_language(CUDA)
+    set(CMAKE_CUDA_STANDARD 20)
+endif()
 
 include(FetchContent)
 FetchContent_Declare(mdspan GIT_REPOSITORY "https://github.com/kokkos/mdspan" GIT_TAG "stable" GIT_SHALLOW TRUE)

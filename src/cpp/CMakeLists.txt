@@ -6,7 +6,7 @@ project(pffdtd)
 add_library(pffdtd)
 add_library(pffdtd::pffdtd ALIAS pffdtd)
 target_include_directories(pffdtd PUBLIC ${PROJECT_SOURCE_DIR})
-target_compile_definitions(pffdtd PUBLIC PRECISION=2)
+target_compile_definitions(pffdtd PUBLIC PFFDTD_PRECISION=1)
 
 target_link_libraries(pffdtd
     PUBLIC

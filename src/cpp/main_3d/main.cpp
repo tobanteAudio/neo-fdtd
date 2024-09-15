@@ -5,12 +5,12 @@
 #include "pffdtd/simulation_3d.hpp"
 #include "pffdtd/utility.hpp"
 
-#ifndef USING_CUDA
-  #error "forgot to define USING_CUDA"
+#ifndef PFFDTD_HAS_CUDA
+  #error "forgot to define PFFDTD_HAS_CUDA"
 #endif
 
-#if USING_CUDA
-  #include "engine_cuda.hpp"
+#if PFFDTD_HAS_CUDA
+  #include "engine_gpu.hpp"
 #else
   #include "engine_cpu.hpp"
 #endif
