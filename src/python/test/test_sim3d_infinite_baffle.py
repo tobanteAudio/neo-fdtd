@@ -87,6 +87,7 @@ def test_sim3d_infinite_baffle(tmp_path, engine):
         save_folder=sim_dir,
         bmax=[baffle_size, depth, baffle_size],
         bmin=[0, 0, 0],
+        Nprocs=1,
     )
 
     run_engine(sim_dir=sim_dir, engine=engine)

@@ -70,6 +70,7 @@ def test_sim3d_locate_sound_source(tmp_path, engine):
         PPW=ppw,
         insig_type='impulse',
         save_folder=sim_dir,
+        Nprocs=1,
     )
 
     run_engine(sim_dir=sim_dir, engine=engine)

@@ -57,6 +57,7 @@ def test_sim3d_detect_room_modes(tmp_path, engine, room, fmax, ppw, fcc, dx_scal
         PPW=ppw,
         insig_type='impulse',
         save_folder=sim_dir,
+        Nprocs=1,
     )
 
     run_engine(sim_dir=sim_dir, engine=engine)
