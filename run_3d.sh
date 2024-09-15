@@ -7,11 +7,12 @@ set -e
 
 root_dir="$(cd "$(dirname "$0")" && pwd)"
 engine_exe="$root_dir/build/src/cpp/main_3d/pffdtd_3d"
+engine_exe="/home/tobante/Developer/lib/pffdtd/c_cuda/bin/pffdtd_gpu_f32.x"
 
 sim_name="LivingRoom"
-sim_setup="${sim_name}_cpu.py"
+sim_setup="${sim_name}_setup.py"
 sim_model_gen="${sim_name}_model.py"
-sim_dir="$root_dir/data/sim_data/$sim_name/cpu"
+sim_dir="$root_dir/data/sim_data/$sim_name/gpu"
 
 model_dir="$root_dir/data/models/$sim_name"
 materials_dir="$root_dir/data/materials"

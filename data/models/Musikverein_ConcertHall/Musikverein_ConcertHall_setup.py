@@ -6,7 +6,6 @@ from pffdtd.sim3d.setup import sim_setup_3d
 
 sim_setup_3d(
     model_json_file='model_export.json',
-    draw_backend='mayavi',
     mat_folder='../../materials',
     source_num=3,
     insig_type='impulse',
@@ -18,13 +17,15 @@ sim_setup_3d(
                     'Window': 'mv_window.h5',
                     'Wood': 'mv_wood.h5',
     },
-    duration=3.0,
+    duration=2.0,
     Tc=20,
     rh=50,
     fcc_flag=True,
-    PPW=7.7,  # for 1% phase velocity error at fmax
-    fmax=2500.0,
-    save_folder='../../sim_data/mv_fcc/gpu',
-    save_folder_gpu='../../sim_data/mv_fcc/gpu',
+    PPW=5.6,
+    fmax=3200.0,
+    save_folder='../../sim_data/Musikverein_ConcertHall/gpu',
+    save_folder_gpu='../../sim_data/Musikverein_ConcertHall/gpu',
     compress=3,  # apply level-3 GZIP compression to larger h5 files
+    draw_vox=True,
+    draw_backend='polyscope',
 )
