@@ -7,7 +7,7 @@ from pffdtd.sim3d.setup import Setup3D
 
 
 class Localization(Setup3D):
-    model_json_file = 'model.json'
+    model_file = 'model.json'
     mat_folder = '../../materials'
     source_index = 1
     source_signal = 'impulse'

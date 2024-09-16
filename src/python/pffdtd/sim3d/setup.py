@@ -135,27 +135,27 @@ def sim_setup_3d(
 
 
 class Setup3D:
-    duration: float = 1.0
-    fmax: float = 800
-    ppw: float = 10.5
-    fcc: bool = False
+    duration: float
+    fmax: float
+    ppw: float
+    fcc: bool
     Tc: float = 20
     rh: float = 50
 
-    model_file: str = 'model.json'
+    model_file: str
     bmin: list[float] | None = None
     bmax: list[float] | None = None
     rot_az_el: list[float] = [0.0, 0.0]
     materials: dict[str, str] = {}
     mat_folder: str | None = None
 
-    source_index: int = 1
-    source_signal: Literal['impulse', 'hann10'] = 'impulse'
+    source_index: int
+    source_signal: Literal['impulse', 'hann10']
     diff_source: bool = True
 
     compress: int = 0
-    save_folder: str = '../cpu'
-    save_folder_gpu: str | None = '../gpu'
+    save_folder: str
+    save_folder_gpu: str | None
 
     draw_vox: bool = True
     draw_backend: Literal['mayavi', 'polyscope'] = 'polyscope'
