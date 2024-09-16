@@ -11,7 +11,6 @@
 
 #include <omp.h>
 
-#include <cassert>
 #include <cmath>
 #include <cstdlib>
 #include <vector>

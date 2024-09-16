@@ -3,10 +3,11 @@
 
 #include "simulation_3d.hpp"
 
+#include "pffdtd/assert.hpp"
+
 #include <fmt/format.h>
 
 #include <algorithm>
-#include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -20,12 +21,12 @@ void ind2sub3d(int64_t idx, int64_t Nx, int64_t Ny, int64_t Nz, int64_t* ix, int
   *iz = idx % Nz;
   *iy = (idx - (*iz)) / Nz % Ny;
   *ix = ((idx - (*iz)) / Nz - (*iy)) / Ny;
-  assert(*ix > 0);
-  assert(*iy > 0);
-  assert(*iz > 0);
-  assert(*ix < Nx - 1);
-  assert(*iy < Ny - 1);
-  assert(*iz < Nz - 1);
+  PFFDTD_ASSERT(*ix > 0);
+  PFFDTD_ASSERT(*iy > 0);
+  PFFDTD_ASSERT(*iz > 0);
+  PFFDTD_ASSERT(*ix < Nx - 1);
+  PFFDTD_ASSERT(*iy < Ny - 1);
+  PFFDTD_ASSERT(*iz < Nz - 1);
 }
 
 // double check some index inside grid
@@ -85,7 +86,7 @@ namespace pffdtd {
   ////////////////////////////////////////////////////////////////////////
   auto filename = simDir / "constants.h5";
   if (not std::filesystem::exists(filename))
-    assert(true == false);
+    PFFDTD_ASSERT(true == false);
 
   file = H5Fopen(filename.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 
@@ -107,21 +108,21 @@ namespace pffdtd {
   strcpy(dset_str, "fcc_flag");
   readH5Constant(file, dset_str, (void*)&fcc_flag, INT8);
   printf("fcc_flag=%d\n", fcc_flag);
-  assert((fcc_flag >= 0) && (fcc_flag <= 2));
+  PFFDTD_ASSERT((fcc_flag >= 0) && (fcc_flag <= 2));
 
   if (H5Fclose(file) != 0) {
     fmt::println("error closing file {}", filename.string());
-    assert(true == false);
+    PFFDTD_ASSERT(true == false);
   } else
     fmt::println("closed file {}", filename.string());
 
   if (fcc_flag > 0) { // FCC (1 is CPU-based, 2 is CPU or GPU)
-    assert(l2 <= 1.0);
-    assert(l <= 1.0);
+    PFFDTD_ASSERT(l2 <= 1.0);
+    PFFDTD_ASSERT(l <= 1.0);
     NN = 12;
   } else { // simple Cartesian
-    assert(l2 <= 1.0 / 3.0);
-    assert(l <= sqrt(1.0 / 3.0));
+    PFFDTD_ASSERT(l2 <= 1.0 / 3.0);
+    PFFDTD_ASSERT(l <= sqrt(1.0 / 3.0));
     NN = 6;
   }
 
@@ -153,7 +154,7 @@ namespace pffdtd {
   ////////////////////////////////////////////////////////////////////////
   filename = simDir / "vox_out.h5";
   if (not std::filesystem::exists(filename))
-    assert(true == false);
+    PFFDTD_ASSERT(true == false);
 
   file = H5Fopen(filename.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 
@@ -185,7 +186,7 @@ namespace pffdtd {
   strcpy(dset_str, "bn_ixyz");
   expected_ndims = 1;
   readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&bn_ixyz, INT64);
-  assert((int64_t)dims[0] == Nb);
+  PFFDTD_ASSERT((int64_t)dims[0] == Nb);
 
   //////////////////
   // adj_bn dataset
@@ -193,8 +194,8 @@ namespace pffdtd {
   strcpy(dset_str, "adj_bn");
   expected_ndims = 2;
   readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&adj_bn_bool, BOOL);
-  assert((int64_t)dims[0] == Nb);
-  assert(dims[1] == (hsize_t)NN);
+  PFFDTD_ASSERT((int64_t)dims[0] == Nb);
+  PFFDTD_ASSERT(dims[1] == (hsize_t)NN);
 
   //////////////////
   // mat_bn dataset
@@ -202,7 +203,7 @@ namespace pffdtd {
   strcpy(dset_str, "mat_bn");
   expected_ndims = 1;
   readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&mat_bn, INT8);
-  assert((int64_t)dims[0] == Nb);
+  PFFDTD_ASSERT((int64_t)dims[0] == Nb);
 
   //////////////////
   // saf_bn dataset
@@ -210,7 +211,7 @@ namespace pffdtd {
   strcpy(dset_str, "saf_bn");
   expected_ndims = 1;
   readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&saf_bn, FLOAT64);
-  assert((int64_t)dims[0] == Nb);
+  PFFDTD_ASSERT((int64_t)dims[0] == Nb);
 
   allocate_zeros((void**)&ssaf_bn, Nb * sizeof(Real));
   for (int64_t i = 0; i < Nb; i++) {
@@ -223,7 +224,7 @@ namespace pffdtd {
 
   if (H5Fclose(file) != 0) {
     fmt::println("error closing file {}", filename.string());
-    assert(true == false);
+    PFFDTD_ASSERT(true == false);
   } else
     fmt::println("closed file {}", filename.string());
 
@@ -234,7 +235,7 @@ namespace pffdtd {
   ////////////////////////////////////////////////////////////////////////
   filename = simDir / "signals.h5";
   if (not std::filesystem::exists(filename))
-    assert(true == false);
+    PFFDTD_ASSERT(true == false);
 
   file = H5Fopen(filename.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 
@@ -267,7 +268,7 @@ namespace pffdtd {
   strcpy(dset_str, "in_ixyz");
   expected_ndims = 1;
   readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&in_ixyz, INT64);
-  assert((int64_t)dims[0] == Ns);
+  PFFDTD_ASSERT((int64_t)dims[0] == Ns);
 
   //////////////////
   // out_ixyz dataset
@@ -275,12 +276,12 @@ namespace pffdtd {
   strcpy(dset_str, "out_ixyz");
   expected_ndims = 1;
   readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&out_ixyz, INT64);
-  assert((int64_t)dims[0] == Nr);
+  PFFDTD_ASSERT((int64_t)dims[0] == Nr);
 
   strcpy(dset_str, "out_reorder");
   expected_ndims = 1;
   readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&out_reorder, INT64);
-  assert((int64_t)dims[0] == Nr);
+  PFFDTD_ASSERT((int64_t)dims[0] == Nr);
 
   //////////////////
   // in_sigs dataset
@@ -288,18 +289,18 @@ namespace pffdtd {
   strcpy(dset_str, "in_sigs");
   expected_ndims = 2;
   readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&in_sigs, FLOAT64);
-  assert((int64_t)dims[0] == Ns);
-  assert((int64_t)dims[1] == Nt);
+  PFFDTD_ASSERT((int64_t)dims[0] == Ns);
+  PFFDTD_ASSERT((int64_t)dims[1] == Nt);
 
   if (H5Fclose(file) != 0) {
     fmt::println("error closing file {}", filename.string());
-    assert(true == false);
+    PFFDTD_ASSERT(true == false);
   } else
     fmt::println("closed file {}", filename.string());
 
   // not recommended to run single without differentiating input
   if (sizeof(Real) == 4)
-    assert(diff);
+    PFFDTD_ASSERT(diff);
 
   ////////////////////////////////////////////////////////////////////////
   //
@@ -308,7 +309,7 @@ namespace pffdtd {
   ////////////////////////////////////////////////////////////////////////
   filename = simDir / "materials.h5";
   if (not std::filesystem::exists(filename))
-    assert(true == false);
+    PFFDTD_ASSERT(true == false);
 
   file = H5Fopen(filename.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 
@@ -320,7 +321,7 @@ namespace pffdtd {
   readH5Constant(file, dset_str, (void*)&Nm, INT8);
   printf("Nm=%d\n", Nm);
 
-  assert(Nm <= MNm);
+  PFFDTD_ASSERT(Nm <= MNm);
 
   strcpy(dset_str, "Mb");
   expected_ndims = 1;
@@ -342,9 +343,9 @@ namespace pffdtd {
     auto id        = fmt::format("mat_{:02d}_DEF", i);
     expected_ndims = 2;
     readH5Dataset(file, id.data(), expected_ndims, dims, (void**)&DEF, FLOAT64);
-    assert((int8_t)dims[0] == Mb[i]);
-    assert((int8_t)dims[1] == 3);
-    assert(Mb[i] <= MMb);
+    PFFDTD_ASSERT((int8_t)dims[0] == Mb[i]);
+    PFFDTD_ASSERT((int8_t)dims[1] == 3);
+    PFFDTD_ASSERT(Mb[i] <= MMb);
 
     for (int8_t j = 0; j < Mb[i]; j++) {
       double D = DEF[j * 3 + 0];
@@ -361,10 +362,10 @@ namespace pffdtd {
       double bd  = b * (2.0 * Dh - Eh - 0.5 * Fh);
       double bDh = b * Dh;
       double bFh = b * Fh;
-      assert(not std::isinf(b));
-      assert(not std::isnan(b));
-      assert(not std::isinf(bd));
-      assert(not std::isnan(bd));
+      PFFDTD_ASSERT(not std::isinf(b));
+      PFFDTD_ASSERT(not std::isnan(b));
+      PFFDTD_ASSERT(not std::isinf(bd));
+      PFFDTD_ASSERT(not std::isnan(bd));
 
       int32_t mij        = (int32_t)MMb * i + j;
       mat_quads[mij].b   = (Real)b;
@@ -378,7 +379,7 @@ namespace pffdtd {
 
   if (H5Fclose(file) != 0) {
     fmt::println("error closing file {}", filename.string());
-    assert(true == false);
+    PFFDTD_ASSERT(true == false);
   } else
     fmt::println("closed file {}", filename.string());
 
@@ -405,9 +406,9 @@ namespace pffdtd {
       at_least_one_not_adj |= !adj;
       all_not_adj &= !adj;
     }
-    assert(at_least_one_not_adj);
+    PFFDTD_ASSERT(at_least_one_not_adj);
     if (all_not_adj)
-      assert(mat_bn[i] == -1);
+      PFFDTD_ASSERT(mat_bn[i] == -1);
   }
   printf("checked adj_bn against mat_bn.\n");
 
@@ -425,7 +426,7 @@ namespace pffdtd {
 
   for (int64_t i = 0; i < Nb; i++) {
     for (int8_t j = 0; j < NN; j++) { // avoids race conditions
-      assert(GET_BIT(adj_bn[i], j) == adj_bn_bool[i * NN + j]);
+      PFFDTD_ASSERT(GET_BIT(adj_bn[i], j) == adj_bn_bool[i * NN + j]);
     }
   }
   printf("adj_bn double checked\n");
@@ -461,7 +462,7 @@ namespace pffdtd {
 
   for (int64_t i = 0; i < Nb; i++) {
     int64_t ii = bn_ixyz[i];
-    assert(ii < Npts);
+    PFFDTD_ASSERT(ii < Npts);
     bn_mask_raw[ii] = true;
   }
   printf("bn_mask_raw filled\n");
@@ -470,7 +471,7 @@ namespace pffdtd {
     for (int64_t q = 0; q < 8; q++) { // avoid race conditions
       int64_t i = j * 8 + q;
       if (i < Npts)
-        assert(GET_BIT(bn_mask[i >> 3], i % 8) == bn_mask_raw[i]);
+        PFFDTD_ASSERT(GET_BIT(bn_mask[i >> 3], i % 8) == bn_mask_raw[i]);
     }
   }
   printf("bn_mask double checked\n");
@@ -495,7 +496,7 @@ namespace pffdtd {
         j++;
       }
     }
-    assert(j == Nbl);
+    PFFDTD_ASSERT(j == Nbl);
   }
   free(mat_bn);
   free(ssaf_bn);
@@ -536,7 +537,7 @@ namespace pffdtd {
         }
       }
     }
-    assert(ii == Nba);
+    PFFDTD_ASSERT(ii == Nba);
     printf("ABC nodes\n");
     if (fcc_flag == 2) { // need to sort bna_ixyz
       int64_t* bna_sort_keys;
@@ -639,7 +640,7 @@ void readH5Dataset(hid_t file, char* dset_str, int ndims, hsize_t* dims, void** 
 
   dset   = H5Dopen(file, dset_str, H5P_DEFAULT);
   dspace = H5Dget_space(dset);
-  assert(H5Sget_simple_extent_ndims(dspace) == ndims);
+  PFFDTD_ASSERT(H5Sget_simple_extent_ndims(dspace) == ndims);
   H5Sget_simple_extent_dims(dspace, dims, NULL);
   if (ndims == 1) {
     // printf("size dim 0 = %llu\n",dims[0]);
@@ -649,7 +650,7 @@ void readH5Dataset(hid_t file, char* dset_str, int ndims, hsize_t* dims, void** 
     // printf("size dim 1 = %llu\n",dims[1]);
     N = dims[0] * dims[1];
   } else {
-    assert(true == false);
+    PFFDTD_ASSERT(true == false);
   }
   switch (t) {
     case FLOAT64: *out_array = (double*)malloc(N * sizeof(double)); break;
@@ -657,11 +658,11 @@ void readH5Dataset(hid_t file, char* dset_str, int ndims, hsize_t* dims, void** 
     case INT64: *out_array = (int64_t*)malloc(N * sizeof(int64_t)); break;
     case INT8: *out_array = (int8_t*)malloc(N * sizeof(int8_t)); break;
     case BOOL: *out_array = (bool*)malloc(N * sizeof(bool)); break;
-    default: assert(true == false);
+    default: PFFDTD_ASSERT(true == false);
   }
   if (*out_array == NULL) {
     printf("Memory allocation failed");
-    assert(true == false); // to break
+    PFFDTD_ASSERT(true == false); // to break
   }
   herr_t status;
   switch (t) {
@@ -673,16 +674,16 @@ void readH5Dataset(hid_t file, char* dset_str, int ndims, hsize_t* dims, void** 
       status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array);
       status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array);
       break;
-    default: assert(true == false);
+    default: PFFDTD_ASSERT(true == false);
   }
 
   if (status != 0) {
     printf("error reading dataset: %s\n", dset_str);
-    assert(true == false);
+    PFFDTD_ASSERT(true == false);
   }
   if (H5Dclose(dset) != 0) {
     printf("error closing dataset: %s\n", dset_str);
-    assert(true == false);
+    PFFDTD_ASSERT(true == false);
   } else {
     printf("read and closed dataset: %s\n", dset_str);
   }
@@ -694,7 +695,7 @@ void readH5Constant(hid_t file, char* dset_str, void* out, DataType t) {
 
   dset   = H5Dopen(file, dset_str, H5P_DEFAULT);
   dspace = H5Dget_space(dset);
-  assert(H5Sget_simple_extent_ndims(dspace) == 0);
+  PFFDTD_ASSERT(H5Sget_simple_extent_ndims(dspace) == 0);
   herr_t status;
   switch (t) {
     case FLOAT64: status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, out); break;
@@ -704,16 +705,16 @@ void readH5Constant(hid_t file, char* dset_str, void* out, DataType t) {
       status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, out);
       status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, out);
       break;
-    default: assert(true == false);
+    default: PFFDTD_ASSERT(true == false);
   }
 
   if (status != 0) {
     printf("error reading dataset: %s\n", dset_str);
-    assert(true == false);
+    PFFDTD_ASSERT(true == false);
   }
   if (H5Dclose(dset) != 0) {
     printf("error closing dataset: %s\n", dset_str);
-    assert(true == false);
+    PFFDTD_ASSERT(true == false);
   } else {
     printf("read constant: %s\n", dset_str);
   }

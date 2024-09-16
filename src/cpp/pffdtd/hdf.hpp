@@ -3,12 +3,12 @@
 
 #pragma once
 
+#include "pffdtd/assert.hpp"
 #include "pffdtd/mdspan.hpp"
 
 #include "hdf5.h"
 
 #include <array>
-#include <cassert>
 #include <filesystem>
 #include <span>
 #include <stdexcept>
@@ -72,7 +72,7 @@ struct H5FReader {
 
     auto ndims = 1UL;
     auto dims  = std::array<hsize_t, 3>{};
-    assert(H5Sget_simple_extent_ndims(space) == ndims);
+    PFFDTD_ASSERT(H5Sget_simple_extent_ndims(space) == ndims);
     H5Sget_simple_extent_dims(space, dims.data(), NULL);
 
     auto size = ndims == 1 ? dims[0] : dims[0] * dims[1];

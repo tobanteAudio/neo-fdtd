@@ -3,17 +3,17 @@
 
 #include "engine_gpu.hpp"
 
-#include <cassert>
+#include "pffdtd/assert.hpp"
+#include "pffdtd/config.hpp"
+#include "pffdtd/progress.hpp"
+#include "pffdtd/utility.hpp"
+
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
-
-#include "pffdtd/config.hpp"
-#include "pffdtd/progress.hpp"
-#include "pffdtd/utility.hpp"
 
 // want 0 to map to 1, otherwise kernel errors
 #define CU_DIV_CEIL(x, y) ((DIV_CEIL(x, y) == 0) ? (1) : (DIV_CEIL(x, y)))
@@ -497,15 +497,15 @@ void check_sorted(pffdtd::Simulation3D const* sim) {
   int64_t Ns        = sim->Ns;
   int64_t Nr        = sim->Nr;
   for (int64_t i = 1; i < Nb; i++)
-    assert(bn_ixyz[i] > bn_ixyz[i - 1]); // check save_gpu_folder
+    PFFDTD_ASSERT(bn_ixyz[i] > bn_ixyz[i - 1]); // check save_gpu_folder
   for (int64_t i = 1; i < Nbl; i++)
-    assert(bnl_ixyz[i] > bnl_ixyz[i - 1]);
+    PFFDTD_ASSERT(bnl_ixyz[i] > bnl_ixyz[i - 1]);
   for (int64_t i = 1; i < Nba; i++)
-    assert(bna_ixyz[i] > bna_ixyz[i - 1]);
+    PFFDTD_ASSERT(bna_ixyz[i] > bna_ixyz[i - 1]);
   for (int64_t i = 1; i < Ns; i++)
-    assert(in_ixyz[i] > in_ixyz[i - 1]);
+    PFFDTD_ASSERT(in_ixyz[i] > in_ixyz[i - 1]);
   for (int64_t i = 1; i < Nr; i++)
-    assert(out_ixyz[i] >= out_ixyz[i - 1]); // possible to have duplicates
+    PFFDTD_ASSERT(out_ixyz[i] >= out_ixyz[i - 1]); // possible to have duplicates
 }
 
 // counts for splitting data across GPUs
@@ -543,7 +543,7 @@ void split_data(pffdtd::Simulation3D const* sim, HostData* ghds, int ngpus) {
     printf("gid=%d, Nx[%d]=%ld, Nx=%ld\n", gid, gid, ghd->Nx, Nx);
     Nx_check += ghd->Nx;
   }
-  assert(Nx_check == Nx);
+  PFFDTD_ASSERT(Nx_check == Nx);
 
   // now count Nr,Ns,Nb for each device
   auto Nxcc = std::vector<int64_t>(static_cast<size_t>(ngpus));
@@ -573,7 +573,7 @@ void split_data(pffdtd::Simulation3D const* sim, HostData* ghds, int ngpus) {
     printf("gid=%d, Nb[%d]=%ld, Nb=%ld\n", gid, gid, ghd->Nb, Nb);
     Nb_check += ghd->Nb;
   }
-  assert(Nb_check == Nb);
+  PFFDTD_ASSERT(Nb_check == Nb);
 
   // bnl_ixyz - Nbl
   int64_t* bnl_ixyz = sim->bnl_ixyz;
@@ -593,7 +593,7 @@ void split_data(pffdtd::Simulation3D const* sim, HostData* ghds, int ngpus) {
     printf("gid=%d, Nbl[%d]=%ld, Nbl=%ld\n", gid, gid, ghd->Nbl, Nbl);
     Nbl_check += ghd->Nbl;
   }
-  assert(Nbl_check == Nbl);
+  PFFDTD_ASSERT(Nbl_check == Nbl);
 
   // bna_ixyz - Nba
   int64_t* bna_ixyz = sim->bna_ixyz;
@@ -613,7 +613,7 @@ void split_data(pffdtd::Simulation3D const* sim, HostData* ghds, int ngpus) {
     printf("gid=%d, Nba[%d]=%ld, Nbl=%ld\n", gid, gid, ghd->Nba, Nba);
     Nba_check += ghd->Nba;
   }
-  assert(Nba_check == Nba);
+  PFFDTD_ASSERT(Nba_check == Nba);
 
   // in_ixyz - Ns
   int64_t* in_ixyz = sim->in_ixyz;
@@ -633,7 +633,7 @@ void split_data(pffdtd::Simulation3D const* sim, HostData* ghds, int ngpus) {
     printf("gid=%d, Ns[%d]=%ld, Ns=%ld\n", gid, gid, ghd->Ns, Ns);
     Ns_check += ghd->Ns;
   }
-  assert(Ns_check == Ns);
+  PFFDTD_ASSERT(Ns_check == Ns);
 
   // out_ixyz - Nr
   int64_t* out_ixyz = sim->out_ixyz;
@@ -653,7 +653,7 @@ void split_data(pffdtd::Simulation3D const* sim, HostData* ghds, int ngpus) {
     printf("gid=%d, Nr[%d]=%ld, Nr=%ld\n", gid, gid, ghd->Nr, Nr);
     Nr_check += ghd->Nr;
   }
-  assert(Nr_check == Nr);
+  PFFDTD_ASSERT(Nr_check == Nr);
 }
 
 namespace pffdtd {
@@ -671,12 +671,12 @@ double run(pffdtd::Simulation3D const& sim) {
     }
   }
 
-  assert((sim.fcc_flag != 1)); // uses either cartesian or FCC folded grid
+  PFFDTD_ASSERT((sim.fcc_flag != 1)); // uses either cartesian or FCC folded grid
 
   int ngpus, max_ngpus;
   cudaGetDeviceCount(&max_ngpus); // control outside with CUDA_VISIBLE_DEVICES
   ngpus = max_ngpus;
-  assert(ngpus < (sim.Nx));
+  PFFDTD_ASSERT(ngpus < (sim.Nx));
   DeviceData* gds;
   allocate_zeros((void**)&gds, ngpus * sizeof(DeviceData));
   HostData* ghds;
@@ -786,39 +786,39 @@ double run(pffdtd::Simulation3D const& sim) {
     for (int64_t nb = 0; nb < (ghd->Nb); nb++) {
       int64_t ii = sim.bn_ixyz[nb + Nb_read]; // global index
       int64_t jj = ii - offset;               // local index
-      assert(jj >= 0);
-      assert(jj < ghd->Npts);
+      PFFDTD_ASSERT(jj >= 0);
+      PFFDTD_ASSERT(jj < ghd->Npts);
       ghd->bn_ixyz[nb] = jj;
       SET_BIT_VAL(ghd->bn_mask[jj >> 3], jj % 8, GET_BIT(sim.bn_mask[ii >> 3], ii % 8)); // set bit
     }
     for (int64_t nb = 0; nb < (ghd->Nbl); nb++) {
       int64_t ii = sim.bnl_ixyz[nb + Nbl_read]; // global index
       int64_t jj = ii - offset;                 // local index
-      assert(jj >= 0);
-      assert(jj < ghd->Npts);
+      PFFDTD_ASSERT(jj >= 0);
+      PFFDTD_ASSERT(jj < ghd->Npts);
       ghd->bnl_ixyz[nb] = jj;
     }
 
     for (int64_t nb = 0; nb < (ghd->Nba); nb++) {
       int64_t ii = sim.bna_ixyz[nb + Nba_read]; // global index
       int64_t jj = ii - offset;                 // local index
-      assert(jj >= 0);
-      assert(jj < ghd->Npts);
+      PFFDTD_ASSERT(jj >= 0);
+      PFFDTD_ASSERT(jj < ghd->Npts);
       ghd->bna_ixyz[nb] = jj;
     }
 
     for (int64_t ns = 0; ns < (ghd->Ns); ns++) {
       int64_t ii = sim.in_ixyz[ns + Ns_read];
       int64_t jj = ii - offset;
-      assert(jj >= 0);
-      assert(jj < ghd->Npts);
+      PFFDTD_ASSERT(jj >= 0);
+      PFFDTD_ASSERT(jj < ghd->Npts);
       ghd->in_ixyz[ns] = jj;
     }
     for (int64_t nr = 0; nr < (ghd->Nr); nr++) {
       int64_t ii = sim.out_ixyz[nr + Nr_read];
       int64_t jj = ii - offset;
-      assert(jj >= 0);
-      assert(jj < ghd->Npts);
+      PFFDTD_ASSERT(jj >= 0);
+      PFFDTD_ASSERT(jj < ghd->Npts);
       ghd->out_ixyz[nr] = jj;
     }
 
@@ -936,13 +936,13 @@ double run(pffdtd::Simulation3D const& sim) {
     int64_t cuGx2 = CU_DIV_CEIL(sim.Nz, cuBx2);   // full face
     int64_t cuGz2 = CU_DIV_CEIL(ghd->Nxh, cuBy2); // full face
 
-    assert(cuGx >= 1);
-    assert(cuGy >= 1);
-    assert(cuGz >= 1);
-    assert(cuGr >= 1);
-    assert(cuGb >= 1);
-    assert(cuGbl >= 1);
-    assert(cuGba >= 1);
+    PFFDTD_ASSERT(cuGx >= 1);
+    PFFDTD_ASSERT(cuGy >= 1);
+    PFFDTD_ASSERT(cuGz >= 1);
+    PFFDTD_ASSERT(cuGr >= 1);
+    PFFDTD_ASSERT(cuGb >= 1);
+    PFFDTD_ASSERT(cuGbl >= 1);
+    PFFDTD_ASSERT(cuGba >= 1);
 
     gd->block_dim_air     = dim3(cuBx, cuBy, cuBz);
     gd->block_dim_readout = dim3(cuBrw, 1, 1);
@@ -975,12 +975,12 @@ double run(pffdtd::Simulation3D const& sim) {
     gpuErrchk(cudaEventCreate(&(gd->cuEv_bn_roundtrip_end)));
     gpuErrchk(cudaEventCreate(&(gd->cuEv_readout_end)));
   }
-  assert(Nb_read == sim.Nb);
-  assert(Nbl_read == sim.Nbl);
-  assert(Nba_read == sim.Nba);
-  assert(Nr_read == sim.Nr);
-  assert(Ns_read == sim.Ns);
-  assert(Nx_read == sim.Nx);
+  PFFDTD_ASSERT(Nb_read == sim.Nb);
+  PFFDTD_ASSERT(Nbl_read == sim.Nbl);
+  PFFDTD_ASSERT(Nba_read == sim.Nba);
+  PFFDTD_ASSERT(Nr_read == sim.Nr);
+  PFFDTD_ASSERT(Ns_read == sim.Ns);
+  PFFDTD_ASSERT(Nx_read == sim.Nx);
 
   // these will be on first GPU only
   cudaEvent_t cuEv_main_start;
