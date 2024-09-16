@@ -3,9 +3,14 @@
 
 """Function to set up a PFFDTD simulation with single source and multiple receivers
 """
-
+import importlib
+import importlib.util
+import inspect
 from pathlib import Path
+from typing import Literal
+import uuid
 
+import click
 import numpy as np
 
 from pffdtd.sim3d.constants import SimConstants
@@ -45,6 +50,7 @@ def sim_setup_3d(
     Nprocs=None,  # number of processes for multiprocessing, defaults to 80% of cores
     compress=None,  # GZIP compress for HDF5, 0 to 9 (fast to slow)
     rot_az_el=[0., 0.],  # to rotate the whole scene (including sources/receivers) -- to test robustness of scheme
+    model_factory=None,
 ):
     assert Tc is not None
     assert rh is not None
@@ -58,10 +64,17 @@ def sim_setup_3d(
     assert mat_files_dict is not None
     assert duration is not None
 
+    # some constants for the simulation, in one place
+    constants = SimConstants(Tc=Tc, rh=rh, fmax=fmax, PPW=PPW, fcc=fcc_flag)
+    constants.save(save_folder)
+
     if (bmin is not None) and (bmax is not None):
         # custom bmin/bmax (for open scenes)
         bmin = np.array(bmin, dtype=np.float64)
         bmax = np.array(bmax, dtype=np.float64)
+
+    if model_factory:
+        model_factory(constants)
 
     # set up room geometry (reads in JSON export, rotates scene)
     room_geo = RoomGeometry(model_json_file, az_el=rot_az_el, bmin=bmin, bmax=bmax)
@@ -70,10 +83,6 @@ def sim_setup_3d(
     # sources have to be specified in advance (edit JSON if necessary)
     Sxyz = room_geo.Sxyz[source_num-1]  # one source (one-based indexing)
     Rxyz = room_geo.Rxyz  # many receivers
-
-    # some constants for the simulation, in one place
-    constants = SimConstants(Tc=Tc, rh=rh, fmax=fmax, PPW=PPW, fcc=fcc_flag)
-    constants.save(save_folder)
 
     # link up the wall materials to impedance datasets
     materials = SimMaterials(save_folder=save_folder)
@@ -123,3 +132,74 @@ def sim_setup_3d(
         room_geo.draw(wireframe=False, backend=draw_backend)
         vox_scene.draw(backend=draw_backend)
         room_geo.show(backend=draw_backend)
+
+
+class Setup3D:
+    duration: float = 1.0
+    fmax: float = 800
+    ppw: float = 10.5
+    fcc: bool = False
+    Tc: float = 20
+    rh: float = 50
+
+    model_file: str = 'model.json'
+    bmin: list[float] | None = None
+    bmax: list[float] | None = None
+    rot_az_el: list[float] = [0.0, 0.0]
+    materials: dict[str, str] = {}
+    mat_folder: str | None = None
+
+    source_index: int = 1
+    source_signal: Literal['impulse', 'hann10'] = 'impulse'
+    diff_source: bool = True
+
+    compress: int = 0
+    save_folder: str = '../cpu'
+    save_folder_gpu: str | None = '../gpu'
+
+    draw_vox: bool = True
+    draw_backend: Literal['mayavi', 'polyscope'] = 'polyscope'
+
+
+@click.command(name="setup", help="Generate simulation files.")
+@click.argument('sim_file', nargs=1, type=click.Path(exists=True))
+def main(sim_file):
+    module_id = str(uuid.uuid1())
+    spec = importlib.util.spec_from_file_location(module_id, sim_file)
+    loaded = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(loaded)
+
+    for name, value in inspect.getmembers(loaded):
+        if inspect.isclass(value) and issubclass(value, Setup3D) and name != "Setup3D":
+            sim = value()
+            model_factory = None
+            if hasattr(sim, "generate_model"):
+                def model_factory(c): return sim.generate_model(c)
+
+            sim_setup_3d(
+                insig_type=sim.source_signal,
+                fmax=sim.fmax,
+                PPW=sim.ppw,
+                save_folder=sim.save_folder,
+                model_json_file=sim.model_file,
+                mat_folder=sim.save_folder,
+                mat_files_dict=sim.materials,
+                duration=sim.duration,
+
+                Tc=sim.Tc,
+                rh=sim.rh,
+                source_num=sim.source_index,
+                save_folder_gpu=sim.save_folder_gpu,
+                draw_vox=sim.draw_vox,
+                draw_backend=sim.draw_backend,
+                diff_source=sim.diff_source,
+                fcc_flag=sim.fcc,
+                bmin=sim.bmin,
+                bmax=sim.bmax,
+                Nvox_est=None,
+                Nh=None,
+                Nprocs=None,
+                compress=sim.compress,
+                rot_az_el=sim.rot_az_el,
+                model_factory=model_factory,
+            )

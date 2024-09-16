@@ -9,28 +9,26 @@ root_dir="$(cd "$(dirname "$0")" && pwd)"
 engine_exe="$root_dir/build/src/cpp/main_3d/pffdtd_3d"
 engine_exe="$root_dir/cmake-build-cuda/src/cpp/main_3d/pffdtd_3d"
 
-sim_name="LivingRoom"
-sim_setup="${sim_name}_setup.py"
+sim_name="InfiniteBaffle"
+sim_setup="${sim_name}.py"
 sim_model_gen="${sim_name}_model.py"
 sim_dir="$root_dir/data/sim_data/$sim_name/gpu"
 
 model_dir="$root_dir/data/models/$sim_name"
 materials_dir="$root_dir/data/materials"
 
-fmin=25
-fmax=800
+fmin=20
+fmax=2000
 smoothing=0
 
 # Delete old sim
 rm -rf "$sim_dir"
 
-# Generate model
+# Generate materials, model & sim data
 cd "$model_dir"
-python "$sim_model_gen"
-
-# Generate sim data
 pffdtd materials build "$materials_dir"
-python "$sim_setup"
+pffdtd sim3d setup "$sim_setup"
+# python "$sim_setup"
 
 # Run sim
 $engine_exe "$sim_dir"
