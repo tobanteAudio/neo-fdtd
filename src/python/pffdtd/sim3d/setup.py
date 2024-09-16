@@ -182,7 +182,7 @@ def main(sim_file):
                 PPW=sim.ppw,
                 save_folder=sim.save_folder,
                 model_json_file=sim.model_file,
-                mat_folder=sim.save_folder,
+                mat_folder=sim.mat_folder,
                 mat_files_dict=sim.materials,
                 duration=sim.duration,
 

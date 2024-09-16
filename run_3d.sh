@@ -9,16 +9,15 @@ root_dir="$(cd "$(dirname "$0")" && pwd)"
 engine_exe="$root_dir/build/src/cpp/main_3d/pffdtd_3d"
 engine_exe="$root_dir/cmake-build-cuda/src/cpp/main_3d/pffdtd_3d"
 
-sim_name="InfiniteBaffle"
+sim_name="Localization"
 sim_setup="${sim_name}.py"
-sim_model_gen="${sim_name}_model.py"
 sim_dir="$root_dir/data/sim_data/$sim_name/gpu"
 
 model_dir="$root_dir/data/models/$sim_name"
 materials_dir="$root_dir/data/materials"
 
 fmin=20
-fmax=2000
+fmax=800
 smoothing=0
 
 # Delete old sim
