@@ -11,23 +11,15 @@
 
 namespace pffdtd {
 
-[[nodiscard]] constexpr auto to_ixy(
-    std::integral auto x,
-    std::integral auto y,
-    std::integral auto /*Nx*/,
-    std::integral auto Ny
-) -> std::integral auto {
+[[nodiscard]] constexpr auto
+to_ixy(std::integral auto x, std::integral auto y, std::integral auto /*Nx*/, std::integral auto Ny) -> std::integral
+    auto {
   return x * Ny + y;
 }
 
-static auto kernelAirUpdate(
-    sycl::id<2> id,
-    double* u0,
-    double const* u1,
-    double const* u2,
-    uint8_t const* inMask,
-    int64_t Ny
-) -> void {
+static auto
+kernelAirUpdate(sycl::id<2> id, double* u0, double const* u1, double const* u2, uint8_t const* inMask, int64_t Ny)
+    -> void {
   auto const x   = id.get(0) + 1;
   auto const y   = id.get(1) + 1;
   auto const idx = to_ixy(x, y, 0, Ny);
@@ -86,10 +78,11 @@ static auto kernelBoundaryLoss(
   u0[ib] = (current + lossFactor * K4 * prev) / (1 + lossFactor * K4);
 }
 
-auto EngineSYCL::operator()(Simulation2D const& sim) const
-    -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
+auto EngineSYCL::operator()(Simulation2D const& sim) const -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
 
-  for (auto device : sycl::device::get_devices()) { pffdtd::summary(device); }
+  for (auto device : sycl::device::get_devices()) {
+    pffdtd::summary(device);
+  }
 
   auto const Nx          = sim.Nx;
   auto const Ny          = sim.Ny;
@@ -133,14 +126,7 @@ auto EngineSYCL::operator()(Simulation2D const& sim) const
       auto airRange  = sycl::range<2>(Nx - 2, Ny - 2);
 
       cgh.parallel_for<struct AirUpdate>(airRange, [=](sycl::id<2> id) {
-        kernelAirUpdate(
-            id,
-            getPtr(u0a),
-            getPtr(u1a),
-            getPtr(u2a),
-            getPtr(inMaskAcc),
-            Ny
-        );
+        kernelAirUpdate(id, getPtr(u0a), getPtr(u1a), getPtr(u2a), getPtr(inMaskAcc), Ny);
       });
     });
 
@@ -153,15 +139,7 @@ auto EngineSYCL::operator()(Simulation2D const& sim) const
       auto rigidRange = sycl::range<1>(Nb);
 
       cgh.parallel_for<struct BoundaryRigid>(rigidRange, [=](sycl::id<1> id) {
-        kernelBoundaryRigid(
-            id,
-            getPtr(u0a),
-            getPtr(u1a),
-            getPtr(u2a),
-            getPtr(bn_ixy_acc),
-            getPtr(adj_bn_acc),
-            Ny
-        );
+        kernelBoundaryRigid(id, getPtr(u0a), getPtr(u1a), getPtr(u2a), getPtr(bn_ixy_acc), getPtr(adj_bn_acc), Ny);
       });
     });
 
@@ -173,23 +151,14 @@ auto EngineSYCL::operator()(Simulation2D const& sim) const
       auto lossRange  = sycl::range<1>(Nb);
 
       cgh.parallel_for<struct BoundaryLoss>(lossRange, [=](sycl::id<1> id) {
-        kernelBoundaryLoss(
-            id,
-            getPtr(u0a),
-            getPtr(u2a),
-            getPtr(bn_ixy_acc),
-            getPtr(adj_bn_acc),
-            loss_factor
-        );
+        kernelBoundaryLoss(id, getPtr(u0a), getPtr(u2a), getPtr(bn_ixy_acc), getPtr(adj_bn_acc), loss_factor);
       });
     });
 
     queue.submit([&](sycl::handler& cgh) {
       auto u0a         = sycl::accessor{u0, cgh, sycl::read_write};
       auto src_sig_acc = sycl::accessor{src_sig, cgh, sycl::read_only};
-      cgh.parallel_for<struct CopyInput>(sycl::range<1>(1), [=](sycl::id<1>) {
-        u0a[inx][iny] += src_sig_acc[n];
-      });
+      cgh.parallel_for<struct CopyInput>(sycl::range<1>(1), [=](sycl::id<1>) { u0a[inx][iny] += src_sig_acc[n]; });
     });
 
     queue.submit([&](sycl::handler& cgh) {

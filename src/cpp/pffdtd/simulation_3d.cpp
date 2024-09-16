@@ -16,15 +16,7 @@
 namespace {
 
 // linear indices to sub-indices in 3d, Nz continguous
-void ind2sub3d(
-    int64_t idx,
-    int64_t Nx,
-    int64_t Ny,
-    int64_t Nz,
-    int64_t* ix,
-    int64_t* iy,
-    int64_t* iz
-) {
+void ind2sub3d(int64_t idx, int64_t Nx, int64_t Ny, int64_t Nz, int64_t* ix, int64_t* iy, int64_t* iz) {
   *iz = idx % Nz;
   *iy = (idx - (*iz)) / Nz % Ny;
   *ix = ((idx - (*iz)) / Nz - (*iy)) / Ny;
@@ -37,13 +29,7 @@ void ind2sub3d(
 }
 
 // double check some index inside grid
-void check_inside_grid(
-    int64_t* idx,
-    int64_t N,
-    int64_t Nx,
-    int64_t Ny,
-    int64_t Nz
-) {
+void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t Nz) {
   for (int64_t i = 0; i < N; i++) {
     int64_t iz, iy, ix;
     ind2sub3d(idx[i], Nx, Ny, Nz, &ix, &iy, &iz);
@@ -54,8 +40,7 @@ void check_inside_grid(
 namespace pffdtd {
 
 // load the sim data from Python-written HDF5 files
-[[nodiscard]] auto loadSimulation3D(std::filesystem::path const& simDir)
-    -> Simulation3D {
+[[nodiscard]] auto loadSimulation3D(std::filesystem::path const& simDir) -> Simulation3D {
   // local values, to read in and attach to struct at end
   int64_t Nx, Ny, Nz;
   int64_t Nb, Nbl, Nba;
@@ -142,10 +127,9 @@ namespace pffdtd {
 
   // calculate some update coefficients
   double lfac = (fcc_flag > 0) ? 0.25 : 1.0; // laplacian factor
-  double dsl2
-      = (1.0 + EPS) * lfac * l2;  // scale for stability (EPS in fdtd_common.hpp)
-  double da1 = (2.0 - dsl2 * NN); // scaling for stability in single
-  double da2 = lfac * l2;
+  double dsl2 = (1.0 + EPS) * lfac * l2;     // scale for stability (EPS in fdtd_common.hpp)
+  double da1  = (2.0 - dsl2 * NN);           // scaling for stability in single
+  double da2  = lfac * l2;
   // Real is defined in fdtd_common.hpp (float or double)
   Real a1  = da1;
   Real a2  = da2;
@@ -231,8 +215,7 @@ namespace pffdtd {
   allocate_zeros((void**)&ssaf_bn, Nb * sizeof(Real));
   for (int64_t i = 0; i < Nb; i++) {
     if (fcc_flag > 0)
-      ssaf_bn[i]
-          = (Real)(0.5 / sqrt(2.0)) * saf_bn[i]; // rescale for S*h/V and cast
+      ssaf_bn[i] = (Real)(0.5 / sqrt(2.0)) * saf_bn[i]; // rescale for S*h/V and cast
     else
       ssaf_bn[i] = (Real)saf_bn[i]; // just cast
   }
@@ -296,14 +279,7 @@ namespace pffdtd {
 
   strcpy(dset_str, "out_reorder");
   expected_ndims = 1;
-  readH5Dataset(
-      file,
-      dset_str,
-      expected_ndims,
-      dims,
-      (void**)&out_reorder,
-      INT64
-  );
+  readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&out_reorder, INT64);
   assert((int64_t)dims[0] == Nr);
 
   //////////////////
@@ -357,10 +333,8 @@ namespace pffdtd {
   //////////////////
   // DEF (RLC) datasets
   //////////////////
-  allocate_zeros(
-      (void**)&mat_quads,
-      static_cast<unsigned long>(Nm * MMb) * sizeof(MatQuad)
-  ); // initalises to zero
+  allocate_zeros((void**)&mat_quads,
+                 static_cast<unsigned long>(Nm * MMb) * sizeof(MatQuad)); // initalises to zero
   allocate_zeros((void**)&mat_beta, Nm * sizeof(Real));
   for (int8_t i = 0; i < Nm; i++) {
     double* DEF; // for one material
@@ -530,8 +504,7 @@ namespace pffdtd {
 
   // ABC ndoes
   int64_t Nyf;
-  Nyf = (fcc_flag == 2) ? 2 * (Ny - 1)
-                        : Ny; // full Ny dim, taking into account FCC fold
+  Nyf = (fcc_flag == 2) ? 2 * (Ny - 1) : Ny; // full Ny dim, taking into account FCC fold
   Nba = 2 * (Nx * Nyf + Nx * Nz + Nyf * Nz) - 12 * (Nx + Nyf + Nz) + 56;
   if (fcc_flag > 0)
     Nba /= 2;
@@ -553,8 +526,7 @@ namespace pffdtd {
           Q += ((iz == 1) || (iz == Nz - 2));
           if (Q > 0) {
             if ((fcc_flag == 2) && (iy >= Nyf / 2)) {
-              bna_ixyz[ii] = ix * Nz * Ny + (Nyf - iy - 1) * Nz
-                           + iz; // index on folded grid
+              bna_ixyz[ii] = ix * Nz * Ny + (Nyf - iy - 1) * Nz + iz; // index on folded grid
             } else {
               bna_ixyz[ii] = ix * Nz * Ny + iy * Nz + iz;
             }
@@ -660,14 +632,7 @@ void freeSimulation3D(Simulation3D& sim) {
 }
 
 // read HDF5 files
-void readH5Dataset(
-    hid_t file,
-    char* dset_str,
-    int ndims,
-    hsize_t* dims,
-    void** out_array,
-    DataType t
-) {
+void readH5Dataset(hid_t file, char* dset_str, int ndims, hsize_t* dims, void** out_array, DataType t) {
   hid_t dset, dspace;
   uint64_t N = 0;
   // herr_t status;
@@ -700,54 +665,13 @@ void readH5Dataset(
   }
   herr_t status;
   switch (t) {
-    case FLOAT64:
-      status = H5Dread(
-          dset,
-          H5T_NATIVE_DOUBLE,
-          H5S_ALL,
-          H5S_ALL,
-          H5P_DEFAULT,
-          *out_array
-      );
-      break;
-    case FLOAT32:
-      status = H5Dread(
-          dset,
-          H5T_NATIVE_FLOAT,
-          H5S_ALL,
-          H5S_ALL,
-          H5P_DEFAULT,
-          *out_array
-      );
-      break;
-    case INT64:
-      status = H5Dread(
-          dset,
-          H5T_NATIVE_INT64,
-          H5S_ALL,
-          H5S_ALL,
-          H5P_DEFAULT,
-          *out_array
-      );
-      break;
+    case FLOAT64: status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array); break;
+    case FLOAT32: status = H5Dread(dset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array); break;
+    case INT64: status = H5Dread(dset, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array); break;
     case INT8:
     case BOOL: // bool read in as INT8
-      status = H5Dread(
-          dset,
-          H5T_NATIVE_INT8,
-          H5S_ALL,
-          H5S_ALL,
-          H5P_DEFAULT,
-          *out_array
-      );
-      status = H5Dread(
-          dset,
-          H5T_NATIVE_INT8,
-          H5S_ALL,
-          H5S_ALL,
-          H5P_DEFAULT,
-          *out_array
-      );
+      status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array);
+      status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array);
       break;
     default: assert(true == false);
   }
@@ -773,14 +697,8 @@ void readH5Constant(hid_t file, char* dset_str, void* out, DataType t) {
   assert(H5Sget_simple_extent_ndims(dspace) == 0);
   herr_t status;
   switch (t) {
-    case FLOAT64:
-      status
-          = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, out);
-      break;
-    case INT64:
-      status
-          = H5Dread(dset, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, out);
-      break;
+    case FLOAT64: status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, out); break;
+    case INT64: status = H5Dread(dset, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, out); break;
     case INT8:
     case BOOL:
       status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, out);
@@ -865,9 +783,7 @@ void rescaleOutput(Simulation3D& sim) {
   double infac  = sim.infac;
   double* u_out = sim.u_out;
 
-  std::transform(u_out, u_out + Nr * Nt, u_out, [infac](auto sample) {
-    return sample * infac;
-  });
+  std::transform(u_out, u_out + Nr * Nt, u_out, [infac](auto sample) { return sample * infac; });
 }
 
 void writeOutputs(Simulation3D& sim, std::filesystem::path const& simDir) {

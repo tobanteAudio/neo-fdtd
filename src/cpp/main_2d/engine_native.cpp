@@ -13,17 +13,13 @@
 
 namespace pffdtd {
 
-[[nodiscard]] constexpr auto to_ixy(
-    std::integral auto x,
-    std::integral auto y,
-    std::integral auto /*Nx*/,
-    std::integral auto Ny
-) -> std::integral auto {
+[[nodiscard]] constexpr auto
+to_ixy(std::integral auto x, std::integral auto y, std::integral auto /*Nx*/, std::integral auto Ny) -> std::integral
+    auto {
   return x * Ny + y;
 }
 
-auto EngineNative::operator()(Simulation2D const& sim) const
-    -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
+auto EngineNative::operator()(Simulation2D const& sim) const -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
 
   auto const Nx         = sim.Nx;
   auto const Ny         = sim.Ny;
@@ -51,9 +47,9 @@ auto EngineNative::operator()(Simulation2D const& sim) const
     fmt::print(stdout, "{:04d}/{:04d}", n, Nt);
     std::fflush(stdout);
 
-    // Air Update
-    #pragma omp parallel for
-    for (int64_t x = 1; x < Nx-1; ++x) {
+// Air Update
+#pragma omp parallel for
+    for (int64_t x = 1; x < Nx - 1; ++x) {
       for (int64_t y = 1; y < Ny - 1; ++y) {
         auto const idx    = to_ixy(x, y, 0, Ny);
         auto const left   = u1.data_handle()[idx - 1];

@@ -9,9 +9,9 @@
 #include <ctime>
 
 #if defined(_WIN32)
-    #include <windows.h>
+  #include <windows.h>
 #else
-    #include <sys/ioctl.h>
+  #include <sys/ioctl.h>
 #endif
 
 namespace pffdtd {
@@ -20,20 +20,20 @@ namespace {
 
 [[nodiscard]] auto getConsoleWidth() -> int {
 #if defined(_WIN32)
-    auto info = CONSOLE_SCREEN_BUFFER_INFO{};
-    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info)) {
-        return info.srWindow.Right - info.srWindow.Left + 1;
-    } else {
-        return 80;
-    }
+  auto info = CONSOLE_SCREEN_BUFFER_INFO{};
+  if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info)) {
+    return info.srWindow.Right - info.srWindow.Left + 1;
+  } else {
+    return 80;
+  }
 #else
-    struct winsize w;
-    ioctl(0, TIOCGWINSZ, &w);
-    return w.ws_col;
+  struct winsize w;
+  ioctl(0, TIOCGWINSZ, &w);
+  return w.ws_col;
 #endif
 }
 
-}  // namespace
+} // namespace
 
 // hacky print progress (like tqdm)..
 // N.B. this conflicts with tmux scrolling (stdout needs to flush)

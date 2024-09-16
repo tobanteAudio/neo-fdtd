@@ -18,7 +18,7 @@
 
 namespace pffdtd {
 
-  namespace {
+namespace {
 
 // function that does freq-dep RLC boundaries.  See 2016 ISMRA paper and
 // accompanying webpage (slightly improved here)
@@ -66,9 +66,8 @@ double process_bnl_pts_fd(
       int64_t nbm = nb * MMb + m;
       int32_t mbk = k * MMb + m;
       MatQuad const* tm;
-      tm = &(mat_quads[mbk]);
-      Real vh0nbm
-          = (tm->b) * du + (tm->bd) * vh1nb[m] - _2 * (tm->bFh) * gh1[nbm];
+      tm          = &(mat_quads[mbk]);
+      Real vh0nbm = (tm->b) * du + (tm->bd) * vh1nb[m] - _2 * (tm->bFh) * gh1[nbm];
       gh1[nbm] += (vh0nbm + vh1nb[m]) / _2;
       vh1[nbm] = vh0nbm;
     }
@@ -78,7 +77,7 @@ double process_bnl_pts_fd(
   return omp_get_wtime() - start;
 }
 
-  }
+} // namespace
 
 auto run(Simulation3D& sd) -> double {
   // keep local ints, scalars
@@ -321,19 +320,7 @@ auto run(Simulation3D& sd) -> double {
       u0b[nb] = u0[bnl_ixyz[nb]];
     }
     // process FD boundary nodes
-    timeElapsedSampleBn = process_bnl_pts_fd(
-        u0b,
-        u2b,
-        ssaf_bnl,
-        mat_bnl,
-        Nbl,
-        Mb,
-        lo2,
-        vh1,
-        gh1,
-        mat_quads,
-        mat_beta
-    );
+    timeElapsedSampleBn = process_bnl_pts_fd(u0b, u2b, ssaf_bnl, mat_bnl, Nbl, Mb, lo2, vh1, gh1, mat_quads, mat_beta);
     timeElapsedBn += timeElapsedSampleBn;
 // write back
 #pragma omp parallel for
@@ -392,21 +379,9 @@ auto run(Simulation3D& sd) -> double {
   /*------------------------
    * RETURN
   ------------------------*/
-  fmt::println(
-      "Air update: {:.6}s, {:.2} Mvox/s",
-      timeElapsedAir,
-      Npts * Nt / 1e6 / timeElapsedAir
-  );
-  fmt::println(
-      "Boundary loop: {:.6}s, {:.2} Mvox/s",
-      timeElapsedBn,
-      Nb * Nt / 1e6 / timeElapsedBn
-  );
-  fmt::println(
-      "Combined (total): {:.6}s, {:.2} Mvox/s",
-      timeElapsed,
-      Npts * Nt / 1e6 / timeElapsed
-  );
+  fmt::println("Air update: {:.6}s, {:.2} Mvox/s", timeElapsedAir, Npts * Nt / 1e6 / timeElapsedAir);
+  fmt::println("Boundary loop: {:.6}s, {:.2} Mvox/s", timeElapsedBn, Nb * Nt / 1e6 / timeElapsedBn);
+  fmt::println("Combined (total): {:.6}s, {:.2} Mvox/s", timeElapsed, Npts * Nt / 1e6 / timeElapsed);
 
   return timeElapsed;
 }
