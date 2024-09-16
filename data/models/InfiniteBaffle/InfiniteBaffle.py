@@ -36,15 +36,15 @@ class InfiniteBaffle(Setup3D):
         height = self.bmax[2]
 
         model = {
-            "mats_hash": {
-                "_RIGID": {
-                    "tris": [
+            'mats_hash': {
+                '_RIGID': {
+                    'tris': [
                         [0, 2, 1],
                         [0, 3, 2],
                         [1, 5, 4],
                         [1, 3, 5]
                     ],
-                    "pts": [
+                    'pts': [
                         [0.0, length, 0.0],
                         [width/2, length, 0.0],
                         [width/2, length, height],
@@ -52,22 +52,22 @@ class InfiniteBaffle(Setup3D):
                         [width, length, 0.0],
                         [width, length, height]
                     ],
-                    "color": [255, 255, 255],
-                    "sides": [0, 0, 0, 0]
+                    'color': [255, 255, 255],
+                    'sides': [0, 0, 0, 0]
                 }
             },
-            "sources": [
-                {"name": "S1", "xyz": [width/2, length-offset, height/2]},
+            'sources': [
+                {'name': 'S1', 'xyz': [width/2, length-offset, height/2]},
             ],
-            "receivers": [
-                {"name": "R1", "xyz": [width/2, offset, height/2 - 0.75]},
-                {"name": "R2", "xyz": [width/2, offset, height/2 - 0.25]},
-                {"name": "R3", "xyz": [width/2, offset, height/2 + 0.00]},
-                {"name": "R4", "xyz": [width/2, offset, height/2 + 0.25]},
-                {"name": "R5", "xyz": [width/2, offset, height/2 + 0.75]},
+            'receivers': [
+                {'name': 'R1', 'xyz': [width/2, offset, height/2 - 0.75]},
+                {'name': 'R2', 'xyz': [width/2, offset, height/2 - 0.25]},
+                {'name': 'R3', 'xyz': [width/2, offset, height/2 + 0.00]},
+                {'name': 'R4', 'xyz': [width/2, offset, height/2 + 0.25]},
+                {'name': 'R5', 'xyz': [width/2, offset, height/2 + 0.75]},
             ]
         }
 
-        with open(self.model_file, "w") as file:
+        with open(self.model_file, 'w') as file:
             json.dump(model, file)
-            print("", file=file)
+            print('', file=file)

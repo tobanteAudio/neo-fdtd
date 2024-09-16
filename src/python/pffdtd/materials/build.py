@@ -12,7 +12,7 @@ from pffdtd.materials.adm_funcs import (
 )
 
 
-@click.command(help="Build materials.")
+@click.command(help='Build materials.')
 @click.option('--plot/--no-plot', default=False)
 @click.argument('write_folder', nargs=1, type=click.Path(exists=True))
 def build(write_folder, plot):

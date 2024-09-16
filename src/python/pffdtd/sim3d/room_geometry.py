@@ -243,7 +243,7 @@ class RoomGeometry:
                 pass
             # issue with saving settings on successive runs, need some close() function
 
-            ps.set_up_dir("z_up")
+            ps.set_up_dir('z_up')
             # Register a mesh
             for m in range(-1, Nmat):
                 mat = mat_str[m]
@@ -296,9 +296,9 @@ class RoomGeometry:
             self.print(f'mat {i}: {rg.mat_str[i]}, {rg.mat_area[i]:.3f}m²')
 
 
-@click.command(name="room-geometry", help="Draw room geometry.")
+@click.command(name='room-geometry', help='Draw room geometry.')
 @click.option('--model', type=click.Path(exists=True))
-@click.option('--backend', default="polyscope", type=click.Choice(["mayavi", "polyscope"]))
+@click.option('--backend', default='polyscope', type=click.Choice(['mayavi', 'polyscope']))
 @click.option('--nodraw', is_flag=True)
 @click.option('--drawnormals', is_flag=True)
 @click.option('--az_el', nargs=2, type=float, default=(0, 0))

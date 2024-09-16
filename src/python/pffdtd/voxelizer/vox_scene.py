@@ -126,7 +126,7 @@ class VoxScene:
         self.print(f'{disk_space_available/2**30=:.3f} GiB')
         # proceed without asking unless more than 50% of free space
         if disk_space_needed > 0.5*disk_space_available:
-            self.print("WARNING: -- disk space usage high")
+            self.print('WARNING: -- disk space usage high')
             if not yes_or_no('continue?'):
                 raise Exception('cancelled')
 
@@ -457,7 +457,7 @@ class VoxScene:
 
         self.print(f'saving with compression: {compress} ...')
         if compress is not None:
-            kw = {'compression': "gzip", 'compression_opts': compress}
+            kw = {'compression': 'gzip', 'compression_opts': compress}
         else:
             kw = {}
         h5f = h5py.File(save_folder / Path('vox_out.h5'), 'w')
@@ -563,7 +563,7 @@ class VoxScene:
                     mat,
                     np.c_[xv[bn_ix[qq]], yv[bn_iy[qq]], zv[bn_iz[qq]]],
                     color=color,
-                    point_render_mode="sphere"
+                    point_render_mode='sphere'
                 )
                 ps_cloud_in.set_radius(sf/2, relative=False)
 

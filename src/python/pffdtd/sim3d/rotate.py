@@ -98,7 +98,7 @@ def rotate(sim_dir, tr=None, compress=False):
 
     timer.tic('write')
     if compress:
-        kw = {'compression': "gzip", 'compression_opts': 9}
+        kw = {'compression': 'gzip', 'compression_opts': 9}
     else:
         kw = {}
     # overwrite

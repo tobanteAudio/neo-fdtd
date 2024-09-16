@@ -16,7 +16,7 @@ from scipy.io import wavfile
 from pffdtd.common.plot import plot_styles
 
 
-def collect_wav_files(directory, pattern="*.wav"):
+def collect_wav_files(directory, pattern='*.wav'):
     search_pattern = os.path.join(directory, pattern)
     wav_files = glob.glob(search_pattern)
     return wav_files
@@ -88,7 +88,7 @@ def run(files, fmin, fmax, show_all=False, show_tolerance=True, target=None):
         for f, name in zip(file_times, file_names):
             ax.semilogx(center_freqs, f, label=f"{name}")
     else:
-        ax.semilogx(center_freqs, file_times[0], label="Measurement")
+        ax.semilogx(center_freqs, file_times[0], label='Measurement')
 
     if target:
         ax.hlines(
@@ -97,12 +97,12 @@ def run(files, fmin, fmax, show_all=False, show_tolerance=True, target=None):
             fmax,
             color='#555555',
             label=f"Target {target} s",
-            linestyles="dashed",
+            linestyles='dashed',
         )
 
-    ax.set_title("RT60")
-    ax.set_ylabel("Decay [s]")
-    ax.set_xlabel("Frequency [Hz]")
+    ax.set_title('RT60')
+    ax.set_ylabel('Decay [s]')
+    ax.set_xlabel('Frequency [Hz]')
     ax.xaxis.set_major_formatter(formatter)
 
     ax.set_xlim((fmin, fmax))
@@ -130,7 +130,7 @@ def run(files, fmin, fmax, show_all=False, show_tolerance=True, target=None):
         else:
             diff = np.insert(np.diff(file_times[0]), 0, 0.0)
             diff = np.insert(file_times[0][:-1]-file_times[0][1:], 0, 0.0)
-            ax.semilogx(center_freqs, diff, label="Measurement")
+            ax.semilogx(center_freqs, diff, label='Measurement')
             ymin, ymax = np.min(diff), np.max(diff)
 
         ax.plot([63.0, 200.0], [0.3, 0.05], color='#555555')
@@ -138,14 +138,14 @@ def run(files, fmin, fmax, show_all=False, show_tolerance=True, target=None):
             [+0.05, -0.05, -0.1, -0.1, +0.3, +0.05, -0.05],
             [200, 100, k4,  k8, fmin, k8, fmin],
             [k8, k4, k8,  k20, 63, k20, 100],
-            linestyles=["-", "-", "-", "--", "--", "--", "--"],
+            linestyles=['-', '-', '-', '--', '--', '--', '--'],
             colors='#555555',
-            label="EBU Tech 3000"
+            label='EBU Tech 3000'
         )
 
-        ax.set_title("Tolerance")
-        ax.set_ylabel("Difference [s]")
-        ax.set_xlabel("Frequency [Hz]")
+        ax.set_title('Tolerance')
+        ax.set_ylabel('Difference [s]')
+        ax.set_xlabel('Frequency [Hz]')
         ax.xaxis.set_major_formatter(formatter)
 
         ax.set_xlim((fmin, fmax))
@@ -158,7 +158,7 @@ def run(files, fmin, fmax, show_all=False, show_tolerance=True, target=None):
     plt.show()
 
 
-@click.command(name="t60", help="Plot RT60 decay times.")
+@click.command(name='t60', help='Plot RT60 decay times.')
 @click.argument('filename', nargs=-1, type=click.Path(exists=True))
 @click.option('--sim_dir', type=click.Path(exists=True))
 @click.option('--fmin', default=1.0)
@@ -166,11 +166,11 @@ def run(files, fmin, fmax, show_all=False, show_tolerance=True, target=None):
 @click.option('--target', default=0.0)
 def main(filename, sim_dir, fmin, fmax, target):
     if sim_dir and len(filename) > 0:
-        raise RuntimeError("--sim_dir not valid, when comparing IRs")
+        raise RuntimeError('--sim_dir not valid, when comparing IRs')
 
     files = filename
     if sim_dir:
-        files = collect_wav_files(sim_dir, "*_out_normalised.wav")
+        files = collect_wav_files(sim_dir, '*_out_normalised.wav')
 
     run(
         list(sorted(files)),

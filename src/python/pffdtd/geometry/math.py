@@ -106,8 +106,8 @@ def iround(x):
     return np.int_(np.round(x))
 
 
-def to_ixy(x, y, Nx, Ny, order="row"):
-    if order == "row":
+def to_ixy(x, y, Nx, Ny, order='row'):
+    if order == 'row':
         return x*Ny+y
     return y*Nx+x
 

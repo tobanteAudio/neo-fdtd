@@ -9,12 +9,12 @@ from pffdtd.materials.adm_funcs import plot_DEF_admittance, read_mat_DEF
 from pffdtd.materials.build import build
 
 
-@click.group(help="Materials.")
+@click.group(help='Materials.')
 def materials():
     pass
 
 
-@materials.command(help="Plot material.")
+@materials.command(help='Plot material.')
 @click.argument('material_file', nargs=1, type=click.Path(exists=True))
 def plot(material_file):
     frequencies = np.logspace(np.log10(10), np.log10(20e3), 4000)

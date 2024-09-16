@@ -38,10 +38,10 @@ class Modes(Setup3D):
 
         room = RoomModelBuilder(length, width, height)
         room.with_colors({
-            "Ceiling": [200, 200, 200],
-            "Floor": [151, 134, 122],
-            "Walls": [255, 255, 255],
+            'Ceiling': [200, 200, 200],
+            'Floor': [151, 134, 122],
+            'Walls': [255, 255, 255],
         })
-        room.add_source("S1", [offset, offset, offset])
-        room.add_receiver("R1", [width-offset, length-offset, height-offset])
+        room.add_source('S1', [offset, offset, offset])
+        room.add_receiver('R1', [width-offset, length-offset, height-offset])
         room.build(self.model_file)

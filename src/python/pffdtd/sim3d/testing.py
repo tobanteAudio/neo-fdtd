@@ -11,14 +11,14 @@ from pffdtd.sim3d.engine import EnginePython3D
 
 
 def run_engine(sim_dir, engine):
-    if engine == "python":
+    if engine == 'python':
         eng = EnginePython3D(sim_dir)
         eng.run_all(1)
         eng.save_outputs()
     else:
-        assert engine == "native"
+        assert engine == 'native'
 
-        exe = pathlib.Path(os.environ.get("PFFDTD_ENGINE_3D")).absolute()
+        exe = pathlib.Path(os.environ.get('PFFDTD_ENGINE_3D')).absolute()
         assert exe.exists()
         assert exe.is_file()
 
@@ -31,6 +31,6 @@ def run_engine(sim_dir, engine):
 
 
 def skip_if_native_engine_unavailable(engine):
-    if engine == "native":
-        if not os.environ.get("PFFDTD_ENGINE_3D"):
-            pytest.skip("Native engine not available")
+    if engine == 'native':
+        if not os.environ.get('PFFDTD_ENGINE_3D'):
+            pytest.skip('Native engine not available')

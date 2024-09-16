@@ -161,7 +161,7 @@ class Setup3D:
     draw_backend: Literal['mayavi', 'polyscope'] = 'polyscope'
 
 
-@click.command(name="setup", help="Generate simulation files.")
+@click.command(name='setup', help='Generate simulation files.')
 @click.argument('sim_file', nargs=1, type=click.Path(exists=True))
 def main(sim_file):
     module_id = str(uuid.uuid1())
@@ -170,10 +170,10 @@ def main(sim_file):
     spec.loader.exec_module(loaded)
 
     for name, value in inspect.getmembers(loaded):
-        if inspect.isclass(value) and issubclass(value, Setup3D) and name != "Setup3D":
+        if inspect.isclass(value) and issubclass(value, Setup3D) and name != 'Setup3D':
             sim = value()
             model_factory = None
-            if hasattr(sim, "generate_model"):
+            if hasattr(sim, 'generate_model'):
                 def model_factory(c): return sim.generate_model(c)
 
             sim_setup_3d(

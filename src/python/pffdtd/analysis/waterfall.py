@@ -9,7 +9,7 @@ from scipy.signal import stft
 from scipy.io import wavfile
 
 
-@click.command(name="waterfall", help="Plot waterfall decay plot.")
+@click.command(name='waterfall', help='Plot waterfall decay plot.')
 @click.argument('filename', nargs=1, type=click.Path(exists=True))
 def main(filename):
     fs, rir = wavfile.read(filename)
@@ -43,12 +43,12 @@ def main(filename):
     fig.update_layout(
         title='Decay Times',
         scene={
-            "xaxis_title": 'X: Time [s]',
-            "yaxis_title": 'Y: Frequency [Hz]',
-            "zaxis_title": 'Z: Amplitude [dB]',
+            'xaxis_title': 'X: Time [s]',
+            'yaxis_title': 'Y: Frequency [Hz]',
+            'zaxis_title': 'Z: Amplitude [dB]',
 
-            "xaxis": {"range": [0, 1]},
-            "yaxis": {"type": "log"},
+            'xaxis': {'range': [0, 1]},
+            'yaxis': {'type': 'log'},
             # "zaxis": {"range": [-60, 0]},
         }
     )

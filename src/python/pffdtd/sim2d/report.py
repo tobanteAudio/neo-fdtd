@@ -23,7 +23,7 @@ def main():
     out_file = args.out_file[0]
     sim_dir = Path(args.sim_dir)
 
-    constants = h5py.File(sim_dir / "constants.h5", 'r')
+    constants = h5py.File(sim_dir / 'constants.h5', 'r')
     fs = float(constants['fs'][...])
     fmax = float(constants['fmax'][...])
     Ts = 1/fs
@@ -74,13 +74,13 @@ def main():
     print(times.shape)
 
     modes = room_modes(3, 3, 3)[:30]
-    modes_f = [mode["frequency"] for mode in modes]
+    modes_f = [mode['frequency'] for mode in modes]
 
     plt.plot(times, out.squeeze(), label=f'{15}deg')
     # plt.plot(times, out[15, :], label=f'{15}deg')
     # plt.plot(times, out[45, :], label=f'{45}deg')
     # plt.plot(times, out[90, :], label=f'{90}deg')
-    plt.grid(which="both")
+    plt.grid(which='both')
     plt.legend()
     plt.show()
 
@@ -88,10 +88,10 @@ def main():
     # plt.semilogx(frequencies, dB[15, :], label=f'{15}deg')
     # plt.semilogx(frequencies, dB[45, :], label=f'{45}deg')
     # plt.semilogx(frequencies, dB[90, :], label=f'{90}deg')
-    plt.vlines(modes_f, -60, 0.0, colors="r", linestyles="--")
+    plt.vlines(modes_f, -60, 0.0, colors='r', linestyles='--')
     plt.xlim((10, 500))
     plt.ylim((-80, 0))
-    plt.grid(which="both")
+    plt.grid(which='both')
     plt.legend()
     plt.show()
 

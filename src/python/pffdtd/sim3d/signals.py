@@ -148,7 +148,7 @@ class SimSignals:
         in_sigs = self.in_sigs
 
         if compress is not None:
-            kw = {'compression': "gzip", 'compression_opts': compress}
+            kw = {'compression': 'gzip', 'compression_opts': compress}
         else:
             kw = {}
         h5f = h5py.File(save_folder / Path('signals.h5'), 'w')

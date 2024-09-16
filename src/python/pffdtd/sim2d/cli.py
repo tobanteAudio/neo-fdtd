@@ -7,7 +7,7 @@ from pffdtd.sim2d import run
 from pffdtd.sim2d import process_outputs
 
 
-@click.group(help="2D wave-equation.")
+@click.group(help='2D wave-equation.')
 def sim2d():
     pass
 

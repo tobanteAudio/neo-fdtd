@@ -63,7 +63,7 @@ class CartGrid():
 
         self.print_stats()
 
-    def save(self, folder, filename="cart_grid.h5"):
+    def save(self, folder, filename='cart_grid.h5'):
         """Save to HDF5 file
         """
         xv = self.xv
@@ -78,7 +78,7 @@ class CartGrid():
         else:
             assert folder.is_dir()
 
-        compression = {'compression': "gzip", 'compression_opts': 9}
+        compression = {'compression': 'gzip', 'compression_opts': 9}
         file = h5py.File(folder / filename, 'w')
         file.create_dataset('xv', data=xv, **compression)
         file.create_dataset('yv', data=yv, **compression)

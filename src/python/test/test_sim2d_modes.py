@@ -25,8 +25,8 @@ def model(*, Lx=None, Ly=None, Nx=None, Ny=None, dx=None, X=None, Y=None, in_mas
 
 
 def test_sim2d_modes(tmp_path):
-    if not os.environ.get("PFFDTD_ENGINE_2D"):
-        pytest.skip("Native 2D engine not available")
+    if not os.environ.get('PFFDTD_ENGINE_2D'):
+        pytest.skip('Native 2D engine not available')
 
     sim_setup_2d(
         sim_dir=tmp_path,
@@ -45,16 +45,16 @@ def test_sim2d_modes(tmp_path):
     )
 
     runner = CliRunner()
-    args = ["sim2d", "run", "--sim_dir", str(tmp_path), "--out", "out-py.h5"]
+    args = ['sim2d', 'run', '--sim_dir', str(tmp_path), '--out', 'out-py.h5']
     result = runner.invoke(cli, args)
     assert result.exit_code == 0
 
-    exe = pathlib.Path(os.environ.get("PFFDTD_ENGINE_2D")).absolute()
+    exe = pathlib.Path(os.environ.get('PFFDTD_ENGINE_2D')).absolute()
     assert exe.exists()
     assert exe.is_file()
 
     result = subprocess.run(
-        args=[str(exe), "-s", str(tmp_path), "-o", "out-cpp.h5"],
+        args=[str(exe), '-s', str(tmp_path), '-o', 'out-cpp.h5'],
         capture_output=True,
         text=True,
         check=True,

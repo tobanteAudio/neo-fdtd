@@ -8,7 +8,7 @@ from pffdtd.sim3d import room_geometry
 from pffdtd.sim3d import setup
 
 
-@click.group(help="3D wave-equation.")
+@click.group(help='3D wave-equation.')
 def sim3d():
     pass
 

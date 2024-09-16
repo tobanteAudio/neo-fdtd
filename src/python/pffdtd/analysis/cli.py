@@ -9,7 +9,7 @@ from pffdtd.analysis.t60 import main as t60
 from pffdtd.analysis.waterfall import main as waterfall
 
 
-@click.group(help="Analysis.")
+@click.group(help='Analysis.')
 def analysis():
     pass
 
