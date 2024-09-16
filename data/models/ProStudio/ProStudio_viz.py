@@ -6,23 +6,35 @@ from pffdtd.sim3d.setup import sim_setup_3d
 sim_setup_3d(
     model_json_file='model.json',
     mat_folder='../../materials',
-    source_num=1,
+    source_num=2,
     insig_type='dhann30',  # for viz
     diff_source=False,
     mat_files_dict={
-        'Walls': 'concrete_painted.h5',
+        'ATC Left': 'floor_wood.h5',
+        'ATC Right': 'floor_wood.h5',
+        'Ceiling': 'absorber_8000_200mm_gap_200mm.h5',
+        'Console': 'door_iron.h5',
+        'Couch': 'leather_arm_chair.h5',
+        # 'Diffusor': 'floor_wood.h5',
+        'Floor': 'floor_wood_on_concrete.h5',
+        'Outboard': 'door_iron.h5',
+        'Rack': 'floor_wood.h5',
+        'Raised Floor': 'floor_wood.h5',
+        'Walls Back': 'absorber_8000_200mm_gap_200mm.h5',
+        'Walls Front': 'absorber_8000_200mm_gap_100mm.h5',
+        'Walls Side': 'absorber_8000_50mm.h5',
+        'Windows': 'glas_thick.h5',
     },
-    duration=0.1,  # duration in seconds
+    duration=0.1,
     Tc=20,
     rh=50,
     fcc_flag=True,
-    PPW=7.7,  # for 2% phase velocity error at fmax
-    fmax=500.0,
-    save_folder='../../sim_data/ProStudio/viz',  # can run python from here
+    PPW=7.7,
+    fmax=800.0,
+    save_folder='../../sim_data/ProStudio/viz',
     compress=0,
     draw_vox=True,
-    # will draw 'voxelization' (spheres are active boundary nodes, cubes rigid boundary nodes)
-    draw_backend='mayavi',
+    draw_backend='polyscope',
 )
 
 # then run with python and 3D visualization:
