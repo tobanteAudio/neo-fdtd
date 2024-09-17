@@ -356,7 +356,7 @@ auto run(Simulation3D& sd) -> double {
     timeElapsed       = now - startTime;
     timeElapsedSample = now - sampleStartTime;
 
-    pffdtd::print_progress(
+    print_progress(
         n,
         Nt,
         Npts,

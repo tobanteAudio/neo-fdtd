@@ -822,7 +822,7 @@ void writeOutputs(Simulation3D& sim, std::filesystem::path const& simDir) {
     }
   }
 
-  auto writer = pffdtd::H5FWriter{simDir / "sim_outs.h5"};
+  auto writer = H5FWriter{simDir / "sim_outs.h5"};
   writer.write("u_out", u_out);
   std::puts("wrote output dataset");
 }

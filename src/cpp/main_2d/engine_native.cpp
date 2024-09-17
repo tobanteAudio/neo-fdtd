@@ -30,7 +30,7 @@ auto EngineNative::operator()(Simulation2D const& sim) const -> stdex::mdarray<d
   auto const Nr         = sim.out_ixy.size();
   auto const lossFactor = sim.loss_factor;
 
-  pffdtd::summary(sim);
+  summary(sim);
 
   auto u0_buf  = stdex::mdarray<double, stdex::dextents<size_t, 2>>(Nx, Ny);
   auto u1_buf  = stdex::mdarray<double, stdex::dextents<size_t, 2>>(Nx, Ny);

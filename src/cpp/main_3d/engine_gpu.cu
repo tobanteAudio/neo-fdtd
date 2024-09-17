@@ -15,6 +15,8 @@
 #include <cstdlib>
 #include <vector>
 
+namespace pffdtd {
+
 // want 0 to map to 1, otherwise kernel errors
 constexpr auto CU_DIV_CEIL(auto x, auto y) { return ((DIV_CEIL(x, y) == 0) ? (1) : (DIV_CEIL(x, y))); }
 
@@ -90,7 +92,7 @@ struct DeviceData { // for or on gpu (arrays all on GPU)
   int8_t* mat_bnl{};
   int8_t* K_bn{};
   Real* mat_beta{};
-  pffdtd::MatQuad<Real>* mat_quads{};
+  MatQuad<Real>* mat_quads{};
   Real* u0{};
   Real* u1{};
   Real* u0b{};
@@ -127,8 +129,8 @@ struct DeviceData { // for or on gpu (arrays all on GPU)
 };
 
 auto print_gpu_details(int i) -> uint64_t;
-void check_sorted(pffdtd::Simulation3D const* sim);
-void split_data(pffdtd::Simulation3D const* sim, HostData* ghds, int ngpus);
+void check_sorted(Simulation3D const* sim);
+void split_data(Simulation3D const* sim, HostData* ghds, int ngpus);
 
 // CUDA kernels
 __global__ void KernelAirCart(Real* __restrict__ u0, Real const* __restrict__ u1, uint8_t const* __restrict__ bn_mask);
@@ -162,7 +164,7 @@ __global__ void KernelBoundaryFD(
     Real const* ssaf_bnl,
     int8_t const* mat_bnl,
     Real const* __restrict__ mat_beta,
-    pffdtd::MatQuad<Real> const* __restrict__ mat_quads
+    MatQuad<Real> const* __restrict__ mat_quads
 );
 __global__ void AddIn(Real* u0, Real sample);
 __global__ void CopyToGridKernel(Real* u, Real const* buffer, int64_t const* locs, int64_t N);
@@ -376,7 +378,7 @@ __global__ void KernelBoundaryFD(
     Real const* ssaf_bnl,
     int8_t const* mat_bnl,
     Real const* __restrict__ mat_beta,
-    pffdtd::MatQuad<Real> const* __restrict__ mat_quads
+    MatQuad<Real> const* __restrict__ mat_quads
 ) {
   int64_t const nb = blockIdx.x * cuBb + threadIdx.x;
   if (nb < cuNbl) {
@@ -395,12 +397,12 @@ __global__ void KernelBoundaryFD(
     Real vh1int[MMb]; // size has to be constant at compile time
     Real gh1int[MMb];
     for (int8_t m = 0; m < cuMb[k]; m++) { // faster on average than MMb
-      int64_t const nbm               = m * cuNbl + nb;
-      int32_t const mbk               = k * MMb + m;
-      pffdtd::MatQuad<Real> const* tm = nullptr;
-      tm                              = &(mat_quads[mbk]);
-      vh1int[m]                       = vh1[nbm];
-      gh1int[m]                       = gh1[nbm];
+      int64_t const nbm       = m * cuNbl + nb;
+      int32_t const mbk       = k * MMb + m;
+      MatQuad<Real> const* tm = nullptr;
+      tm                      = &(mat_quads[mbk]);
+      vh1int[m]               = vh1[nbm];
+      gh1int[m]               = gh1[nbm];
       u0bint -= fac * (_2 * (tm->bDh) * vh1int[m] - (tm->bFh) * gh1int[m]);
     }
 
@@ -408,13 +410,13 @@ __global__ void KernelBoundaryFD(
 
     // NOLINTBEGIN(clang-analyzer-core.UndefinedBinaryOperatorResult)
     for (int8_t m = 0; m < cuMb[k]; m++) { // faster on average than MMb
-      int64_t const nbm               = m * cuNbl + nb;
-      int32_t const mbk               = k * MMb + m;
-      pffdtd::MatQuad<Real> const* tm = nullptr;
-      tm                              = &(mat_quads[mbk]);
-      Real const vh0m                 = (tm->b) * du + (tm->bd) * vh1int[m] - _2 * (tm->bFh) * gh1int[m];
-      gh1[nbm]                        = gh1int[m] + (vh0m + vh1int[m]) / _2;
-      vh1[nbm]                        = vh0m;
+      int64_t const nbm       = m * cuNbl + nb;
+      int32_t const mbk       = k * MMb + m;
+      MatQuad<Real> const* tm = nullptr;
+      tm                      = &(mat_quads[mbk]);
+      Real const vh0m         = (tm->b) * du + (tm->bd) * vh1int[m] - _2 * (tm->bFh) * gh1int[m];
+      gh1[nbm]                = gh1int[m] + (vh0m + vh1int[m]) / _2;
+      vh1[nbm]                = vh0m;
     }
     // NOLINTEND(clang-analyzer-core.UndefinedBinaryOperatorResult)
     u0b[nb] = u0bint;
@@ -502,7 +504,7 @@ __global__ void FlipHaloYZ_Xend(Real* __restrict__ u1) {
 }
 
 // input indices need to be sorted for multi-device allocation
-void check_sorted(pffdtd::Simulation3D const* sim) {
+void check_sorted(Simulation3D const* sim) {
   int64_t* bn_ixyz  = sim->bn_ixyz;
   int64_t* bnl_ixyz = sim->bnl_ixyz;
   int64_t* bna_ixyz = sim->bna_ixyz;
@@ -531,7 +533,7 @@ void check_sorted(pffdtd::Simulation3D const* sim) {
 }
 
 // counts for splitting data across GPUs
-void split_data(pffdtd::Simulation3D const* sim, HostData* ghds, int ngpus) {
+void split_data(Simulation3D const* sim, HostData* ghds, int ngpus) {
   int64_t const Nx = sim->Nx;
   int64_t const Ny = sim->Ny;
   int64_t const Nz = sim->Nz;
@@ -678,10 +680,8 @@ void split_data(pffdtd::Simulation3D const* sim, HostData* ghds, int ngpus) {
   PFFDTD_ASSERT(Nr_check == Nr);
 }
 
-namespace pffdtd {
-
 // run the sim!
-auto run(pffdtd::Simulation3D const& sim) -> double {
+auto run(Simulation3D const& sim) -> double {
   // if you want to test synchronous, env variable for that
   char const* s = getenv("CUDA_LAUNCH_BLOCKING");
   if (s != nullptr) {
@@ -905,13 +905,10 @@ auto run(pffdtd::Simulation3D const& sim) -> double {
     gpuErrchk(cudaMalloc(&(gd->mat_beta), (size_t)sim.Nm * sizeof(Real)));
     gpuErrchk(cudaMemcpy(gd->mat_beta, sim.mat_beta, (size_t)sim.Nm * sizeof(Real), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->mat_quads), (size_t)sim.Nm * MMb * sizeof(pffdtd::MatQuad<Real>)));
-    gpuErrchk(cudaMemcpy(
-        gd->mat_quads,
-        sim.mat_quads,
-        (size_t)sim.Nm * MMb * sizeof(pffdtd::MatQuad<Real>),
-        cudaMemcpyHostToDevice
-    ));
+    gpuErrchk(cudaMalloc(&(gd->mat_quads), (size_t)sim.Nm * MMb * sizeof(MatQuad<Real>)));
+    gpuErrchk(
+        cudaMemcpy(gd->mat_quads, sim.mat_quads, (size_t)sim.Nm * MMb * sizeof(MatQuad<Real>), cudaMemcpyHostToDevice)
+    );
 
     gpuErrchk(cudaMalloc(&(gd->bn_mask), (size_t)(ghd->Nbm * sizeof(uint8_t))));
     gpuErrchk(cudaMemcpy(gd->bn_mask, ghd->bn_mask, (size_t)ghd->Nbm * sizeof(uint8_t), cudaMemcpyHostToDevice));
@@ -1270,7 +1267,7 @@ auto run(pffdtd::Simulation3D const& sim) -> double {
       time_elapsed_sample_bn = millis_bn / 1000.0;
       time_elapsed_bn += time_elapsed_sample_bn;
 
-      pffdtd::print_progress(
+      print_progress(
           n,
           sim.Nt,
           sim.Npts,
