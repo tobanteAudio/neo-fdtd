@@ -53,11 +53,12 @@ __constant__ int8_t cuMb[MNm]; // to store Mb per mat
 
 // this is data on host, sometimes copied and recomputed for copy to GPU devices
 // (indices), sometimes just aliased pointers (scalar arrays)
+template<typename Float>
 struct HostData {      // arrays on host (for copy), mirrors gpu local data
   double* in_sigs{};   // aliased
-  Real* u_out_buf{};   // aliased
+  Float* u_out_buf{};  // aliased
   double* u_out{};     // aliased
-  Real* ssaf_bnl{};    // aliased
+  Float* ssaf_bnl{};   // aliased
   int64_t* in_ixyz{};  // recomputed
   int64_t* out_ixyz{}; // recomputed
   int64_t* bn_ixyz{};  // recomputed
@@ -80,6 +81,7 @@ struct HostData {      // arrays on host (for copy), mirrors gpu local data
 };
 
 // these are arrays pointing to GPU device memory, or CUDA stuff (dim3, events)
+template<typename Float>
 struct DeviceData { // for or on gpu (arrays all on GPU)
   int64_t* bn_ixyz{};
   int64_t* bnl_ixyz{};
@@ -87,21 +89,21 @@ struct DeviceData { // for or on gpu (arrays all on GPU)
   int8_t* Q_bna{};
   int64_t* out_ixyz{};
   uint16_t* adj_bn{};
-  Real* ssaf_bnl{};
+  Float* ssaf_bnl{};
   uint8_t* bn_mask{};
   int8_t* mat_bnl{};
   int8_t* K_bn{};
-  Real* mat_beta{};
-  MatQuad<Real>* mat_quads{};
-  Real* u0{};
-  Real* u1{};
-  Real* u0b{};
-  Real* u1b{};
-  Real* u2b{};
-  Real* u2ba{};
-  Real* vh1{};
-  Real* gh1{};
-  Real* u_out_buf{};
+  Float* mat_beta{};
+  MatQuad<Float>* mat_quads{};
+  Float* u0{};
+  Float* u1{};
+  Float* u0b{};
+  Float* u1b{};
+  Float* u2b{};
+  Float* u2ba{};
+  Float* vh1{};
+  Float* gh1{};
+  Float* u_out_buf{};
   dim3 block_dim_air;
   dim3 grid_dim_air;
   dim3 block_dim_fold;
@@ -128,53 +130,318 @@ struct DeviceData { // for or on gpu (arrays all on GPU)
   int64_t totalmembytes{};
 };
 
-auto print_gpu_details(int i) -> uint64_t;
-void check_sorted(Simulation3D const* sim);
-void split_data(Simulation3D const* sim, HostData* ghds, int ngpus);
+// NB. 'x' is contiguous dim in CUDA domain
 
-// CUDA kernels
-__global__ void KernelAirCart(Real* __restrict__ u0, Real const* __restrict__ u1, uint8_t const* __restrict__ bn_mask);
-__global__ void KernelAirFCC(Real* __restrict__ u0, Real const* __restrict__ u1, uint8_t const* __restrict__ bn_mask);
-__global__ void KernelFoldFCC(Real* __restrict__ u1);
+// vanilla scheme, unrolled, intrinsics to control rounding errors
+template<typename Float>
+__global__ void
+KernelAirCart(Float* __restrict__ u0, Float const* __restrict__ u1, uint8_t const* __restrict__ bn_mask) {
+  int64_t const cx = blockIdx.x * cuBx + threadIdx.x + 1;
+  int64_t const cy = blockIdx.y * cuBy + threadIdx.y + 1;
+  int64_t const cz = blockIdx.z * cuBz + threadIdx.z + 1;
+  if ((cx < cuNx - 1) && (cy < cuNy - 1) && (cz < cuNz - 1)) {
+    int64_t const ii = cz * cuNxNy + cy * cuNx + cx;
+    // divide-conquer add for better accuracy
+    Float tmp1 = NAN;
+    Float tmp2 = NAN;
+    tmp1       = ADD_O(u1[ii + cuNxNy], u1[ii - cuNxNy]);
+    tmp2       = ADD_O(u1[ii + cuNx], u1[ii - cuNx]);
+    tmp1       = ADD_O(tmp1, tmp2);
+    tmp2       = ADD_O(u1[ii + 1], u1[ii - 1]);
+    tmp1       = ADD_O(tmp1, tmp2);
+    tmp1       = FMA_D(c1, u1[ii], FMA_D(c2, tmp1, -u0[ii]));
+
+    // write final value back to global memory
+    if ((GET_BIT(bn_mask[ii >> 3], ii % 8)) == 0) {
+      u0[ii] = tmp1;
+    }
+  }
+}
+
+// air update for FCC, on folded grid (improvement to 2013 DAFx paper)
+template<typename Float>
+__global__ void
+KernelAirFCC(Float* __restrict__ u0, Float const* __restrict__ u1, uint8_t const* __restrict__ bn_mask) {
+  // get ix,iy,iz from thread and block Id's
+  int64_t const cx = blockIdx.x * cuBx + threadIdx.x + 1;
+  int64_t const cy = blockIdx.y * cuBy + threadIdx.y + 1;
+  int64_t const cz = blockIdx.z * cuBz + threadIdx.z + 1;
+  if ((cx < cuNx - 1) && (cy < cuNy - 1) && (cz < cuNz - 1)) {
+    // x is contiguous
+    int64_t const ii = cz * cuNxNy + cy * cuNx + cx;
+    Float tmp1       = NAN;
+    Float tmp2       = NAN;
+    Float tmp3       = NAN;
+    Float tmp4       = NAN;
+    // divide-conquer add as much as possible
+    tmp1 = ADD_O(u1[ii + cuNxNy + cuNx], u1[ii - cuNxNy - cuNx]);
+    tmp2 = ADD_O(u1[ii + cuNx + 1], u1[ii - cuNx - 1]);
+    tmp1 = ADD_O(tmp1, tmp2);
+    tmp3 = ADD_O(u1[ii + cuNxNy + 1], u1[ii - cuNxNy - 1]);
+    tmp4 = ADD_O(u1[ii + cuNxNy - cuNx], u1[ii - cuNxNy + cuNx]);
+    tmp3 = ADD_O(tmp3, tmp4);
+    tmp2 = ADD_O(u1[ii + cuNx - 1], u1[ii - cuNx + 1]);
+    tmp1 = ADD_O(tmp1, tmp2);
+    tmp4 = ADD_O(u1[ii + cuNxNy - 1], u1[ii - cuNxNy + 1]);
+    tmp3 = ADD_O(tmp3, tmp4);
+    tmp1 = ADD_O(tmp1, tmp3);
+    tmp1 = FMA_D(c1, u1[ii], FMA_D(c2, tmp1, -u0[ii]));
+    // write final value back to global memory
+    if ((GET_BIT(bn_mask[ii >> 3], ii % 8)) == 0) {
+      u0[ii] = tmp1;
+    }
+  }
+}
+
+// this folds in half of FCC subgrid so everything is nicely homogenous (no
+// braching for stencil)
+template<typename Float>
+__global__ void KernelFoldFCC(Float* __restrict__ u1) {
+  int64_t const cx = blockIdx.x * cuBx2 + threadIdx.x;
+  int64_t const cz = blockIdx.y * cuBy2 + threadIdx.y;
+  // fold is along middle dimension
+  if ((cx < cuNx) && (cz < cuNz)) {
+    u1[cz * cuNxNy + (cuNy - 1) * cuNx + cx] = u1[cz * cuNxNy + (cuNy - 2) * cuNx + cx];
+  }
+}
+
+// rigid boundaries, cartesian, using adj info
+template<typename Float>
 __global__ void KernelBoundaryRigidCart(
-    Real* __restrict__ u0,
-    Real const* __restrict__ u1,
+    Float* __restrict__ u0,
+    Float const* __restrict__ u1,
     uint16_t const* __restrict__ adj_bn,
     int64_t const* __restrict__ bn_ixyz,
     int8_t const* __restrict__ K_bn
-);
+) {
+  int64_t const nb = blockIdx.x * cuBb + threadIdx.x;
+  if (nb < cuNb) {
+    int64_t const ii   = bn_ixyz[nb];
+    uint16_t const adj = adj_bn[nb];
+    Float const K      = K_bn[nb];
+
+    Float const _2 = 2.0;
+    Float const b1 = (_2 - csl2 * K);
+    Float const b2 = c2;
+
+    Float tmp1 = NAN;
+    Float tmp2 = NAN;
+    tmp1       = ADD_O((Float)GET_BIT(adj, 0) * u1[ii + cuNxNy], (Float)GET_BIT(adj, 1) * u1[ii - cuNxNy]);
+    tmp2       = ADD_O((Float)GET_BIT(adj, 2) * u1[ii + cuNx], (Float)GET_BIT(adj, 3) * u1[ii - cuNx]);
+    tmp1       = ADD_O(tmp1, tmp2);
+    tmp2       = ADD_O((Float)GET_BIT(adj, 4) * u1[ii + 1], (Float)GET_BIT(adj, 5) * u1[ii - 1]);
+    tmp1       = ADD_O(tmp1, tmp2);
+    tmp1       = FMA_D(b1, u1[ii], FMA_D(b2, tmp1, -u0[ii]));
+
+    // u0[ii] = partial; //write back to global memory
+    u0[ii] = tmp1; // write back to global memory
+  }
+}
+
+// rigid boundaries, FCC, using adj info
+template<typename Float>
 __global__ void KernelBoundaryRigidFCC(
-    Real* __restrict__ u0,
-    Real const* __restrict__ u1,
+    Float* __restrict__ u0,
+    Float const* __restrict__ u1,
     uint16_t const* __restrict__ adj_bn,
     int64_t const* __restrict__ bn_ixyz,
     int8_t const* __restrict__ K_bn
-);
+) {
+  int64_t const nb = blockIdx.x * cuBb + threadIdx.x;
+  if (nb < cuNb) {
+    int64_t const ii   = bn_ixyz[nb];
+    uint16_t const adj = adj_bn[nb];
+    Float const K      = K_bn[nb];
+
+    Float const _2 = 2.0;
+    Float const b1 = (_2 - csl2 * K);
+    Float const b2 = c2;
+
+    Float tmp1 = NAN;
+    Float tmp2 = NAN;
+    Float tmp3 = NAN;
+    Float tmp4 = NAN;
+    tmp1 = ADD_O((Float)GET_BIT(adj, 0) * u1[ii + cuNxNy + cuNx], (Float)GET_BIT(adj, 1) * u1[ii - cuNxNy - cuNx]);
+    tmp2 = ADD_O((Float)GET_BIT(adj, 2) * u1[ii + cuNx + 1], (Float)GET_BIT(adj, 3) * u1[ii - cuNx - 1]);
+    tmp1 = ADD_O(tmp1, tmp2);
+    tmp3 = ADD_O((Float)GET_BIT(adj, 4) * u1[ii + cuNxNy + 1], (Float)GET_BIT(adj, 5) * u1[ii - cuNxNy - 1]);
+    tmp4 = ADD_O((Float)GET_BIT(adj, 6) * u1[ii + cuNxNy - cuNx], (Float)GET_BIT(adj, 7) * u1[ii - cuNxNy + cuNx]);
+    tmp3 = ADD_O(tmp3, tmp4);
+    tmp2 = ADD_O((Float)GET_BIT(adj, 8) * u1[ii + cuNx - 1], (Float)GET_BIT(adj, 9) * u1[ii - cuNx + 1]);
+    tmp1 = ADD_O(tmp1, tmp2);
+    tmp4 = ADD_O((Float)GET_BIT(adj, 10) * u1[ii + cuNxNy - 1], (Float)GET_BIT(adj, 11) * u1[ii - cuNxNy + 1]);
+    tmp3 = ADD_O(tmp3, tmp4);
+    tmp1 = ADD_O(tmp1, tmp3);
+    tmp1 = FMA_D(b1, u1[ii], FMA_D(b2, tmp1, -u0[ii]));
+
+    u0[ii] = tmp1; // write back to global memory
+  }
+}
+
+// ABC loss at boundaries of simulation grid
+template<typename Float>
 __global__ void KernelBoundaryABC(
-    Real* __restrict__ u0,
-    Real const* __restrict__ u2ba,
+    Float* __restrict__ u0,
+    Float const* __restrict__ u2ba,
     int8_t const* __restrict__ Q_bna,
     int64_t const* __restrict__ bna_ixyz
-);
+) {
+  int64_t const nb = blockIdx.x * cuBb + threadIdx.x;
+  if (nb < cuNba) {
+    Float const _1   = 1.0;
+    Float const lQ   = cl * Q_bna[nb];
+    int64_t const ib = bna_ixyz[nb];
+    Float partial    = u0[ib];
+    partial          = (partial + lQ * u2ba[nb]) / (_1 + lQ);
+    u0[ib]           = partial;
+  }
+}
+
+// Part of freq-dep boundary update
+template<typename Float>
 __global__ void KernelBoundaryFD(
-    Real* __restrict__ u0b,
-    Real const* u2b,
-    Real* __restrict__ vh1,
-    Real* __restrict__ gh1,
-    Real const* ssaf_bnl,
+    Float* __restrict__ u0b,
+    Float const* u2b,
+    Float* __restrict__ vh1,
+    Float* __restrict__ gh1,
+    Float const* ssaf_bnl,
     int8_t const* mat_bnl,
-    Real const* __restrict__ mat_beta,
-    MatQuad<Real> const* __restrict__ mat_quads
-);
-__global__ void AddIn(Real* u0, Real sample);
-__global__ void CopyToGridKernel(Real* u, Real const* buffer, int64_t const* locs, int64_t N);
-__global__ void CopyFromGridKernel(Real* buffer, Real const* u, int64_t const* locs, int64_t N);
-__global__ void FlipHaloXY_Zbeg(Real* __restrict__ u1);
-__global__ void FlipHaloXY_Zend(Real* __restrict__ u1);
-__global__ void FlipHaloXZ_Ybeg(Real* __restrict__ u1);
-__global__ void FlipHaloXZ_Yend(Real* __restrict__ u1);
-__global__ void FlipHaloYZ_Xbeg(Real* __restrict__ u1);
-__global__ void FlipHaloYZ_Xend(Real* __restrict__ u1);
+    Float const* __restrict__ mat_beta,
+    MatQuad<Float> const* __restrict__ mat_quads
+) {
+  int64_t const nb = blockIdx.x * cuBb + threadIdx.x;
+  if (nb < cuNbl) {
+    Float const _1     = 1.0;
+    Float const _2     = 2.0;
+    int32_t const k    = mat_bnl[nb];
+    Float const ssaf   = ssaf_bnl[nb];
+    Float const lo2Kbg = clo2 * ssaf * mat_beta[k];
+    Float const fac    = _2 * clo2 * ssaf / (_1 + lo2Kbg);
+
+    Float u0bint       = u0b[nb];
+    Float const u2bint = u2b[nb];
+
+    u0bint = (u0bint + lo2Kbg * u2bint) / (_1 + lo2Kbg);
+
+    Float vh1int[MMb]; // size has to be constant at compile time
+    Float gh1int[MMb];
+    for (int8_t m = 0; m < cuMb[k]; m++) { // faster on average than MMb
+      int64_t const nbm        = m * cuNbl + nb;
+      int32_t const mbk        = k * MMb + m;
+      MatQuad<Float> const* tm = nullptr;
+      tm                       = &(mat_quads[mbk]);
+      vh1int[m]                = vh1[nbm];
+      gh1int[m]                = gh1[nbm];
+      u0bint -= fac * (_2 * (tm->bDh) * vh1int[m] - (tm->bFh) * gh1int[m]);
+    }
+
+    Float const du = u0bint - u2bint;
+
+    // NOLINTBEGIN(clang-analyzer-core.UndefinedBinaryOperatorResult)
+    for (int8_t m = 0; m < cuMb[k]; m++) { // faster on average than MMb
+      int64_t const nbm        = m * cuNbl + nb;
+      int32_t const mbk        = k * MMb + m;
+      MatQuad<Float> const* tm = nullptr;
+      tm                       = &(mat_quads[mbk]);
+      Float const vh0m         = (tm->b) * du + (tm->bd) * vh1int[m] - _2 * (tm->bFh) * gh1int[m];
+      gh1[nbm]                 = gh1int[m] + (vh0m + vh1int[m]) / _2;
+      vh1[nbm]                 = vh0m;
+    }
+    // NOLINTEND(clang-analyzer-core.UndefinedBinaryOperatorResult)
+    u0b[nb] = u0bint;
+  }
+}
+
+// add source input (one at a time for simplicity)
+template<typename Float>
+__global__ void AddIn(Float* u0, Float sample) {
+  u0[0] += sample;
+}
+
+// dst-src copy from buffer to grid
+template<typename Float>
+__global__ void CopyToGridKernel(Float* u, Float const* buffer, int64_t const* locs, int64_t N) {
+  int64_t const i = blockIdx.x * cuBrw + threadIdx.x;
+  if (i < N) {
+    u[locs[i]] = buffer[i];
+  }
+}
+
+// dst-src copy to buffer from  grid (not needed, but to make more explicit)
+template<typename Float>
+__global__ void CopyFromGridKernel(Float* buffer, Float const* u, int64_t const* locs, int64_t N) {
+  int64_t const i = blockIdx.x * cuBrw + threadIdx.x;
+  if (i < N) {
+    buffer[i] = u[locs[i]];
+  }
+}
+
+// flip halos for ABCs
+template<typename Float>
+__global__ void FlipHaloXY_Zbeg(Float* __restrict__ u1) {
+  int64_t const cx = blockIdx.x * cuBx2 + threadIdx.x;
+  int64_t const cy = blockIdx.y * cuBy2 + threadIdx.y;
+  if ((cx < cuNx) && (cy < cuNy)) {
+    int64_t ii = 0;
+    ii         = 0 * cuNxNy + cy * cuNx + cx;
+    u1[ii]     = u1[ii + 2 * cuNxNy];
+  }
+}
+
+template<typename Float>
+__global__ void FlipHaloXY_Zend(Float* __restrict__ u1) {
+  int64_t const cx = blockIdx.x * cuBx2 + threadIdx.x;
+  int64_t const cy = blockIdx.y * cuBy2 + threadIdx.y;
+  if ((cx < cuNx) && (cy < cuNy)) {
+    int64_t ii = 0;
+    ii         = (cuNz - 1) * cuNxNy + cy * cuNx + cx;
+    u1[ii]     = u1[ii - 2 * cuNxNy];
+  }
+}
+
+template<typename Float>
+__global__ void FlipHaloXZ_Ybeg(Float* __restrict__ u1) {
+  int64_t const cx = blockIdx.x * cuBx2 + threadIdx.x;
+  int64_t const cz = blockIdx.y * cuBy2 + threadIdx.y;
+  if ((cx < cuNx) && (cz < cuNz)) {
+    int64_t ii = 0;
+    ii         = cz * cuNxNy + 0 * cuNx + cx;
+    u1[ii]     = u1[ii + 2 * cuNx];
+  }
+}
+
+template<typename Float>
+__global__ void FlipHaloXZ_Yend(Float* __restrict__ u1) {
+  int64_t const cx = blockIdx.x * cuBx2 + threadIdx.x;
+  int64_t const cz = blockIdx.y * cuBy2 + threadIdx.y;
+  if ((cx < cuNx) && (cz < cuNz)) {
+    int64_t ii = 0;
+    ii         = cz * cuNxNy + (cuNy - 1) * cuNx + cx;
+    u1[ii]     = u1[ii - 2 * cuNx];
+  }
+}
+
+template<typename Float>
+__global__ void FlipHaloYZ_Xbeg(Float* __restrict__ u1) {
+  int64_t const cy = blockIdx.x * cuBx2 + threadIdx.x;
+  int64_t const cz = blockIdx.y * cuBy2 + threadIdx.y;
+  if ((cy < cuNy) && (cz < cuNz)) {
+    int64_t ii = 0;
+    ii         = cz * cuNxNy + cy * cuNx + 0;
+    u1[ii]     = u1[ii + 2];
+  }
+}
+
+template<typename Float>
+__global__ void FlipHaloYZ_Xend(Float* __restrict__ u1) {
+  int64_t const cy = blockIdx.x * cuBx2 + threadIdx.x;
+  int64_t const cz = blockIdx.y * cuBy2 + threadIdx.y;
+  if ((cy < cuNy) && (cz < cuNz)) {
+    int64_t ii = 0;
+    ii         = cz * cuNxNy + cy * cuNx + (cuNx - 1);
+    u1[ii]     = u1[ii - 2];
+  }
+}
 
 // standard error checking
 // NOLINTNEXTLINE
@@ -210,299 +477,6 @@ auto print_gpu_details(int i) -> uint64_t {
   return prop.totalGlobalMem;
 }
 
-// NB. 'x' is contiguous dim in CUDA domain
-
-// vanilla scheme, unrolled, intrinsics to control rounding errors
-__global__ void KernelAirCart(Real* __restrict__ u0, Real const* __restrict__ u1, uint8_t const* __restrict__ bn_mask) {
-  int64_t const cx = blockIdx.x * cuBx + threadIdx.x + 1;
-  int64_t const cy = blockIdx.y * cuBy + threadIdx.y + 1;
-  int64_t const cz = blockIdx.z * cuBz + threadIdx.z + 1;
-  if ((cx < cuNx - 1) && (cy < cuNy - 1) && (cz < cuNz - 1)) {
-    int64_t const ii = cz * cuNxNy + cy * cuNx + cx;
-    // divide-conquer add for better accuracy
-    Real tmp1 = NAN;
-    Real tmp2 = NAN;
-    tmp1      = ADD_O(u1[ii + cuNxNy], u1[ii - cuNxNy]);
-    tmp2      = ADD_O(u1[ii + cuNx], u1[ii - cuNx]);
-    tmp1      = ADD_O(tmp1, tmp2);
-    tmp2      = ADD_O(u1[ii + 1], u1[ii - 1]);
-    tmp1      = ADD_O(tmp1, tmp2);
-    tmp1      = FMA_D(c1, u1[ii], FMA_D(c2, tmp1, -u0[ii]));
-
-    // write final value back to global memory
-    if ((GET_BIT(bn_mask[ii >> 3], ii % 8)) == 0) {
-      u0[ii] = tmp1;
-    }
-  }
-}
-
-// air update for FCC, on folded grid (improvement to 2013 DAFx paper)
-__global__ void KernelAirFCC(Real* __restrict__ u0, Real const* __restrict__ u1, uint8_t const* __restrict__ bn_mask) {
-  // get ix,iy,iz from thread and block Id's
-  int64_t const cx = blockIdx.x * cuBx + threadIdx.x + 1;
-  int64_t const cy = blockIdx.y * cuBy + threadIdx.y + 1;
-  int64_t const cz = blockIdx.z * cuBz + threadIdx.z + 1;
-  if ((cx < cuNx - 1) && (cy < cuNy - 1) && (cz < cuNz - 1)) {
-    // x is contiguous
-    int64_t const ii = cz * cuNxNy + cy * cuNx + cx;
-    Real tmp1        = NAN;
-    Real tmp2        = NAN;
-    Real tmp3        = NAN;
-    Real tmp4        = NAN;
-    // divide-conquer add as much as possible
-    tmp1 = ADD_O(u1[ii + cuNxNy + cuNx], u1[ii - cuNxNy - cuNx]);
-    tmp2 = ADD_O(u1[ii + cuNx + 1], u1[ii - cuNx - 1]);
-    tmp1 = ADD_O(tmp1, tmp2);
-    tmp3 = ADD_O(u1[ii + cuNxNy + 1], u1[ii - cuNxNy - 1]);
-    tmp4 = ADD_O(u1[ii + cuNxNy - cuNx], u1[ii - cuNxNy + cuNx]);
-    tmp3 = ADD_O(tmp3, tmp4);
-    tmp2 = ADD_O(u1[ii + cuNx - 1], u1[ii - cuNx + 1]);
-    tmp1 = ADD_O(tmp1, tmp2);
-    tmp4 = ADD_O(u1[ii + cuNxNy - 1], u1[ii - cuNxNy + 1]);
-    tmp3 = ADD_O(tmp3, tmp4);
-    tmp1 = ADD_O(tmp1, tmp3);
-    tmp1 = FMA_D(c1, u1[ii], FMA_D(c2, tmp1, -u0[ii]));
-    // write final value back to global memory
-    if ((GET_BIT(bn_mask[ii >> 3], ii % 8)) == 0) {
-      u0[ii] = tmp1;
-    }
-  }
-}
-
-// this folds in half of FCC subgrid so everything is nicely homogenous (no
-// braching for stencil)
-__global__ void KernelFoldFCC(Real* __restrict__ u1) {
-  int64_t const cx = blockIdx.x * cuBx2 + threadIdx.x;
-  int64_t const cz = blockIdx.y * cuBy2 + threadIdx.y;
-  // fold is along middle dimension
-  if ((cx < cuNx) && (cz < cuNz)) {
-    u1[cz * cuNxNy + (cuNy - 1) * cuNx + cx] = u1[cz * cuNxNy + (cuNy - 2) * cuNx + cx];
-  }
-}
-
-// rigid boundaries, cartesian, using adj info
-__global__ void KernelBoundaryRigidCart(
-    Real* __restrict__ u0,
-    Real const* __restrict__ u1,
-    uint16_t const* __restrict__ adj_bn,
-    int64_t const* __restrict__ bn_ixyz,
-    int8_t const* __restrict__ K_bn
-) {
-  int64_t const nb = blockIdx.x * cuBb + threadIdx.x;
-  if (nb < cuNb) {
-    int64_t const ii   = bn_ixyz[nb];
-    uint16_t const adj = adj_bn[nb];
-    Real const K       = K_bn[nb];
-
-    Real const _2 = 2.0;
-    Real const b1 = (_2 - csl2 * K);
-    Real const b2 = c2;
-
-    Real tmp1 = NAN;
-    Real tmp2 = NAN;
-    tmp1      = ADD_O((Real)GET_BIT(adj, 0) * u1[ii + cuNxNy], (Real)GET_BIT(adj, 1) * u1[ii - cuNxNy]);
-    tmp2      = ADD_O((Real)GET_BIT(adj, 2) * u1[ii + cuNx], (Real)GET_BIT(adj, 3) * u1[ii - cuNx]);
-    tmp1      = ADD_O(tmp1, tmp2);
-    tmp2      = ADD_O((Real)GET_BIT(adj, 4) * u1[ii + 1], (Real)GET_BIT(adj, 5) * u1[ii - 1]);
-    tmp1      = ADD_O(tmp1, tmp2);
-    tmp1      = FMA_D(b1, u1[ii], FMA_D(b2, tmp1, -u0[ii]));
-
-    // u0[ii] = partial; //write back to global memory
-    u0[ii] = tmp1; // write back to global memory
-  }
-}
-
-// rigid boundaries, FCC, using adj info
-__global__ void KernelBoundaryRigidFCC(
-    Real* __restrict__ u0,
-    Real const* __restrict__ u1,
-    uint16_t const* __restrict__ adj_bn,
-    int64_t const* __restrict__ bn_ixyz,
-    int8_t const* __restrict__ K_bn
-) {
-  int64_t const nb = blockIdx.x * cuBb + threadIdx.x;
-  if (nb < cuNb) {
-    int64_t const ii   = bn_ixyz[nb];
-    uint16_t const adj = adj_bn[nb];
-    Real const K       = K_bn[nb];
-
-    Real const _2 = 2.0;
-    Real const b1 = (_2 - csl2 * K);
-    Real const b2 = c2;
-
-    Real tmp1 = NAN;
-    Real tmp2 = NAN;
-    Real tmp3 = NAN;
-    Real tmp4 = NAN;
-    tmp1      = ADD_O((Real)GET_BIT(adj, 0) * u1[ii + cuNxNy + cuNx], (Real)GET_BIT(adj, 1) * u1[ii - cuNxNy - cuNx]);
-    tmp2      = ADD_O((Real)GET_BIT(adj, 2) * u1[ii + cuNx + 1], (Real)GET_BIT(adj, 3) * u1[ii - cuNx - 1]);
-    tmp1      = ADD_O(tmp1, tmp2);
-    tmp3      = ADD_O((Real)GET_BIT(adj, 4) * u1[ii + cuNxNy + 1], (Real)GET_BIT(adj, 5) * u1[ii - cuNxNy - 1]);
-    tmp4      = ADD_O((Real)GET_BIT(adj, 6) * u1[ii + cuNxNy - cuNx], (Real)GET_BIT(adj, 7) * u1[ii - cuNxNy + cuNx]);
-    tmp3      = ADD_O(tmp3, tmp4);
-    tmp2      = ADD_O((Real)GET_BIT(adj, 8) * u1[ii + cuNx - 1], (Real)GET_BIT(adj, 9) * u1[ii - cuNx + 1]);
-    tmp1      = ADD_O(tmp1, tmp2);
-    tmp4      = ADD_O((Real)GET_BIT(adj, 10) * u1[ii + cuNxNy - 1], (Real)GET_BIT(adj, 11) * u1[ii - cuNxNy + 1]);
-    tmp3      = ADD_O(tmp3, tmp4);
-    tmp1      = ADD_O(tmp1, tmp3);
-    tmp1      = FMA_D(b1, u1[ii], FMA_D(b2, tmp1, -u0[ii]));
-
-    u0[ii] = tmp1; // write back to global memory
-  }
-}
-
-// ABC loss at boundaries of simulation grid
-__global__ void KernelBoundaryABC(
-    Real* __restrict__ u0,
-    Real const* __restrict__ u2ba,
-    int8_t const* __restrict__ Q_bna,
-    int64_t const* __restrict__ bna_ixyz
-) {
-  int64_t const nb = blockIdx.x * cuBb + threadIdx.x;
-  if (nb < cuNba) {
-    Real const _1    = 1.0;
-    Real const lQ    = cl * Q_bna[nb];
-    int64_t const ib = bna_ixyz[nb];
-    Real partial     = u0[ib];
-    partial          = (partial + lQ * u2ba[nb]) / (_1 + lQ);
-    u0[ib]           = partial;
-  }
-}
-
-// Part of freq-dep boundary update
-__global__ void KernelBoundaryFD(
-    Real* __restrict__ u0b,
-    Real const* u2b,
-    Real* __restrict__ vh1,
-    Real* __restrict__ gh1,
-    Real const* ssaf_bnl,
-    int8_t const* mat_bnl,
-    Real const* __restrict__ mat_beta,
-    MatQuad<Real> const* __restrict__ mat_quads
-) {
-  int64_t const nb = blockIdx.x * cuBb + threadIdx.x;
-  if (nb < cuNbl) {
-    Real const _1     = 1.0;
-    Real const _2     = 2.0;
-    int32_t const k   = mat_bnl[nb];
-    Real const ssaf   = ssaf_bnl[nb];
-    Real const lo2Kbg = clo2 * ssaf * mat_beta[k];
-    Real const fac    = _2 * clo2 * ssaf / (_1 + lo2Kbg);
-
-    Real u0bint       = u0b[nb];
-    Real const u2bint = u2b[nb];
-
-    u0bint = (u0bint + lo2Kbg * u2bint) / (_1 + lo2Kbg);
-
-    Real vh1int[MMb]; // size has to be constant at compile time
-    Real gh1int[MMb];
-    for (int8_t m = 0; m < cuMb[k]; m++) { // faster on average than MMb
-      int64_t const nbm       = m * cuNbl + nb;
-      int32_t const mbk       = k * MMb + m;
-      MatQuad<Real> const* tm = nullptr;
-      tm                      = &(mat_quads[mbk]);
-      vh1int[m]               = vh1[nbm];
-      gh1int[m]               = gh1[nbm];
-      u0bint -= fac * (_2 * (tm->bDh) * vh1int[m] - (tm->bFh) * gh1int[m]);
-    }
-
-    Real const du = u0bint - u2bint;
-
-    // NOLINTBEGIN(clang-analyzer-core.UndefinedBinaryOperatorResult)
-    for (int8_t m = 0; m < cuMb[k]; m++) { // faster on average than MMb
-      int64_t const nbm       = m * cuNbl + nb;
-      int32_t const mbk       = k * MMb + m;
-      MatQuad<Real> const* tm = nullptr;
-      tm                      = &(mat_quads[mbk]);
-      Real const vh0m         = (tm->b) * du + (tm->bd) * vh1int[m] - _2 * (tm->bFh) * gh1int[m];
-      gh1[nbm]                = gh1int[m] + (vh0m + vh1int[m]) / _2;
-      vh1[nbm]                = vh0m;
-    }
-    // NOLINTEND(clang-analyzer-core.UndefinedBinaryOperatorResult)
-    u0b[nb] = u0bint;
-  }
-}
-
-// add source input (one at a time for simplicity)
-__global__ void AddIn(Real* u0, Real sample) { u0[0] += sample; }
-
-// dst-src copy from buffer to grid
-__global__ void CopyToGridKernel(Real* u, Real const* buffer, int64_t const* locs, int64_t N) {
-  int64_t const i = blockIdx.x * cuBrw + threadIdx.x;
-  if (i < N) {
-    u[locs[i]] = buffer[i];
-  }
-}
-
-// dst-src copy to buffer from  grid (not needed, but to make more explicit)
-__global__ void CopyFromGridKernel(Real* buffer, Real const* u, int64_t const* locs, int64_t N) {
-  int64_t const i = blockIdx.x * cuBrw + threadIdx.x;
-  if (i < N) {
-    buffer[i] = u[locs[i]];
-  }
-}
-
-// flip halos for ABCs
-__global__ void FlipHaloXY_Zbeg(Real* __restrict__ u1) {
-  int64_t const cx = blockIdx.x * cuBx2 + threadIdx.x;
-  int64_t const cy = blockIdx.y * cuBy2 + threadIdx.y;
-  if ((cx < cuNx) && (cy < cuNy)) {
-    int64_t ii = 0;
-    ii         = 0 * cuNxNy + cy * cuNx + cx;
-    u1[ii]     = u1[ii + 2 * cuNxNy];
-  }
-}
-
-__global__ void FlipHaloXY_Zend(Real* __restrict__ u1) {
-  int64_t const cx = blockIdx.x * cuBx2 + threadIdx.x;
-  int64_t const cy = blockIdx.y * cuBy2 + threadIdx.y;
-  if ((cx < cuNx) && (cy < cuNy)) {
-    int64_t ii = 0;
-    ii         = (cuNz - 1) * cuNxNy + cy * cuNx + cx;
-    u1[ii]     = u1[ii - 2 * cuNxNy];
-  }
-}
-
-__global__ void FlipHaloXZ_Ybeg(Real* __restrict__ u1) {
-  int64_t const cx = blockIdx.x * cuBx2 + threadIdx.x;
-  int64_t const cz = blockIdx.y * cuBy2 + threadIdx.y;
-  if ((cx < cuNx) && (cz < cuNz)) {
-    int64_t ii = 0;
-    ii         = cz * cuNxNy + 0 * cuNx + cx;
-    u1[ii]     = u1[ii + 2 * cuNx];
-  }
-}
-
-__global__ void FlipHaloXZ_Yend(Real* __restrict__ u1) {
-  int64_t const cx = blockIdx.x * cuBx2 + threadIdx.x;
-  int64_t const cz = blockIdx.y * cuBy2 + threadIdx.y;
-  if ((cx < cuNx) && (cz < cuNz)) {
-    int64_t ii = 0;
-    ii         = cz * cuNxNy + (cuNy - 1) * cuNx + cx;
-    u1[ii]     = u1[ii - 2 * cuNx];
-  }
-}
-
-__global__ void FlipHaloYZ_Xbeg(Real* __restrict__ u1) {
-  int64_t const cy = blockIdx.x * cuBx2 + threadIdx.x;
-  int64_t const cz = blockIdx.y * cuBy2 + threadIdx.y;
-  if ((cy < cuNy) && (cz < cuNz)) {
-    int64_t ii = 0;
-    ii         = cz * cuNxNy + cy * cuNx + 0;
-    u1[ii]     = u1[ii + 2];
-  }
-}
-
-__global__ void FlipHaloYZ_Xend(Real* __restrict__ u1) {
-  int64_t const cy = blockIdx.x * cuBx2 + threadIdx.x;
-  int64_t const cz = blockIdx.y * cuBy2 + threadIdx.y;
-  if ((cy < cuNy) && (cz < cuNz)) {
-    int64_t ii = 0;
-    ii         = cz * cuNxNy + cy * cuNx + (cuNx - 1);
-    u1[ii]     = u1[ii - 2];
-  }
-}
-
 // input indices need to be sorted for multi-device allocation
 void check_sorted(Simulation3D const* sim) {
   int64_t* bn_ixyz  = sim->bn_ixyz;
@@ -533,11 +507,11 @@ void check_sorted(Simulation3D const* sim) {
 }
 
 // counts for splitting data across GPUs
-void split_data(Simulation3D const* sim, HostData* ghds, int ngpus) {
-  int64_t const Nx = sim->Nx;
-  int64_t const Ny = sim->Ny;
-  int64_t const Nz = sim->Nz;
-  HostData* ghd    = nullptr;
+void split_data(Simulation3D const* sim, HostData<Real>* ghds, int ngpus) {
+  int64_t const Nx    = sim->Nx;
+  int64_t const Ny    = sim->Ny;
+  int64_t const Nz    = sim->Nz;
+  HostData<Real>* ghd = nullptr;
   // initialise
   for (int gid = 0; gid < ngpus; gid++) {
     ghd      = &ghds[gid];
@@ -700,10 +674,10 @@ auto run(Simulation3D const& sim) -> double {
   cudaGetDeviceCount(&max_ngpus); // control outside with CUDA_VISIBLE_DEVICES
   ngpus = max_ngpus;
   PFFDTD_ASSERT(ngpus < (sim.Nx));
-  DeviceData* gds = nullptr;
-  allocate_zeros((void**)&gds, ngpus * sizeof(DeviceData));
-  HostData* ghds = nullptr;
-  allocate_zeros((void**)&ghds, ngpus * sizeof(HostData)); // one bit per
+  DeviceData<Real>* gds = nullptr;
+  allocate_zeros((void**)&gds, ngpus * sizeof(DeviceData<Real>));
+  HostData<Real>* ghds = nullptr;
+  allocate_zeros((void**)&ghds, ngpus * sizeof(HostData<Real>)); // one bit per
 
   if (ngpus > 1) {
     check_sorted(&sim); // needs to be sorted for multi-GPU
@@ -737,7 +711,7 @@ auto run(Simulation3D const& sim) -> double {
 
   // start moving data to GPUs
   for (int gid = 0; gid < ngpus; gid++) {
-    HostData* ghd = &(ghds[gid]);
+    HostData<Real>* ghd = &(ghds[gid]);
     printf("GPU %d -- ", gid);
     printf("Nx=%ld Ns=%ld Nr=%ld Nb=%ld Nbl=%ld Nba=%ld\n", ghd->Nx, ghd->Ns, ghd->Nr, ghd->Nb, ghd->Nbl, ghd->Nba);
   }
@@ -761,8 +735,8 @@ auto run(Simulation3D const& sim) -> double {
   for (int gid = 0; gid < ngpus; gid++) {
     gpuErrchk(cudaSetDevice(gid));
 
-    DeviceData* gd = &(gds[gid]);
-    HostData* ghd  = &(ghds[gid]);
+    DeviceData<Real>* gd = &(gds[gid]);
+    HostData<Real>* ghd  = &(ghds[gid]);
     printf("---------\n");
     printf("GPU %d\n", gid);
     printf("---------\n");
@@ -1022,8 +996,8 @@ auto run(Simulation3D const& sim) -> double {
   for (int64_t n = 0; n < sim.Nt; n++) {    // loop over time-steps
     for (int gid = 0; gid < ngpus; gid++) { // loop over GPUs (one thread launches all kernels)
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData* gd = &(gds[gid]);  // get struct of device pointers
-      HostData* ghd  = &(ghds[gid]); // get struct of host points (corresponding to device)
+      DeviceData<Real>* gd = &(gds[gid]);  // get struct of device pointers
+      HostData<Real>* ghd  = &(ghds[gid]); // get struct of host points (corresponding to device)
 
       // start first timer
       if (gid == 0) {
@@ -1150,8 +1124,8 @@ auto run(Simulation3D const& sim) -> double {
     // readouts
     for (int gid = 0; gid < ngpus; gid++) {
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData* gd = &(gds[gid]);
-      HostData* ghd  = &(ghds[gid]);
+      DeviceData<Real>* gd = &(gds[gid]);
+      HostData<Real>* ghd  = &(ghds[gid]);
       gpuErrchk(cudaEventSynchronize(gd->cuEv_readout_end));
       // copy grid points off output buffer
       for (int64_t nr = 0; nr < ghd->Nr; nr++) {
@@ -1161,7 +1135,7 @@ auto run(Simulation3D const& sim) -> double {
     // synchronise streams
     for (int gid = 0; gid < ngpus; gid++) {
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData* gd = &(gds[gid]);                       // don't really need to set gpu device to sync
+      DeviceData<Real>* gd = &(gds[gid]);                 // don't really need to set gpu device to sync
       gpuErrchk(cudaStreamSynchronize(gd->cuStream_air)); // interior complete
       gpuErrchk(cudaStreamSynchronize(gd->cuStream_bn));  // transfer complete
     }
@@ -1221,11 +1195,11 @@ auto run(Simulation3D const& sim) -> double {
 
     for (int gid = 0; gid < ngpus; gid++) {
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData* gd = &(gds[gid]);
+      DeviceData<Real>* gd = &(gds[gid]);
       gpuErrchk(cudaStreamSynchronize(gd->cuStream_bn)); // transfer complete
     }
     for (int gid = 0; gid < ngpus; gid++) {
-      DeviceData* gd = &(gds[gid]);
+      DeviceData<Real>* gd = &(gds[gid]);
       // update pointers
       Real* tmp_ptr = nullptr;
       tmp_ptr       = gd->u1;
@@ -1247,7 +1221,7 @@ auto run(Simulation3D const& sim) -> double {
     {
       // timing only on gpu0
       gpuErrchk(cudaSetDevice(0));
-      DeviceData* gd = &(gds[0]);
+      DeviceData<Real>* gd = &(gds[0]);
       gpuErrchk(cudaEventSynchronize(cuEv_main_sample_end)); // not sure this is correct
       gpuErrchk(cudaEventElapsedTime(&millis_since_start, cuEv_main_start, cuEv_main_sample_end));
       gpuErrchk(cudaEventElapsedTime(&millis_since_sample_start, cuEv_main_sample_start, cuEv_main_sample_end));
@@ -1309,8 +1283,8 @@ auto run(Simulation3D const& sim) -> double {
   gpuErrchk(cudaEventDestroy(cuEv_main_sample_end));
   for (int gid = 0; gid < ngpus; gid++) {
     gpuErrchk(cudaSetDevice(gid));
-    DeviceData* gd = &(gds[gid]);
-    HostData* ghd  = &(ghds[gid]);
+    DeviceData<Real>* gd = &(gds[gid]);
+    HostData<Real>* ghd  = &(ghds[gid]);
     // cleanup streams
     gpuErrchk(cudaStreamDestroy(gd->cuStream_air));
     gpuErrchk(cudaStreamDestroy(gd->cuStream_bn));
