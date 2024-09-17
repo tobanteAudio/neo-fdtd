@@ -70,7 +70,7 @@ struct H5FReader {
     auto set   = H5Dopen(_handle, dataset, H5P_DEFAULT);
     auto space = H5Dget_space(set);
 
-    auto ndims = 1UL;
+    auto ndims = 1;
     auto dims  = std::array<hsize_t, 3>{};
     PFFDTD_ASSERT(H5Sget_simple_extent_ndims(space) == ndims);
     H5Sget_simple_extent_dims(space, dims.data(), NULL);
