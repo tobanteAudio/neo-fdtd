@@ -2,9 +2,9 @@
 # SPDX-FileCopyrightText: 2024 Tobias Hienzsch
 cmake_minimum_required(VERSION 3.24)
 
-option(PFFDTD_ENABLE_ACPP_SYCL "Build with AdaptiveCpp SYCL" OFF)
-option(PFFDTD_ENABLE_INTEL_SYCL "Build with Intel SYCL" OFF)
 option(PFFDTD_ENABLE_CUDA "Build with CUDA" OFF)
+option(PFFDTD_ENABLE_SYCL_ACPP "Build with AdaptiveCpp SYCL" OFF)
+option(PFFDTD_ENABLE_SYCL_ONEAPI "Build with Intel SYCL" OFF)
 
 find_program(CCACHE ccache)
 if (CCACHE)
@@ -36,12 +36,14 @@ find_package(fmt REQUIRED)
 find_package(HDF5 REQUIRED)
 find_package(OpenMP REQUIRED)
 
-if(PFFDTD_ENABLE_ACPP_SYCL)
+if(PFFDTD_ENABLE_SYCL_ACPP)
     find_package(AdaptiveCpp REQUIRED)
+    set(PFFDTD_HAS_SYCL TRUE)
 endif()
 
-if(PFFDTD_ENABLE_INTEL_SYCL)
+if(PFFDTD_ENABLE_SYCL_ONEAPI)
     find_package(IntelSYCL REQUIRED)
+    set(PFFDTD_HAS_SYCL TRUE)
 endif()
 
 add_subdirectory(src/cpp)

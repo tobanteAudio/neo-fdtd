@@ -35,7 +35,7 @@ target_sources(pffdtd
 
 target_compile_definitions(pffdtd PUBLIC _CRT_SECURE_NO_WARNINGS=1)
 
-if(PFFDTD_ENABLE_ACPP_SYCL OR PFFDTD_ENABLE_INTEL_SYCL)
+if(PFFDTD_HAS_SYCL)
     target_compile_definitions(pffdtd PUBLIC PFFDTD_HAS_SYCL=1)
 endif()
 

@@ -37,7 +37,7 @@ cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_PROJECT_TOP_LE
 Assumes that `AdaptiveCPP` was build with `clang++`:
 
 ```shell
-cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=clang++ -D PFFDTD_ENABLE_ACPP_SYCL=ON -D AdaptiveCpp_DIR=/usr/local/lib/cmake/AdaptiveCpp -D ACPP_TARGETS="generic" -D CMAKE_PROJECT_TOP_LEVEL_INCLUDES=external/cmake-conan/conan_provider.cmake
+cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=clang++ -D PFFDTD_ENABLE_SYCL_ACPP=ON -D AdaptiveCpp_DIR=/usr/local/lib/cmake/AdaptiveCpp -D ACPP_TARGETS="generic" -D CMAKE_PROJECT_TOP_LEVEL_INCLUDES=external/cmake-conan/conan_provider.cmake
 ```
 
 ### Intel oneAPI
@@ -51,7 +51,7 @@ cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=cla
 ```shell
 source /opt/intel/oneapi/setvars.sh
 
-cmake -S. -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx -D PFFDTD_ENABLE_INTEL_SYCL=ON -D CMAKE_PROJECT_TOP_LEVEL_INCLUDES=external/cmake-conan/conan_provider.cmake -D CONAN_HOST_PROFILE=../cmake/profile/linux_sycl
+cmake -S. -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx -D PFFDTD_ENABLE_SYCL_ONEAPI=ON -D CMAKE_PROJECT_TOP_LEVEL_INCLUDES=external/cmake-conan/conan_provider.cmake -D CONAN_HOST_PROFILE=../cmake/profile/linux_sycl
 cmake --build build
 
 # Using hyper-threads is usally a slow down. Use the number of physical cores.
@@ -92,5 +92,5 @@ Currently not supported. Has issues building HDF5 from source via conan.
 # Or: Set environment variables
 . 'C:\Program Files (x86)\Intel\oneAPI\setvars.bat'
 
-cmake -S . -B build -G Ninja -D PFFDTD_ENABLE_INTEL_SYCL=ON -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icx -D CMAKE_PROJECT_TOP_LEVEL_INCLUDES=external/cmake-conan/conan_provider.cmake -D CONAN_HOST_PROFILE=../cmake/profile/windows_sycl
+cmake -S . -B build -G Ninja -D PFFDTD_ENABLE_SYCL_ONEAPI=ON -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icx -D CMAKE_PROJECT_TOP_LEVEL_INCLUDES=external/cmake-conan/conan_provider.cmake -D CONAN_HOST_PROFILE=../cmake/profile/windows_sycl
 ```
