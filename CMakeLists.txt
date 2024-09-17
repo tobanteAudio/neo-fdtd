@@ -1,12 +1,16 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2024 Tobias Hienzsch
-
 cmake_minimum_required(VERSION 3.24)
-project(pffdtd VERSION 1.0.0 LANGUAGES C CXX)
 
 option(PFFDTD_ENABLE_ACPP_SYCL "Build with AdaptiveCpp SYCL" OFF)
 option(PFFDTD_ENABLE_INTEL_SYCL "Build with Intel SYCL" OFF)
 option(PFFDTD_ENABLE_CUDA "Build with CUDA" OFF)
+
+find_program(CCACHE ccache)
+if (CCACHE)
+    set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE})
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE})
+endif ()
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -20,6 +24,8 @@ if(PFFDTD_ENABLE_CUDA)
     enable_language(CUDA)
     set(CMAKE_CUDA_STANDARD 20)
 endif()
+
+project(pffdtd VERSION 0.1.0 LANGUAGES C CXX)
 
 include(FetchContent)
 FetchContent_Declare(mdspan GIT_REPOSITORY "https://github.com/kokkos/mdspan" GIT_TAG "stable" GIT_SHALLOW TRUE)
