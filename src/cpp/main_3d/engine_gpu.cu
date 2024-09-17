@@ -87,7 +87,7 @@ struct DeviceData { // for or on gpu (arrays all on GPU)
   int8_t* mat_bnl;
   int8_t* K_bn;
   Real* mat_beta;
-  pffdtd::MatQuad* mat_quads;
+  pffdtd::MatQuad<Real>* mat_quads;
   Real* u0;
   Real* u1;
   Real* u0b;
@@ -159,7 +159,7 @@ __global__ void KernelBoundaryFD(
     Real const* ssaf_bnl,
     int8_t const* mat_bnl,
     Real const* __restrict__ mat_beta,
-    pffdtd::MatQuad const* __restrict__ mat_quads
+    pffdtd::MatQuad<Real> const* __restrict__ mat_quads
 );
 __global__ void AddIn(Real* u0, Real sample);
 __global__ void CopyToGridKernel(Real* u, Real const* buffer, int64_t const* locs, int64_t N);
@@ -363,7 +363,7 @@ __global__ void KernelBoundaryFD(
     Real const* ssaf_bnl,
     int8_t const* mat_bnl,
     Real const* __restrict__ mat_beta,
-    pffdtd::MatQuad const* __restrict__ mat_quads
+    pffdtd::MatQuad<Real> const* __restrict__ mat_quads
 ) {
   int64_t nb = blockIdx.x * cuBb + threadIdx.x;
   if (nb < cuNbl) {
@@ -384,7 +384,7 @@ __global__ void KernelBoundaryFD(
     for (int8_t m = 0; m < cuMb[k]; m++) { // faster on average than MMb
       int64_t nbm = m * cuNbl + nb;
       int32_t mbk = k * MMb + m;
-      pffdtd::MatQuad const* tm;
+      pffdtd::MatQuad<Real> const* tm;
       tm        = &(mat_quads[mbk]);
       vh1int[m] = vh1[nbm];
       gh1int[m] = gh1[nbm];
@@ -396,7 +396,7 @@ __global__ void KernelBoundaryFD(
     for (int8_t m = 0; m < cuMb[k]; m++) { // faster on average than MMb
       int64_t nbm = m * cuNbl + nb;
       int32_t mbk = k * MMb + m;
-      pffdtd::MatQuad const* tm;
+      pffdtd::MatQuad<Real> const* tm;
       tm        = &(mat_quads[mbk]);
       Real vh0m = (tm->b) * du + (tm->bd) * vh1int[m] - _2 * (tm->bFh) * gh1int[m];
       gh1[nbm]  = gh1int[m] + (vh0m + vh1int[m]) / _2;
@@ -879,10 +879,13 @@ double run(pffdtd::Simulation3D const& sim) {
     gpuErrchk(cudaMalloc(&(gd->mat_beta), (size_t)sim.Nm * sizeof(Real)));
     gpuErrchk(cudaMemcpy(gd->mat_beta, sim.mat_beta, (size_t)sim.Nm * sizeof(Real), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->mat_quads), (size_t)sim.Nm * MMb * sizeof(pffdtd::MatQuad)));
-    gpuErrchk(
-        cudaMemcpy(gd->mat_quads, sim.mat_quads, (size_t)sim.Nm * MMb * sizeof(pffdtd::MatQuad), cudaMemcpyHostToDevice)
-    );
+    gpuErrchk(cudaMalloc(&(gd->mat_quads), (size_t)sim.Nm * MMb * sizeof(pffdtd::MatQuad<Real>)));
+    gpuErrchk(cudaMemcpy(
+        gd->mat_quads,
+        sim.mat_quads,
+        (size_t)sim.Nm * MMb * sizeof(pffdtd::MatQuad<Real>),
+        cudaMemcpyHostToDevice
+    ));
 
     gpuErrchk(cudaMalloc(&(gd->bn_mask), (size_t)(ghd->Nbm * sizeof(uint8_t))));
     gpuErrchk(cudaMemcpy(gd->bn_mask, ghd->bn_mask, (size_t)ghd->Nbm * sizeof(uint8_t), cudaMemcpyHostToDevice));

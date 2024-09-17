@@ -67,7 +67,7 @@ namespace pffdtd {
   int8_t NN;
   int8_t* Mb;
   int8_t Nm;
-  MatQuad* mat_quads;
+  MatQuad<Real>* mat_quads;
   Real* mat_beta; // one per material
 
   double Ts;
@@ -334,8 +334,7 @@ namespace pffdtd {
   //////////////////
   // DEF (RLC) datasets
   //////////////////
-  allocate_zeros((void**)&mat_quads,
-                 static_cast<unsigned long>(Nm * MMb) * sizeof(MatQuad)); // initalises to zero
+  allocate_zeros((void**)&mat_quads, static_cast<unsigned long>(Nm * MMb) * sizeof(MatQuad<Real>));
   allocate_zeros((void**)&mat_beta, Nm * sizeof(Real));
   for (int8_t i = 0; i < Nm; i++) {
     double* DEF; // for one material

@@ -21,52 +21,51 @@ namespace {
 
 // function that does freq-dep RLC boundaries.  See 2016 ISMRA paper and
 // accompanying webpage (slightly improved here)
+template<typename Float>
 double process_bnl_pts_fd(
-    Real* u0b,
-    Real const* u2b,
-    Real const* ssaf_bnl,
+    Float* u0b,
+    Float const* u2b,
+    Float const* ssaf_bnl,
     int8_t const* mat_bnl,
     int64_t Nbl,
     int8_t* Mb,
-    Real lo2,
-    Real* vh1,
-    Real* gh1,
-    MatQuad const* mat_quads,
-    Real const* mat_beta
+    Float lo2,
+    Float* vh1,
+    Float* gh1,
+    MatQuad<Float> const* mat_quads,
+    Float const* mat_beta
 ) {
   auto const start = omp_get_wtime();
 #pragma omp parallel for schedule(static)
   for (int64_t nb = 0; nb < Nbl; nb++) {
-    Real _1   = 1.0;
-    Real _2   = 2.0;
+    Float _1  = 1.0;
+    Float _2  = 2.0;
     int32_t k = mat_bnl[nb];
 
-    Real lo2Kbg = lo2 * ssaf_bnl[nb] * mat_beta[k];
-    Real fac    = _2 * lo2 * ssaf_bnl[nb] / (_1 + lo2Kbg);
+    Float lo2Kbg = lo2 * ssaf_bnl[nb] * mat_beta[k];
+    Float fac    = _2 * lo2 * ssaf_bnl[nb] / (_1 + lo2Kbg);
 
-    Real u0bint = u0b[nb];
-    Real u2bint = u2b[nb];
+    Float u0bint = u0b[nb];
+    Float u2bint = u2b[nb];
 
     u0bint = (u0bint + lo2Kbg * u2bint) / (_1 + lo2Kbg);
 
-    Real vh1nb[MMb];
+    Float vh1nb[MMb];
     for (int8_t m = 0; m < Mb[k]; m++) {
-      int64_t nbm = nb * MMb + m;
-      int32_t mbk = k * MMb + m;
-      MatQuad const* tm;
-      tm       = &(mat_quads[mbk]);
-      vh1nb[m] = vh1[nbm];
+      int64_t nbm              = nb * MMb + m;
+      int32_t mbk              = k * MMb + m;
+      MatQuad<Float> const* tm = &(mat_quads[mbk]);
+      vh1nb[m]                 = vh1[nbm];
       u0bint -= fac * (_2 * (tm->bDh) * vh1nb[m] - (tm->bFh) * gh1[nbm]);
     }
 
-    Real du = u0bint - u2bint;
+    Float du = u0bint - u2bint;
 
     for (int8_t m = 0; m < Mb[k]; m++) {
-      int64_t nbm = nb * MMb + m;
-      int32_t mbk = k * MMb + m;
-      MatQuad const* tm;
-      tm          = &(mat_quads[mbk]);
-      Real vh0nbm = (tm->b) * du + (tm->bd) * vh1nb[m] - _2 * (tm->bFh) * gh1[nbm];
+      int64_t nbm              = nb * MMb + m;
+      int32_t mbk              = k * MMb + m;
+      MatQuad<Float> const* tm = &(mat_quads[mbk]);
+      Float vh0nbm             = (tm->b) * du + (tm->bd) * vh1nb[m] - _2 * (tm->bFh) * gh1[nbm];
       gh1[nbm] += (vh0nbm + vh1nb[m]) / _2;
       vh1[nbm] = vh0nbm;
     }
@@ -93,21 +92,21 @@ auto run(Simulation3D& sd) -> double {
   int8_t* Mb   = sd.Mb;
 
   // keep local copies of pointers (style choice)
-  int64_t* bn_ixyz   = sd.bn_ixyz;
-  int64_t* bnl_ixyz  = sd.bnl_ixyz;
-  int64_t* bna_ixyz  = sd.bna_ixyz;
-  int64_t* in_ixyz   = sd.in_ixyz;
-  int64_t* out_ixyz  = sd.out_ixyz;
-  uint16_t* adj_bn   = sd.adj_bn;
-  uint8_t* bn_mask   = sd.bn_mask;
-  int8_t* mat_bnl    = sd.mat_bnl;
-  int8_t* Q_bna      = sd.Q_bna;
-  double* in_sigs    = sd.in_sigs;
-  double* u_out      = sd.u_out;
-  int8_t fcc_flag    = sd.fcc_flag;
-  Real* ssaf_bnl     = sd.ssaf_bnl;
-  Real* mat_beta     = sd.mat_beta;
-  MatQuad* mat_quads = sd.mat_quads;
+  int64_t* bn_ixyz         = sd.bn_ixyz;
+  int64_t* bnl_ixyz        = sd.bnl_ixyz;
+  int64_t* bna_ixyz        = sd.bna_ixyz;
+  int64_t* in_ixyz         = sd.in_ixyz;
+  int64_t* out_ixyz        = sd.out_ixyz;
+  uint16_t* adj_bn         = sd.adj_bn;
+  uint8_t* bn_mask         = sd.bn_mask;
+  int8_t* mat_bnl          = sd.mat_bnl;
+  int8_t* Q_bna            = sd.Q_bna;
+  double* in_sigs          = sd.in_sigs;
+  double* u_out            = sd.u_out;
+  int8_t fcc_flag          = sd.fcc_flag;
+  Real* ssaf_bnl           = sd.ssaf_bnl;
+  Real* mat_beta           = sd.mat_beta;
+  MatQuad<Real>* mat_quads = sd.mat_quads;
 
   // allocate memory
   auto u0_buf   = std::vector<Real>(static_cast<size_t>(Npts));
