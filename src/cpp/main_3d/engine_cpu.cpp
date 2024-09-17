@@ -22,25 +22,25 @@ namespace {
 // function that does freq-dep RLC boundaries.  See 2016 ISMRA paper and
 // accompanying webpage (slightly improved here)
 template<typename Float>
-double process_bnl_pts_fd(
+auto process_bnl_pts_fd(
     Float* u0b,
     Float const* u2b,
     Float const* ssaf_bnl,
     int8_t const* mat_bnl,
     int64_t Nbl,
-    int8_t* Mb,
+    int8_t const* Mb,
     Float lo2,
     Float* vh1,
     Float* gh1,
     MatQuad<Float> const* mat_quads,
     Float const* mat_beta
-) {
+) -> double {
   auto const start = omp_get_wtime();
 #pragma omp parallel for schedule(static)
   for (int64_t nb = 0; nb < Nbl; nb++) {
-    Float _1  = 1.0;
-    Float _2  = 2.0;
-    int32_t k = mat_bnl[nb];
+    Float _1        = 1.0;
+    Float _2        = 2.0;
+    int32_t const k = mat_bnl[nb];
 
     Float lo2Kbg = lo2 * ssaf_bnl[nb] * mat_beta[k];
     Float fac    = _2 * lo2 * ssaf_bnl[nb] / (_1 + lo2Kbg);
@@ -52,8 +52,8 @@ double process_bnl_pts_fd(
 
     Float vh1nb[MMb];
     for (int8_t m = 0; m < Mb[k]; m++) {
-      int64_t nbm              = nb * MMb + m;
-      int32_t mbk              = k * MMb + m;
+      int64_t const nbm        = nb * MMb + m;
+      int32_t const mbk        = k * MMb + m;
       MatQuad<Float> const* tm = &(mat_quads[mbk]);
       vh1nb[m]                 = vh1[nbm];
       u0bint -= fac * (_2 * (tm->bDh) * vh1nb[m] - (tm->bFh) * gh1[nbm]);
@@ -62,8 +62,8 @@ double process_bnl_pts_fd(
     Float du = u0bint - u2bint;
 
     for (int8_t m = 0; m < Mb[k]; m++) {
-      int64_t nbm              = nb * MMb + m;
-      int32_t mbk              = k * MMb + m;
+      int64_t const nbm        = nb * MMb + m;
+      int32_t const mbk        = k * MMb + m;
       MatQuad<Float> const* tm = &(mat_quads[mbk]);
       Float vh0nbm             = (tm->b) * du + (tm->bd) * vh1nb[m] - _2 * (tm->bFh) * gh1[nbm];
       gh1[nbm] += (vh0nbm + vh1nb[m]) / _2;
@@ -79,17 +79,17 @@ double process_bnl_pts_fd(
 
 auto run(Simulation3D& sd) -> double {
   // keep local ints, scalars
-  int64_t Ns   = sd.Ns;
-  int64_t Nr   = sd.Nr;
-  int64_t Nt   = sd.Nt;
-  int64_t Npts = sd.Npts;
-  int64_t Nx   = sd.Nx;
-  int64_t Ny   = sd.Ny;
-  int64_t Nz   = sd.Nz;
-  int64_t Nb   = sd.Nb;
-  int64_t Nbl  = sd.Nbl;
-  int64_t Nba  = sd.Nba;
-  int8_t* Mb   = sd.Mb;
+  int64_t const Ns   = sd.Ns;
+  int64_t const Nr   = sd.Nr;
+  int64_t const Nt   = sd.Nt;
+  int64_t const Npts = sd.Npts;
+  int64_t const Nx   = sd.Nx;
+  int64_t const Ny   = sd.Ny;
+  int64_t const Nz   = sd.Nz;
+  int64_t const Nb   = sd.Nb;
+  int64_t const Nbl  = sd.Nbl;
+  int64_t const Nba  = sd.Nba;
+  int8_t* Mb         = sd.Mb;
 
   // keep local copies of pointers (style choice)
   int64_t* bn_ixyz         = sd.bn_ixyz;
@@ -128,28 +128,28 @@ auto run(Simulation3D& sd) -> double {
   Real* gh1  = gh1_buf.data();
 
   // sim coefficients
-  Real lo2 = sd.lo2;
-  Real sl2 = sd.sl2;
-  Real l   = sd.l;
-  Real a1  = sd.a1;
-  Real a2  = sd.a2;
+  Real const lo2 = sd.lo2;
+  Real const sl2 = sd.sl2;
+  Real const l   = sd.l;
+  Real const a1  = sd.a1;
+  Real const a2  = sd.a2;
 
   // can control outside with OMP_NUM_THREADS env variable
-  int numWorkers = omp_get_max_threads();
+  int const numWorkers = omp_get_max_threads();
 
   fmt::println("ENGINE: fcc_flag={}", fcc_flag);
   fmt::println("{}", (fcc_flag > 0) ? "fcc=true" : "fcc=false");
 
   // for timing
-  double timeElapsed;
-  double timeElapsedAir = 0.0;
-  double timeElapsedBn  = 0.0;
-  double timeElapsedSample;
+  double timeElapsed           = NAN;
+  double timeElapsedAir        = 0.0;
+  double timeElapsedBn         = 0.0;
+  double timeElapsedSample     = NAN;
   double timeElapsedSample_air = 0.0;
   double timeElapsedSampleBn   = 0.0;
-  double startTime             = omp_get_wtime();
+  double const startTime       = omp_get_wtime();
 
-  int64_t NzNy = Nz * Ny;
+  int64_t const NzNy = Nz * Ny;
   for (int64_t n = 0; n < Nt; n++) {
     auto const sampleStartTime = omp_get_wtime();
 
@@ -203,8 +203,8 @@ auto run(Simulation3D& sd) -> double {
       for (int64_t ix = 1; ix < Nx - 1; ix++) {
         for (int64_t iy = 1; iy < Ny - 1; iy++) {
           for (int64_t iz = 1; iz < Nz - 1; iz++) { // contiguous
-            int64_t ii = ix * NzNy + iy * Nz + iz;
-            if (!(GET_BIT(bn_mask[ii >> 3], ii % 8))) {
+            int64_t const ii = ix * NzNy + iy * Nz + iz;
+            if ((GET_BIT(bn_mask[ii >> 3], ii % 8)) == 0) {
               Real partial = a1 * u1[ii] - u0[ii];
               partial += a2 * u1[ii + NzNy];
               partial += a2 * u1[ii - NzNy];
@@ -224,8 +224,8 @@ auto run(Simulation3D& sd) -> double {
           // while loop iterates iterates over both types of FCC grids
           int64_t iz = (fcc_flag == 1) ? 2 - (ix + iy) % 2 : 1;
           while (iz < Nz - 1) {
-            int64_t ii = ix * NzNy + iy * Nz + iz;
-            if (!(GET_BIT(bn_mask[ii >> 3], ii % 8))) {
+            int64_t const ii = ix * NzNy + iy * Nz + iz;
+            if ((GET_BIT(bn_mask[ii >> 3], ii % 8)) == 0) {
               Real partial = a1 * u1[ii] - u0[ii];
               partial += a2 * u1[ii + NzNy + Nz];
               partial += a2 * u1[ii - NzNy - Nz];
@@ -248,9 +248,9 @@ auto run(Simulation3D& sd) -> double {
     }
     // ABC loss (2nd-order accurate first-order Engquist-Majda)
     for (int64_t nb = 0; nb < Nba; nb++) {
-      Real lQ    = l * Q_bna[nb];
-      int64_t ib = bna_ixyz[nb];
-      u0[ib]     = (u0[ib] + lQ * u2ba[nb]) / (1.0 + lQ);
+      Real const lQ    = l * Q_bna[nb];
+      int64_t const ib = bna_ixyz[nb];
+      u0[ib]           = (u0[ib] + lQ * u2ba[nb]) / (1.0 + lQ);
     }
 
     // rigid boundary nodes, using adj data
@@ -259,19 +259,20 @@ auto run(Simulation3D& sd) -> double {
     if (fcc_flag == 0) {
 #pragma omp parallel for
       for (int64_t nb = 0; nb < Nb; nb++) {
-        int64_t ii = bn_ixyz[nb];
-        uint8_t Kint;
-        uint16_t v = adj_bn[nb];
-        for (Kint = 0; v; Kint++)
+        int64_t const ii = bn_ixyz[nb];
+        uint8_t Kint     = 0;
+        uint16_t v       = adj_bn[nb];
+        for (Kint = 0; v != 0U; Kint++) {
           v &= v - 1; // clear the least significant bit set
+        }
 
-        Real _2 = 2.0;
-        Real K  = Kint;
-        Real b2 = a2;
-        Real b1 = (_2 - sl2 * K);
+        Real const _2 = 2.0;
+        Real const K  = Kint;
+        Real const b2 = a2;
+        Real const b1 = (_2 - sl2 * K);
 
-        Real partial = b1 * u1[ii] - u0[ii];
-        uint16_t adj = adj_bn[nb];
+        Real partial       = b1 * u1[ii] - u0[ii];
+        uint16_t const adj = adj_bn[nb];
         partial += b2 * (Real)GET_BIT(adj, 0) * u1[ii + NzNy];
         partial += b2 * (Real)GET_BIT(adj, 1) * u1[ii - NzNy];
         partial += b2 * (Real)GET_BIT(adj, 2) * u1[ii + Nz];
@@ -283,19 +284,20 @@ auto run(Simulation3D& sd) -> double {
     } else if (fcc_flag > 0) {
 #pragma omp parallel for
       for (int64_t nb = 0; nb < Nb; nb++) {
-        int64_t ii = bn_ixyz[nb];
-        uint8_t Kint;
-        uint16_t v = adj_bn[nb];
-        for (Kint = 0; v; Kint++)
+        int64_t const ii = bn_ixyz[nb];
+        uint8_t Kint     = 0;
+        uint16_t v       = adj_bn[nb];
+        for (Kint = 0; v != 0U; Kint++) {
           v &= v - 1; // clear the least significant bit set
+        }
 
-        Real _2 = 2.0;
-        Real K  = Kint;
-        Real b2 = a2;
-        Real b1 = (_2 - sl2 * K);
+        Real const _2 = 2.0;
+        Real const K  = Kint;
+        Real const b2 = a2;
+        Real const b1 = (_2 - sl2 * K);
 
-        Real partial = b1 * u1[ii] - u0[ii];
-        uint16_t adj = adj_bn[nb];
+        Real partial       = b1 * u1[ii] - u0[ii];
+        uint16_t const adj = adj_bn[nb];
         partial += b2 * (Real)GET_BIT(adj, 0) * u1[ii + NzNy + Nz];
         partial += b2 * (Real)GET_BIT(adj, 1) * u1[ii - NzNy - Nz];
         partial += b2 * (Real)GET_BIT(adj, 2) * u1[ii + Nz + 1];
@@ -328,21 +330,21 @@ auto run(Simulation3D& sd) -> double {
 
     // read output at current sample
     for (int64_t nr = 0; nr < Nr; nr++) {
-      int64_t ii         = out_ixyz[nr];
+      int64_t const ii   = out_ixyz[nr];
       u_out[nr * Nt + n] = (double)u1[ii];
     }
 
     // add current sample to next (as per update)
     for (int64_t ns = 0; ns < Ns; ns++) {
-      int64_t ii = in_ixyz[ns];
+      int64_t const ii = in_ixyz[ns];
       u0[ii] += (Real)in_sigs[ns * Nt + n];
     }
 
     // swap pointers
-    Real* tmp_ptr;
-    tmp_ptr = u1;
-    u1      = u0;
-    u0      = tmp_ptr;
+    Real* tmp_ptr = nullptr;
+    tmp_ptr       = u1;
+    u1            = u0;
+    u0            = tmp_ptr;
 
     // using extra state here for simplicity
     tmp_ptr = u2b;

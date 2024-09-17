@@ -76,7 +76,7 @@ void scaleInput(Simulation3D& sim);
 void rescaleOutput(Simulation3D& sim);
 void writeOutputs(Simulation3D& sim, std::filesystem::path const& simDir);
 
-void readH5Dataset(hid_t file, char* dset_str, int ndims, hsize_t* dims, void** data_array, DataType t);
+void readH5Dataset(hid_t file, char* dset_str, int ndims, hsize_t* dims, void** out_array, DataType t);
 void readH5Constant(hid_t file, char* dset_str, void* out, DataType t);
 
 } // namespace pffdtd

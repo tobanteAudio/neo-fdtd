@@ -4,41 +4,58 @@
 Checks: >
   *-,
 
-  -bugprone-*,
-  -bugprone-macro-parentheses,
+  bugprone-*,
+  -bugprone-branch-clone,
   -bugprone-easily-swappable-parameters,
+  -bugprone-exception-escape,
+  -bugprone-macro-parentheses,
   -bugprone-narrowing-conversions,
+  -bugprone-signed-char-misuse,
 
-  -cert-*,
+  cert-*,
+  -cert-dcl03-c,
+  -cert-err33-c,
   -cert-err58-cpp,
   -cert-oop54-cpp,
+  -cert-str34-c,
 
-  -clang-analyzer-*,
-  -clang-diagnostics-*,
+  clang-analyzer-*,
+  clang-diagnostics-*,
+  concurrency-*,
 
-  -concurrency-*,
-
-  -cppcoreguidelines-*,
+  cppcoreguidelines-*,
   -cppcoreguidelines-avoid-magic-numbers,
   -cppcoreguidelines-avoid-const-or-ref-data-members,
+  -cppcoreguidelines-pro-type-cstyle-cast,
+  -cppcoreguidelines-narrowing-conversions,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
   -cppcoreguidelines-pro-bounds-constant-array-index,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-owning-memory,
 
-  -hicpp-*,
+  hicpp-*,
+  -hicpp-no-array-decay,
+  -hicpp-signed-bitwise,
 
-  -misc-*,
+  misc-*,
+  -misc-include-cleaner,
+  -misc-use-anonymous-namespace,
 
-  -modernize-*,
-
+  modernize-*,
   performance-*,
 
-  -readability-*,
-  -readability-identifier-naming,
-  -readability-const-return-type,
+  readability-*,
+  -readability-function-cognitive-complexity,
   -readability-identifier-length,
+  -readability-identifier-naming,
   -readability-magic-numbers,
 
+  -*-avoid-c-arrays,
+  -*-no-malloc,
   -*-non-private-member-variables-in-classes,
   -*-special-member-functions,
+  -*-static-assert,
+  -*-vararg,
 
 WarningsAsErrors: "*"
 FormatStyle: none

@@ -22,11 +22,11 @@
 
 struct Arguments {
   std::string engine{"native"};
-  std::string simDir{};
+  std::string simDir;
   std::string out{"out.h5"};
 };
 
-int main(int argc, char** argv) {
+auto main(int argc, char** argv) -> int {
   auto app  = CLI::App{"pffdtd-2d"};
   auto args = Arguments{};
   app.add_option("-e,--engine", args.engine);
@@ -42,7 +42,8 @@ int main(int argc, char** argv) {
       fmt::println("Using engine: NATIVE");
       auto const engine = pffdtd::EngineNative{};
       return engine(sim);
-    } else if (args.engine == "sycl") {
+    }
+    if (args.engine == "sycl") {
 #if defined(PFFDTD_HAS_SYCL)
       fmt::println("Using engine: SYCL");
       auto const engine = pffdtd::EngineSYCL{};
@@ -50,9 +51,9 @@ int main(int argc, char** argv) {
 #else
       pffdtd::raisef<std::runtime_error>("pffdtd built without SYCL support");
 #endif
-    } else {
-      pffdtd::raisef<std::runtime_error>("invalid engine '{}'", args.engine);
     }
+
+    pffdtd::raisef<std::runtime_error>("invalid engine '{}'", args.engine);
   }();
 
   auto results = pffdtd::H5FWriter{simDir / args.out};

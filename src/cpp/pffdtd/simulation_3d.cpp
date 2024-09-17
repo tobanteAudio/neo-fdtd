@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <numbers>
 
 namespace {
 
@@ -32,7 +33,9 @@ void ind2sub3d(int64_t idx, int64_t Nx, int64_t Ny, int64_t Nz, int64_t* ix, int
 // double check some index inside grid
 void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t Nz) {
   for (int64_t i = 0; i < N; i++) {
-    int64_t iz, iy, ix;
+    int64_t iz = 0;
+    int64_t iy = 0;
+    int64_t ix = 0;
     ind2sub3d(idx[i], Nx, Ny, Nz, &ix, &iy, &iz);
   }
 }
@@ -43,39 +46,49 @@ namespace pffdtd {
 // load the sim data from Python-written HDF5 files
 [[nodiscard]] auto loadSimulation3D(std::filesystem::path const& simDir) -> Simulation3D {
   // local values, to read in and attach to struct at end
-  int64_t Nx, Ny, Nz;
-  int64_t Nb, Nbl, Nba;
-  int64_t Npts;
-  int64_t Ns, Nr, Nt;
-  int64_t* bn_ixyz;
-  int64_t* bnl_ixyz;
-  int64_t* bna_ixyz;
-  int8_t* Q_bna;
-  int64_t *in_ixyz, *out_ixyz, *out_reorder;
-  bool* adj_bn_bool;
-  int8_t* K_bn;
-  uint16_t* adj_bn; // large enough for FCC
-  uint8_t* bn_mask;
-  int8_t *mat_bn, *mat_bnl;
-  double* saf_bn;
-  Real *ssaf_bn, *ssaf_bnl;
-  double* in_sigs;
-  double* u_out;
-  double l;
-  double l2;
-  int8_t fcc_flag;
-  int8_t NN;
-  int8_t* Mb;
-  int8_t Nm;
-  MatQuad<Real>* mat_quads;
-  Real* mat_beta; // one per material
+  int64_t Nx               = 0;
+  int64_t Ny               = 0;
+  int64_t Nz               = 0;
+  int64_t Nb               = 0;
+  int64_t Nbl              = 0;
+  int64_t Nba              = 0;
+  int64_t Npts             = 0;
+  int64_t Ns               = 0;
+  int64_t Nr               = 0;
+  int64_t Nt               = 0;
+  int64_t* bn_ixyz         = nullptr;
+  int64_t* bnl_ixyz        = nullptr;
+  int64_t* bna_ixyz        = nullptr;
+  int8_t* Q_bna            = nullptr;
+  int64_t* in_ixyz         = nullptr;
+  int64_t* out_ixyz        = nullptr;
+  int64_t* out_reorder     = nullptr;
+  bool* adj_bn_bool        = nullptr;
+  int8_t* K_bn             = nullptr;
+  uint16_t* adj_bn         = nullptr; // large enough for FCC
+  uint8_t* bn_mask         = nullptr;
+  int8_t* mat_bn           = nullptr;
+  int8_t* mat_bnl          = nullptr;
+  double* saf_bn           = nullptr;
+  Real* ssaf_bn            = nullptr;
+  Real* ssaf_bnl           = nullptr;
+  double* in_sigs          = nullptr;
+  double* u_out            = nullptr;
+  double l                 = NAN;
+  double l2                = NAN;
+  int8_t fcc_flag          = 0;
+  int8_t NN                = 0;
+  int8_t* Mb               = nullptr;
+  int8_t Nm                = 0;
+  MatQuad<Real>* mat_quads = nullptr;
+  Real* mat_beta           = nullptr; // one per material
 
-  double Ts;
-  bool diff;
+  double Ts = NAN;
+  bool diff = false;
 
-  hid_t file;      // HDF5 type
+  hid_t file = 0;  // HDF5 type
   hsize_t dims[2]; // HDF5 type
-  int expected_ndims;
+  int expected_ndims = 0;
   char dset_str[80];
   // char filename[80];
 
@@ -85,8 +98,9 @@ namespace pffdtd {
   //
   ////////////////////////////////////////////////////////////////////////
   auto filename = simDir / "constants.h5";
-  if (not std::filesystem::exists(filename))
+  if (not std::filesystem::exists(filename)) {
     PFFDTD_ASSERT(true == false);
+  }
 
   file = H5Fopen(filename.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 
@@ -113,8 +127,9 @@ namespace pffdtd {
   if (H5Fclose(file) != 0) {
     fmt::println("error closing file {}", filename.string());
     PFFDTD_ASSERT(true == false);
-  } else
+  } else {
     fmt::println("closed file {}", filename.string());
+  }
 
   if (fcc_flag > 0) { // FCC (1 is CPU-based, 2 is CPU or GPU)
     PFFDTD_ASSERT(l2 <= 1.0);
@@ -127,15 +142,15 @@ namespace pffdtd {
   }
 
   // calculate some update coefficients
-  double lfac = (fcc_flag > 0) ? 0.25 : 1.0; // laplacian factor
-  double dsl2 = (1.0 + EPS) * lfac * l2;     // scale for stability (EPS in fdtd_common.hpp)
-  double da1  = (2.0 - dsl2 * NN);           // scaling for stability in single
-  double da2  = lfac * l2;
+  double const lfac = (fcc_flag > 0) ? 0.25 : 1.0; // laplacian factor
+  double const dsl2 = (1.0 + EPS) * lfac * l2;     // scale for stability (EPS in fdtd_common.hpp)
+  double const da1  = (2.0 - dsl2 * NN);           // scaling for stability in single
+  double const da2  = lfac * l2;
   // Real is defined in fdtd_common.hpp (float or double)
-  Real a1  = da1;
-  Real a2  = da2;
-  Real sl2 = dsl2;
-  Real lo2 = 0.5 * l;
+  Real const a1  = da1;
+  Real const a2  = da2;
+  Real const sl2 = dsl2;
+  Real const lo2 = 0.5 * l;
 
   printf("a2 (double): %.16g\n", da2);
   printf("a2 (Real): %.16g\n", a2);
@@ -153,8 +168,9 @@ namespace pffdtd {
   //
   ////////////////////////////////////////////////////////////////////////
   filename = simDir / "vox_out.h5";
-  if (not std::filesystem::exists(filename))
+  if (not std::filesystem::exists(filename)) {
     PFFDTD_ASSERT(true == false);
+  }
 
   file = H5Fopen(filename.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 
@@ -215,18 +231,20 @@ namespace pffdtd {
 
   allocate_zeros((void**)&ssaf_bn, Nb * sizeof(Real));
   for (int64_t i = 0; i < Nb; i++) {
-    if (fcc_flag > 0)
-      ssaf_bn[i] = (Real)(0.5 / sqrt(2.0)) * saf_bn[i]; // rescale for S*h/V and cast
-    else
+    if (fcc_flag > 0) {
+      ssaf_bn[i] = (Real)(0.5 / std::numbers::sqrt2) * saf_bn[i]; // rescale for S*h/V and cast
+    } else {
       ssaf_bn[i] = (Real)saf_bn[i]; // just cast
+    }
   }
   free(saf_bn);
 
   if (H5Fclose(file) != 0) {
     fmt::println("error closing file {}", filename.string());
     PFFDTD_ASSERT(true == false);
-  } else
+  } else {
     fmt::println("closed file {}", filename.string());
+  }
 
   ////////////////////////////////////////////////////////////////////////
   //
@@ -234,8 +252,9 @@ namespace pffdtd {
   //
   ////////////////////////////////////////////////////////////////////////
   filename = simDir / "signals.h5";
-  if (not std::filesystem::exists(filename))
+  if (not std::filesystem::exists(filename)) {
     PFFDTD_ASSERT(true == false);
+  }
 
   file = H5Fopen(filename.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 
@@ -260,7 +279,7 @@ namespace pffdtd {
 
   strcpy(dset_str, "diff");
   readH5Constant(file, dset_str, (void*)&diff, BOOL);
-  printf("diff=%d\n", diff);
+  printf("diff=%d\n", static_cast<int>(diff));
 
   //////////////////
   // in_ixyz dataset
@@ -295,12 +314,14 @@ namespace pffdtd {
   if (H5Fclose(file) != 0) {
     fmt::println("error closing file {}", filename.string());
     PFFDTD_ASSERT(true == false);
-  } else
+  } else {
     fmt::println("closed file {}", filename.string());
+  }
 
   // not recommended to run single without differentiating input
-  if (sizeof(Real) == 4)
+  if (sizeof(Real) == 4) {
     PFFDTD_ASSERT(diff);
+  }
 
   ////////////////////////////////////////////////////////////////////////
   //
@@ -308,8 +329,9 @@ namespace pffdtd {
   //
   ////////////////////////////////////////////////////////////////////////
   filename = simDir / "materials.h5";
-  if (not std::filesystem::exists(filename))
+  if (not std::filesystem::exists(filename)) {
     PFFDTD_ASSERT(true == false);
+  }
 
   file = H5Fopen(filename.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 
@@ -337,7 +359,7 @@ namespace pffdtd {
   allocate_zeros((void**)&mat_quads, static_cast<unsigned long>(Nm * MMb) * sizeof(MatQuad<Real>));
   allocate_zeros((void**)&mat_beta, Nm * sizeof(Real));
   for (int8_t i = 0; i < Nm; i++) {
-    double* DEF; // for one material
+    double* DEF = nullptr; // for one material
     // sprintf(dset_str, "mat_%02d_DEF", i);
     auto id        = fmt::format("mat_{:02d}_DEF", i);
     expected_ndims = 2;
@@ -347,26 +369,26 @@ namespace pffdtd {
     PFFDTD_ASSERT(Mb[i] <= MMb);
 
     for (int8_t j = 0; j < Mb[i]; j++) {
-      double D = DEF[j * 3 + 0];
-      double E = DEF[j * 3 + 1];
-      double F = DEF[j * 3 + 2];
+      double const D = DEF[j * 3 + 0];
+      double const E = DEF[j * 3 + 1];
+      double const F = DEF[j * 3 + 2];
       printf("DEF[%d,%d]=[%.16g, %.16g, %.16g] \n", i, j, D, E, F);
 
       // see 2016 ISMRA paper
-      double Dh = D / Ts;
-      double Eh = E;
-      double Fh = F * Ts;
+      double const Dh = D / Ts;
+      double const Eh = E;
+      double const Fh = F * Ts;
 
-      double b   = 1.0 / (2.0 * Dh + Eh + 0.5 * Fh);
-      double bd  = b * (2.0 * Dh - Eh - 0.5 * Fh);
-      double bDh = b * Dh;
-      double bFh = b * Fh;
+      double const b   = 1.0 / (2.0 * Dh + Eh + 0.5 * Fh);
+      double const bd  = b * (2.0 * Dh - Eh - 0.5 * Fh);
+      double const bDh = b * Dh;
+      double const bFh = b * Fh;
       PFFDTD_ASSERT(not std::isinf(b));
       PFFDTD_ASSERT(not std::isnan(b));
       PFFDTD_ASSERT(not std::isinf(bd));
       PFFDTD_ASSERT(not std::isnan(bd));
 
-      int32_t mij        = (int32_t)MMb * i + j;
+      int32_t const mij  = (int32_t)MMb * i + j;
       mat_quads[mij].b   = (Real)b;
       mat_quads[mij].bd  = (Real)bd;
       mat_quads[mij].bDh = (Real)bDh;
@@ -379,8 +401,9 @@ namespace pffdtd {
   if (H5Fclose(file) != 0) {
     fmt::println("error closing file {}", filename.string());
     PFFDTD_ASSERT(true == false);
-  } else
+  } else {
     fmt::println("closed file {}", filename.string());
+  }
 
   ////////////////////////////////////////////////////////////////////////
   //
@@ -401,13 +424,14 @@ namespace pffdtd {
     bool at_least_one_not_adj = false;
     bool all_not_adj          = true;
     for (int8_t j = 0; j < NN; j++) {
-      bool adj = adj_bn_bool[i * NN + j];
+      bool const adj = adj_bn_bool[i * NN + j];
       at_least_one_not_adj |= !adj;
       all_not_adj &= !adj;
     }
     PFFDTD_ASSERT(at_least_one_not_adj);
-    if (all_not_adj)
+    if (all_not_adj) {
       PFFDTD_ASSERT(mat_bn[i] == -1);
+    }
   }
   printf("checked adj_bn against mat_bn.\n");
 
@@ -448,19 +472,19 @@ namespace pffdtd {
   // bit-pack and check bn_mask
   //////////////////
   // make compressed bit-mask
-  int64_t Nbm = (Npts - 1) / 8 + 1;
+  int64_t const Nbm = (Npts - 1) / 8 + 1;
   allocate_zeros((void**)&bn_mask, Nbm); // one bit per
   for (int64_t i = 0; i < Nb; i++) {
-    int64_t ii = bn_ixyz[i];
+    int64_t const ii = bn_ixyz[i];
     SET_BIT(bn_mask[ii >> 3], ii % 8);
   }
 
   // create bn_mask_raw to double check
-  bool* bn_mask_raw;
+  bool* bn_mask_raw = nullptr;
   allocate_zeros((void**)&bn_mask_raw, Npts * sizeof(bool));
 
   for (int64_t i = 0; i < Nb; i++) {
-    int64_t ii = bn_ixyz[i];
+    int64_t const ii = bn_ixyz[i];
     PFFDTD_ASSERT(ii < Npts);
     bn_mask_raw[ii] = true;
   }
@@ -468,9 +492,10 @@ namespace pffdtd {
 
   for (int64_t j = 0; j < Nbm; j++) {
     for (int64_t q = 0; q < 8; q++) { // avoid race conditions
-      int64_t i = j * 8 + q;
-      if (i < Npts)
+      int64_t const i = j * 8 + q;
+      if (i < Npts) {
         PFFDTD_ASSERT(GET_BIT(bn_mask[i >> 3], i % 8) == bn_mask_raw[i]);
+      }
     }
   }
   printf("bn_mask double checked\n");
@@ -479,7 +504,7 @@ namespace pffdtd {
   // count Nbl
   Nbl = 0;
   for (int64_t i = 0; i < Nb; i++) {
-    Nbl += mat_bn[i] >= 0;
+    Nbl += static_cast<int64_t>(mat_bn[i] >= 0);
   }
   printf("Nbl = %ld\n", static_cast<long>(Nbl));
   allocate_zeros((void**)&mat_bnl, Nbl * sizeof(int8_t));
@@ -503,11 +528,12 @@ namespace pffdtd {
   printf("separated non-rigid bn\n");
 
   // ABC ndoes
-  int64_t Nyf;
-  Nyf = (fcc_flag == 2) ? 2 * (Ny - 1) : Ny; // full Ny dim, taking into account FCC fold
-  Nba = 2 * (Nx * Nyf + Nx * Nz + Nyf * Nz) - 12 * (Nx + Nyf + Nz) + 56;
-  if (fcc_flag > 0)
+  int64_t Nyf = 0;
+  Nyf         = (fcc_flag == 2) ? 2 * (Ny - 1) : Ny; // full Ny dim, taking into account FCC fold
+  Nba         = 2 * (Nx * Nyf + Nx * Nz + Nyf * Nz) - 12 * (Nx + Nyf + Nz) + 56;
+  if (fcc_flag > 0) {
     Nba /= 2;
+  }
 
   allocate_zeros((void**)&bna_ixyz, Nba * sizeof(int64_t));
   allocate_zeros((void**)&Q_bna, Nba * sizeof(int8_t));
@@ -517,13 +543,14 @@ namespace pffdtd {
       for (int64_t iy = 1; iy < Nyf - 1; iy++) {
         for (int64_t iz = 1; iz < Nz - 1; iz++) {
 
-          if ((fcc_flag > 0) && (ix + iy + iz) % 2 == 1)
+          if ((fcc_flag > 0) && (ix + iy + iz) % 2 == 1) {
             continue;
+          }
 
           int8_t Q = 0;
-          Q += ((ix == 1) || (ix == Nx - 2));
-          Q += ((iy == 1) || (iy == Nyf - 2));
-          Q += ((iz == 1) || (iz == Nz - 2));
+          Q += static_cast<int>((ix == 1) || (ix == Nx - 2));
+          Q += static_cast<int>((iy == 1) || (iy == Nyf - 2));
+          Q += static_cast<int>((iz == 1) || (iz == Nz - 2));
           if (Q > 0) {
             if ((fcc_flag == 2) && (iy >= Nyf / 2)) {
               bna_ixyz[ii] = ix * Nz * Ny + (Nyf - iy - 1) * Nz + iz; // index on folded grid
@@ -539,13 +566,13 @@ namespace pffdtd {
     PFFDTD_ASSERT(ii == Nba);
     printf("ABC nodes\n");
     if (fcc_flag == 2) { // need to sort bna_ixyz
-      int64_t* bna_sort_keys;
+      int64_t* bna_sort_keys = nullptr;
       allocate_zeros((void**)&bna_sort_keys, Nba * sizeof(int64_t));
       sort_keys(bna_ixyz, bna_sort_keys, Nba);
 
       // now sort corresponding Q_bna array
-      int8_t* Q_bna_sorted;
-      int8_t* Q_bna_unsorted;
+      int8_t* Q_bna_sorted   = nullptr;
+      int8_t* Q_bna_unsorted = nullptr;
       allocate_zeros((void**)&Q_bna_sorted, Nba * sizeof(int8_t));
       // swap pointers
       Q_bna_unsorted = Q_bna;
@@ -633,14 +660,15 @@ void freeSimulation3D(Simulation3D& sim) {
 
 // read HDF5 files
 void readH5Dataset(hid_t file, char* dset_str, int ndims, hsize_t* dims, void** out_array, DataType t) {
-  hid_t dset, dspace;
-  uint64_t N = 0;
+  hid_t dset   = 0;
+  hid_t dspace = 0;
+  uint64_t N   = 0;
   // herr_t status;
 
   dset   = H5Dopen(file, dset_str, H5P_DEFAULT);
   dspace = H5Dget_space(dset);
   PFFDTD_ASSERT(H5Sget_simple_extent_ndims(dspace) == ndims);
-  H5Sget_simple_extent_dims(dspace, dims, NULL);
+  H5Sget_simple_extent_dims(dspace, dims, nullptr);
   if (ndims == 1) {
     // printf("size dim 0 = %llu\n",dims[0]);
     N = dims[0];
@@ -659,20 +687,17 @@ void readH5Dataset(hid_t file, char* dset_str, int ndims, hsize_t* dims, void** 
     case BOOL: *out_array = (bool*)malloc(N * sizeof(bool)); break;
     default: PFFDTD_ASSERT(true == false);
   }
-  if (*out_array == NULL) {
+  if (*out_array == nullptr) {
     printf("Memory allocation failed");
     PFFDTD_ASSERT(true == false); // to break
   }
-  herr_t status;
+  herr_t status = 0;
   switch (t) {
     case FLOAT64: status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array); break;
     case FLOAT32: status = H5Dread(dset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array); break;
     case INT64: status = H5Dread(dset, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array); break;
-    case INT8:
-    case BOOL: // bool read in as INT8
-      status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array);
-      status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array);
-      break;
+    case INT8: // bool read in as INT8
+    case BOOL: status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array); break;
     default: PFFDTD_ASSERT(true == false);
   }
 
@@ -690,20 +715,18 @@ void readH5Dataset(hid_t file, char* dset_str, int ndims, hsize_t* dims, void** 
 
 // read scalars from HDF5 datasets
 void readH5Constant(hid_t file, char* dset_str, void* out, DataType t) {
-  hid_t dset, dspace;
+  hid_t dset   = 0;
+  hid_t dspace = 0;
 
   dset   = H5Dopen(file, dset_str, H5P_DEFAULT);
   dspace = H5Dget_space(dset);
   PFFDTD_ASSERT(H5Sget_simple_extent_ndims(dspace) == 0);
-  herr_t status;
+  herr_t status = 0;
   switch (t) {
     case FLOAT64: status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, out); break;
     case INT64: status = H5Dread(dset, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, out); break;
     case INT8:
-    case BOOL:
-      status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, out);
-      status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, out);
-      break;
+    case BOOL: status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, out); break;
     default: PFFDTD_ASSERT(true == false);
   }
 
@@ -721,8 +744,8 @@ void readH5Constant(hid_t file, char* dset_str, void* out, DataType t) {
 
 // print last samples of simulation (for correctness checking..)
 void printLastSample(Simulation3D& sim) {
-  int64_t Nt           = sim.Nt;
-  int64_t Nr           = sim.Nr;
+  int64_t const Nt     = sim.Nt;
+  int64_t const Nr     = sim.Nr;
   double* u_out        = sim.u_out;
   int64_t* out_reorder = sim.out_reorder;
   // print last samples
@@ -737,9 +760,9 @@ void printLastSample(Simulation3D& sim) {
 
 // scale input to be in middle of floating-point range
 void scaleInput(Simulation3D& sim) {
-  double* in_sigs = sim.in_sigs;
-  int64_t Nt      = sim.Nt;
-  int64_t Ns      = sim.Ns;
+  double* in_sigs  = sim.in_sigs;
+  int64_t const Nt = sim.Nt;
+  int64_t const Ns = sim.Ns;
 
   // normalise input signals (and save gain)
   double max_in = 0.0;
@@ -748,12 +771,12 @@ void scaleInput(Simulation3D& sim) {
       max_in = std::max(max_in, fabs(in_sigs[ns * Nt + n]));
     }
   }
-  double aexp  = 0.5; // normalise to middle power of two
-  int32_t pow2 = (int32_t)round(aexp * REAL_MAX_EXP + (1 - aexp) * REAL_MIN_EXP);
+  double const aexp = 0.5; // normalise to middle power of two
+  auto pow2         = (int32_t)round(aexp * REAL_MAX_EXP + (1 - aexp) * REAL_MIN_EXP);
   // int32_t pow2 = 0; //normalise to one
-  double norm1     = pow(2.0, pow2);
-  double inv_infac = norm1 / max_in;
-  double infac     = 1.0 / inv_infac;
+  double const norm1     = pow(2.0, pow2);
+  double const inv_infac = norm1 / max_in;
+  double const infac     = 1.0 / inv_infac;
 
   printf(
       "max_in = %.16e, pow2 = %d, norm1 = %.16e, inv_infac = %.16e, infac = "
@@ -778,10 +801,10 @@ void scaleInput(Simulation3D& sim) {
 
 // undo that scaling
 void rescaleOutput(Simulation3D& sim) {
-  int64_t Nt    = sim.Nt;
-  int64_t Nr    = sim.Nr;
-  double infac  = sim.infac;
-  double* u_out = sim.u_out;
+  int64_t const Nt = sim.Nt;
+  int64_t const Nr = sim.Nr;
+  double infac     = sim.infac;
+  double* u_out    = sim.u_out;
 
   std::transform(u_out, u_out + Nr * Nt, u_out, [infac](auto sample) { return sample * infac; });
 }

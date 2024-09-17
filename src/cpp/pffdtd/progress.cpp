@@ -27,7 +27,7 @@ namespace {
     return 80;
   }
 #else
-  struct winsize w;
+  auto w = winsize{};
   ioctl(0, TIOCGWINSZ, &w);
   return w.ws_col;
 #endif
@@ -58,8 +58,8 @@ void print_progress(
   // int ncolsl = 120;
   // int ncolsp = w.ws_col-ncolsl;
 
-  double pcnt = (100.0 * n) / Nt;
-  int nlines  = 6;
+  double const pcnt = (100.0 * n) / Nt;
+  int const nlines  = 6;
   if (n > 0) {
     // back up
     for (int nl = 0; nl < nlines; nl++) {
@@ -89,13 +89,19 @@ void print_progress(
       fmt::print(".");
     }
   }
-  double est_total = time_elapsed * Nt / n;
+  double const est_total = time_elapsed * Nt / n;
 
-  int sec, h_e, m_e, s_e, h_t, m_t, s_t;
-  sec = (int)time_elapsed;
-  h_e = (sec / 3600);
-  m_e = (sec - (3600 * h_e)) / 60;
-  s_e = (sec - (3600 * h_e) - (m_e * 60));
+  int sec = 0;
+  int h_e = 0;
+  int m_e = 0;
+  int s_e = 0;
+  int h_t = 0;
+  int m_t = 0;
+  int s_t = 0;
+  sec     = (int)time_elapsed;
+  h_e     = (sec / 3600);
+  m_e     = (sec - (3600 * h_e)) / 60;
+  s_e     = (sec - (3600 * h_e) - (m_e * 60));
 
   sec = (int)est_total;
   h_t = (sec / 3600);
