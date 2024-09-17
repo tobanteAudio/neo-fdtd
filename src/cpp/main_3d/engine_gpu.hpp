@@ -11,5 +11,5 @@
 #endif
 
 namespace pffdtd {
-auto run(Simulation3D const& sd) -> double;
+auto run(Simulation3D const& sim) -> double;
 }

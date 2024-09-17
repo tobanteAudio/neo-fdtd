@@ -103,7 +103,7 @@ auto run(Simulation3D& sd) -> double {
   int8_t* Q_bna            = sd.Q_bna;
   double* in_sigs          = sd.in_sigs;
   double* u_out            = sd.u_out;
-  int8_t fcc_flag          = sd.fcc_flag;
+  int8_t const fcc_flag    = sd.fcc_flag;
   Real* ssaf_bnl           = sd.ssaf_bnl;
   Real* mat_beta           = sd.mat_beta;
   MatQuad<Real>* mat_quads = sd.mat_quads;

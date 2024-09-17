@@ -21,7 +21,9 @@ Checks: >
 
   clang-analyzer-*,
   clang-diagnostics-*,
+
   concurrency-*,
+  -concurrency-mt-unsafe,
 
   cppcoreguidelines-*,
   -cppcoreguidelines-avoid-magic-numbers,
@@ -38,6 +40,7 @@ Checks: >
   -hicpp-signed-bitwise,
 
   misc-*,
+  -misc-confusable-identifiers,
   -misc-include-cleaner,
   -misc-use-anonymous-namespace,
 
