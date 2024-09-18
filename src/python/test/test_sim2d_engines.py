@@ -24,10 +24,8 @@ def model(*, Lx=None, Ly=None, Nx=None, Ny=None, dx=None, X=None, Y=None, in_mas
     return in_mask, inx, iny, out_ixy
 
 
-def test_sim2d_modes(tmp_path):
-    if not os.environ.get('PFFDTD_ENGINE_2D'):
-        pytest.skip('Native 2D engine not available')
-
+@pytest.mark.skipif(os.environ.get('PFFDTD_ENGINE_2D') is None, reason='Native 2D engine not available')
+def test_sim2d_engines(tmp_path):
     sim_setup_2d(
         sim_dir=tmp_path,
         room=(2, 2),
