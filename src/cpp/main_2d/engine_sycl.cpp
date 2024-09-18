@@ -11,14 +11,12 @@
 
 namespace pffdtd {
 
-[[nodiscard]] constexpr auto
-to_ixy(std::integral auto x, std::integral auto y, std::integral auto /*Nx*/, std::integral auto Ny) -> std::integral
-    auto {
-  return x * Ny + y;
-}
+namespace {
 
-static auto
-kernelAirUpdate(sycl::id<2> id, double* u0, double const* u1, double const* u2, uint8_t const* inMask, int64_t Ny)
+[[nodiscard]] constexpr auto to_ixy(auto x, auto y, auto /*Nx*/, auto Ny) { return x * Ny + y; }
+
+template<typename Float>
+auto kernelAirUpdate(sycl::id<2> id, Float* u0, Float const* u1, Float const* u2, uint8_t const* inMask, int64_t Ny)
     -> void {
   auto const x   = id.get(0) + 1;
   auto const y   = id.get(1) + 1;
@@ -34,14 +32,15 @@ kernelAirUpdate(sycl::id<2> id, double* u0, double const* u1, double const* u2, 
   auto const top    = u1[idx + Ny];
   auto const last   = u2[idx];
 
-  u0[idx] = 0.5 * (left + right + bottom + top) - last;
+  u0[idx] = Float(0.5) * (left + right + bottom + top) - last;
 }
 
-static auto kernelBoundaryRigid(
+template<typename Float>
+auto kernelBoundaryRigid(
     sycl::id<1> idx,
-    double* u0,
-    double const* u1,
-    double const* u2,
+    Float* u0,
+    Float const* u1,
+    Float const* u2,
     int64_t const* bn_ixy,
     int64_t const* adj_bn,
     int64_t Ny
@@ -58,16 +57,17 @@ static auto kernelBoundaryRigid(
   auto const top       = u1[ib + Ny];
   auto const neighbors = left + right + top + bottom;
 
-  u0[ib] = (2 - 0.5 * K) * last1 + 0.5 * neighbors - last2;
+  u0[ib] = (Float(2) - Float(0.5) * K) * last1 + Float(0.5) * neighbors - last2;
 }
 
-static auto kernelBoundaryLoss(
+template<typename Float>
+auto kernelBoundaryLoss(
     sycl::id<1> idx,
-    double* u0,
-    double const* u2,
+    Float* u0,
+    Float const* u2,
     int64_t const* bn_ixy,
     int64_t const* adj_bn,
-    double lossFactor
+    Float lossFactor
 ) -> void {
   auto const ib      = bn_ixy[idx];
   auto const K       = adj_bn[idx];
@@ -75,8 +75,9 @@ static auto kernelBoundaryLoss(
   auto const prev    = u2[ib];
   auto const K4      = 4 - K;
 
-  u0[ib] = (current + lossFactor * K4 * prev) / (1 + lossFactor * K4);
+  u0[ib] = (current + lossFactor * K4 * prev) / (Float(1) + lossFactor * K4);
 }
+} // namespace
 
 auto EngineSYCL::operator()(Simulation2D const& sim) const -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
 
