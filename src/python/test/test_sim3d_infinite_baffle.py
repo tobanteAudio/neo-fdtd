@@ -85,6 +85,7 @@ def test_sim3d_infinite_baffle(tmp_path, engine):
         PPW=ppw,
         insig_type='impulse',
         save_folder=sim_dir,
+        save_folder_gpu=sim_dir if engine != 'python' else None,
         bmax=[baffle_size, depth, baffle_size],
         bmin=[0, 0, 0],
         Nprocs=1,

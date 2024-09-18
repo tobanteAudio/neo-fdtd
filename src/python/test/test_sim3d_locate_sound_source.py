@@ -70,6 +70,7 @@ def test_sim3d_locate_sound_source(tmp_path, engine):
         PPW=ppw,
         insig_type='impulse',
         save_folder=sim_dir,
+        save_folder_gpu=sim_dir if engine != 'python' else None,
         Nprocs=1,
     )
 
