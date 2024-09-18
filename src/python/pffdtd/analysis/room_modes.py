@@ -148,7 +148,7 @@ def detect_room_modes(
         window = windows.hann(buf.shape[0])
         buf *= window
 
-        nfft = (2**iceil(np.log2(buf.shape[0])))*2
+        nfft = (2**iceil(np.log2(buf.shape[0])))*8
         spectrum = np.fft.rfft(buf, nfft)
         freqs = np.fft.rfftfreq(nfft, 1/fs)
 
@@ -157,7 +157,7 @@ def detect_room_modes(
         dB += 75.0
 
         dB_max = np.max(dB)
-        peaks, _ = find_peaks(dB, width=2)
+        peaks, _ = find_peaks(dB, width=2, height=50.0)
         measured_mode_freqs = freqs[peaks]
 
         print(measured_mode_freqs[:10])
