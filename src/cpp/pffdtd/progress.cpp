@@ -9,9 +9,9 @@
 #include <ctime>
 
 #if defined(_WIN32)
-    #include <windows.h>
+  #include <windows.h>
 #else
-    #include <sys/ioctl.h>
+  #include <sys/ioctl.h>
 #endif
 
 namespace pffdtd {
@@ -20,20 +20,20 @@ namespace {
 
 [[nodiscard]] auto getConsoleWidth() -> int {
 #if defined(_WIN32)
-    auto info = CONSOLE_SCREEN_BUFFER_INFO{};
-    if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info)) {
-        return info.srWindow.Right - info.srWindow.Left + 1;
-    } else {
-        return 80;
-    }
+  auto info = CONSOLE_SCREEN_BUFFER_INFO{};
+  if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &info)) {
+    return info.srWindow.Right - info.srWindow.Left + 1;
+  } else {
+    return 80;
+  }
 #else
-    struct winsize w;
-    ioctl(0, TIOCGWINSZ, &w);
-    return w.ws_col;
+  auto w = winsize{};
+  ioctl(0, TIOCGWINSZ, &w);
+  return w.ws_col;
 #endif
 }
 
-}  // namespace
+} // namespace
 
 // hacky print progress (like tqdm)..
 // N.B. this conflicts with tmux scrolling (stdout needs to flush)
@@ -58,8 +58,8 @@ void print_progress(
   // int ncolsl = 120;
   // int ncolsp = w.ws_col-ncolsl;
 
-  double pcnt = (100.0 * n) / Nt;
-  int nlines  = 6;
+  double const pcnt = (100.0 * n) / Nt;
+  int const nlines  = 6;
   if (n > 0) {
     // back up
     for (int nl = 0; nl < nlines; nl++) {
@@ -89,13 +89,19 @@ void print_progress(
       fmt::print(".");
     }
   }
-  double est_total = time_elapsed * Nt / n;
+  double const est_total = time_elapsed * Nt / n;
 
-  int sec, h_e, m_e, s_e, h_t, m_t, s_t;
-  sec = (int)time_elapsed;
-  h_e = (sec / 3600);
-  m_e = (sec - (3600 * h_e)) / 60;
-  s_e = (sec - (3600 * h_e) - (m_e * 60));
+  int sec = 0;
+  int h_e = 0;
+  int m_e = 0;
+  int s_e = 0;
+  int h_t = 0;
+  int m_t = 0;
+  int s_t = 0;
+  sec     = (int)time_elapsed;
+  h_e     = (sec / 3600);
+  m_e     = (sec - (3600 * h_e)) / 60;
+  s_e     = (sec - (3600 * h_e) - (m_e * 60));
 
   sec = (int)est_total;
   h_t = (sec / 3600);

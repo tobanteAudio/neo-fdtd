@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2021 Brian Hamilton
+from dataclasses import dataclass
 
 import numba as nb
 import numpy as np
 from numpy import exp, pi, cos, sqrt, log
+from numpy.typing import ArrayLike
 from scipy.fft import dct, idct  # default type2
 from scipy.fft import rfft, irfft
 from tqdm import tqdm
@@ -11,7 +13,36 @@ from tqdm import tqdm
 from pffdtd.geometry.math import iceil, iround
 
 
-def air_absorption(frequencies, temperature_celsius, rel_humidity_pnct, pressure_atmospheric_kPa=101.325):
+@dataclass
+class AirAbsorption:
+    gamma_p: np.float64
+    gamma: np.float64
+    etaO: np.float64
+    eta: np.float64
+    almN: np.float64
+    almO: np.float64
+    c: np.float64
+    frO: np.float64
+    frN: np.float64
+
+    # frequency-dependent coefficeints in Np/m or dB/m
+    absVibN_dB: np.ndarray
+    absVibO_dB: np.ndarray
+    absClRo_dB: np.ndarray
+    absfull_dB: np.ndarray
+
+    absVibN_Np: np.ndarray
+    absVibO_Np: np.ndarray
+    absClRo_Np: np.ndarray
+    absfull_Np: np.ndarray
+
+
+def air_absorption(
+        frequencies: ArrayLike,
+        temperature_celsius: float,
+        rel_humidity_pnct: float,
+        pressure_atmospheric_kPa: float = 101.325
+) -> AirAbsorption:
     """This is an implementation of formulae in the ISO9613-1 standard for air absorption
     """
     assert pressure_atmospheric_kPa <= 200
@@ -78,7 +109,8 @@ def air_absorption(frequencies, temperature_celsius, rel_humidity_pnct, pressure
     frN = p * Tr**(-0.5) * (9 + 280 * h * np.exp(-4.17 * (Tr**(-1/3) - 1)))
 
     # (5)
-    absfull1 = 8.686*f2*(1.84e-11 * np.sqrt(Tr)/p + Tr**-2.5 * (0.01275*(np.exp(-2239.1/Tk)/(frO + f2/frO)) + 0.1068*(np.exp(-3352.0/Tk)/(frN + f2/frN))))
+    absfull1 = 8.686*f2*(1.84e-11 * np.sqrt(Tr)/p + Tr**-2.5 * (0.01275*(
+        np.exp(-2239.1/Tk)/(frO + f2/frO)) + 0.1068*(np.exp(-3352.0/Tk)/(frN + f2/frN))))
 
     # (A.2)
     absClRo = 1.6e-10*np.sqrt(Tr)*f2/p
@@ -99,28 +131,26 @@ def air_absorption(frequencies, temperature_celsius, rel_humidity_pnct, pressure
     etaO = almO*(c/pi2/frO)*np.log(10)/20
 
     # return a dictionary of different constants
-    return_dict = {}
-    return_dict['gamma_p'] = etaO/c
-    return_dict['gamma'] = eta/c
-    return_dict['etaO'] = etaO
-    return_dict['eta'] = eta
-    return_dict['almN'] = almN
-    return_dict['almO'] = almO
-    return_dict['c'] = c
-    return_dict['frO'] = frO
-    return_dict['frN'] = frN
+    return AirAbsorption(
+        gamma_p=etaO/c,
+        gamma=eta/c,
+        etaO=etaO,
+        eta=eta,
+        almN=almN,
+        almO=almO,
+        c=c,
+        frO=frO,
+        frN=frN,
 
-    # frequency-dependent coefficeints in Np/m or dB/m
-    return_dict['absVibN_dB'] = absVibN
-    return_dict['absVibO_dB'] = absVibO
-    return_dict['absClRo_dB'] = absClRo
-    return_dict['absfull_dB'] = absfull2
-    return_dict['absVibN_Np'] = absVibN*np.log(10)/20
-    return_dict['absVibO_Np'] = absVibO*np.log(10)/20
-    return_dict['absClRo_Np'] = absClRo*np.log(10)/20
-    return_dict['absfull_Np'] = absfull2*np.log(10)/20
-
-    return return_dict
+        absVibN_dB=absVibN,
+        absVibO_dB=absVibO,
+        absClRo_dB=absClRo,
+        absfull_dB=absfull2,
+        absVibN_Np=absVibN*np.log(10)/20,
+        absVibO_Np=absVibO*np.log(10)/20,
+        absClRo_Np=absClRo*np.log(10)/20,
+        absfull_Np=absfull2*np.log(10)/20,
+    )
 
 
 def apply_modal_filter(x, Fs, Tc, rh, pad_t=0.0):
@@ -155,8 +185,8 @@ def apply_modal_filter(x, Fs, Tc, rh, pad_t=0.0):
     wq = wqTs/Ts
 
     rd = air_absorption(wq/2/pi, Tc, rh)
-    alphaq = rd['absfull_Np']
-    c = rd['c']
+    alphaq = rd.absfull_Np
+    c = rd.c
 
     P0 = np.zeros(xp.shape)
     P1 = np.zeros(xp.shape)
@@ -231,8 +261,8 @@ def apply_ola_filter(x, Fs, Tc, rh, Nw=1024):
 
     fv = np.arange(Nfft_h)/Nfft*Fs
     rd = air_absorption(fv, Tc, rh)
-    c = rd['c']
-    absNp = rd['absfull_Np']
+    c = rd.c
+    absNp = rd.absfull_Np
 
     for i in range(xp.shape[0]):
         pbar = tqdm(total=NF, desc=f'OLA filter channel {i}', ascii=True)
@@ -269,7 +299,7 @@ def apply_visco_filter(x, Fs, Tc, rh, NdB=120, t_start=None):
     function for Stokes' equation", to be presented at the DAFx2021 e-conference.
     """
     rd = air_absorption(1, Tc, rh)
-    g = rd['gamma_p']
+    g = rd.gamma_p
 
     Ts = 1/Fs
     if t_start is None:
@@ -313,23 +343,23 @@ def main():
     print(f'{Tc=} {rh=}%')
 
     rd = air_absorption(f, Tc, rh)
-    print(f"{rd['almO']=}")
-    print(f"{rd['almN']=}")
-    print(f"{rd['c']=}")
-    print(f"{rd['frO']=}")
-    print(f"{rd['frN']=}")
-    print(f"{rd['eta']=}")
+    print(f"{rd.almO=}")
+    print(f"{rd.almN=}")
+    print(f"{rd.c=}")
+    print(f"{rd.frO=}")
+    print(f"{rd.frN=}")
+    print(f"{rd.eta=}")
 
     rh = (100 - 10)*np.random.random_sample()+10
     Tc = (50 - -20)*np.random.random_sample()-20
     print(f'{Tc=} {rh=}%')
     rd = air_absorption(f, Tc, rh)
-    print(f"{rd['almO']=}")
-    print(f"{rd['almN']=}")
-    print(f"{rd['c']=}")
-    print(f"{rd['frO']=}")
-    print(f"{rd['frN']=}")
-    print(f"{rd['eta']=}")
+    print(f"{rd.almO=}")
+    print(f"{rd.almN=}")
+    print(f"{rd.c=}")
+    print(f"{rd.frO=}")
+    print(f"{rd.frN=}")
+    print(f"{rd.eta=}")
 
 
 if __name__ == '__main__':

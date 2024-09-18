@@ -45,9 +45,7 @@ inline auto summary(sycl::device dev) -> void {
 
 template<typename Accessor>
 [[nodiscard]] auto getPtr(Accessor&& a) -> auto* {
-  return std::forward<Accessor>(a)
-      .template get_multi_ptr<sycl::access::decorated::no>()
-      .get();
+  return std::forward<Accessor>(a).template get_multi_ptr<sycl::access::decorated::no>().get();
 }
 
 } // namespace pffdtd

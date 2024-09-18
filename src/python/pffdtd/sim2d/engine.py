@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 
 class Engine2D:
-    def __init__(self, sim_dir, out="out.h5", video=False):
+    def __init__(self, sim_dir, out='out.h5', video=False):
         self.sim_dir = Path(sim_dir)
         self.video = video
         self.output_file = out

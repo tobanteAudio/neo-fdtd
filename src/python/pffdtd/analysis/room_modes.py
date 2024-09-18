@@ -21,7 +21,7 @@ def find_nearest(array, value):
     return array[idx]
 
 
-def collect_wav_paths(folder, pattern="*.wav"):
+def collect_wav_paths(folder, pattern='*.wav'):
     return list(sorted(glob.glob(os.path.join(folder, pattern))))
 
 
@@ -31,8 +31,8 @@ def hz_to_note(frequency):
     # Reference position for A4 in the note list
     A4_position = 9
     # List of note names
-    note_names = ["C", "C#", "D", "D#", "E",
-                  "F", "F#", "G", "G#", "A", "A#", "B"]
+    note_names = ['C', 'C#', 'D', 'D#', 'E',
+                  'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
     # Calculate the number of semitones between the given frequency and A4
     semitones_from_A4 = 12 * np.log2(frequency / A4_frequency)
@@ -58,10 +58,10 @@ def room_mode(L, W, H, m, n, p):
 def room_mode_kind(m, n, p):
     non_zero = (m != 0) + (n != 0) + (p != 0)
     if non_zero == 1:
-        return "axial"
+        return 'axial'
     if non_zero == 2:
-        return "tangential"
-    return "oblique"
+        return 'tangential'
+    return 'oblique'
 
 
 def room_modes(L, W, H, max_order=6):
@@ -71,10 +71,10 @@ def room_modes(L, W, H, max_order=6):
             for p in range(max_order+1):
                 if m+n+p > 0:
                     modes.append({
-                        "m": m,
-                        "n": n,
-                        "p": p,
-                        "frequency": room_mode(L, W, H, m, n, p)
+                        'm': m,
+                        'n': n,
+                        'p': p,
+                        'frequency': room_mode(L, W, H, m, n, p)
                     })
 
     return sorted(modes, key=lambda x: x['frequency'])
@@ -109,7 +109,7 @@ def detect_room_modes(
     directory = sim_dir
     paths = filename
     if not paths:
-        paths = collect_wav_paths(directory, "*_out_normalised.wav")
+        paths = collect_wav_paths(directory, '*_out_normalised.wav')
 
     L = length
     W = width
@@ -126,7 +126,7 @@ def detect_room_modes(
     print(f"{A=:.2f}m^2 {S=:.2f}m^2 {V=:.2f}m^3")
     print(f"w/h={W/H:.2f} l/h={L/H:.2f} l/w={L/W:.2f}")
     print(f"FSI({len(modes)}): {frequency_spacing_index(modes):.2f}")
-    print("")
+    print('')
 
     for mode in modes[:10]:
         m = mode['m']
@@ -148,7 +148,7 @@ def detect_room_modes(
         window = windows.hann(buf.shape[0])
         buf *= window
 
-        nfft = (2**iceil(np.log2(buf.shape[0])))*2
+        nfft = (2**iceil(np.log2(buf.shape[0])))*8
         spectrum = np.fft.rfft(buf, nfft)
         freqs = np.fft.rfftfreq(nfft, 1/fs)
 
@@ -157,7 +157,7 @@ def detect_room_modes(
         dB += 75.0
 
         dB_max = np.max(dB)
-        peaks, _ = find_peaks(dB, width=2)
+        peaks, _ = find_peaks(dB, width=2, height=50.0)
         measured_mode_freqs = freqs[peaks]
 
         print(measured_mode_freqs[:10])
@@ -168,7 +168,7 @@ def detect_room_modes(
         calculated_mode_freqs = [mode['frequency']
                                  for mode in modes][:num_modes]
         plt.vlines(calculated_mode_freqs, dB_max-80, dB_max+10,
-                   colors='#AAAAAA', linestyles='--', label="Modes")
+                   colors='#AAAAAA', linestyles='--', label='Modes')
         if len(paths) == 1:
             plt.plot(measured_mode_freqs, dB[peaks], 'r.',
                      markersize=10, label='Peaks')
@@ -179,7 +179,7 @@ def detect_room_modes(
             error_pct = np.abs(error)/mode*100
             print(f"{mode=:03.3f} Hz - {nearest=:03.3f} Hz = {error:03.3f} Hz / {error_pct:.3f} %")
 
-    plt.title("")
+    plt.title('')
     plt.xlabel('Frequency [Hz]')
     plt.ylabel('Amplitude [dB]')
     plt.xscale('log')
@@ -195,7 +195,7 @@ def detect_room_modes(
     return calculated_mode_freqs, measured_mode_freqs
 
 
-@click.command(name="room-modes", help="Plot room modes.")
+@click.command(name='room-modes', help='Plot room modes.')
 @click.argument('filename', nargs=-1, type=click.Path(exists=True))
 @click.option('--sim_dir', type=click.Path(exists=True))
 @click.option('--fmin', default=1.0, type=float)

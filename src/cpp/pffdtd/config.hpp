@@ -6,7 +6,7 @@
 #include <cfloat>
 
 // flag passed in at compilation (see Makefile)
-#if PRECISION == 2 // double
+#if PFFDTD_PRECISION == 2 // double
 typedef double Real;
 
   #define REAL_MAX_EXP DBL_MAX_EXP
@@ -19,7 +19,7 @@ typedef double Real;
   #define ADD_D __dadd_rn
   #define EPS   0.0
 
-#elif PRECISION == 1 // float with safeguards
+#elif PFFDTD_PRECISION == 1 // float with safeguards
 typedef float Real;
 
   #define REAL_MAX_EXP FLT_MAX_EXP
@@ -32,5 +32,5 @@ typedef float Real;
   #define ADD_D        __fadd_rn
   #define EPS          1.19209289e-07 // helps with stability in single
 #else
-  #error "PRECISION = 1 (single) or 2 (double)"
+  #error "PFFDTD_PRECISION = 1 (single) or 2 (double)"
 #endif

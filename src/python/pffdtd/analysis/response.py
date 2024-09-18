@@ -39,12 +39,12 @@ def fractional_octave_smoothing(magnitudes, fs, nfft, fraction=3):
     return smoothed
 
 
-@click.command(name="response", help="Plot frequency response.")
+@click.command(name='response', help='Plot frequency response.')
 @click.argument('filename', nargs=2, type=click.Path(exists=True))
 @click.option('--fmin', default=1.0)
 @click.option('--fmax', default=1000.0)
-@click.option('--label_a', default="A")
-@click.option('--label_b', default="B")
+@click.option('--label_a', default='A')
+@click.option('--label_b', default='B')
 @click.option('--smoothing', default=0.0)
 @click.option('--target', default=0.0)
 def main(filename, fmin, fmax, label_a, label_b, smoothing, target):

@@ -31,17 +31,17 @@ def main():
     print(f"width     = {well_width*100:.2f} cm")
     print(f"depth     = {design_depth*100:.2f} cm")
     print(f"seat      = {seat_distance*100:.2f} cm")
-    print("")
+    print('')
 
     print(f"scatter   = {fmin:.2f} Hz")
     print(f"diffuse   = {design_frequency:.2f} Hz")
     print(f"HF cutoff = {fmax:.2f} Hz")
     print(f"plate     = {plate_frequency:.2f} Hz")
-    print("")
+    print('')
 
-    print(f"wells     = {np.round(w*100,2)} cm")
+    print(f"wells     = {np.round(w*100, 2)} cm")
     print(f"max depth = {np.max(w)*100:.2f} cm")
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

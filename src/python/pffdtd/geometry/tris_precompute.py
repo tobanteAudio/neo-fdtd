@@ -64,23 +64,23 @@ def tris_precompute(pts=None, tris=None):
     custom_dtype = [\
         # ('a',np.float64,(3,)),\
         # ('b',np.float64,(3,)),\
-        # ('c',np.float64,(3,)),\
-        ('v', np.float64, (3, 3)), \
-        ('ab', np.float64, (3,)), \
-        ('bc', np.float64, (3,)), \
-        ('ca', np.float64, (3,)), \
-        ('nor', np.float64, (3,)), \
-        ('unor', np.float64, (3,)), \
-        ('eab_unor', np.float64, (3,)), \
-        ('ebc_unor', np.float64, (3,)), \
-        ('eca_unor', np.float64, (3,)), \
-        ('cent', np.float64, (3,)), \
-        ('bmin', np.float64, (3,)), \
-        ('bmax', np.float64, (3,)), \
-        ('l2ab', np.float64), \
-        ('l2bc', np.float64), \
-        ('l2ca', np.float64), \
-        ('area', np.float64), \
+        # ('c',np.float64,(3,)),
+        ('v', np.float64, (3, 3)),
+        ('ab', np.float64, (3,)),
+        ('bc', np.float64, (3,)),
+        ('ca', np.float64, (3,)),
+        ('nor', np.float64, (3,)),
+        ('unor', np.float64, (3,)),
+        ('eab_unor', np.float64, (3,)),
+        ('ebc_unor', np.float64, (3,)),
+        ('eca_unor', np.float64, (3,)),
+        ('cent', np.float64, (3,)),
+        ('bmin', np.float64, (3,)),
+        ('bmax', np.float64, (3,)),
+        ('l2ab', np.float64),
+        ('l2bc', np.float64),
+        ('l2ca', np.float64),
+        ('area', np.float64),
     ]
 
     tris_pre = np.zeros(Ntris, dtype=custom_dtype)

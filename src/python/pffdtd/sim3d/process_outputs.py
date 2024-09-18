@@ -300,7 +300,7 @@ def process_outputs(
         po.show_plots()
 
 
-@click.command(name="process-outputs", help="Process raw simulation output.")
+@click.command(name='process-outputs', help='Process raw simulation output.')
 @click.option('--sim_dir', type=click.Path(exists=True))
 @click.option('--plot', is_flag=True)
 @click.option('--plot_raw', is_flag=True)
@@ -311,7 +311,7 @@ def process_outputs(
 @click.option('--order_lowcut', default=8)
 @click.option('--order_lowpass', default=8)
 @click.option('--symmetric_lowpass', is_flag=True)
-@click.option('--air_abs_filter', default="none")
+@click.option('--air_abs_filter', default='none')
 def main(sim_dir, plot, plot_raw, save_wav, resample_fs, fcut_lowcut, fcut_lowpass, order_lowcut, order_lowpass, symmetric_lowpass, air_abs_filter):
     process_outputs(
         sim_dir=sim_dir,

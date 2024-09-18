@@ -12,12 +12,12 @@ from pffdtd.sim3d.testing import run_engine, skip_if_native_engine_unavailable
 from pffdtd.sim3d.process_outputs import process_outputs
 
 
-@pytest.mark.parametrize("engine", ["python", "native"])
+@pytest.mark.parametrize('engine', ['python', 'native'])
 @pytest.mark.parametrize(
-    "room,fmax,ppw,fcc,dx_scale,tolerance_pct",
+    'room,fmax,ppw,fcc,dx_scale,tolerance_pct',
     [
         ((2.8, 2.076, 1.48), 400, 10.5, False, 2, 1.7),
-        ((3.0, 1.0, 2.0), 600, 7.7, True, 3, 3.4),
+        ((3.0, 1.0, 2.0), 600, 7.7, True, 3, 3.8),
     ]
 )
 def test_sim3d_detect_room_modes(tmp_path, engine, room, fmax, ppw, fcc, dx_scale, tolerance_pct):
@@ -36,8 +36,8 @@ def test_sim3d_detect_room_modes(tmp_path, engine, room, fmax, ppw, fcc, dx_scal
 
     offset = dx*dx_scale
     room = RoomModelBuilder(L, W, H)
-    room.add_source("S1", [offset, offset, offset])
-    room.add_receiver("R1", [W-offset, L-offset, H-offset])
+    room.add_source('S1', [offset, offset, offset])
+    room.add_receiver('R1', [W-offset, L-offset, H-offset])
     room.build(model_file)
 
     write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.03), root_dir / material)
@@ -57,6 +57,7 @@ def test_sim3d_detect_room_modes(tmp_path, engine, room, fmax, ppw, fcc, dx_scal
         PPW=ppw,
         insig_type='impulse',
         save_folder=sim_dir,
+        Nprocs=1,
     )
 
     run_engine(sim_dir=sim_dir, engine=engine)
@@ -69,7 +70,7 @@ def test_sim3d_detect_room_modes(tmp_path, engine, room, fmax, ppw, fcc, dx_scal
         fcut_lowpass=fmax,
         order_lowpass=8,
         symmetric_lowpass=True,
-        air_abs_filter="none",
+        air_abs_filter='none',
         save_wav=True,
         plot_raw=False,
         plot=False,

@@ -36,5 +36,5 @@ def main():
     print(primitive_root_diffuser(17))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

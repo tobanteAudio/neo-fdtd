@@ -12,7 +12,7 @@ from scipy import signal
 from pffdtd.common.wavfile import save_as_wav_files
 
 
-@click.command(name="process-outputs", help="Process raw simulation output.")
+@click.command(name='process-outputs', help='Process raw simulation output.')
 @click.option('--diff', is_flag=True)
 @click.option('--fmin', default=20.0)
 @click.option('--sim_dir', type=click.Path(exists=True))
@@ -20,7 +20,7 @@ from pffdtd.common.wavfile import save_as_wav_files
 def main(fmin, diff, sim_dir, out_file):
     sim_dir = pathlib.Path(sim_dir)
 
-    constants = h5py.File(sim_dir / "constants.h5", 'r')
+    constants = h5py.File(sim_dir / 'constants.h5', 'r')
     fs = float(constants['fs'][...])
     fmax = float(constants['fmax'][...])
     Ts = 1/fs

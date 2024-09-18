@@ -15,8 +15,7 @@ template<typename E, typename... Args>
 }
 
 template<typename E, typename... Args>
-[[noreturn]] auto raisef(fmt::format_string<Args...> str, Args&&... args)
-    -> void {
+[[noreturn]] auto raisef(fmt::format_string<Args...> str, Args&&... args) -> void {
   raise<E>(fmt::format(str, std::forward<Args>(args)...));
 }
 

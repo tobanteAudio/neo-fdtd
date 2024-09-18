@@ -23,6 +23,7 @@ sudo apt install libomp-dev ninja-build   # Ubuntu
 
 # Can be skipped if building with conan package manager
 sudo dnf install hdf5-devel fmt-devel cli11-devel # Fedora
+sudo apt install libhdf5-dev libfmt-dev libcli11-dev # Ubuntu
 ```
 
 ### GCC or Clang
@@ -36,15 +37,21 @@ cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_PROJECT_TOP_LE
 Assumes that `AdaptiveCPP` was build with `clang++`:
 
 ```shell
-cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=clang++ -D PFFDTD_ENABLE_ACPP_SYCL=ON -D AdaptiveCpp_DIR=/usr/local/lib/cmake/AdaptiveCpp -D ACPP_TARGETS="generic" -D CMAKE_PROJECT_TOP_LEVEL_INCLUDES=external/cmake-conan/conan_provider.cmake
+cmake -S . -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=clang -D CMAKE_CXX_COMPILER=clang++ -D PFFDTD_ENABLE_SYCL_ACPP=ON -D AdaptiveCpp_DIR=/usr/local/lib/cmake/AdaptiveCpp -D ACPP_TARGETS="generic" -D CMAKE_PROJECT_TOP_LEVEL_INCLUDES=external/cmake-conan/conan_provider.cmake
 ```
 
 ### Intel oneAPI
 
+- <https://www.intel.com/content/www/us/en/developer/tools/oneapi/toolkits.html#base-kit>
+- Nvidia:
+  - Drivers
+  - <https://developer.codeplay.com/products/oneapi/nvidia/2024.2.1/guides/get-started-guide-nvidia>
+  - <https://www.server-world.info/en/note?os=Ubuntu_24.04&p=nvidia&f=2>
+
 ```shell
 source /opt/intel/oneapi/setvars.sh
 
-cmake -S. -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx -D PFFDTD_ENABLE_INTEL_SYCL=ON -D CMAKE_PROJECT_TOP_LEVEL_INCLUDES=external/cmake-conan/conan_provider.cmake -D CONAN_HOST_PROFILE=../cmake/profile/linux_sycl
+cmake -S. -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx -D PFFDTD_ENABLE_SYCL_ONEAPI=ON -D CMAKE_PROJECT_TOP_LEVEL_INCLUDES=external/cmake-conan/conan_provider.cmake -D CONAN_HOST_PROFILE=../cmake/profile/linux_sycl
 cmake --build build
 
 # Using hyper-threads is usally a slow down. Use the number of physical cores.
@@ -52,6 +59,12 @@ export DPCPP_CPU_PLACES=cores
 export DPCPP_CPU_CU_AFFINITY=spread
 export DPCPP_CPU_NUM_CUS=16
 ./run_2d.sh
+```
+
+### CUDA
+
+```shell
+cmake -S. -B build -G Ninja -D CMAKE_BUILD_TYPE=Release -D CMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -D PFFDTD_ENABLE_CUDA=ON -D CMAKE_PROJECT_TOP_LEVEL_INCLUDES=external/cmake-conan/conan_provider.cmake
 ```
 
 ## Windows
@@ -79,5 +92,5 @@ Currently not supported. Has issues building HDF5 from source via conan.
 # Or: Set environment variables
 . 'C:\Program Files (x86)\Intel\oneAPI\setvars.bat'
 
-cmake -S . -B build -G Ninja -D PFFDTD_ENABLE_INTEL_SYCL=ON -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icx -D CMAKE_PROJECT_TOP_LEVEL_INCLUDES=external/cmake-conan/conan_provider.cmake -D CONAN_HOST_PROFILE=../cmake/profile/windows_sycl
+cmake -S . -B build -G Ninja -D PFFDTD_ENABLE_SYCL_ONEAPI=ON -D CMAKE_BUILD_TYPE=Release -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icx -D CMAKE_PROJECT_TOP_LEVEL_INCLUDES=external/cmake-conan/conan_provider.cmake -D CONAN_HOST_PROFILE=../cmake/profile/windows_sycl
 ```

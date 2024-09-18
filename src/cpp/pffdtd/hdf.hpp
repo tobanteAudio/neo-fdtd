@@ -3,12 +3,12 @@
 
 #pragma once
 
+#include "pffdtd/assert.hpp"
 #include "pffdtd/mdspan.hpp"
 
 #include "hdf5.h"
 
 #include <array>
-#include <cassert>
 #include <filesystem>
 #include <span>
 #include <stdexcept>
@@ -32,8 +32,7 @@ template<typename T>
 inline constexpr auto isStdVector<std::vector<T>> = true;
 
 struct H5FReader {
-  explicit H5FReader(char const* str)
-      : _handle{H5Fopen(str, H5F_ACC_RDONLY, H5P_DEFAULT)} {}
+  explicit H5FReader(char const* str) : _handle{H5Fopen(str, H5F_ACC_RDONLY, H5P_DEFAULT)} {}
 
   ~H5FReader() { H5Fclose(_handle); }
 
@@ -71,9 +70,9 @@ struct H5FReader {
     auto set   = H5Dopen(_handle, dataset, H5P_DEFAULT);
     auto space = H5Dget_space(set);
 
-    auto ndims = 1UL;
+    auto ndims = 1;
     auto dims  = std::array<hsize_t, 3>{};
-    assert(H5Sget_simple_extent_ndims(space) == ndims);
+    PFFDTD_ASSERT(H5Sget_simple_extent_ndims(space) == ndims);
     H5Sget_simple_extent_dims(space, dims.data(), NULL);
 
     auto size = ndims == 1 ? dims[0] : dims[0] * dims[1];
@@ -104,8 +103,7 @@ struct H5FReader {
   }
 
   private:
-  auto checkErrorAndCloseDataset(char const* name, hid_t set, herr_t err)
-      -> void {
+  auto checkErrorAndCloseDataset(char const* name, hid_t set, herr_t err) -> void {
     if (err != 0) {
       throw std::runtime_error{"dataset read in: " + std::string{name}};
     }
@@ -120,19 +118,11 @@ struct H5FReader {
 
 struct H5FWriter {
   explicit H5FWriter(std::filesystem::path const& path)
-      : _handle{H5Fcreate(
-          path.string().c_str(),
-          H5F_ACC_TRUNC,
-          H5P_DEFAULT,
-          H5P_DEFAULT
-      )} {}
+      : _handle{H5Fcreate(path.string().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)} {}
 
   ~H5FWriter() { H5Fclose(_handle); }
 
-  auto write(
-      char const* name,
-      stdex::mdspan<double const, stdex::dextents<size_t, 2>> buf
-  ) -> void {
+  auto write(char const* name, stdex::mdspan<double const, stdex::dextents<size_t, 2>> buf) -> void {
     hsize_t dims[2]{
         static_cast<hsize_t>(buf.extent(0)),
         static_cast<hsize_t>(buf.extent(1)),

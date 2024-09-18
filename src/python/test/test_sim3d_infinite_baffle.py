@@ -14,7 +14,7 @@ from pffdtd.sim3d.testing import run_engine, skip_if_native_engine_unavailable
 from pffdtd.sim3d.process_outputs import process_outputs
 
 
-@pytest.mark.parametrize("engine", ["python", "native"])
+@pytest.mark.parametrize('engine', ['python', 'native'])
 def test_sim3d_infinite_baffle(tmp_path, engine):
     skip_if_native_engine_unavailable(engine)
 
@@ -41,15 +41,15 @@ def test_sim3d_infinite_baffle(tmp_path, engine):
     r3 = [r3[0], r3[1], s1[2]]
 
     model = {
-        "mats_hash": {
-            "Baffle": {
-                "tris": [
+        'mats_hash': {
+            'Baffle': {
+                'tris': [
                     [0, 2, 1],
                     [0, 3, 2],
                     [1, 5, 4],
                     [1, 3, 5]
                 ],
-                "pts": [
+                'pts': [
                     [0.0, depth, 0.0],
                     [baffle_size/2, depth, 0.0],
                     [baffle_size/2, depth, baffle_size],
@@ -57,19 +57,19 @@ def test_sim3d_infinite_baffle(tmp_path, engine):
                     [baffle_size, depth, 0.0],
                     [baffle_size, depth, baffle_size]
                 ],
-                "color": [255, 255, 255],
-                "sides": [1, 1, 1, 1]
+                'color': [255, 255, 255],
+                'sides': [1, 1, 1, 1]
             }
         },
-        "sources": [{"name": "S1", "xyz": s1}],
-        "receivers": [
-            {"name": "R1", "xyz": r1},
-            {"name": "R2", "xyz": r2},
-            {"name": "R3", "xyz": r3},
+        'sources': [{'name': 'S1', 'xyz': s1}],
+        'receivers': [
+            {'name': 'R1', 'xyz': r1},
+            {'name': 'R2', 'xyz': r2},
+            {'name': 'R3', 'xyz': r3},
         ]
     }
 
-    with open(model_file, "w") as file:
+    with open(model_file, 'w') as file:
         json.dump(model, file)
 
     write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.01), root_dir / material)
@@ -87,6 +87,7 @@ def test_sim3d_infinite_baffle(tmp_path, engine):
         save_folder=sim_dir,
         bmax=[baffle_size, depth, baffle_size],
         bmin=[0, 0, 0],
+        Nprocs=1,
     )
 
     run_engine(sim_dir=sim_dir, engine=engine)
@@ -99,15 +100,15 @@ def test_sim3d_infinite_baffle(tmp_path, engine):
         fcut_lowpass=fmax,
         order_lowpass=8,
         symmetric_lowpass=True,
-        air_abs_filter="none",
+        air_abs_filter='none',
         save_wav=True,
         plot_raw=False,
         plot=False,
     )
 
-    fs_1, buf_1 = wavread(sim_dir / "R001_out_normalised.wav")
-    fs_2, buf_2 = wavread(sim_dir / "R002_out_normalised.wav")
-    fs_3, buf_3 = wavread(sim_dir / "R003_out_normalised.wav")
+    fs_1, buf_1 = wavread(sim_dir / 'R001_out_normalised.wav')
+    fs_2, buf_2 = wavread(sim_dir / 'R002_out_normalised.wav')
+    fs_3, buf_3 = wavread(sim_dir / 'R003_out_normalised.wav')
     assert fs_1 == fs_2
     assert fs_1 == fs_3
 
