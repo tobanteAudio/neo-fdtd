@@ -1,14 +1,17 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2024 Tobias Hienzsch
+from pathlib import Path
+
 import numpy as np
 
+from pffdtd.materials.adm_funcs import convert_Sabs_to_Yn, write_freq_ind_mat_from_Yn
 from pffdtd.sim3d.model_builder import RoomModelBuilder
 from pffdtd.sim3d.setup import Setup3D
 
 
 class Localization(Setup3D):
     model_file = 'model.json'
-    mat_folder = '../../materials'
+    mat_folder = '../../sim_data/Localization/materials'
     source_index = 1
     source_signal = 'impulse'
     diff_source = True
@@ -20,7 +23,7 @@ class Localization(Setup3D):
     duration = 0.4
     Tc = 20
     rh = 50
-    fcc_flag = False
+    fcc = False
     ppw = 10.5
     fmax = 800.0
     save_folder = '../../sim_data/Localization/cpu'
@@ -29,7 +32,15 @@ class Localization(Setup3D):
     draw_vox = True
     draw_backend = 'polyscope'
 
+    def generate_materials(self):
+        self._print('Generate materials')
+
+        folder = Path(self.mat_folder)
+        filename = folder / 'sabine_9512.h5'
+        write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.9512), filename=filename)
+
     def generate_model(self, constants):
+        self._print('Generate model')
         L = 3.0
         W = 3.0
         H = 3.0
@@ -55,3 +66,6 @@ class Localization(Setup3D):
         room.add_receiver('R3', list(mics[3-1]/2+[0.5, 0.5, 0.5]))
         room.add_receiver('R4', list(mics[4-1]/2+[0.5, 0.5, 0.5]))
         room.build(self.model_file)
+
+    def _print(self, msg):
+        print(f'--LOCALIZATION: {msg}')

@@ -50,7 +50,7 @@ def convert_Sabs_to_Yn(Sabs, max_iter=100):
     """sabine absorption to specific admittance, Paris formula inversion with Newton method
     """
     def _print(fstring):
-        print(f'--MATS: {fstring}')
+        print(f'--MATERIALS: {fstring}')
 
     def fg(g):
         return 8.0*g*(1+g/(1+g)-2*g*np.log((g+1)/g))
@@ -83,7 +83,7 @@ def write_freq_ind_mat_from_Zn(Zn, filename):
     """write HDF5 mat file from a specific impedance (frequency-independent)
     """
     def _print(fstring):
-        print(f'--MATS: {fstring}')
+        print(f'--MATERIALS: {fstring}')
 
     assert ~np.isnan(Zn)
     assert ~np.isinf(Zn)  # rigid should be specified in scene (no material)
@@ -101,7 +101,7 @@ def write_freq_ind_mat_from_Yn(Yn, filename):
     """write HDF5 mat file from a specific impedance (frequency-independent)
     """
     def _print(fstring):
-        print(f'--MATS: {fstring}')
+        print(f'--MATERIALS: {fstring}')
 
     assert ~np.isnan(Yn)
     assert ~np.isinf(Yn)
@@ -113,7 +113,7 @@ def write_freq_dep_mat(DEF, filename):
     """write HDF5 mat file from frequency-independent triplet (D=F=0)
     """
     def _print(fstring):
-        print(f'--MATS: {fstring}')
+        print(f'--MATERIALS: {fstring}')
 
     _print(f'{DEF=}')
     DEF = np.atleast_2d(DEF)
@@ -255,7 +255,7 @@ def _from_DEF(D, E, F):
     return Ynm, dw, w0
 
 
-def fit_to_Sabs_oct_11(Sabs, filename, plot=False):
+def fit_to_Sabs_oct_11(Sabs, filename, plot=False, verbose=False):
     # fit Yn from 11 Sabine octave-band coefficients (16Hz to 16KHz)
     # this is a simple fitting routine that is a starting point for octave-band input data
     assert Sabs.size == 11
@@ -337,9 +337,11 @@ def fit_to_Sabs_oct_11(Sabs, filename, plot=False):
     # now save
     h5f = h5py.File(filename, 'w')
     assert np.all(np.sum(DEF > 0, axis=-1))  # at least one non-zero
-    print(f'{DEF=}')
     h5f.create_dataset('DEF', data=np.atleast_2d(DEF))
     h5f.close()
 
+    print(f'--MATERIALS: Fit {Path(filename).stem}')
+    if verbose:
+        print(f'{DEF=}')
     if plot:
         plot_DEF_admittance(fv, np.c_[D, E, F], model_Rf=R_target)

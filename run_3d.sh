@@ -25,7 +25,6 @@ rm -rf "$sim_dir"
 
 # Generate materials, model & sim data
 cd "$model_dir"
-pffdtd materials build "$materials_dir"
 pffdtd sim3d setup "$sim_setup"
 
 # Run sim

@@ -1,14 +1,18 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2024 Tobias Hienzsch
+from pathlib import Path
+
+import numpy as np
 
 from pffdtd.geometry.math import find_third_vertex
+from pffdtd.materials.adm_funcs import fit_to_Sabs_oct_11
 from pffdtd.sim3d.model_builder import RoomModelBuilder
 from pffdtd.sim3d.setup import Setup3D
 
 
 class Studio(Setup3D):
     model_file = 'model.json'
-    mat_folder = '../../materials'
+    mat_folder = '../../sim_data/Studio/materials'
     source_index = 1
     source_signal = 'impulse'
     diff_source = True
@@ -16,11 +20,11 @@ class Studio(Setup3D):
         'Absorber M': 'absorber_8000_100mm.h5',
         'Absorber L': 'absorber_8000_200mm.h5',
         'Ceiling': 'concrete_painted.h5',
-        'Diffusor': 'door_wood.h5',
-        'Floor': 'floor_wood.h5',
+        'Diffusor': 'wood.h5',
+        'Floor': 'wood_on_concrete.h5',
         'Sofa': 'absorber_8000_100mm.h5',
-        'Speaker_Cabinet': 'door_wood.h5',
-        'Table': 'door_wood.h5',
+        'Speaker_Cabinet': 'wood.h5',
+        'Table': 'wood.h5',
         'Walls': 'concrete_painted.h5',
     }
     duration = 2.0
@@ -36,7 +40,26 @@ class Studio(Setup3D):
     compress = 0
     rot_az_el = [0, 0]
 
+    def generate_materials(self):
+        self._print('Generate materials')
+        folder = Path(self.mat_folder)
+
+        # autopep8: off
+        absorber_8000_100mm           = np.array([0.02, 0.03, 0.05, 0.30, 0.69, 0.92, 0.93, 0.94, 0.95, 0.93, 0.90])
+        absorber_8000_200mm           = np.array([0.05, 0.10, 0.40, 0.85, 0.89, 0.92, 0.93, 0.94, 0.95, 0.93, 0.90])
+        concrete_painted              = np.array([0.01, 0.01, 0.01, 0.05, 0.06, 0.07, 0.09, 0.08, 0.08, 0.08, 0.08])
+        wood                          = np.array([0.10, 0.11, 0.13, 0.15, 0.11, 0.10, 0.07, 0.06, 0.07, 0.07, 0.07])
+        wood_on_concrete              = np.array([0.01, 0.01, 0.01, 0.04, 0.04, 0.07, 0.06, 0.06, 0.07, 0.06, 0.06])
+
+        fit_to_Sabs_oct_11(absorber_8000_100mm , filename=folder / 'absorber_8000_100mm.h5')
+        fit_to_Sabs_oct_11(absorber_8000_200mm , filename=folder / 'absorber_8000_200mm.h5')
+        fit_to_Sabs_oct_11(concrete_painted    , filename=folder / 'concrete_painted.h5'   )
+        fit_to_Sabs_oct_11(wood                , filename=folder / 'wood.h5'               )
+        fit_to_Sabs_oct_11(wood_on_concrete    , filename=folder / 'wood_on_concrete.h5'   )
+        # autopep8: on
+
     def generate_model(self, constants):
+        self._print('Generate model')
         S = 0.90
         L = 7.00*S
         W = 5.19*S
@@ -102,3 +125,6 @@ class Studio(Setup3D):
         room.add_receiver('P2', p2.tolist())
         room.add_receiver('P3', p3.tolist())
         room.build(self.model_file)
+
+    def _print(self, msg):
+        print(f'--STUDIO: {msg}')

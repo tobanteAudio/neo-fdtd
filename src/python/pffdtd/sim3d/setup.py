@@ -13,6 +13,7 @@ import uuid
 import click
 import numpy as np
 
+from pffdtd.common.misc import ensure_folder_exists
 from pffdtd.sim3d.constants import SimConstants
 from pffdtd.sim3d.materials import SimMaterials
 from pffdtd.sim3d.room_geometry import RoomGeometry
@@ -161,9 +162,50 @@ class Setup3D:
     draw_backend: Literal['mayavi', 'polyscope'] = 'polyscope'
 
 
-@click.command(name='setup', help='Generate simulation files.')
-@click.argument('sim_file', nargs=1, type=click.Path(exists=True))
-def main(sim_file):
+def run_setup3d_for_class(class_name):
+    assert issubclass(class_name, Setup3D)
+
+    sim = class_name()
+    model_factory = None
+    if sim.mat_folder:
+        ensure_folder_exists(sim.mat_folder)
+
+    if hasattr(sim, 'generate_materials'):
+        sim.generate_materials()
+
+    if hasattr(sim, 'generate_model'):
+        def model_factory(c): return sim.generate_model(c)
+
+    sim_setup_3d(
+        insig_type=sim.source_signal,
+        fmax=sim.fmax,
+        PPW=sim.ppw,
+        save_folder=sim.save_folder,
+        model_json_file=sim.model_file,
+        mat_folder=sim.mat_folder,
+        mat_files_dict=sim.materials,
+        duration=sim.duration,
+
+        Tc=sim.Tc,
+        rh=sim.rh,
+        source_num=sim.source_index,
+        save_folder_gpu=sim.save_folder_gpu,
+        draw_vox=sim.draw_vox,
+        draw_backend=sim.draw_backend,
+        diff_source=sim.diff_source,
+        fcc_flag=sim.fcc,
+        bmin=sim.bmin,
+        bmax=sim.bmax,
+        Nvox_est=None,
+        Nh=None,
+        Nprocs=None,
+        compress=sim.compress,
+        rot_az_el=sim.rot_az_el,
+        model_factory=model_factory,
+    )
+
+
+def run_setup3d_for_file(sim_file):
     module_id = str(uuid.uuid1())
     spec = importlib.util.spec_from_file_location(module_id, sim_file)
     loaded = importlib.util.module_from_spec(spec)
@@ -171,35 +213,10 @@ def main(sim_file):
 
     for name, value in inspect.getmembers(loaded):
         if inspect.isclass(value) and issubclass(value, Setup3D) and name != 'Setup3D':
-            sim = value()
-            model_factory = None
-            if hasattr(sim, 'generate_model'):
-                def model_factory(c): return sim.generate_model(c)
+            run_setup3d_for_class(value)
 
-            sim_setup_3d(
-                insig_type=sim.source_signal,
-                fmax=sim.fmax,
-                PPW=sim.ppw,
-                save_folder=sim.save_folder,
-                model_json_file=sim.model_file,
-                mat_folder=sim.mat_folder,
-                mat_files_dict=sim.materials,
-                duration=sim.duration,
 
-                Tc=sim.Tc,
-                rh=sim.rh,
-                source_num=sim.source_index,
-                save_folder_gpu=sim.save_folder_gpu,
-                draw_vox=sim.draw_vox,
-                draw_backend=sim.draw_backend,
-                diff_source=sim.diff_source,
-                fcc_flag=sim.fcc,
-                bmin=sim.bmin,
-                bmax=sim.bmax,
-                Nvox_est=None,
-                Nh=None,
-                Nprocs=None,
-                compress=sim.compress,
-                rot_az_el=sim.rot_az_el,
-                model_factory=model_factory,
-            )
+@click.command(name='setup', help='Generate simulation files.')
+@click.argument('sim_file', nargs=1, type=click.Path(exists=True))
+def main(sim_file):
+    run_setup3d_for_file(sim_file)

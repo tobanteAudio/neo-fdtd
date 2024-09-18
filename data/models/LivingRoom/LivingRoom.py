@@ -1,33 +1,36 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2024 Tobias Hienzsch
-import pathlib
+from pathlib import Path
 
+import numpy as np
+
+from pffdtd.materials.adm_funcs import fit_to_Sabs_oct_11
 from pffdtd.sim3d.model_builder import MeshModelBuilder
 from pffdtd.sim3d.setup import Setup3D
 
 
 class LivingRoom(Setup3D):
     model_file = 'model.json'
-    mat_folder = '../../materials'
+    mat_folder = '../../sim_data/LivingRoom/materials'
     source_index = 1
     source_signal = 'impulse'
     diff_source = True
     materials = {
-        'Book Shelf': 'floor_wood.h5',
+        'Book Shelf': 'wood.h5',
         'Ceiling': 'concrete_painted.h5',
-        'Coffee Table': 'floor_wood.h5',
+        'Coffee Table': 'wood.h5',
         'Couch': 'absorber_8000_100mm.h5',
-        'Desk': 'floor_wood.h5',
-        'Door': 'floor_wood.h5',
-        'Floor': 'floor_wood.h5',
-        'Kallax': 'floor_wood.h5',
-        'Monitors': 'floor_wood.h5',
-        'Speakers': 'floor_wood.h5',
-        'Speaker Stands': 'door_iron.h5',
-        'Table': 'floor_wood.h5',
-        'TV 42': 'floor_wood.h5',
-        'TV 55': 'floor_wood.h5',
-        'TV Table': 'floor_wood.h5',
+        'Desk': 'wood.h5',
+        'Door': 'wood.h5',
+        'Floor': 'wood.h5',
+        'Kallax': 'wood.h5',
+        'Monitors': 'wood.h5',
+        'Speakers': 'wood.h5',
+        'Speaker Stands': 'metal_iron.h5',
+        'Table': 'wood.h5',
+        'TV 42': 'wood.h5',
+        'TV 55': 'wood.h5',
+        'TV Table': 'wood.h5',
         'Walls': 'concrete_painted.h5',
         'Window': 'glas_thick.h5',
     }
@@ -43,8 +46,28 @@ class LivingRoom(Setup3D):
     draw_vox = True
     draw_backend = 'polyscope'
 
+    def generate_materials(self):
+        self._print('Generate materials')
+
+        # autopep8: off
+        absorber_8000_100mm = np.array([0.02, 0.03, 0.05, 0.30, 0.69, 0.92, 0.93, 0.94, 0.95, 0.93, 0.90])
+        concrete_painted    = np.array([0.01, 0.01, 0.01, 0.05, 0.06, 0.07, 0.09, 0.08, 0.08, 0.08, 0.08])
+        glas_thick          = np.array([0.15, 0.30, 0.27, 0.18, 0.06, 0.04, 0.03, 0.02, 0.02, 0.02, 0.01])
+        metal_iron          = np.array([0.01, 0.01, 0.01, 0.01, 0.01, 0.02, 0.02, 0.03, 0.03, 0.03, 0.02])
+        wood                = np.array([0.10, 0.11, 0.13, 0.15, 0.11, 0.10, 0.07, 0.06, 0.07, 0.07, 0.07])
+
+        folder = Path(self.mat_folder)
+        fit_to_Sabs_oct_11(absorber_8000_100mm , filename=folder / 'absorber_8000_100mm.h5')
+        fit_to_Sabs_oct_11(concrete_painted    , filename=folder / 'concrete_painted.h5'   )
+        fit_to_Sabs_oct_11(glas_thick          , filename=folder / 'glas_thick.h5'         )
+        fit_to_Sabs_oct_11(metal_iron          , filename=folder / 'metal_iron.h5'         )
+        fit_to_Sabs_oct_11(wood                , filename=folder / 'wood.h5'               )
+        # autopep8: on
+
     def generate_model(self, constants):
-        dir = pathlib.Path('.')
+        self._print('Generate model')
+
+        dir = Path('.')
         obj = dir/'obj'
 
         s1 = [3.65-0.5, 6.0-0.3, 1.2]
@@ -76,3 +99,6 @@ class LivingRoom(Setup3D):
         m.add_receiver('R1', r1)
         m.add_receiver('R2', r2)
         m.write(self.model_file)
+
+    def _print(self, msg):
+        print(f'--LIVING-ROOM: {msg}')

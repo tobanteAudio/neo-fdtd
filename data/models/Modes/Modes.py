@@ -1,12 +1,15 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2024 Tobias Hienzsch
+from pathlib import Path
+
+from pffdtd.materials.adm_funcs import convert_Sabs_to_Yn, write_freq_ind_mat_from_Yn
 from pffdtd.sim3d.model_builder import RoomModelBuilder
 from pffdtd.sim3d.setup import Setup3D
 
 
 class Modes(Setup3D):
     model_file = 'model.json'
-    mat_folder = '../../materials'
+    mat_folder = '../../sim_data/Modes/materials'
     source_index = 1
     source_signal = 'impulse'
     diff_source = True
@@ -28,7 +31,15 @@ class Modes(Setup3D):
     draw_backend = 'polyscope'
     rot_az_el = [0, 0]
 
+    def generate_materials(self):
+        self._print('Generate materials')
+
+        folder = Path(self.mat_folder)
+        filename = folder / 'sabine_03.h5'
+        write_freq_ind_mat_from_Yn(convert_Sabs_to_Yn(0.03), filename=filename)
+
     def generate_model(self, constants):
+        self._print('Generate model')
         width = 2.0
         length = 3.0
         height = 4.0
@@ -45,3 +56,6 @@ class Modes(Setup3D):
         room.add_source('S1', [offset, offset, offset])
         room.add_receiver('R1', [width-offset, length-offset, height-offset])
         room.build(self.model_file)
+
+    def _print(self, msg):
+        print(f'--MODES: {msg}')

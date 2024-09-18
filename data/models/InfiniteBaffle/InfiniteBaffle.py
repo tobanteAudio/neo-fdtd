@@ -12,7 +12,7 @@ class InfiniteBaffle(Setup3D):
     ppw = 10.5
     fcc = False
     model_file = 'model.json'
-    mat_folder = '../../materials',
+    mat_folder = '../../sim_data/InfiniteBaffle/materials'
     duration = 0.3
     source_index = 1
     source_signal = 'impulse'

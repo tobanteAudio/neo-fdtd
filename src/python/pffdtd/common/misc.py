@@ -9,6 +9,14 @@ def get_default_nprocs():
     return max(1, int(0.8*mp.cpu_count()))
 
 
+def ensure_folder_exists(folder):
+    folder = Path(folder)
+    if not folder.exists():
+        folder.mkdir(parents=True)
+    else:
+        assert folder.is_dir()
+
+
 def clear_dat_folder(dat_folder_str=None):
     # clear dat folder
     dat_path = Path(dat_folder_str)
