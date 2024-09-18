@@ -8,8 +8,8 @@ from pffdtd.sim3d.setup import Setup3D
 class InfiniteBaffle(Setup3D):
     """Point source on infinite baffle in an anechoic chamber
     """
-    fmax = 2000
-    ppw = 10.5
+    fmax = 4000
+    ppw = 7.7
     fcc = False
     model_file = 'model.json'
     mat_folder = '../../sim_data/InfiniteBaffle/materials'

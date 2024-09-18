@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2024 Tobias Hienzsch
 
 /.vscode
-/data/sim_data
+sim_data
 /build
 /cmake-build-*
 .DS_Store

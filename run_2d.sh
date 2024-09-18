@@ -15,9 +15,9 @@ python_dir="$root_dir/src/python"
 engine_exe="$root_dir/$build_dir/src/cpp/main_2d/pffdtd_2d"
 
 sim_name="Modes2D"
-sim_dir="$root_dir/data/sim_data/$sim_name/cpu"
+sim_dir="$root_dir/sim_data/$sim_name/cpu"
 sim_setup="${sim_name}.py"
-model_dir="$root_dir/data/models/$sim_name"
+model_dir="$root_dir/models/$sim_name"
 
 jobs=16
 

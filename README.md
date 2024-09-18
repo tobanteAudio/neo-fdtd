@@ -109,7 +109,7 @@ See (TODO:) for some performance benchmark results using single-node Nvidia GPUs
 
 ## License
 
-This software is released under the MIT license. See the LICENSE file for details. The Sketchup models found in the data/models folder are released under different licenses; see the README files in their corresponding folders.
+This software is released under the MIT license. See the LICENSE file for details. The Sketchup models found in the `models` folder are released under different licenses; see the README files in their corresponding folders.
 
 ## Credits
 

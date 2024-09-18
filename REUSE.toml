@@ -4,25 +4,20 @@
 version = 1
 
 [[annotations]]
-path = [
-    "benchmarks/pffdtd_benchmarks.csv",
-    "doc/screenshot.png",
-    "src/model_viewer/doc/screenshot.png",
-    "src/ruby_SU/RoomExporter.rbz",
-]
+path = ["benchmarks/pffdtd_benchmarks.csv", "doc/screenshot.png"]
 SPDX-FileCopyrightText = "2021 Brian Hamilton"
 SPDX-License-Identifier = "MIT"
 
 [[annotations]]
 path = [
-    "data/models/CTK_Church/CTK_Church_SU2017.skp",
-    "data/models/CTK_Church/model_export.json",
-    "data/models/CTK_Church/receivers.csv",
-    "data/models/CTK_Church/sources.csv",
-    "data/models/Musikverein_ConcertHall/Musikverein_SU2017.skp",
-    "data/models/Musikverein_ConcertHall/model_export.json",
-    "data/models/Musikverein_ConcertHall/receivers.csv",
-    "data/models/Musikverein_ConcertHall/sources.csv",
+    "models/CTK_Church/CTK_Church_SU2017.skp",
+    "models/CTK_Church/model_export.json",
+    "models/CTK_Church/receivers.csv",
+    "models/CTK_Church/sources.csv",
+    "models/Musikverein_ConcertHall/Musikverein_SU2017.skp",
+    "models/Musikverein_ConcertHall/model_export.json",
+    "models/Musikverein_ConcertHall/receivers.csv",
+    "models/Musikverein_ConcertHall/sources.csv",
 ]
 SPDX-FileCopyrightText = "2021 Brian Hamilton"
 SPDX-License-Identifier = "CC-BY-SA-4.0"
@@ -31,14 +26,13 @@ SPDX-License-Identifier = "CC-BY-SA-4.0"
 path = [
     "cmake/profile/linux_sycl",
     "cmake/profile/windows_sycl",
-    "data/materials/*.h5",
-    "data/models/**/*.obj",
-    "data/models/InfiniteBaffle/model.json",
-    "data/models/LivingRoom/model.json",
-    "data/models/Localization/model.json",
-    "data/models/Modes/model.json",
-    "data/models/ProStudio/model.json",
-    "data/models/Studio/model.json",
+    "models/InfiniteBaffle/model.json",
+    "models/LivingRoom/model.json",
+    "models/Localization/model.json",
+    "models/Modes/model.json",
+    "models/ProStudio/model.json",
+    "models/Studio/model.json",
+    "models/**/*.obj",
 ]
 SPDX-FileCopyrightText = "2024 Tobias Hienzsch"
 SPDX-License-Identifier = "MIT"
