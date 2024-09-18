@@ -166,7 +166,6 @@ def run_setup3d_for_class(class_name):
     assert issubclass(class_name, Setup3D)
 
     sim = class_name()
-    model_factory = None
     if sim.mat_folder:
         ensure_folder_exists(sim.mat_folder)
 
@@ -174,7 +173,8 @@ def run_setup3d_for_class(class_name):
         sim.generate_materials()
 
     if hasattr(sim, 'generate_model'):
-        def model_factory(c): return sim.generate_model(c)
+        def model_factory(c):
+            return sim.generate_model(c)
 
     sim_setup_3d(
         insig_type=sim.source_signal,

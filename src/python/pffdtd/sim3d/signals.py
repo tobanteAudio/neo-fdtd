@@ -34,7 +34,7 @@ class SimSignals:
         self.zv = h5f['zv'][()]
         h5f.close()
 
-        self.fcc = (self.fcc_flag > 0)
+        self.fcc = self.fcc_flag > 0
 
         if self.fcc:
             assert self.xv.size % 2 == 0
@@ -176,7 +176,6 @@ class SimSignals:
         yv = self.yv
         zv = self.zv
         ix_iy_iz = np.empty(pos_xyz.shape, dtype=np.int64)
-        Nx = xv.size
         Ny = yv.size
         Nz = zv.size
 

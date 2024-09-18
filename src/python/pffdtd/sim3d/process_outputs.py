@@ -39,7 +39,6 @@ class ProcessOutputs:
         # get some sim constants (floats) from constants
         h5f = h5py.File(sim_dir / Path('constants.h5'), 'r')
         Ts = h5f['Ts'][()]
-        c = h5f['c'][()]
         Tc = h5f['Tc'][()]
         rh = h5f['rh'][()]
         h5f.close()
@@ -116,7 +115,7 @@ class ProcessOutputs:
             return
         r_out_f = self.r_out_f
 
-        self.print(f'resampling')
+        self.print('resampling')
         r_out_f = resample(r_out_f, Fs, Fs_f, filter='kaiser_best')
 
         self.Fs_f = Fs_f
@@ -130,12 +129,12 @@ class ProcessOutputs:
         Tc = self.Tc
         rh = self.rh
         r_out_f = self.r_out_f
-        self.print(f'applying Stokes'' air absorption filter')
-        r_out_f = apply_visco_filter(r_out_f, Fs_f, Tc=Tc, rh=rh, NdB=NdB)
-        self.Nt_f = r_out_f.shape[-1]  # gets lengthened by filter
 
+        self.print('applying Stokes air absorption filter')
+        r_out_f = apply_visco_filter(r_out_f, Fs_f, Tc=Tc, rh=rh, NdB=NdB)
+
+        self.Nt_f = r_out_f.shape[-1]  # gets lengthened by filter
         self.r_out_f = r_out_f
-        Nt_f = self.Nt_f
 
     # to apply Stokes' filter (see I3DA 2021 paper)
     def apply_modal_filter(self):
@@ -143,12 +142,12 @@ class ProcessOutputs:
         Tc = self.Tc
         rh = self.rh
         r_out_f = self.r_out_f
-        self.print(f'applying modal air absorption filter')
-        r_out_f = apply_modal_filter(r_out_f, Fs_f, Tc=Tc, rh=rh)
-        self.Nt_f = r_out_f.shape[-1]  # gets lengthened by filter
 
+        self.print('applying modal air absorption filter')
+        r_out_f = apply_modal_filter(r_out_f, Fs_f, Tc=Tc, rh=rh)
+
+        self.Nt_f = r_out_f.shape[-1]  # gets lengthened by filter
         self.r_out_f = r_out_f
-        Nt_f = self.Nt_f
 
     # to apply air absorption through STFT (overlap-add) framework
     def apply_ola_filter(self):  # default settings for 48kHz
@@ -156,20 +155,18 @@ class ProcessOutputs:
         Tc = self.Tc
         rh = self.rh
         r_out_f = self.r_out_f
-        self.print(f'applying OLA air absorption filter')
-        r_out_f = apply_ola_filter(r_out_f, Fs_f, Tc=Tc, rh=rh)
-        self.Nt_f = r_out_f.shape[-1]  # maybe lengthened by filter
 
+        self.print('applying OLA air absorption filter')
+        r_out_f = apply_ola_filter(r_out_f, Fs_f, Tc=Tc, rh=rh)
+
+        self.Nt_f = r_out_f.shape[-1]  # maybe lengthened by filter
         self.r_out_f = r_out_f
-        Nt_f = self.Nt_f
 
     # plot the raw outputs (just to debug)
     def plot_raw_outputs(self):
         Nt = self.Nt
         Ts = self.Ts
-        Fs = self.Fs
         tv = np.arange(Nt)*Ts
-        u_out = self.u_out
         r_out = self.r_out
 
         # fig = plt.figure()

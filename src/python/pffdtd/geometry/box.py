@@ -94,7 +94,7 @@ class Box:
             mlab.draw()
             print('drawing box..')
         else:
-            raise
+            raise RuntimeError(f"invalid backend {backend}")
 
     # draw and show
     def draw(self, backend='mayavi', r=None, color=(0, 1, 0)):
@@ -113,7 +113,7 @@ class Box:
             fig.scene.interactor.interactor_style = tvtk.InteractorStyleTerrain()
             mlab.show()
         else:
-            raise
+            raise RuntimeError(f"invalid backend {backend}")
 
     def show(self, backend='mayavi'):
         if backend == 'mayavi':
@@ -137,7 +137,7 @@ class Box:
             mlab.draw()
             print('drawing box faces..')
         else:
-            raise
+            raise RuntimeError(f"invalid backend {backend}")
 
 
 def main():

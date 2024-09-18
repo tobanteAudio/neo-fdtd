@@ -441,7 +441,9 @@ class EnginePython3D:
             # ldraw = lambda u : 20*np.log10(np.abs(u)+np.spacing(1))
 
             cmap = 'seismic'  # best to diff input so symmetric (diverging colormap)
-            def ldraw(u): return u
+
+            def ldraw(u):
+                return u
 
             hh_xy = mlab.mesh(xy_x, xy_y, np.full(xy_x.shape, zv[iz_in]), scalars=ldraw(uxy.T), colormap=cmap)
             hh_xz = mlab.mesh(xz_x, np.full(xz_x.shape, yv[iy_in]), xz_z, scalars=ldraw(uxz.T), colormap=cmap)

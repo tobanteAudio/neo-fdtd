@@ -89,7 +89,7 @@ class RoomGeometry:
         # calculate bmin/bmax
         for mat in mat_str:
             pts = mats_dict[mat]['pts']
-            tris = mats_dict[mat]['tris']
+            # tris = mats_dict[mat]['tris']
             bmin = np.min(np.r_[pts, bmin[None, :]], axis=0)
             bmax = np.max(np.r_[pts, bmax[None, :]], axis=0)
 
@@ -265,7 +265,7 @@ class RoomGeometry:
                 )
 
         else:
-            raise
+            raise RuntimeError(f"invalid backend {backend}")
 
         self.fig = fig
 
@@ -278,7 +278,7 @@ class RoomGeometry:
             # View the point cloud and mesh we just registered in the 3D UI
             ps.show()
         else:
-            raise
+            raise RuntimeError(f"invalid backend {backend}")
 
     def print_stats(self):
         rg = self

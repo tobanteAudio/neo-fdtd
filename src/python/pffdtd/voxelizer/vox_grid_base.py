@@ -62,15 +62,15 @@ class VoxGridBase:
             Nprocs = self.nprocs
         self.print(f'using {Nprocs} processes')
 
-        tris = self.tris
+        # tris = self.tris
         tris_pre = self.tris_pre
         Ntris = self.Ntris
-        pts = self.pts
+        # pts = self.pts
         Nvox = self.Nvox
 
         self.timer.tic('voxgrid fill')
 
-        tri_pts = tris_pre['v']
+        # tri_pts = tris_pre['v']
         tri_bmin = tris_pre['bmin']
         tri_bmax = tris_pre['bmax']
 
@@ -213,6 +213,6 @@ class VoxGridBase:
         elif backend == 'polyscope':
             import polyscope as ps
             pmesh = ps.register_surface_mesh('voxels', boxpts, boxtris, color=(0, 1, 0), edge_color=(0, 1, 0), edge_width=tube_radius)
-            # pmesh.set_transparency(0.0)
+            # pmesh.set_transparency(0.75)
 
         self.print('boxes drawn..')

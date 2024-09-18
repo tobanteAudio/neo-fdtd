@@ -132,7 +132,7 @@ def main():
         from tvtk.api import tvtk  # only for z-up
         assert args.trials < 4
 
-    for tt in range(args.trials):
+    for _ in range(args.trials):
         Ntris = 4
         # points for tris
         vv = npr.randn(Ntris, 3, 3)

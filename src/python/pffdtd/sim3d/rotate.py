@@ -63,7 +63,7 @@ def rotate(sim_dir, tr=None, compress=False):
     out_ixyz = h5f['out_ixyz'][...]
     Nr = h5f['Nr'][()]
     Ns = h5f['Ns'][()]
-    Nt = h5f['Nt'][()]
+    # Nt = h5f['Nt'][()]
     h5f.close()
     _print(timer.ftoc('read'))
 
@@ -216,7 +216,7 @@ def fold_fcc_sim_data(sim_dir):
     Nyh = np.int_(Ny/2)+1
 
     bix, biy, biz = ind2sub3d(bn_ixyz, Nx, Ny, Nz)
-    ii = (biy >= Ny/2)
+    ii = biy >= Ny/2
 
     # bn_ixyz
     bn_ixyz[ii] = np.c_[bix[ii], Ny-biy[ii]-1, biz[ii]] @ npa([Nz*Nyh, Nz, 1])
@@ -229,13 +229,13 @@ def fold_fcc_sim_data(sim_dir):
 
     # in_ixyz
     bix, biy, biz = ind2sub3d(in_ixyz, Nx, Ny, Nz)
-    ii = (biy >= Ny/2)
+    ii = biy >= Ny/2
     in_ixyz[ii] = np.c_[bix[ii], Ny-biy[ii]-1, biz[ii]] @ npa([Nz*Nyh, Nz, 1])
     in_ixyz[~ii] = np.c_[bix[~ii], biy[~ii], biz[~ii]] @ npa([Nz*Nyh, Nz, 1])
 
     # out_ixyz
     bix, biy, biz = ind2sub3d(out_ixyz, Nx, Ny, Nz)
-    ii = (biy >= Ny/2)
+    ii = biy >= Ny/2
     out_ixyz[ii] = np.c_[bix[ii], Ny-biy[ii]-1, biz[ii]] @ npa([Nz*Nyh, Nz, 1])
     out_ixyz[~ii] = np.c_[bix[~ii], biy[~ii], biz[~ii]] @ npa([Nz*Nyh, Nz, 1])
 
