@@ -47,31 +47,25 @@ namespace pffdtd {
 // load the sim data from Python-written HDF5 files
 [[nodiscard]] auto loadSimulation3D(std::filesystem::path const& simDir) -> Simulation3D {
   // local values, to read in and attach to struct at end
-  int64_t Nbl              = 0;
-  int64_t Nba              = 0;
-  int64_t* bn_ixyz         = nullptr;
-  int64_t* bnl_ixyz        = nullptr;
-  int64_t* bna_ixyz        = nullptr;
-  int8_t* Q_bna            = nullptr;
-  int64_t* in_ixyz         = nullptr;
-  int64_t* out_ixyz        = nullptr;
-  int64_t* out_reorder     = nullptr;
-  bool* adj_bn_bool        = nullptr;
-  int8_t* K_bn             = nullptr;
-  uint16_t* adj_bn         = nullptr; // large enough for FCC
-  uint8_t* bn_mask         = nullptr;
-  int8_t* mat_bn           = nullptr;
-  int8_t* mat_bnl          = nullptr;
-  double* saf_bn           = nullptr;
-  Real* ssaf_bn            = nullptr;
-  Real* ssaf_bnl           = nullptr;
-  double* in_sigs          = nullptr;
-  double* u_out            = nullptr;
-  int8_t NN                = 0;
-  int8_t* Mb               = nullptr;
-  int8_t Nm                = 0;
-  MatQuad<Real>* mat_quads = nullptr;
-  Real* mat_beta           = nullptr; // one per material
+  int64_t* bn_ixyz     = nullptr;
+  int64_t* bnl_ixyz    = nullptr;
+  int64_t* bna_ixyz    = nullptr;
+  int8_t* Q_bna        = nullptr;
+  int64_t* in_ixyz     = nullptr;
+  int64_t* out_ixyz    = nullptr;
+  int64_t* out_reorder = nullptr;
+  bool* adj_bn_bool    = nullptr;
+  int8_t* K_bn         = nullptr;
+  uint16_t* adj_bn     = nullptr; // large enough for FCC
+  uint8_t* bn_mask     = nullptr;
+  int8_t* mat_bn       = nullptr;
+  int8_t* mat_bnl      = nullptr;
+  double* saf_bn       = nullptr;
+  Real* ssaf_bn        = nullptr;
+  Real* ssaf_bnl       = nullptr;
+  double* in_sigs      = nullptr;
+  double* u_out        = nullptr;
+  int8_t* Mb           = nullptr;
 
   hsize_t dims[2]; // HDF5 type
   int expected_ndims = 0;
@@ -100,6 +94,7 @@ namespace pffdtd {
   PFFDTD_ASSERT((fcc_flag >= 0) && (fcc_flag <= 2));
 
   // FCC (1 is CPU-based, 2 is CPU or GPU)
+  int8_t NN = 0;
   if (fcc_flag > 0) {
     PFFDTD_ASSERT(l2 <= 1.0);
     PFFDTD_ASSERT(l <= 1.0);
@@ -133,9 +128,7 @@ namespace pffdtd {
   fmt::println("NN={}", NN);
 
   ////////////////////////////////////////////////////////////////////////
-  //
   // Read vox HDF5 dataset
-  //
   ////////////////////////////////////////////////////////////////////////
   filename = simDir / "vox_out.h5";
   if (not std::filesystem::exists(filename)) {
@@ -198,9 +191,7 @@ namespace pffdtd {
   std::free(saf_bn);
 
   ////////////////////////////////////////////////////////////////////////
-  //
   // Read signals HDF5 dataset
-  //
   ////////////////////////////////////////////////////////////////////////
   filename = simDir / "signals.h5";
   if (not std::filesystem::exists(filename)) {
@@ -253,9 +244,7 @@ namespace pffdtd {
   }
 
   ////////////////////////////////////////////////////////////////////////
-  //
   // Read materials HDF5 dataset
-  //
   ////////////////////////////////////////////////////////////////////////
   filename = simDir / "materials.h5";
   if (not std::filesystem::exists(filename)) {
@@ -267,7 +256,7 @@ namespace pffdtd {
   //////////////////
   // integers
   //////////////////
-  readH5Constant(materials.handle(), "Nmat", (void*)&Nm, DataType::Int8);
+  auto const Nm = materials.read<int8_t>("Nmat");
   fmt::println("Nm={}", Nm);
   PFFDTD_ASSERT(Nm <= MNm);
 
@@ -281,6 +270,8 @@ namespace pffdtd {
   //////////////////
   // DEF (RLC) datasets
   //////////////////
+  MatQuad<Real>* mat_quads = nullptr;
+  Real* mat_beta           = nullptr; // one per material
   allocate_zeros((void**)&mat_quads, static_cast<unsigned long>(Nm * MMb) * sizeof(MatQuad<Real>));
   allocate_zeros((void**)&mat_beta, Nm * sizeof(Real));
   for (int8_t i = 0; i < Nm; i++) {
@@ -323,9 +314,7 @@ namespace pffdtd {
   }
 
   ////////////////////////////////////////////////////////////////////////
-  //
   // Checks and repacking
-  //
   ////////////////////////////////////////////////////////////////////////
 
   //////////////////
@@ -419,7 +408,7 @@ namespace pffdtd {
   std::free(bn_mask_raw);
 
   // count Nbl
-  Nbl = 0;
+  int64_t Nbl = 0;
   for (int64_t i = 0; i < Nb; i++) {
     Nbl += static_cast<int64_t>(mat_bn[i] >= 0);
   }
@@ -445,9 +434,8 @@ namespace pffdtd {
   fmt::println("separated non-rigid bn");
 
   // ABC ndoes
-  int64_t Nyf = 0;
-  Nyf         = (fcc_flag == 2) ? 2 * (Ny - 1) : Ny; // full Ny dim, taking into account FCC fold
-  Nba         = 2 * (Nx * Nyf + Nx * Nz + Nyf * Nz) - 12 * (Nx + Nyf + Nz) + 56;
+  int64_t Nyf = (fcc_flag == 2) ? 2 * (Ny - 1) : Ny; // full Ny dim, taking into account FCC fold
+  int64_t Nba = 2 * (Nx * Nyf + Nx * Nz + Nyf * Nz) - 12 * (Nx + Nyf + Nz) + 56;
   if (fcc_flag > 0) {
     Nba /= 2;
   }
