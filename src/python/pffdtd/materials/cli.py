@@ -6,7 +6,6 @@ import numpy as np
 import pathlib
 
 from pffdtd.materials.adm_funcs import plot_DEF_admittance, read_mat_DEF
-from pffdtd.materials.build import build
 
 
 @click.group(help='Materials.')
@@ -22,4 +21,9 @@ def plot(material_file):
     plot_DEF_admittance(frequencies, material)
 
 
-materials.add_command(build)
+# freq-independent impedance from reflection coefficients
+# write_freq_ind_mat_from_Yn(convert_R_to_Yn(0.90),filename=Path(write_folder / 'R90_mat.h5'))
+# write_freq_ind_mat_from_Yn(convert_R_to_Yn(0.5),filename=Path(write_folder / 'R50.h5'))
+
+# #input DEF values directly
+# write_freq_dep_mat(npa([[0,1.0,0],[2,3,4]]),filename=Path(write_folder / 'ex_mat.h5'))
