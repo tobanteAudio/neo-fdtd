@@ -660,8 +660,7 @@ auto run(Simulation3D const& sim) -> double {
   char const* s = getenv("CUDA_LAUNCH_BLOCKING");
   if (s != nullptr) {
     if (s[0] == '1') {
-      printf("******************SYNCHRONOUS (DEBUG "
-             "ONLY!!!)*********************\n");
+      printf("******************SYNCHRONOUS (DEBUG  ONLY!!!)*********************\n");
       printf("...continue?\n");
       getchar();
     }

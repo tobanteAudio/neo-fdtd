@@ -11,7 +11,9 @@
 
 #include <omp.h>
 
+#include <bit>
 #include <cmath>
+#include <cstddef>
 #include <cstdlib>
 #include <vector>
 
@@ -259,57 +261,49 @@ auto run(Simulation3D& sd) -> double {
     if (fcc_flag == 0) {
 #pragma omp parallel for
       for (int64_t nb = 0; nb < Nb; nb++) {
-        int64_t const ii = bn_ixyz[nb];
-        uint8_t Kint     = 0;
-        uint16_t v       = adj_bn[nb];
-        for (Kint = 0; v != 0U; Kint++) {
-          v &= v - 1; // clear the least significant bit set
-        }
+        auto const ii   = bn_ixyz[nb];
+        auto const adj  = adj_bn[nb];
+        auto const Kint = std::popcount(adj);
 
-        Real const _2 = 2.0;
-        Real const K  = Kint;
-        Real const b2 = a2;
-        Real const b1 = (_2 - sl2 * K);
+        auto const _2 = static_cast<Real>(2.0);
+        auto const K  = static_cast<Real>(Kint);
+        auto const b2 = static_cast<Real>(a2);
+        auto const b1 = (_2 - sl2 * K);
 
-        Real partial       = b1 * u1[ii] - u0[ii];
-        uint16_t const adj = adj_bn[nb];
-        partial += b2 * (Real)GET_BIT(adj, 0) * u1[ii + NzNy];
-        partial += b2 * (Real)GET_BIT(adj, 1) * u1[ii - NzNy];
-        partial += b2 * (Real)GET_BIT(adj, 2) * u1[ii + Nz];
-        partial += b2 * (Real)GET_BIT(adj, 3) * u1[ii - Nz];
-        partial += b2 * (Real)GET_BIT(adj, 4) * u1[ii + 1];
-        partial += b2 * (Real)GET_BIT(adj, 5) * u1[ii - 1];
+        auto partial = b1 * u1[ii] - u0[ii];
+        partial += b2 * static_cast<Real>(GET_BIT(adj, 0)) * u1[ii + NzNy];
+        partial += b2 * static_cast<Real>(GET_BIT(adj, 1)) * u1[ii - NzNy];
+        partial += b2 * static_cast<Real>(GET_BIT(adj, 2)) * u1[ii + Nz];
+        partial += b2 * static_cast<Real>(GET_BIT(adj, 3)) * u1[ii - Nz];
+        partial += b2 * static_cast<Real>(GET_BIT(adj, 4)) * u1[ii + 1];
+        partial += b2 * static_cast<Real>(GET_BIT(adj, 5)) * u1[ii - 1];
         u0[ii] = partial;
       }
     } else if (fcc_flag > 0) {
 #pragma omp parallel for
       for (int64_t nb = 0; nb < Nb; nb++) {
-        int64_t const ii = bn_ixyz[nb];
-        uint8_t Kint     = 0;
-        uint16_t v       = adj_bn[nb];
-        for (Kint = 0; v != 0U; Kint++) {
-          v &= v - 1; // clear the least significant bit set
-        }
+        auto const ii   = bn_ixyz[nb];
+        auto const adj  = adj_bn[nb];
+        auto const Kint = std::popcount(adj);
 
-        Real const _2 = 2.0;
-        Real const K  = Kint;
-        Real const b2 = a2;
-        Real const b1 = (_2 - sl2 * K);
+        auto const _2 = static_cast<Real>(2.0);
+        auto const K  = static_cast<Real>(Kint);
+        auto const b2 = static_cast<Real>(a2);
+        auto const b1 = (_2 - sl2 * K);
 
-        Real partial       = b1 * u1[ii] - u0[ii];
-        uint16_t const adj = adj_bn[nb];
-        partial += b2 * (Real)GET_BIT(adj, 0) * u1[ii + NzNy + Nz];
-        partial += b2 * (Real)GET_BIT(adj, 1) * u1[ii - NzNy - Nz];
-        partial += b2 * (Real)GET_BIT(adj, 2) * u1[ii + Nz + 1];
-        partial += b2 * (Real)GET_BIT(adj, 3) * u1[ii - Nz - 1];
-        partial += b2 * (Real)GET_BIT(adj, 4) * u1[ii + NzNy + 1];
-        partial += b2 * (Real)GET_BIT(adj, 5) * u1[ii - NzNy - 1];
-        partial += b2 * (Real)GET_BIT(adj, 6) * u1[ii + NzNy - Nz];
-        partial += b2 * (Real)GET_BIT(adj, 7) * u1[ii - NzNy + Nz];
-        partial += b2 * (Real)GET_BIT(adj, 8) * u1[ii + Nz - 1];
-        partial += b2 * (Real)GET_BIT(adj, 9) * u1[ii - Nz + 1];
-        partial += b2 * (Real)GET_BIT(adj, 10) * u1[ii + NzNy - 1];
-        partial += b2 * (Real)GET_BIT(adj, 11) * u1[ii - NzNy + 1];
+        auto partial = b1 * u1[ii] - u0[ii];
+        partial += b2 * static_cast<Real>(GET_BIT(adj, 0)) * u1[ii + NzNy + Nz];
+        partial += b2 * static_cast<Real>(GET_BIT(adj, 1)) * u1[ii - NzNy - Nz];
+        partial += b2 * static_cast<Real>(GET_BIT(adj, 2)) * u1[ii + Nz + 1];
+        partial += b2 * static_cast<Real>(GET_BIT(adj, 3)) * u1[ii - Nz - 1];
+        partial += b2 * static_cast<Real>(GET_BIT(adj, 4)) * u1[ii + NzNy + 1];
+        partial += b2 * static_cast<Real>(GET_BIT(adj, 5)) * u1[ii - NzNy - 1];
+        partial += b2 * static_cast<Real>(GET_BIT(adj, 6)) * u1[ii + NzNy - Nz];
+        partial += b2 * static_cast<Real>(GET_BIT(adj, 7)) * u1[ii - NzNy + Nz];
+        partial += b2 * static_cast<Real>(GET_BIT(adj, 8)) * u1[ii + Nz - 1];
+        partial += b2 * static_cast<Real>(GET_BIT(adj, 9)) * u1[ii - Nz + 1];
+        partial += b2 * static_cast<Real>(GET_BIT(adj, 10)) * u1[ii + NzNy - 1];
+        partial += b2 * static_cast<Real>(GET_BIT(adj, 11)) * u1[ii - NzNy + 1];
         u0[ii] = partial;
       }
     }
@@ -331,26 +325,23 @@ auto run(Simulation3D& sd) -> double {
     // read output at current sample
     for (int64_t nr = 0; nr < Nr; nr++) {
       int64_t const ii   = out_ixyz[nr];
-      u_out[nr * Nt + n] = (double)u1[ii];
+      u_out[nr * Nt + n] = static_cast<double>(u1[ii]);
     }
 
     // add current sample to next (as per update)
     for (int64_t ns = 0; ns < Ns; ns++) {
       int64_t const ii = in_ixyz[ns];
-      u0[ii] += (Real)in_sigs[ns * Nt + n];
+      u0[ii] += static_cast<Real>(in_sigs[ns * Nt + n]);
     }
 
     // swap pointers
-    Real* tmp_ptr = nullptr;
-    tmp_ptr       = u1;
-    u1            = u0;
-    u0            = tmp_ptr;
+    std::swap(u0, u1);
 
     // using extra state here for simplicity
-    tmp_ptr = u2b;
-    u2b     = u1b;
-    u1b     = u0b;
-    u0b     = tmp_ptr;
+    auto* tmp = u2b;
+    u2b       = u1b;
+    u1b       = u0b;
+    u0b       = tmp;
 
     auto const now    = omp_get_wtime();
     timeElapsed       = now - startTime;
