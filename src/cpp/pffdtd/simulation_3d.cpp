@@ -4,6 +4,7 @@
 #include "simulation_3d.hpp"
 
 #include "pffdtd/assert.hpp"
+#include "pffdtd/hdf.hpp"
 
 #include <fmt/format.h>
 
@@ -46,16 +47,8 @@ namespace pffdtd {
 // load the sim data from Python-written HDF5 files
 [[nodiscard]] auto loadSimulation3D(std::filesystem::path const& simDir) -> Simulation3D {
   // local values, to read in and attach to struct at end
-  int64_t Nx               = 0;
-  int64_t Ny               = 0;
-  int64_t Nz               = 0;
-  int64_t Nb               = 0;
   int64_t Nbl              = 0;
   int64_t Nba              = 0;
-  int64_t Npts             = 0;
-  int64_t Ns               = 0;
-  int64_t Nr               = 0;
-  int64_t Nt               = 0;
   int64_t* bn_ixyz         = nullptr;
   int64_t* bnl_ixyz        = nullptr;
   int64_t* bna_ixyz        = nullptr;
@@ -74,68 +67,45 @@ namespace pffdtd {
   Real* ssaf_bnl           = nullptr;
   double* in_sigs          = nullptr;
   double* u_out            = nullptr;
-  double l                 = NAN;
-  double l2                = NAN;
-  int8_t fcc_flag          = 0;
   int8_t NN                = 0;
   int8_t* Mb               = nullptr;
   int8_t Nm                = 0;
   MatQuad<Real>* mat_quads = nullptr;
   Real* mat_beta           = nullptr; // one per material
 
-  double Ts = NAN;
-  bool diff = false;
-
-  hid_t file = 0;  // HDF5 type
   hsize_t dims[2]; // HDF5 type
   int expected_ndims = 0;
-  char dset_str[80];
-  // char filename[80];
 
   ////////////////////////////////////////////////////////////////////////
-  //
   // Read constants HDF5 dataset
-  //
   ////////////////////////////////////////////////////////////////////////
   auto filename = simDir / "constants.h5";
   if (not std::filesystem::exists(filename)) {
-    PFFDTD_ASSERT(true == false);
+    raisef<std::invalid_argument>("file '{}' does not exist", filename.string());
   }
 
-  file = H5Fopen(filename.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+  auto constants = H5FReader(filename);
 
   //////////////////
   // constants
   //////////////////
-  strcpy(dset_str, "l");
-  readH5Constant(file, dset_str, (void*)&l, FLOAT64);
-  printf("l=%.16g\n", l);
-
-  strcpy(dset_str, "l2");
-  readH5Constant(file, dset_str, (void*)&l2, FLOAT64);
-  printf("l2=%.16g\n", l2);
-
-  strcpy(dset_str, "Ts");
-  readH5Constant(file, dset_str, (void*)&Ts, FLOAT64);
-  printf("Ts=%.16g\n", Ts);
-
-  strcpy(dset_str, "fcc_flag");
-  readH5Constant(file, dset_str, (void*)&fcc_flag, INT8);
-  printf("fcc_flag=%d\n", fcc_flag);
+  auto const l        = constants.read<double>("l");
+  auto const l2       = constants.read<double>("l2");
+  auto const Ts       = constants.read<double>("Ts");
+  auto const fcc_flag = constants.read<int8_t>("fcc_flag");
+  fmt::println("l={:.16g}", l);
+  fmt::println("l2={:.16g}", l2);
+  fmt::println("Ts={:.16g}", Ts);
+  fmt::println("fcc_flag={}", fcc_flag);
   PFFDTD_ASSERT((fcc_flag >= 0) && (fcc_flag <= 2));
 
-  if (H5Fclose(file) != 0) {
-    fmt::println("error closing file {}", filename.string());
-    PFFDTD_ASSERT(true == false);
-  } else {
-    fmt::println("closed file {}", filename.string());
-  }
-
-  if (fcc_flag > 0) { // FCC (1 is CPU-based, 2 is CPU or GPU)
+  // FCC (1 is CPU-based, 2 is CPU or GPU)
+  if (fcc_flag > 0) {
     PFFDTD_ASSERT(l2 <= 1.0);
     PFFDTD_ASSERT(l <= 1.0);
     NN = 12;
-  } else { // simple Cartesian
+  } else {
+    // simple Cartesian
     PFFDTD_ASSERT(l2 <= 1.0 / 3.0);
     PFFDTD_ASSERT(l <= sqrt(1.0 / 3.0));
     NN = 6;
@@ -146,21 +116,21 @@ namespace pffdtd {
   double const dsl2 = (1.0 + EPS) * lfac * l2;     // scale for stability (EPS in fdtd_common.hpp)
   double const da1  = (2.0 - dsl2 * NN);           // scaling for stability in single
   double const da2  = lfac * l2;
-  // Real is defined in fdtd_common.hpp (float or double)
+
   Real const a1  = da1;
   Real const a2  = da2;
   Real const sl2 = dsl2;
   Real const lo2 = 0.5 * l;
 
-  printf("a2 (double): %.16g\n", da2);
-  printf("a2 (Real): %.16g\n", a2);
-  printf("a1 (double): %.16g\n", da1);
-  printf("a1 (Real): %.16g\n", a1);
-  printf("sl2 (double): %.16g\n", dsl2);
-  printf("sl2 (Real): %.16g\n", sl2);
+  fmt::println("a2 (double): {:.16g}", da2);
+  fmt::println("a2 (Real): {:.16g}", a2);
+  fmt::println("a1 (double): {:.16g}", da1);
+  fmt::println("a1 (Real): {:.16g}", a1);
+  fmt::println("sl2 (double): {:.16g}", dsl2);
+  fmt::println("sl2 (Real): {:.16g}", sl2);
 
-  printf("l2=%.16g\n", l2);
-  printf("NN=%d\n", NN);
+  fmt::println("l2={:.16g}", l2);
+  fmt::println("NN={}", NN);
 
   ////////////////////////////////////////////////////////////////////////
   //
@@ -169,64 +139,52 @@ namespace pffdtd {
   ////////////////////////////////////////////////////////////////////////
   filename = simDir / "vox_out.h5";
   if (not std::filesystem::exists(filename)) {
-    PFFDTD_ASSERT(true == false);
+    raisef<std::invalid_argument>("file '{}' does not exist", filename.string());
   }
 
-  file = H5Fopen(filename.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+  auto vox_out = H5FReader(filename);
 
   //////////////////
   // integers
   //////////////////
-  strcpy(dset_str, "Nx");
-  readH5Constant(file, dset_str, (void*)&Nx, INT64);
-  printf("Nx=%ld\n", static_cast<long>(Nx));
-
-  strcpy(dset_str, "Ny");
-  readH5Constant(file, dset_str, (void*)&Ny, INT64);
-  printf("Ny=%ld\n", static_cast<long>(Ny));
-
-  strcpy(dset_str, "Nz");
-  readH5Constant(file, dset_str, (void*)&Nz, INT64);
-  printf("Nz=%ld\n", static_cast<long>(Nz));
-
-  Npts = Nx * Ny * Nz;
-  printf("Npts=%ld\n", static_cast<long>(Npts));
-
-  strcpy(dset_str, "Nb");
-  readH5Constant(file, dset_str, (void*)&Nb, INT64);
-  printf("Nb=%ld\n", static_cast<long>(Nb));
+  auto const Nx   = vox_out.read<int64_t>("Nx");
+  auto const Ny   = vox_out.read<int64_t>("Ny");
+  auto const Nz   = vox_out.read<int64_t>("Nz");
+  auto const Npts = Nx * Ny * Nz;
+  auto const Nb   = vox_out.read<int64_t>("Nb");
+  fmt::println("Nx={}", Nx);
+  fmt::println("Ny={}", Ny);
+  fmt::println("Nz={}", Nz);
+  fmt::println("Npts={}", Npts);
+  fmt::println("Nb={}", Nb);
 
   //////////////////
   // bn_ixyz dataset
   //////////////////
-  strcpy(dset_str, "bn_ixyz");
   expected_ndims = 1;
-  readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&bn_ixyz, INT64);
+  readH5Dataset(vox_out.handle(), "bn_ixyz", expected_ndims, dims, (void**)&bn_ixyz, DataType::Int64);
   PFFDTD_ASSERT((int64_t)dims[0] == Nb);
 
   //////////////////
   // adj_bn dataset
   //////////////////
-  strcpy(dset_str, "adj_bn");
   expected_ndims = 2;
-  readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&adj_bn_bool, BOOL);
+  readH5Dataset(vox_out.handle(), "adj_bn", expected_ndims, dims, (void**)&adj_bn_bool, DataType::Bool);
   PFFDTD_ASSERT((int64_t)dims[0] == Nb);
   PFFDTD_ASSERT(dims[1] == (hsize_t)NN);
 
   //////////////////
   // mat_bn dataset
   //////////////////
-  strcpy(dset_str, "mat_bn");
   expected_ndims = 1;
-  readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&mat_bn, INT8);
+  readH5Dataset(vox_out.handle(), "mat_bn", expected_ndims, dims, (void**)&mat_bn, DataType::Int8);
   PFFDTD_ASSERT((int64_t)dims[0] == Nb);
 
   //////////////////
   // saf_bn dataset
   //////////////////
-  strcpy(dset_str, "saf_bn");
   expected_ndims = 1;
-  readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&saf_bn, FLOAT64);
+  readH5Dataset(vox_out.handle(), "saf_bn", expected_ndims, dims, (void**)&saf_bn, DataType::Float64);
   PFFDTD_ASSERT((int64_t)dims[0] == Nb);
 
   allocate_zeros((void**)&ssaf_bn, Nb * sizeof(Real));
@@ -237,14 +195,7 @@ namespace pffdtd {
       ssaf_bn[i] = (Real)saf_bn[i]; // just cast
     }
   }
-  free(saf_bn);
-
-  if (H5Fclose(file) != 0) {
-    fmt::println("error closing file {}", filename.string());
-    PFFDTD_ASSERT(true == false);
-  } else {
-    fmt::println("closed file {}", filename.string());
-  }
+  std::free(saf_bn);
 
   ////////////////////////////////////////////////////////////////////////
   //
@@ -253,70 +204,48 @@ namespace pffdtd {
   ////////////////////////////////////////////////////////////////////////
   filename = simDir / "signals.h5";
   if (not std::filesystem::exists(filename)) {
-    PFFDTD_ASSERT(true == false);
+    raisef<std::invalid_argument>("file '{}' does not exist", filename.string());
   }
 
-  file = H5Fopen(filename.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+  auto signals = H5FReader(filename);
 
   //////////////////
   // integers
   //////////////////
-  strcpy(dset_str, "Nt");
-  readH5Constant(file, dset_str, (void*)&Nt, INT64);
-  printf("Nt=%ld\n", static_cast<long>(Nt));
-
-  strcpy(dset_str, "Ns");
-  readH5Constant(file, dset_str, (void*)&Ns, INT64);
-  printf("Ns=%ld\n", static_cast<long>(Ns));
-
-  strcpy(dset_str, "Nr");
-  readH5Constant(file, dset_str, (void*)&Nr, INT64);
-  printf("Nr=%ld\n", static_cast<long>(Nr));
-
-  strcpy(dset_str, "Nr");
-  readH5Constant(file, dset_str, (void*)&Nr, INT64);
-  printf("Nr=%ld\n", static_cast<long>(Nr));
-
-  strcpy(dset_str, "diff");
-  readH5Constant(file, dset_str, (void*)&diff, BOOL);
-  printf("diff=%d\n", static_cast<int>(diff));
+  auto const Nt   = signals.read<int64_t>("Nt");
+  auto const Ns   = signals.read<int64_t>("Ns");
+  auto const Nr   = signals.read<int64_t>("Nr");
+  auto const diff = signals.read<bool>("diff");
+  fmt::println("Nt={}", Nt);
+  fmt::println("Ns={}", Ns);
+  fmt::println("Nr={}", Nr);
+  fmt::println("diff={}", diff);
 
   //////////////////
   // in_ixyz dataset
   //////////////////
-  strcpy(dset_str, "in_ixyz");
   expected_ndims = 1;
-  readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&in_ixyz, INT64);
+  readH5Dataset(signals.handle(), "in_ixyz", expected_ndims, dims, (void**)&in_ixyz, DataType::Int64);
   PFFDTD_ASSERT((int64_t)dims[0] == Ns);
 
   //////////////////
   // out_ixyz dataset
   //////////////////
-  strcpy(dset_str, "out_ixyz");
   expected_ndims = 1;
-  readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&out_ixyz, INT64);
+  readH5Dataset(signals.handle(), "out_ixyz", expected_ndims, dims, (void**)&out_ixyz, DataType::Int64);
   PFFDTD_ASSERT((int64_t)dims[0] == Nr);
 
-  strcpy(dset_str, "out_reorder");
   expected_ndims = 1;
-  readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&out_reorder, INT64);
+  readH5Dataset(signals.handle(), "out_reorder", expected_ndims, dims, (void**)&out_reorder, DataType::Int64);
   PFFDTD_ASSERT((int64_t)dims[0] == Nr);
 
   //////////////////
   // in_sigs dataset
   //////////////////
-  strcpy(dset_str, "in_sigs");
   expected_ndims = 2;
-  readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&in_sigs, FLOAT64);
+  readH5Dataset(signals.handle(), "in_sigs", expected_ndims, dims, (void**)&in_sigs, DataType::Float64);
   PFFDTD_ASSERT((int64_t)dims[0] == Ns);
   PFFDTD_ASSERT((int64_t)dims[1] == Nt);
-
-  if (H5Fclose(file) != 0) {
-    fmt::println("error closing file {}", filename.string());
-    PFFDTD_ASSERT(true == false);
-  } else {
-    fmt::println("closed file {}", filename.string());
-  }
 
   // not recommended to run single without differentiating input
   if (sizeof(Real) == 4) {
@@ -330,27 +259,23 @@ namespace pffdtd {
   ////////////////////////////////////////////////////////////////////////
   filename = simDir / "materials.h5";
   if (not std::filesystem::exists(filename)) {
-    PFFDTD_ASSERT(true == false);
+    raisef<std::invalid_argument>("file '{}' does not exist", filename.string());
   }
 
-  file = H5Fopen(filename.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+  auto materials = H5FReader(filename);
 
   //////////////////
   // integers
   //////////////////
-
-  strcpy(dset_str, "Nmat");
-  readH5Constant(file, dset_str, (void*)&Nm, INT8);
-  printf("Nm=%d\n", Nm);
-
+  readH5Constant(materials.handle(), "Nmat", (void*)&Nm, DataType::Int8);
+  fmt::println("Nm={}", Nm);
   PFFDTD_ASSERT(Nm <= MNm);
 
-  strcpy(dset_str, "Mb");
   expected_ndims = 1;
-  readH5Dataset(file, dset_str, expected_ndims, dims, (void**)&Mb, INT8);
+  readH5Dataset(materials.handle(), "Mb", expected_ndims, dims, (void**)&Mb, DataType::Int8);
 
   for (int8_t i = 0; i < Nm; i++) {
-    printf("Mb[%d]=%d\n", i, Mb[i]);
+    fmt::println("Mb[{}]={}", i, Mb[i]);
   }
 
   //////////////////
@@ -359,11 +284,10 @@ namespace pffdtd {
   allocate_zeros((void**)&mat_quads, static_cast<unsigned long>(Nm * MMb) * sizeof(MatQuad<Real>));
   allocate_zeros((void**)&mat_beta, Nm * sizeof(Real));
   for (int8_t i = 0; i < Nm; i++) {
-    double* DEF = nullptr; // for one material
-    // sprintf(dset_str, "mat_%02d_DEF", i);
+    double* DEF    = nullptr; // for one material
     auto id        = fmt::format("mat_{:02d}_DEF", i);
     expected_ndims = 2;
-    readH5Dataset(file, id.data(), expected_ndims, dims, (void**)&DEF, FLOAT64);
+    readH5Dataset(materials.handle(), id.c_str(), expected_ndims, dims, (void**)&DEF, DataType::Float64);
     PFFDTD_ASSERT((int8_t)dims[0] == Mb[i]);
     PFFDTD_ASSERT((int8_t)dims[1] == 3);
     PFFDTD_ASSERT(Mb[i] <= MMb);
@@ -372,7 +296,7 @@ namespace pffdtd {
       double const D = DEF[j * 3 + 0];
       double const E = DEF[j * 3 + 1];
       double const F = DEF[j * 3 + 2];
-      printf("DEF[%d,%d]=[%.16g, %.16g, %.16g] \n", i, j, D, E, F);
+      fmt::println("DEF[{},{}]=[{:.16g}, {:.16g}, {:.16g}] ", i, j, D, E, F);
 
       // see 2016 ISMRA paper
       double const Dh = D / Ts;
@@ -395,14 +319,7 @@ namespace pffdtd {
       mat_quads[mij].bFh = (Real)bFh;
       mat_beta[i] += (Real)b;
     }
-    free(DEF);
-  }
-
-  if (H5Fclose(file) != 0) {
-    fmt::println("error closing file {}", filename.string());
-    PFFDTD_ASSERT(true == false);
-  } else {
-    fmt::println("closed file {}", filename.string());
+    std::free(DEF);
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -415,7 +332,7 @@ namespace pffdtd {
   // check bn_ixyz
   //////////////////
   check_inside_grid(bn_ixyz, Nb, Nx, Ny, Nz);
-  printf("bn_ixyz checked\n");
+  fmt::println("bn_ixyz checked");
 
   //////////////////
   // check adj_bn_bool and mat_bn
@@ -433,7 +350,7 @@ namespace pffdtd {
       PFFDTD_ASSERT(mat_bn[i] == -1);
     }
   }
-  printf("checked adj_bn against mat_bn.\n");
+  fmt::println("checked adj_bn against mat_bn.");
 
   //////////////////
   // bit-pack and check adj_bn
@@ -445,15 +362,15 @@ namespace pffdtd {
       SET_BIT_VAL(adj_bn[i], j, adj_bn_bool[i * NN + j]);
     }
   }
-  printf("adj_bn filled\n");
+  fmt::println("adj_bn filled");
 
   for (int64_t i = 0; i < Nb; i++) {
     for (int8_t j = 0; j < NN; j++) { // avoids race conditions
       PFFDTD_ASSERT(GET_BIT(adj_bn[i], j) == adj_bn_bool[i * NN + j]);
     }
   }
-  printf("adj_bn double checked\n");
-  free(adj_bn_bool);
+  fmt::println("adj_bn double checked");
+  std::free(adj_bn_bool);
 
   //////////////////
   // calculate K_bn from adj_bn
@@ -466,7 +383,7 @@ namespace pffdtd {
       K_bn[nb] += GET_BIT(adj_bn[nb], nn);
     }
   }
-  printf("K_bn calculated\n");
+  fmt::println("K_bn calculated");
 
   //////////////////
   // bit-pack and check bn_mask
@@ -488,7 +405,7 @@ namespace pffdtd {
     PFFDTD_ASSERT(ii < Npts);
     bn_mask_raw[ii] = true;
   }
-  printf("bn_mask_raw filled\n");
+  fmt::println("bn_mask_raw filled");
 
   for (int64_t j = 0; j < Nbm; j++) {
     for (int64_t q = 0; q < 8; q++) { // avoid race conditions
@@ -498,15 +415,15 @@ namespace pffdtd {
       }
     }
   }
-  printf("bn_mask double checked\n");
-  free(bn_mask_raw);
+  fmt::println("bn_mask double checked");
+  std::free(bn_mask_raw);
 
   // count Nbl
   Nbl = 0;
   for (int64_t i = 0; i < Nb; i++) {
     Nbl += static_cast<int64_t>(mat_bn[i] >= 0);
   }
-  printf("Nbl = %ld\n", static_cast<long>(Nbl));
+  fmt::println("Nbl = {}", Nbl);
   allocate_zeros((void**)&mat_bnl, Nbl * sizeof(int8_t));
   allocate_zeros((void**)&bnl_ixyz, Nbl * sizeof(int64_t));
   allocate_zeros((void**)&ssaf_bnl, Nbl * sizeof(Real));
@@ -522,10 +439,10 @@ namespace pffdtd {
     }
     PFFDTD_ASSERT(j == Nbl);
   }
-  free(mat_bn);
-  free(ssaf_bn);
+  std::free(mat_bn);
+  std::free(ssaf_bn);
 
-  printf("separated non-rigid bn\n");
+  fmt::println("separated non-rigid bn");
 
   // ABC ndoes
   int64_t Nyf = 0;
@@ -564,7 +481,7 @@ namespace pffdtd {
       }
     }
     PFFDTD_ASSERT(ii == Nba);
-    printf("ABC nodes\n");
+    fmt::println("ABC nodes");
     if (fcc_flag == 2) { // need to sort bna_ixyz
       int64_t* bna_sort_keys = nullptr;
       allocate_zeros((void**)&bna_sort_keys, Nba * sizeof(int64_t));
@@ -581,9 +498,9 @@ namespace pffdtd {
       for (int64_t cc = 0; cc < Nba; cc++) {
         Q_bna_sorted[cc] = Q_bna_unsorted[bna_sort_keys[cc]];
       }
-      free(bna_sort_keys);
-      free(Q_bna_unsorted);
-      printf("sorted ABC nodes for FCC/GPU\n");
+      std::free(bna_sort_keys);
+      std::free(Q_bna_unsorted);
+      fmt::println("sorted ABC nodes for FCC/GPU");
     }
   }
 
@@ -633,113 +550,25 @@ namespace pffdtd {
   return sim;
 }
 
-// free everything
 void freeSimulation3D(Simulation3D& sim) {
-  /*------------------------
-   * FREE WILLY
-  ------------------------*/
-  free(sim.bn_ixyz);
-  free(sim.bnl_ixyz);
-  free(sim.bna_ixyz);
-  free(sim.Q_bna);
-  free(sim.adj_bn);
-  free(sim.mat_bnl);
-  free(sim.bn_mask);
-  free(sim.ssaf_bnl);
-  free(sim.K_bn);
-  free(sim.in_ixyz);
-  free(sim.out_ixyz);
-  free(sim.out_reorder);
-  free(sim.in_sigs);
-  free(sim.u_out);
-  free(sim.Mb);
-  free(sim.mat_beta);
-  free(sim.mat_quads);
-  printf("sim data freed\n");
-}
-
-// read HDF5 files
-void readH5Dataset(hid_t file, char* dset_str, int ndims, hsize_t* dims, void** out_array, DataType t) {
-  hid_t dset   = 0;
-  hid_t dspace = 0;
-  uint64_t N   = 0;
-  // herr_t status;
-
-  dset   = H5Dopen(file, dset_str, H5P_DEFAULT);
-  dspace = H5Dget_space(dset);
-  PFFDTD_ASSERT(H5Sget_simple_extent_ndims(dspace) == ndims);
-  H5Sget_simple_extent_dims(dspace, dims, nullptr);
-  if (ndims == 1) {
-    // printf("size dim 0 = %llu\n",dims[0]);
-    N = dims[0];
-  } else if (ndims == 2) {
-    // printf("size dim 0 = %llu\n",dims[0]);
-    // printf("size dim 1 = %llu\n",dims[1]);
-    N = dims[0] * dims[1];
-  } else {
-    PFFDTD_ASSERT(true == false);
-  }
-  switch (t) {
-    case FLOAT64: *out_array = (double*)malloc(N * sizeof(double)); break;
-    case FLOAT32: *out_array = (double*)malloc(N * sizeof(float)); break;
-    case INT64: *out_array = (int64_t*)malloc(N * sizeof(int64_t)); break;
-    case INT8: *out_array = (int8_t*)malloc(N * sizeof(int8_t)); break;
-    case BOOL: *out_array = (bool*)malloc(N * sizeof(bool)); break;
-    default: PFFDTD_ASSERT(true == false);
-  }
-  if (*out_array == nullptr) {
-    printf("Memory allocation failed");
-    PFFDTD_ASSERT(true == false); // to break
-  }
-  herr_t status = 0;
-  switch (t) {
-    case FLOAT64: status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array); break;
-    case FLOAT32: status = H5Dread(dset, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array); break;
-    case INT64: status = H5Dread(dset, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array); break;
-    case INT8: // bool read in as INT8
-    case BOOL: status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, *out_array); break;
-    default: PFFDTD_ASSERT(true == false);
-  }
-
-  if (status != 0) {
-    printf("error reading dataset: %s\n", dset_str);
-    PFFDTD_ASSERT(true == false);
-  }
-  if (H5Dclose(dset) != 0) {
-    printf("error closing dataset: %s\n", dset_str);
-    PFFDTD_ASSERT(true == false);
-  } else {
-    printf("read and closed dataset: %s\n", dset_str);
-  }
-}
-
-// read scalars from HDF5 datasets
-void readH5Constant(hid_t file, char* dset_str, void* out, DataType t) {
-  hid_t dset   = 0;
-  hid_t dspace = 0;
-
-  dset   = H5Dopen(file, dset_str, H5P_DEFAULT);
-  dspace = H5Dget_space(dset);
-  PFFDTD_ASSERT(H5Sget_simple_extent_ndims(dspace) == 0);
-  herr_t status = 0;
-  switch (t) {
-    case FLOAT64: status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, out); break;
-    case INT64: status = H5Dread(dset, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, out); break;
-    case INT8:
-    case BOOL: status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, out); break;
-    default: PFFDTD_ASSERT(true == false);
-  }
-
-  if (status != 0) {
-    printf("error reading dataset: %s\n", dset_str);
-    PFFDTD_ASSERT(true == false);
-  }
-  if (H5Dclose(dset) != 0) {
-    printf("error closing dataset: %s\n", dset_str);
-    PFFDTD_ASSERT(true == false);
-  } else {
-    printf("read constant: %s\n", dset_str);
-  }
+  std::free(sim.bn_ixyz);
+  std::free(sim.bnl_ixyz);
+  std::free(sim.bna_ixyz);
+  std::free(sim.Q_bna);
+  std::free(sim.adj_bn);
+  std::free(sim.mat_bnl);
+  std::free(sim.bn_mask);
+  std::free(sim.ssaf_bnl);
+  std::free(sim.K_bn);
+  std::free(sim.in_ixyz);
+  std::free(sim.out_ixyz);
+  std::free(sim.out_reorder);
+  std::free(sim.in_sigs);
+  std::free(sim.u_out);
+  std::free(sim.Mb);
+  std::free(sim.mat_beta);
+  std::free(sim.mat_quads);
+  fmt::println("sim data freed");
 }
 
 // print last samples of simulation (for correctness checking..)
@@ -749,9 +578,9 @@ void printLastSample(Simulation3D& sim) {
   double* u_out        = sim.u_out;
   int64_t* out_reorder = sim.out_reorder;
   // print last samples
-  printf("RAW OUTPUTS\n");
+  fmt::println("RAW OUTPUTS");
   for (int64_t nr = 0; nr < Nr; nr++) {
-    printf("receiver %ld\n", static_cast<long>(nr));
+    fmt::println("receiver {}", nr);
     for (int64_t n = Nt - 5; n < Nt; n++) {
       printf("sample %ld: %.16e\n", long(n), u_out[out_reorder[nr] * Nt + n]);
     }

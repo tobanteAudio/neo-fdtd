@@ -5,19 +5,18 @@
 #pragma once
 
 #include "pffdtd/config.hpp"
-#include "pffdtd/hdf.hpp"
 #include "pffdtd/utility.hpp"
 
 #include <cstdint>
 #include <filesystem>
 
+namespace pffdtd {
+
 // maximum number of RLC branches in freq-dep (FD) boundaries (needed at
 // compile-time for CUDA kernels)
-#define MMb 12 // change as necssary
+inline constexpr auto MMb = 12; // change as necssary
 // maximum number of materials allows (needed at compile-time for CUDA)
-#define MNm 64 // change as necssary
-
-namespace pffdtd {
+inline constexpr auto MNm = 64; // change as necssary
 
 // see python code and 2016 ISMRA paper
 template<typename Float>
@@ -75,8 +74,5 @@ void printLastSample(Simulation3D& sim);
 void scaleInput(Simulation3D& sim);
 void rescaleOutput(Simulation3D& sim);
 void writeOutputs(Simulation3D& sim, std::filesystem::path const& simDir);
-
-void readH5Dataset(hid_t file, char* dset_str, int ndims, hsize_t* dims, void** out_array, DataType t);
-void readH5Constant(hid_t file, char* dset_str, void* out, DataType t);
 
 } // namespace pffdtd

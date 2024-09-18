@@ -20,6 +20,7 @@ target_sources(pffdtd
     PRIVATE
         pffdtd/config.hpp
         pffdtd/exception.hpp
+        pffdtd/hdf.cpp
         pffdtd/hdf.hpp
         pffdtd/mdspan.hpp
         pffdtd/progress.cpp

@@ -4,25 +4,22 @@
 #pragma once
 
 #include "pffdtd/assert.hpp"
+#include "pffdtd/exception.hpp"
 #include "pffdtd/mdspan.hpp"
 
 #include "hdf5.h"
 
 #include <array>
 #include <filesystem>
-#include <span>
-#include <stdexcept>
-#include <string>
 #include <vector>
 
 namespace pffdtd {
 
-enum DataType : unsigned char {
-  FLOAT64,
-  FLOAT32,
-  INT64,
-  INT8,
-  BOOL,
+enum struct DataType : unsigned char {
+  Float64,
+  Int64,
+  Int8,
+  Bool,
 };
 
 template<typename T>
@@ -32,34 +29,42 @@ template<typename T>
 inline constexpr auto isStdVector<std::vector<T>> = true;
 
 struct H5FReader {
-  explicit H5FReader(char const* str) : _handle{H5Fopen(str, H5F_ACC_RDONLY, H5P_DEFAULT)} {}
+  explicit H5FReader(std::filesystem::path const& path)
+      : _handle{H5Fopen(path.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT)} {}
 
   ~H5FReader() { H5Fclose(_handle); }
+
+  [[nodiscard]] auto handle() const noexcept -> hid_t { return _handle; }
 
   template<typename T>
   [[nodiscard]] auto read(char const* dataset) -> T {
     if constexpr (isStdVector<T>) {
       return readBuffer<typename T::value_type>(dataset);
-    }
-
-    auto set = H5Dopen(_handle, dataset, H5P_DEFAULT);
-
-    if constexpr (std::is_same_v<T, int64_t>) {
-      auto val  = T{};
-      auto type = H5T_NATIVE_INT64;
-      auto ptr  = static_cast<void*>(&val);
-      auto err  = H5Dread(set, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr);
-      checkErrorAndCloseDataset(dataset, set, err);
-      return val;
-    }
-
-    if constexpr (std::is_same_v<T, double>) {
-      auto val  = T{};
-      auto type = H5T_NATIVE_DOUBLE;
-      auto ptr  = static_cast<void*>(&val);
-      auto err  = H5Dread(set, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr);
-      checkErrorAndCloseDataset(dataset, set, err);
-      return val;
+    } else if constexpr (std::is_same_v<T, bool>) {
+      return static_cast<bool>(read<int8_t>(dataset));
+    } else {
+      auto set = H5Dopen(_handle, dataset, H5P_DEFAULT);
+      if constexpr (std::is_same_v<T, int64_t>) {
+        auto val = T{};
+        auto ptr = static_cast<void*>(&val);
+        auto err = H5Dread(set, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr);
+        checkErrorAndCloseDataset(dataset, set, err);
+        return val;
+      } else if constexpr (std::is_same_v<T, int8_t>) {
+        auto val = T{};
+        auto ptr = static_cast<void*>(&val);
+        auto err = H5Dread(set, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr);
+        checkErrorAndCloseDataset(dataset, set, err);
+        return val;
+      } else if constexpr (std::is_same_v<T, double>) {
+        auto val = T{};
+        auto ptr = static_cast<void*>(&val);
+        auto err = H5Dread(set, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr);
+        checkErrorAndCloseDataset(dataset, set, err);
+        return val;
+      } else {
+        static_assert(always_false<T>);
+      }
     }
 
     return {};
@@ -73,7 +78,7 @@ struct H5FReader {
     auto ndims = 1;
     auto dims  = std::array<hsize_t, 3>{};
     PFFDTD_ASSERT(H5Sget_simple_extent_ndims(space) == ndims);
-    H5Sget_simple_extent_dims(space, dims.data(), NULL);
+    H5Sget_simple_extent_dims(space, dims.data(), nullptr);
 
     auto size = ndims == 1 ? dims[0] : dims[0] * dims[1];
 
@@ -105,11 +110,11 @@ struct H5FReader {
   private:
   auto checkErrorAndCloseDataset(char const* name, hid_t set, herr_t err) -> void {
     if (err != 0) {
-      throw std::runtime_error{"dataset read in: " + std::string{name}};
+      raisef<std::runtime_error>("dataset read in: {}", name);
     }
 
     if (H5Dclose(set) != 0) {
-      throw std::runtime_error{"dataset close in: " + std::string{name}};
+      raisef<std::runtime_error>("dataset close in: {}", name);
     }
   }
 
@@ -131,27 +136,30 @@ struct H5FWriter {
     auto def  = H5P_DEFAULT;
     auto type = H5T_NATIVE_DOUBLE;
 
-    auto space  = H5Screate_simple(2, dims, NULL);
+    auto space  = H5Screate_simple(2, dims, nullptr);
     auto set    = H5Dcreate(_handle, name, type, space, def, def, def);
     auto status = H5Dwrite(set, type, H5S_ALL, H5S_ALL, def, buf.data_handle());
 
     if (status != 0) {
-      throw std::runtime_error("error writing dataset\n");
+      raise<std::runtime_error>("error writing dataset\n");
     }
 
     status = H5Dclose(set);
     if (status != 0) {
-      throw std::runtime_error("error closing dataset\n");
+      raise<std::runtime_error>("error closing dataset\n");
     }
 
     status = H5Sclose(space);
     if (status != 0) {
-      throw std::runtime_error("error closing dataset space\n");
+      raise<std::runtime_error>("error closing dataset space\n");
     }
   }
 
   private:
   hid_t _handle;
 };
+
+void readH5Dataset(hid_t file, char const* dset_str, int ndims, hsize_t* dims, void** out, DataType t);
+void readH5Constant(hid_t file, char const* dset_str, void* out, DataType t);
 
 } // namespace pffdtd
