@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <span>
 #include <vector>
 
 namespace pffdtd {
@@ -461,19 +462,19 @@ inline void gpuAssert(cudaError_t code, char const* file, int line, bool abort =
 auto print_gpu_details(int i) -> uint64_t {
   cudaDeviceProp prop{};
   cudaGetDeviceProperties(&prop, i);
-  printf("\nDevice Number: %d [%s]\n", i, prop.name);
-  printf("  Compute: %d.%d\n", prop.major, prop.minor);
-  printf("  Peak Memory Bandwidth: %.3f GB/s\n", 2.0 * prop.memoryClockRate * (prop.memoryBusWidth / 8.0) / 1.0e6);
-  printf(
+  std::printf("\nDevice Number: %d [%s]\n", i, prop.name);
+  std::printf("  Compute: %d.%d\n", prop.major, prop.minor);
+  std::printf("  Peak Memory Bandwidth: %.3f GB/s\n", 2.0 * prop.memoryClockRate * (prop.memoryBusWidth / 8.0) / 1.0e6);
+  std::printf(
       "  Total global memory: [ %.3f GB | %.3f GiB | %lu MiB ]\n",
       (double)prop.totalGlobalMem / (1e9),
       (double)prop.totalGlobalMem / 1073741824ULL,
       prop.totalGlobalMem >> 20
   );
-  printf("  Registers per block: %d\n", prop.regsPerBlock);
-  printf("  Concurrent Kernels: %d\n", prop.concurrentKernels);
-  printf("  Async Engine: %d\n", prop.asyncEngineCount);
-  printf("\n");
+  std::printf("  Registers per block: %d\n", prop.regsPerBlock);
+  std::printf("  Concurrent Kernels: %d\n", prop.concurrentKernels);
+  std::printf("  Async Engine: %d\n", prop.asyncEngineCount);
+  std::printf("\n");
   return prop.totalGlobalMem;
 }
 
@@ -507,20 +508,21 @@ void check_sorted(Simulation3D const* sim) {
 }
 
 // counts for splitting data across GPUs
-void split_data(Simulation3D const* sim, HostData<Real>* ghds, int ngpus) {
-  int64_t const Nx    = sim->Nx;
-  int64_t const Ny    = sim->Ny;
-  int64_t const Nz    = sim->Nz;
-  HostData<Real>* ghd = nullptr;
+void split_data(Simulation3D const* sim, std::span<HostData<Real>> ghds) {
+  auto const Nx    = sim->Nx;
+  auto const Ny    = sim->Ny;
+  auto const Nz    = sim->Nz;
+  auto const ngpus = static_cast<int>(ghds.size());
+
   // initialise
   for (int gid = 0; gid < ngpus; gid++) {
-    ghd      = &ghds[gid];
-    ghd->Nx  = 0;
-    ghd->Nb  = 0;
-    ghd->Nbl = 0;
-    ghd->Nba = 0;
-    ghd->Ns  = 0;
-    ghd->Nr  = 0;
+    auto& hd = ghds[gid];
+    hd.Nx    = 0;
+    hd.Nb    = 0;
+    hd.Nbl   = 0;
+    hd.Nba   = 0;
+    hd.Ns    = 0;
+    hd.Nr    = 0;
   }
 
   // split Nx layers (Nz contiguous)
@@ -528,29 +530,29 @@ void split_data(Simulation3D const* sim, HostData<Real>* ghds, int ngpus) {
   int64_t const Nxl = Nx % ngpus;
 
   for (int gid = 0; gid < ngpus; gid++) {
-    ghd     = &ghds[gid];
-    ghd->Nx = Nxm;
+    auto& hd = ghds[gid];
+    hd.Nx    = Nxm;
   }
   for (int gid = 0; gid < Nxl; gid++) {
-    ghd = &ghds[gid];
-    ghd->Nx += 1;
+    auto& hd = ghds[gid];
+    hd.Nx += 1;
   }
   int64_t Nx_check = 0;
   for (int gid = 0; gid < ngpus; gid++) {
-    ghd = &ghds[gid];
-    printf("gid=%d, Nx[%d]=%ld, Nx=%ld\n", gid, gid, ghd->Nx, Nx);
-    Nx_check += ghd->Nx;
+    auto& hd = ghds[gid];
+    std::printf("gid=%d, Nx[%d]=%ld, Nx=%ld\n", gid, gid, hd.Nx, Nx);
+    Nx_check += hd.Nx;
   }
   PFFDTD_ASSERT(Nx_check == Nx);
 
   // now count Nr,Ns,Nb for each device
   auto Nxcc = std::vector<int64_t>(static_cast<size_t>(ngpus));
   Nxcc[0]   = ghds[0].Nx;
-  printf("Nxcc[%d]=%ld\n", 0, Nxcc[0]);
+  std::printf("Nxcc[%d]=%ld\n", 0, Nxcc[0]);
   for (int gid = 1; gid < ngpus; gid++) {
-    ghd       = &ghds[gid];
-    Nxcc[gid] = ghd->Nx + Nxcc[gid - 1];
-    printf("Nxcc[%d]=%ld\n", gid, Nxcc[gid]);
+    auto& hd  = ghds[gid];
+    Nxcc[gid] = hd.Nx + Nxcc[gid - 1];
+    std::printf("Nxcc[%d]=%ld\n", gid, Nxcc[gid]);
   }
 
   // bn_ixyz - Nb
@@ -567,9 +569,9 @@ void split_data(Simulation3D const* sim, HostData<Real>* ghds, int ngpus) {
   }
   int64_t Nb_check = 0;
   for (int gid = 0; gid < ngpus; gid++) {
-    ghd = &ghds[gid];
-    printf("gid=%d, Nb[%d]=%ld, Nb=%ld\n", gid, gid, ghd->Nb, Nb);
-    Nb_check += ghd->Nb;
+    auto& hd = ghds[gid];
+    std::printf("gid=%d, Nb[%d]=%ld, Nb=%ld\n", gid, gid, hd.Nb, Nb);
+    Nb_check += hd.Nb;
   }
   PFFDTD_ASSERT(Nb_check == Nb);
 
@@ -587,9 +589,9 @@ void split_data(Simulation3D const* sim, HostData<Real>* ghds, int ngpus) {
   }
   int64_t Nbl_check = 0;
   for (int gid = 0; gid < ngpus; gid++) {
-    ghd = &ghds[gid];
-    printf("gid=%d, Nbl[%d]=%ld, Nbl=%ld\n", gid, gid, ghd->Nbl, Nbl);
-    Nbl_check += ghd->Nbl;
+    auto& hd = ghds[gid];
+    std::printf("gid=%d, Nbl[%d]=%ld, Nbl=%ld\n", gid, gid, hd.Nbl, Nbl);
+    Nbl_check += hd.Nbl;
   }
   PFFDTD_ASSERT(Nbl_check == Nbl);
 
@@ -607,9 +609,9 @@ void split_data(Simulation3D const* sim, HostData<Real>* ghds, int ngpus) {
   }
   int64_t Nba_check = 0;
   for (int gid = 0; gid < ngpus; gid++) {
-    ghd = &ghds[gid];
-    printf("gid=%d, Nba[%d]=%ld, Nbl=%ld\n", gid, gid, ghd->Nba, Nba);
-    Nba_check += ghd->Nba;
+    auto& hd = ghds[gid];
+    std::printf("gid=%d, Nba[%d]=%ld, Nbl=%ld\n", gid, gid, hd.Nba, Nba);
+    Nba_check += hd.Nba;
   }
   PFFDTD_ASSERT(Nba_check == Nba);
 
@@ -627,9 +629,9 @@ void split_data(Simulation3D const* sim, HostData<Real>* ghds, int ngpus) {
   }
   int64_t Ns_check = 0;
   for (int gid = 0; gid < ngpus; gid++) {
-    ghd = &ghds[gid];
-    printf("gid=%d, Ns[%d]=%ld, Ns=%ld\n", gid, gid, ghd->Ns, Ns);
-    Ns_check += ghd->Ns;
+    auto& hd = ghds[gid];
+    std::printf("gid=%d, Ns[%d]=%ld, Ns=%ld\n", gid, gid, hd.Ns, Ns);
+    Ns_check += hd.Ns;
   }
   PFFDTD_ASSERT(Ns_check == Ns);
 
@@ -647,9 +649,9 @@ void split_data(Simulation3D const* sim, HostData<Real>* ghds, int ngpus) {
   }
   int64_t Nr_check = 0;
   for (int gid = 0; gid < ngpus; gid++) {
-    ghd = &ghds[gid];
-    printf("gid=%d, Nr[%d]=%ld, Nr=%ld\n", gid, gid, ghd->Nr, Nr);
-    Nr_check += ghd->Nr;
+    auto& hd = ghds[gid];
+    std::printf("gid=%d, Nr[%d]=%ld, Nr=%ld\n", gid, gid, hd.Nr, Nr);
+    Nr_check += hd.Nr;
   }
   PFFDTD_ASSERT(Nr_check == Nr);
 }
@@ -660,30 +662,28 @@ auto run(Simulation3D const& sim) -> double {
   char const* s = getenv("CUDA_LAUNCH_BLOCKING");
   if (s != nullptr) {
     if (s[0] == '1') {
-      printf("******************SYNCHRONOUS (DEBUG  ONLY!!!)*********************\n");
-      printf("...continue?\n");
+      std::printf("******************SYNCHRONOUS (DEBUG  ONLY!!!)*********************\n");
+      std::printf("...continue?\n");
       getchar();
     }
   }
 
   PFFDTD_ASSERT((sim.fcc_flag != 1)); // uses either cartesian or FCC folded grid
 
-  int ngpus     = 0;
   int max_ngpus = 0;
   cudaGetDeviceCount(&max_ngpus); // control outside with CUDA_VISIBLE_DEVICES
-  ngpus = max_ngpus;
+  auto const ngpus = max_ngpus;
   PFFDTD_ASSERT(ngpus < (sim.Nx));
-  DeviceData<Real>* gds = nullptr;
-  allocate_zeros((void**)&gds, ngpus * sizeof(DeviceData<Real>));
-  HostData<Real>* ghds = nullptr;
-  allocate_zeros((void**)&ghds, ngpus * sizeof(HostData<Real>)); // one bit per
+
+  auto ghds = std::vector<HostData<Real>>(static_cast<size_t>(ngpus));
+  auto gds  = std::vector<DeviceData<Real>>(static_cast<size_t>(ngpus));
 
   if (ngpus > 1) {
     check_sorted(&sim); // needs to be sorted for multi-GPU
   }
 
   // get local counts for Nx,Nb,Nr,Ns
-  split_data(&sim, ghds, ngpus);
+  split_data(&sim, ghds);
 
   for (int gid = 0; gid < ngpus; gid++) {
     gds[gid].totalmembytes = print_gpu_details(gid);
@@ -705,14 +705,14 @@ auto run(Simulation3D const& sim) -> double {
   float millis_since_start        = NAN;
   float millis_since_sample_start = NAN;
 
-  printf("a1 = %.16g\n", a1);
-  printf("a2 = %.16g\n", a2);
+  std::printf("a1 = %.16g\n", a1);
+  std::printf("a2 = %.16g\n", a2);
 
   // start moving data to GPUs
   for (int gid = 0; gid < ngpus; gid++) {
-    HostData<Real>* ghd = &(ghds[gid]);
-    printf("GPU %d -- ", gid);
-    printf("Nx=%ld Ns=%ld Nr=%ld Nb=%ld Nbl=%ld Nba=%ld\n", ghd->Nx, ghd->Ns, ghd->Nr, ghd->Nb, ghd->Nbl, ghd->Nba);
+    auto& ghd = ghds[gid];
+    std::printf("GPU %d -- ", gid);
+    std::printf("Nx=%ld Ns=%ld Nr=%ld Nb=%ld Nbl=%ld Nba=%ld\n", ghd.Nx, ghd.Ns, ghd.Nr, ghd.Nb, ghd.Nbl, ghd.Nba);
   }
 
   int64_t Ns_read  = 0;
@@ -736,16 +736,16 @@ auto run(Simulation3D const& sim) -> double {
 
     DeviceData<Real>* gd = &(gds[gid]);
     HostData<Real>* ghd  = &(ghds[gid]);
-    printf("---------\n");
-    printf("GPU %d\n", gid);
-    printf("---------\n");
+    std::printf("---------\n");
+    std::printf("GPU %d\n", gid);
+    std::printf("---------\n");
 
-    printf("Nx to read = %ld\n", ghd->Nx);
-    printf("Nb to read = %ld\n", ghd->Nb);
-    printf("Nbl to read = %ld\n", ghd->Nbl);
-    printf("Nba to read = %ld\n", ghd->Nba);
-    printf("Ns to read = %ld\n", ghd->Ns);
-    printf("Nr to read = %ld\n", ghd->Nr);
+    std::printf("Nx to read = %ld\n", ghd->Nx);
+    std::printf("Nb to read = %ld\n", ghd->Nb);
+    std::printf("Nbl to read = %ld\n", ghd->Nbl);
+    std::printf("Nba to read = %ld\n", ghd->Nba);
+    std::printf("Ns to read = %ld\n", ghd->Ns);
+    std::printf("Nr to read = %ld\n", ghd->Nr);
 
     // Nxh (effective Nx with extra halos)
     ghd->Nxh = ghd->Nx;
@@ -760,7 +760,7 @@ auto run(Simulation3D const& sim) -> double {
     // boundary mask
     ghd->Nbm = CU_DIV_CEIL(ghd->Npts, 8);
 
-    printf("Nx=%ld Ns=%ld Nr=%ld Nb=%ld, Npts=%ld\n", ghd->Nx, ghd->Ns, ghd->Nr, ghd->Nb, ghd->Npts);
+    std::printf("Nx=%ld Ns=%ld Nr=%ld Nb=%ld, Npts=%ld\n", ghd->Nx, ghd->Ns, ghd->Nr, ghd->Nb, ghd->Npts);
 
     // aliased pointers (to memory already allocated)
     ghd->in_sigs   = sim.in_sigs + Ns_read * sim.Nt;
@@ -894,14 +894,14 @@ auto run(Simulation3D const& sim) -> double {
     Nx_read += ghd->Nx;
     Nx_pos = Nx_read - 1; // back up one at subsequent stage
 
-    printf("Nx_read = %ld\n", Nx_read);
-    printf("Nb_read = %ld\n", Nb_read);
-    printf("Nbl_read = %ld\n", Nbl_read);
-    printf("Ns_read = %ld\n", Ns_read);
-    printf("Nr_read = %ld\n", Nr_read);
+    std::printf("Nx_read = %ld\n", Nx_read);
+    std::printf("Nb_read = %ld\n", Nb_read);
+    std::printf("Nbl_read = %ld\n", Nbl_read);
+    std::printf("Ns_read = %ld\n", Ns_read);
+    std::printf("Nr_read = %ld\n", Nr_read);
 
-    printf("Global memory allocation done\n");
-    printf("\n");
+    std::printf("Global memory allocation done\n");
+    std::printf("\n");
 
     // swapping x and z here (CUDA has first dim contiguous)
     gpuErrchk(cudaMemcpyToSymbol(cuNx, &(sim.Nz), sizeof(int64_t)));
@@ -920,8 +920,8 @@ auto run(Simulation3D const& sim) -> double {
     gpuErrchk(cudaMemcpyToSymbol(csl2, &sl2, sizeof(Real)));
     gpuErrchk(cudaMemcpyToSymbol(clo2, &lo2, sizeof(Real)));
 
-    printf("Constant memory loaded\n");
-    printf("\n");
+    std::printf("Constant memory loaded\n");
+    std::printf("\n");
 
     // threads grids and blocks (swap x and z)
     int64_t const cuGx  = CU_DIV_CEIL(sim.Nz - 2, cuBx);
@@ -1255,7 +1255,7 @@ auto run(Simulation3D const& sim) -> double {
       );
     }
   }
-  printf("\n");
+  std::printf("\n");
 
   for (int gid = 0; gid < ngpus; gid++) {
     gpuErrchk(cudaSetDevice(gid));
@@ -1325,8 +1325,6 @@ auto run(Simulation3D const& sim) -> double {
     free(ghd->out_ixyz);
   }
   gpuErrchk(cudaFreeHost(u_out_buf));
-  free(gds);
-  free(ghds);
 
   // reset after frees (for some reason it conflicts with cudaFreeHost)
   for (int gid = 0; gid < ngpus; gid++) {
@@ -1334,9 +1332,9 @@ auto run(Simulation3D const& sim) -> double {
     gpuErrchk(cudaDeviceReset());
   }
 
-  printf("Boundary loop: %.6fs, %.2f Mvox/s\n", time_elapsed_bn, sim.Nb * sim.Nt / 1e6 / time_elapsed_bn);
-  printf("Air update: %.6fs, %.2f Mvox/s\n", time_elapsed_air, sim.Npts * sim.Nt / 1e6 / time_elapsed_air);
-  printf("Combined (total): %.6fs, %.2f Mvox/s\n", time_elapsed, sim.Npts * sim.Nt / 1e6 / time_elapsed);
+  std::printf("Boundary loop: %.6fs, %.2f Mvox/s\n", time_elapsed_bn, sim.Nb * sim.Nt / 1e6 / time_elapsed_bn);
+  std::printf("Air update: %.6fs, %.2f Mvox/s\n", time_elapsed_air, sim.Npts * sim.Nt / 1e6 / time_elapsed_air);
+  std::printf("Combined (total): %.6fs, %.2f Mvox/s\n", time_elapsed, sim.Npts * sim.Nt / 1e6 / time_elapsed);
   return time_elapsed;
 }
 

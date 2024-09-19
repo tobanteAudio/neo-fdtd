@@ -64,7 +64,6 @@ namespace pffdtd {
   Real* ssaf_bn        = nullptr;
   Real* ssaf_bnl       = nullptr;
   double* in_sigs      = nullptr;
-  double* u_out        = nullptr;
   int8_t* Mb           = nullptr;
 
   hsize_t dims[2]; // HDF5 type
@@ -156,14 +155,14 @@ namespace pffdtd {
   //////////////////
   expected_ndims = 1;
   readDataset(vox_out.handle(), "bn_ixyz", expected_ndims, dims, (void**)&bn_ixyz, DataType::Int64);
-  PFFDTD_ASSERT((int64_t)dims[0] == Nb);
+  PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nb);
 
   //////////////////
   // adj_bn dataset
   //////////////////
   expected_ndims = 2;
   readDataset(vox_out.handle(), "adj_bn", expected_ndims, dims, (void**)&adj_bn_bool, DataType::Bool);
-  PFFDTD_ASSERT((int64_t)dims[0] == Nb);
+  PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nb);
   PFFDTD_ASSERT(dims[1] == (hsize_t)NN);
 
   //////////////////
@@ -171,14 +170,14 @@ namespace pffdtd {
   //////////////////
   expected_ndims = 1;
   readDataset(vox_out.handle(), "mat_bn", expected_ndims, dims, (void**)&mat_bn, DataType::Int8);
-  PFFDTD_ASSERT((int64_t)dims[0] == Nb);
+  PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nb);
 
   //////////////////
   // saf_bn dataset
   //////////////////
   expected_ndims = 1;
   readDataset(vox_out.handle(), "saf_bn", expected_ndims, dims, (void**)&saf_bn, DataType::Float64);
-  PFFDTD_ASSERT((int64_t)dims[0] == Nb);
+  PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nb);
 
   allocate_zeros((void**)&ssaf_bn, Nb * sizeof(Real));
   for (int64_t i = 0; i < Nb; i++) {
@@ -217,26 +216,26 @@ namespace pffdtd {
   //////////////////
   expected_ndims = 1;
   readDataset(signals.handle(), "in_ixyz", expected_ndims, dims, (void**)&in_ixyz, DataType::Int64);
-  PFFDTD_ASSERT((int64_t)dims[0] == Ns);
+  PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Ns);
 
   //////////////////
   // out_ixyz dataset
   //////////////////
   expected_ndims = 1;
   readDataset(signals.handle(), "out_ixyz", expected_ndims, dims, (void**)&out_ixyz, DataType::Int64);
-  PFFDTD_ASSERT((int64_t)dims[0] == Nr);
+  PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nr);
 
   expected_ndims = 1;
   readDataset(signals.handle(), "out_reorder", expected_ndims, dims, (void**)&out_reorder, DataType::Int64);
-  PFFDTD_ASSERT((int64_t)dims[0] == Nr);
+  PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nr);
 
   //////////////////
   // in_sigs dataset
   //////////////////
   expected_ndims = 2;
   readDataset(signals.handle(), "in_sigs", expected_ndims, dims, (void**)&in_sigs, DataType::Float64);
-  PFFDTD_ASSERT((int64_t)dims[0] == Ns);
-  PFFDTD_ASSERT((int64_t)dims[1] == Nt);
+  PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Ns);
+  PFFDTD_ASSERT(static_cast<int64_t>(dims[1]) == Nt);
 
   // not recommended to run single without differentiating input
   if (sizeof(Real) == 4) {
@@ -434,8 +433,8 @@ namespace pffdtd {
   fmt::println("separated non-rigid bn");
 
   // ABC ndoes
-  int64_t Nyf = (fcc_flag == 2) ? 2 * (Ny - 1) : Ny; // full Ny dim, taking into account FCC fold
-  int64_t Nba = 2 * (Nx * Nyf + Nx * Nz + Nyf * Nz) - 12 * (Nx + Nyf + Nz) + 56;
+  int64_t const Nyf = (fcc_flag == 2) ? 2 * (Ny - 1) : Ny; // full Ny dim, taking into account FCC fold
+  int64_t Nba       = 2 * (Nx * Nyf + Nx * Nz + Nyf * Nz) - 12 * (Nx + Nyf + Nz) + 56;
   if (fcc_flag > 0) {
     Nba /= 2;
   }
@@ -493,7 +492,7 @@ namespace pffdtd {
   }
 
   // for outputs
-  allocate_zeros((void**)&u_out, Nr * Nt * sizeof(double));
+  auto* u_out = allocate<double>(Nr * Nt);
 
   /*------------------------
    * ATTACH
