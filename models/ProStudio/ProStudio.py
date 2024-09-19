@@ -35,9 +35,9 @@ class ProStudio(Setup3D):
     duration = 1.2
     Tc = 20
     rh = 50
-    fcc = True
+    fcc = False
     ppw = 7.7
-    fmax = 4000.0
+    fmax = 2000.0
     save_folder = '../../sim_data/ProStudio/cpu'
     save_folder_gpu = '../../sim_data/ProStudio/gpu'
     draw_vox = True
