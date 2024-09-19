@@ -159,6 +159,6 @@ struct H5FWriter {
   hid_t _handle;
 };
 
-void readH5Dataset(hid_t file, char const* dset_str, int ndims, hsize_t* dims, void** out, DataType t);
+void readDataset(hid_t file, char const* dset_str, int ndims, hsize_t* dims, void** out, DataType t);
 
 } // namespace pffdtd

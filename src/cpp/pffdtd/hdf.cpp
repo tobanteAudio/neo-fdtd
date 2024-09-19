@@ -11,7 +11,7 @@
 
 namespace pffdtd {
 
-auto readH5Dataset(hid_t file, char const* dset_str, int ndims, hsize_t* dims, void** out, DataType t) -> void {
+auto readDataset(hid_t file, char const* dset_str, int ndims, hsize_t* dims, void** out, DataType t) -> void {
   auto dset   = H5Dopen(file, dset_str, H5P_DEFAULT);
   auto dspace = H5Dget_space(dset);
   PFFDTD_ASSERT(H5Sget_simple_extent_ndims(dspace) == ndims);

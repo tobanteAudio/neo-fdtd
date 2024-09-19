@@ -155,14 +155,14 @@ namespace pffdtd {
   // bn_ixyz dataset
   //////////////////
   expected_ndims = 1;
-  readH5Dataset(vox_out.handle(), "bn_ixyz", expected_ndims, dims, (void**)&bn_ixyz, DataType::Int64);
+  readDataset(vox_out.handle(), "bn_ixyz", expected_ndims, dims, (void**)&bn_ixyz, DataType::Int64);
   PFFDTD_ASSERT((int64_t)dims[0] == Nb);
 
   //////////////////
   // adj_bn dataset
   //////////////////
   expected_ndims = 2;
-  readH5Dataset(vox_out.handle(), "adj_bn", expected_ndims, dims, (void**)&adj_bn_bool, DataType::Bool);
+  readDataset(vox_out.handle(), "adj_bn", expected_ndims, dims, (void**)&adj_bn_bool, DataType::Bool);
   PFFDTD_ASSERT((int64_t)dims[0] == Nb);
   PFFDTD_ASSERT(dims[1] == (hsize_t)NN);
 
@@ -170,14 +170,14 @@ namespace pffdtd {
   // mat_bn dataset
   //////////////////
   expected_ndims = 1;
-  readH5Dataset(vox_out.handle(), "mat_bn", expected_ndims, dims, (void**)&mat_bn, DataType::Int8);
+  readDataset(vox_out.handle(), "mat_bn", expected_ndims, dims, (void**)&mat_bn, DataType::Int8);
   PFFDTD_ASSERT((int64_t)dims[0] == Nb);
 
   //////////////////
   // saf_bn dataset
   //////////////////
   expected_ndims = 1;
-  readH5Dataset(vox_out.handle(), "saf_bn", expected_ndims, dims, (void**)&saf_bn, DataType::Float64);
+  readDataset(vox_out.handle(), "saf_bn", expected_ndims, dims, (void**)&saf_bn, DataType::Float64);
   PFFDTD_ASSERT((int64_t)dims[0] == Nb);
 
   allocate_zeros((void**)&ssaf_bn, Nb * sizeof(Real));
@@ -216,25 +216,25 @@ namespace pffdtd {
   // in_ixyz dataset
   //////////////////
   expected_ndims = 1;
-  readH5Dataset(signals.handle(), "in_ixyz", expected_ndims, dims, (void**)&in_ixyz, DataType::Int64);
+  readDataset(signals.handle(), "in_ixyz", expected_ndims, dims, (void**)&in_ixyz, DataType::Int64);
   PFFDTD_ASSERT((int64_t)dims[0] == Ns);
 
   //////////////////
   // out_ixyz dataset
   //////////////////
   expected_ndims = 1;
-  readH5Dataset(signals.handle(), "out_ixyz", expected_ndims, dims, (void**)&out_ixyz, DataType::Int64);
+  readDataset(signals.handle(), "out_ixyz", expected_ndims, dims, (void**)&out_ixyz, DataType::Int64);
   PFFDTD_ASSERT((int64_t)dims[0] == Nr);
 
   expected_ndims = 1;
-  readH5Dataset(signals.handle(), "out_reorder", expected_ndims, dims, (void**)&out_reorder, DataType::Int64);
+  readDataset(signals.handle(), "out_reorder", expected_ndims, dims, (void**)&out_reorder, DataType::Int64);
   PFFDTD_ASSERT((int64_t)dims[0] == Nr);
 
   //////////////////
   // in_sigs dataset
   //////////////////
   expected_ndims = 2;
-  readH5Dataset(signals.handle(), "in_sigs", expected_ndims, dims, (void**)&in_sigs, DataType::Float64);
+  readDataset(signals.handle(), "in_sigs", expected_ndims, dims, (void**)&in_sigs, DataType::Float64);
   PFFDTD_ASSERT((int64_t)dims[0] == Ns);
   PFFDTD_ASSERT((int64_t)dims[1] == Nt);
 
@@ -261,7 +261,7 @@ namespace pffdtd {
   PFFDTD_ASSERT(Nm <= MNm);
 
   expected_ndims = 1;
-  readH5Dataset(materials.handle(), "Mb", expected_ndims, dims, (void**)&Mb, DataType::Int8);
+  readDataset(materials.handle(), "Mb", expected_ndims, dims, (void**)&Mb, DataType::Int8);
 
   for (int8_t i = 0; i < Nm; i++) {
     fmt::println("Mb[{}]={}", i, Mb[i]);
@@ -278,7 +278,7 @@ namespace pffdtd {
     double* DEF    = nullptr; // for one material
     auto id        = fmt::format("mat_{:02d}_DEF", i);
     expected_ndims = 2;
-    readH5Dataset(materials.handle(), id.c_str(), expected_ndims, dims, (void**)&DEF, DataType::Float64);
+    readDataset(materials.handle(), id.c_str(), expected_ndims, dims, (void**)&DEF, DataType::Float64);
     PFFDTD_ASSERT((int8_t)dims[0] == Mb[i]);
     PFFDTD_ASSERT((int8_t)dims[1] == 3);
     PFFDTD_ASSERT(Mb[i] <= MMb);
