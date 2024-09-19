@@ -12,4 +12,4 @@
 
 namespace pffdtd {
 auto run(Simulation3D const& sim) -> double;
-}
+} // namespace pffdtd

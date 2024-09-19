@@ -5,6 +5,7 @@
 #include "engine_cpu.hpp"
 
 #include "pffdtd/progress.hpp"
+#include "pffdtd/time.hpp"
 #include "pffdtd/utility.hpp"
 
 #include <fmt/format.h>
@@ -24,7 +25,7 @@ namespace {
 // function that does freq-dep RLC boundaries.  See 2016 ISMRA paper and
 // accompanying webpage (slightly improved here)
 template<typename Float>
-auto process_bnl_pts_fd(
+auto process_bnl_fd(
     Float* u0b,
     Float const* u2b,
     Float const* ssaf_bnl,
@@ -36,8 +37,8 @@ auto process_bnl_pts_fd(
     Float* gh1,
     MatQuad<Float> const* mat_quads,
     Float const* mat_beta
-) -> double {
-  auto const start = omp_get_wtime();
+) -> Seconds {
+  auto const start = getTime();
 #pragma omp parallel for schedule(static)
   for (int64_t nb = 0; nb < Nbl; nb++) {
     Float _1        = 1.0;
@@ -74,7 +75,7 @@ auto process_bnl_pts_fd(
 
     u0b[nb] = u0bint;
   }
-  return omp_get_wtime() - start;
+  return getTime() - start;
 }
 
 } // namespace
@@ -140,20 +141,20 @@ auto run(Simulation3D& sd) -> double {
   int const numWorkers = omp_get_max_threads();
 
   fmt::println("ENGINE: fcc_flag={}", fcc_flag);
-  fmt::println("{}", (fcc_flag > 0) ? "fcc=true" : "fcc=false");
+  fmt::println("fcc={}", (fcc_flag > 0) ? "true" : "false");
 
   // for timing
-  double timeElapsed           = NAN;
-  double timeElapsedAir        = 0.0;
-  double timeElapsedBn         = 0.0;
-  double timeElapsedSample     = NAN;
-  double timeElapsedSample_air = 0.0;
-  double timeElapsedSampleBn   = 0.0;
-  double const startTime       = omp_get_wtime();
+  auto elapsed           = 0.0;
+  auto elapsedAir        = 0.0;
+  auto elapsedBn         = 0.0;
+  auto elapsedSample     = 0.0;
+  auto elapsedSample_air = 0.0;
+  auto elapsedSampleBn   = 0.0;
+  auto const startTime   = getTime();
 
   int64_t const NzNy = Nz * Ny;
   for (int64_t n = 0; n < Nt; n++) {
-    auto const sampleStartTime = omp_get_wtime();
+    auto const sampleStartTime = getTime();
 
 // copy last state ABCs
 #pragma omp parallel for
@@ -256,8 +257,8 @@ auto run(Simulation3D& sd) -> double {
     }
 
     // rigid boundary nodes, using adj data
-    timeElapsedSample_air = omp_get_wtime() - sampleStartTime;
-    timeElapsedAir += timeElapsedSample_air;
+    elapsedSample_air = Seconds(getTime() - sampleStartTime).count();
+    elapsedAir += elapsedSample_air;
     if (fcc_flag == 0) {
 #pragma omp parallel for
       for (int64_t nb = 0; nb < Nb; nb++) {
@@ -314,8 +315,8 @@ auto run(Simulation3D& sd) -> double {
       u0b[nb] = u0[bnl_ixyz[nb]];
     }
     // process FD boundary nodes
-    timeElapsedSampleBn = process_bnl_pts_fd(u0b, u2b, ssaf_bnl, mat_bnl, Nbl, Mb, lo2, vh1, gh1, mat_quads, mat_beta);
-    timeElapsedBn += timeElapsedSampleBn;
+    elapsedSampleBn = process_bnl_fd(u0b, u2b, ssaf_bnl, mat_bnl, Nbl, Mb, lo2, vh1, gh1, mat_quads, mat_beta).count();
+    elapsedBn += elapsedSampleBn;
 // write back
 #pragma omp parallel for
     for (int64_t nb = 0; nb < Nbl; nb++) {
@@ -343,38 +344,38 @@ auto run(Simulation3D& sd) -> double {
     u1b       = u0b;
     u0b       = tmp;
 
-    auto const now    = omp_get_wtime();
-    timeElapsed       = now - startTime;
-    timeElapsedSample = now - sampleStartTime;
+    auto const now = getTime();
+    elapsed        = Seconds(now - startTime).count();
+    elapsedSample  = Seconds(now - sampleStartTime).count();
 
     print_progress(
         n,
         Nt,
         Npts,
         Nb,
-        timeElapsed,
-        timeElapsedSample,
-        timeElapsedAir,
-        timeElapsedSample_air,
-        timeElapsedBn,
-        timeElapsedSampleBn,
+        elapsed,
+        elapsedSample,
+        elapsedAir,
+        elapsedSample_air,
+        elapsedBn,
+        elapsedSampleBn,
         numWorkers
     );
   }
   fmt::println("");
 
   // timing
-  auto const endTime = omp_get_wtime();
-  timeElapsed        = endTime - startTime;
+  auto const endTime = getTime();
+  elapsed            = Seconds(endTime - startTime).count();
 
   /*------------------------
    * RETURN
   ------------------------*/
-  fmt::println("Air update: {:.6}s, {:.2} Mvox/s", timeElapsedAir, Npts * Nt / 1e6 / timeElapsedAir);
-  fmt::println("Boundary loop: {:.6}s, {:.2} Mvox/s", timeElapsedBn, Nb * Nt / 1e6 / timeElapsedBn);
-  fmt::println("Combined (total): {:.6}s, {:.2} Mvox/s", timeElapsed, Npts * Nt / 1e6 / timeElapsed);
+  fmt::println("Air update: {:.6}s, {:.2} Mvox/s", elapsedAir, Npts * Nt / 1e6 / elapsedAir);
+  fmt::println("Boundary loop: {:.6}s, {:.2} Mvox/s", elapsedBn, Nb * Nt / 1e6 / elapsedBn);
+  fmt::println("Combined (total): {:.6}s, {:.2} Mvox/s", elapsed, Npts * Nt / 1e6 / elapsed);
 
-  return timeElapsed;
+  return elapsed;
 }
 
 } // namespace pffdtd

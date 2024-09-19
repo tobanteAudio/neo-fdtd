@@ -10,6 +10,7 @@
 #include "pffdtd/exception.hpp"
 #include "pffdtd/hdf.hpp"
 #include "pffdtd/simulation_2d.hpp"
+#include "pffdtd/time.hpp"
 
 #include <CLI/CLI.hpp>
 
@@ -34,7 +35,7 @@ auto main(int argc, char** argv) -> int {
   app.add_option("-o,--out", args.out);
   CLI11_PARSE(app, argc, argv);
 
-  auto const start  = std::chrono::steady_clock::now();
+  auto const start  = pffdtd::getTime();
   auto const simDir = std::filesystem::path{args.simDir};
   auto const sim    = pffdtd::loadSimulation2D(simDir);
   auto const out    = [&] {
@@ -59,8 +60,8 @@ auto main(int argc, char** argv) -> int {
   auto results = pffdtd::H5FWriter{simDir / args.out};
   results.write("out", out);
 
-  auto const stop = std::chrono::steady_clock::now();
-  auto const sec  = std::chrono::duration<double>(stop - start);
+  auto const stop = pffdtd::getTime();
+  auto const sec  = pffdtd::Seconds(stop - start);
   fmt::println("Simulation time: {} s", sec.count());
 
   return EXIT_SUCCESS;
