@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2021 Brian Hamilton
 
-#include "engine_gpu.hpp"
+#include "engine_cuda.hpp"
 
 #include "pffdtd/assert.hpp"
 #include "pffdtd/config.hpp"

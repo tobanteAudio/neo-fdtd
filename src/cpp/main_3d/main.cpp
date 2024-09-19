@@ -11,9 +11,9 @@
 #endif
 
 #if PFFDTD_HAS_CUDA
-  #include "engine_gpu.hpp"
+  #include "pffdtd/engine_cuda.hpp"
 #else
-  #include "engine_cpu.hpp"
+  #include "pffdtd/engine_openmp.hpp"
 #endif
 
 #include <fmt/format.h>

@@ -19,6 +19,8 @@ target_link_libraries(pffdtd
 target_sources(pffdtd
     PRIVATE
         pffdtd/config.hpp
+        pffdtd/engine_openmp.cpp
+        pffdtd/engine_openmp.hpp
         pffdtd/exception.hpp
         pffdtd/hdf.cpp
         pffdtd/hdf.hpp
@@ -40,6 +42,14 @@ target_compile_definitions(pffdtd PUBLIC _CRT_SECURE_NO_WARNINGS=1)
 if(PFFDTD_HAS_SYCL)
     target_compile_definitions(pffdtd PUBLIC PFFDTD_HAS_SYCL=1)
 endif()
+
+if(PFFDTD_ENABLE_CUDA)
+    target_sources(pffdtd PRIVATE pffdtd/engine_cuda.cu pffdtd/engine_cuda.hpp)
+    target_compile_definitions(pffdtd PUBLIC PFFDTD_HAS_CUDA=1)
+else()
+    target_compile_definitions(pffdtd PUBLIC PFFDTD_HAS_CUDA=0)
+endif()
+
 
 if((CMAKE_CXX_COMPILER_ID STREQUAL "MSVC") OR (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC"))
     target_compile_options(pffdtd PUBLIC /W3)
