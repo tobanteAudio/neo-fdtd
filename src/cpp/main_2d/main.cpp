@@ -1,19 +1,17 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 Tobias Hienzsch
 
-#include "engine_native.hpp"
-
-#if defined(PFFDTD_HAS_SYCL)
-  #include "engine_sycl.hpp"
-#endif
-
+#include "pffdtd/engine_2d_native.hpp"
 #include "pffdtd/exception.hpp"
 #include "pffdtd/hdf.hpp"
 #include "pffdtd/simulation_2d.hpp"
 #include "pffdtd/time.hpp"
 
-#include <CLI/CLI.hpp>
+#if defined(PFFDTD_HAS_SYCL)
+  #include "pffdtd/engine_2d_sycl.hpp"
+#endif
 
+#include <CLI/CLI.hpp>
 #include <fmt/format.h>
 
 #include <chrono>

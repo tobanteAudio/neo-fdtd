@@ -2,13 +2,13 @@
 // SPDX-FileCopyrightText: 2021 Brian Hamilton
 // Main entry point of the CPU/GPU PFFDTD engines.
 
-#include "pffdtd/simulation_3d.hpp"
-#include "pffdtd/time.hpp"
-#include "pffdtd/utility.hpp"
-
 #ifndef PFFDTD_HAS_CUDA
   #error "forgot to define PFFDTD_HAS_CUDA"
 #endif
+
+#include "pffdtd/simulation_3d.hpp"
+#include "pffdtd/time.hpp"
+#include "pffdtd/utility.hpp"
 
 #if PFFDTD_HAS_CUDA
   #include "pffdtd/engine_cuda.hpp"

@@ -19,6 +19,8 @@ target_link_libraries(pffdtd
 target_sources(pffdtd
     PRIVATE
         pffdtd/config.hpp
+        pffdtd/engine_2d_native.cpp
+        pffdtd/engine_2d_native.hpp
         pffdtd/engine_openmp.cpp
         pffdtd/engine_openmp.hpp
         pffdtd/exception.hpp
@@ -40,7 +42,14 @@ target_sources(pffdtd
 target_compile_definitions(pffdtd PUBLIC _CRT_SECURE_NO_WARNINGS=1)
 
 if(PFFDTD_HAS_SYCL)
+    target_sources(pffdtd PRIVATE pffdtd/engine_2d_sycl.cpp pffdtd/engine_2d_sycl.hpp)
+    add_sycl_to_target(TARGET pffdtd SOURCES pffdtd/engine_2d_sycl.cpp)
     target_compile_definitions(pffdtd PUBLIC PFFDTD_HAS_SYCL=1)
+
+    if(PFFDTD_ENABLE_SYCL_ONEAPI)
+        set_source_files_properties(pffdtd/engine_2d_sycl.cpp PROPERTIES COMPILE_FLAGS "-fsycl-targets=nvptx64-nvidia-cuda")
+        target_link_libraries(pffdtd PRIVATE "-fsycl-targets=nvptx64-nvidia-cuda")
+    endif()
 endif()
 
 if(PFFDTD_ENABLE_CUDA)
@@ -49,7 +58,6 @@ if(PFFDTD_ENABLE_CUDA)
 else()
     target_compile_definitions(pffdtd PUBLIC PFFDTD_HAS_CUDA=0)
 endif()
-
 
 if((CMAKE_CXX_COMPILER_ID STREQUAL "MSVC") OR (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC"))
     target_compile_options(pffdtd PUBLIC /W3)

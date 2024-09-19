@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 Tobias Hienzsch
 
-#include "engine_native.hpp"
+#include "engine_2d_native.hpp"
 
 #include <fmt/format.h>
 

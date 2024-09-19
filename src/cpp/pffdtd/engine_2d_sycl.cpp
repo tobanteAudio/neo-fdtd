@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 Tobias Hienzsch
 
-#include "engine_sycl.hpp"
+#include "engine_2d_sycl.hpp"
 
 #include "pffdtd/sycl.hpp"
 
