@@ -144,13 +144,11 @@ auto run(Simulation3D& sd) -> double {
   fmt::println("fcc={}", (fcc_flag > 0) ? "true" : "false");
 
   // for timing
-  auto elapsed           = 0.0;
-  auto elapsedAir        = 0.0;
-  auto elapsedBn         = 0.0;
-  auto elapsedSample     = 0.0;
-  auto elapsedSample_air = 0.0;
-  auto elapsedSampleBn   = 0.0;
-  auto const startTime   = getTime();
+  auto elapsedAir       = 0.0;
+  auto elapsedBn        = 0.0;
+  auto elapsedSampleAir = 0.0;
+  auto elapsedSampleBn  = 0.0;
+  auto const startTime  = getTime();
 
   int64_t const NzNy = Nz * Ny;
   for (int64_t n = 0; n < Nt; n++) {
@@ -257,8 +255,8 @@ auto run(Simulation3D& sd) -> double {
     }
 
     // rigid boundary nodes, using adj data
-    elapsedSample_air = Seconds(getTime() - sampleStartTime).count();
-    elapsedAir += elapsedSample_air;
+    elapsedSampleAir = Seconds(getTime() - sampleStartTime).count();
+    elapsedAir += elapsedSampleAir;
     if (fcc_flag == 0) {
 #pragma omp parallel for
       for (int64_t nb = 0; nb < Nb; nb++) {
@@ -344,33 +342,29 @@ auto run(Simulation3D& sd) -> double {
     u1b       = u0b;
     u0b       = tmp;
 
-    auto const now = getTime();
-    elapsed        = Seconds(now - startTime).count();
-    elapsedSample  = Seconds(now - sampleStartTime).count();
+    auto const now           = getTime();
+    auto const elapsed       = Seconds(now - startTime).count();
+    auto const elapsedSample = Seconds(now - sampleStartTime).count();
 
-    print_progress(
-        n,
-        Nt,
-        Npts,
-        Nb,
-        elapsed,
-        elapsedSample,
-        elapsedAir,
-        elapsedSample_air,
-        elapsedBn,
-        elapsedSampleBn,
-        numWorkers
-    );
+    print(ProgressReport{
+        .n                     = n,
+        .Nt                    = Nt,
+        .Npts                  = Npts,
+        .Nb                    = Nb,
+        .elapsed               = elapsed,
+        .elapsedSample         = elapsedSample,
+        .elapsedAir            = elapsedAir,
+        .elapsedSampleAir      = elapsedSampleAir,
+        .elapsedBoundary       = elapsedBn,
+        .elapsedSampleBoundary = elapsedSampleBn,
+        .numWorkers            = numWorkers,
+    });
   }
   fmt::println("");
 
-  // timing
   auto const endTime = getTime();
-  elapsed            = Seconds(endTime - startTime).count();
+  auto const elapsed = Seconds(endTime - startTime).count();
 
-  /*------------------------
-   * RETURN
-  ------------------------*/
   fmt::println("Air update: {:.6}s, {:.2} Mvox/s", elapsedAir, Npts * Nt / 1e6 / elapsedAir);
   fmt::println("Boundary loop: {:.6}s, {:.2} Mvox/s", elapsedBn, Nb * Nt / 1e6 / elapsedBn);
   fmt::println("Combined (total): {:.6}s, {:.2} Mvox/s", elapsed, Npts * Nt / 1e6 / elapsed);

@@ -7,18 +7,20 @@
 
 namespace pffdtd {
 
-auto print_progress(
-    uint32_t n,
-    uint32_t Nt,
-    uint64_t Npts,
-    uint64_t Nb,
-    double time_elapsed,
-    double time_elapsed_sample,
-    double time_elapsed_air,
-    double time_elapsed_sample_air,
-    double time_elapsed_bn,
-    double time_elapsed_sample_bn,
-    int num_workers
-) -> void;
+struct ProgressReport {
+  int64_t n;
+  int64_t Nt;
+  int64_t Npts;
+  int64_t Nb;
+  double elapsed;
+  double elapsedSample;
+  double elapsedAir;
+  double elapsedSampleAir;
+  double elapsedBoundary;
+  double elapsedSampleBoundary;
+  int numWorkers;
+};
+
+auto print(ProgressReport const progress) -> void;
 
 } // namespace pffdtd

@@ -696,14 +696,14 @@ auto run(Simulation3D const& sim) -> double {
   Real sl2 = sim.sl2;
 
   // timing stuff
-  double time_elapsed             = 0.0;
-  double time_elapsed_bn          = 0.0;
-  double time_elapsed_sample      = NAN;
-  double time_elapsed_sample_bn   = NAN;
-  double time_elapsed_air         = 0.0; // feed into print/process
-  double time_elapsed_sample_air  = NAN; // feed into print/process
-  float millis_since_start        = NAN;
-  float millis_since_sample_start = NAN;
+  double elapsed                  = 0.0;
+  double elapsedBoundary          = 0.0;
+  double elapsedSample            = 0.0;
+  double elapsedSampleBoundary    = 0.0;
+  double elapsedAir               = 0.0; // feed into print/process
+  double elapsedSampleAir         = 0.0; // feed into print/process
+  float millis_since_start        = 0.0;
+  float millis_since_sample_start = 0.0;
 
   std::printf("a1 = %.16g\n", a1);
   std::printf("a2 = %.16g\n", a2);
@@ -1225,34 +1225,34 @@ auto run(Simulation3D const& sim) -> double {
       gpuErrchk(cudaEventElapsedTime(&millis_since_start, cuEv_main_start, cuEv_main_sample_end));
       gpuErrchk(cudaEventElapsedTime(&millis_since_sample_start, cuEv_main_sample_start, cuEv_main_sample_end));
 
-      time_elapsed        = millis_since_start / 1000;
-      time_elapsed_sample = millis_since_sample_start / 1000;
+      elapsed       = millis_since_start / 1000;
+      elapsedSample = millis_since_sample_start / 1000;
 
       float millis_air = NAN;
       float millis_bn  = NAN;
       gpuErrchk(cudaEventElapsedTime(&millis_air, gd->cuEv_air_start, gd->cuEv_air_end));
-      time_elapsed_sample_air = 0.001 * millis_air;
-      time_elapsed_air += time_elapsed_sample_air;
+      elapsedSampleAir = 0.001 * millis_air;
+      elapsedAir += elapsedSampleAir;
 
       // not full picutre, only first gpu
       gpuErrchk(cudaEventElapsedTime(&millis_bn, gd->cuEv_bn_roundtrip_start, gd->cuEv_bn_roundtrip_end));
 
-      time_elapsed_sample_bn = millis_bn / 1000.0;
-      time_elapsed_bn += time_elapsed_sample_bn;
+      elapsedSampleBoundary = millis_bn / 1000.0;
+      elapsedBoundary += elapsedSampleBoundary;
 
-      print_progress(
-          n,
-          sim.Nt,
-          sim.Npts,
-          sim.Nb,
-          time_elapsed,
-          time_elapsed_sample,
-          time_elapsed_air,
-          time_elapsed_sample_air,
-          time_elapsed_bn,
-          time_elapsed_sample_bn,
-          ngpus
-      );
+      print(ProgressReport{
+          .n                     = n,
+          .Nt                    = sim.Nt,
+          .Npts                  = sim.Npts,
+          .Nb                    = sim.Nb,
+          .elapsed               = elapsed,
+          .elapsedSample         = elapsedSample,
+          .elapsedAir            = elapsedAir,
+          .elapsedSampleAir      = elapsedSampleAir,
+          .elapsedBoundary       = elapsedBoundary,
+          .elapsedSampleBoundary = elapsedSampleBoundary,
+          .numWorkers            = ngpus,
+      });
     }
   }
   std::printf("\n");
@@ -1269,7 +1269,7 @@ auto run(Simulation3D const& sim) -> double {
     gpuErrchk(cudaEventSynchronize(cuEv_main_end));
 
     gpuErrchk(cudaEventElapsedTime(&millis_since_start, cuEv_main_start, cuEv_main_end));
-    time_elapsed = millis_since_start / 1000;
+    elapsed = millis_since_start / 1000;
   }
 
   /*------------------------
@@ -1332,10 +1332,10 @@ auto run(Simulation3D const& sim) -> double {
     gpuErrchk(cudaDeviceReset());
   }
 
-  std::printf("Boundary loop: %.6fs, %.2f Mvox/s\n", time_elapsed_bn, sim.Nb * sim.Nt / 1e6 / time_elapsed_bn);
-  std::printf("Air update: %.6fs, %.2f Mvox/s\n", time_elapsed_air, sim.Npts * sim.Nt / 1e6 / time_elapsed_air);
-  std::printf("Combined (total): %.6fs, %.2f Mvox/s\n", time_elapsed, sim.Npts * sim.Nt / 1e6 / time_elapsed);
-  return time_elapsed;
+  std::printf("Boundary loop: %.6fs, %.2f Mvox/s\n", elapsedBoundary, sim.Nb * sim.Nt / 1e6 / elapsedBoundary);
+  std::printf("Air update: %.6fs, %.2f Mvox/s\n", elapsedAir, sim.Npts * sim.Nt / 1e6 / elapsedAir);
+  std::printf("Combined (total): %.6fs, %.2f Mvox/s\n", elapsed, sim.Npts * sim.Nt / 1e6 / elapsed);
+  return elapsed;
 }
 
 } // namespace pffdtd
