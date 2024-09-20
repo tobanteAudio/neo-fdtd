@@ -34,7 +34,8 @@ jobs:
             osx_target: ""
             cmake_prefix_path: ""
             cmake_flags: ""
-            cxx_flags: ""
+            build_type: "Debug"
+            cxx_flags: "--coverage -march=native -Og"
             python_version: "3.12"
             pffdtd_engine_2d: "build/src/cpp/main_2d/pffdtd_2d"
             pffdtd_engine_3d: ""
@@ -44,6 +45,7 @@ jobs:
             osx_target: "10.15"
             cmake_prefix_path: ""
             cmake_flags: '-D OpenMP_ROOT=`brew list libomp | grep libomp.a | sed -E "s/\/lib\/.*//"`'
+            build_type: "Release"
             cxx_flags: ""
             python_version: "3.12"
             pffdtd_engine_2d: "build/src/cpp/main_2d/pffdtd_2d"
@@ -54,6 +56,7 @@ jobs:
             osx_target: "11.0"
             cmake_prefix_path: ""
             cmake_flags: '-D OpenMP_ROOT=`brew list libomp | grep libomp.a | sed -E "s/\/lib\/.*//"`'
+            build_type: "Release"
             cxx_flags: ""
             python_version: "3.12"
             pffdtd_engine_2d: "build/src/cpp/main_2d/pffdtd_2d"
@@ -64,6 +67,7 @@ jobs:
             osx_target: ""
             cmake_prefix_path: ""
             cmake_flags: ""
+            build_type: "Release"
             cxx_flags: ""
             python_version: "3.12"
             pffdtd_engine_2d: "build/src/cpp/main_2d/pffdtd_2d.exe"
@@ -83,7 +87,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt update -y
-          sudo apt install -y libomp-dev ninja-build
+          sudo apt install -y libomp-dev ninja-build gcovr
           pip3 install --break-system-packages conan
 
       - name: Install dependencies (macOS)
@@ -111,7 +115,7 @@ jobs:
           cmake
           -B build
           -G Ninja
-          -D CMAKE_BUILD_TYPE=Release
+          -D CMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -D CMAKE_CXX_FLAGS="${{ matrix.cxx_flags }}"
           -D CMAKE_PROJECT_TOP_LEVEL_INCLUDES=external/cmake-conan/conan_provider.cmake
           ${{ matrix.cmake_flags }}
@@ -125,8 +129,12 @@ jobs:
       - name: Pytest
         run: pytest --cov=pffdtd --cov-branch
 
+      - name: GCOV
+        run: gcovr --xml-pretty --exclude-unreachable-branches --exclude-throw-branches -r src -s build -o build/coverage.xml
+
       - name: Upload coverage report
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
+          files: ./.coverage,./build/coverage.xml
