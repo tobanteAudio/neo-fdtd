@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2024 Tobias Hienzsch
-
+import click
 import numpy as np
 
 
@@ -32,9 +32,6 @@ def primitive_root_diffuser(prime, g=None, depth=None):
     return n, g
 
 
+@click.command(name='prd', help='Design PRD diffusors.')
 def main():
     print(primitive_root_diffuser(17))
-
-
-if __name__ == '__main__':
-    main()

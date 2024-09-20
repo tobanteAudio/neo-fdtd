@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2024 Tobias Hienzsch
-
+import click
 import numpy as np
 
 
@@ -12,6 +12,7 @@ def quadratic_residue_diffuser(prime, depth=None):
     return n
 
 
+@click.command(name='qrd', help='Design QRD diffusors.')
 def main():
     n = 13
     c = 343
@@ -41,7 +42,3 @@ def main():
 
     print(f"wells     = {np.round(w*100, 2)} cm")
     print(f"max depth = {np.max(w)*100:.2f} cm")
-
-
-if __name__ == '__main__':
-    main()

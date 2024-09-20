@@ -1,13 +1,12 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2024 Tobias Hienzsch
-import argparse
 from pathlib import Path
 
+import click
 import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import signal
-from scipy.signal import butter, bilinear_zpk, zpk2sos, sosfilt
 
 from pffdtd.common.wavfile import collect_wav_files, load_wav_files
 
@@ -16,8 +15,8 @@ def bandpass_filter(y, lowcut, highcut, fs, order=4):
     nyquist = 0.5 * fs
     low = lowcut / nyquist
     high = highcut / nyquist
-    b, a = signal.butter(order, [low, high], btype='band')
-    return signal.filtfilt(b, a, y, axis=1)
+    sos = signal.butter(order, [low, high], btype='band', output='sos')
+    return signal.sosfilt(sos, y, axis=-1)
 
 
 def polar_response(y: np.array, fs: float, min_angle=0, max_angle=180, trim_angle=5):
@@ -51,12 +50,10 @@ def polar_response(y: np.array, fs: float, min_angle=0, max_angle=180, trim_angl
     return norm, mic_angles
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('sim_dir', nargs=1)
-    args = parser.parse_args()
-    sim_dir = Path(args.sim_dir[0])
-
+@click.command(name='measurement', help='Measure polar response.')
+@click.argument('sim_dir', nargs=1,  type=click.Path(exists=True))
+def main(sim_dir):
+    sim_dir = Path(sim_dir)
     files = collect_wav_files(sim_dir, '*_out_normalised.wav')
     fs, out = load_wav_files(files)
 
@@ -74,8 +71,6 @@ def main():
     print(f"{out.shape=}")
 
     out = out[:, trim_samples:]
-    # out *= signal.windows.hann(out.shape[-1])
-
     times: np.ndarray = np.linspace(0.0, out.shape[-1]/fs, out.shape[-1])
 
     plt.plot(times, out[15, :], label=f'{15}deg')
@@ -127,7 +122,3 @@ def main():
     ax[2][1].set_thetamax(180)
 
     plt.show()
-
-
-if __name__ == '__main__':
-    main()
