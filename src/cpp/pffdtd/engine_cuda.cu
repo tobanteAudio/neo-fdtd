@@ -795,14 +795,13 @@ auto run(Simulation3D const& sim) -> double {
     ghd->u_out     = sim.u_out + Nr_read * sim.Nt;
     ghd->u_out_buf = u_out_buf + Nr_read;
 
-    // recalculate indices, these are associated host versions to copy over to
-    // devices
-    allocate_zeros((void**)&(ghd->bn_ixyz), ghd->Nb * sizeof(int64_t));
-    allocate_zeros((void**)&(ghd->bnl_ixyz), ghd->Nbl * sizeof(int64_t));
-    allocate_zeros((void**)&(ghd->bna_ixyz), ghd->Nba * sizeof(int64_t));
-    allocate_zeros((void**)&(ghd->bn_mask), ghd->Nbm * sizeof(uint8_t));
-    allocate_zeros((void**)&(ghd->in_ixyz), ghd->Ns * sizeof(int64_t));
-    allocate_zeros((void**)&(ghd->out_ixyz), ghd->Nr * sizeof(int64_t));
+    // recalculate indices, these are associated host versions to copy over to devices
+    ghd->bn_ixyz  = allocate_zeros<int64_t>(ghd->Nb);
+    ghd->bnl_ixyz = allocate_zeros<int64_t>(ghd->Nbl);
+    ghd->bna_ixyz = allocate_zeros<int64_t>(ghd->Nba);
+    ghd->bn_mask  = allocate_zeros<uint8_t>(ghd->Nbm);
+    ghd->in_ixyz  = allocate_zeros<int64_t>(ghd->Ns);
+    ghd->out_ixyz = allocate_zeros<int64_t>(ghd->Nr);
 
     int64_t const offset = Nzy * Nx_pos;
     for (int64_t nb = 0; nb < (ghd->Nb); nb++) {

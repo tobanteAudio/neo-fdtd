@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 
 #ifndef DIV_CEIL
   #define DIV_CEIL(x, y) (((x) + (y) - 1) / (y)) // this works for x≥0 and y>0
@@ -16,12 +17,14 @@
 #define SET_BIT_VAL(var, pos, val) ((var) = ((var) & ~(1ULL << (pos))) | ((val) << (pos)))
 
 namespace pffdtd {
-void allocate_zeros(void** arr, uint64_t Nbytes);
-void sort_keys(int64_t* val_arr, int64_t* key_arr, int64_t N);
+auto sort_keys(int64_t* val_arr, int64_t* key_arr, int64_t N) -> void;
 
 template<typename T>
-[[nodiscard]] auto allocate(std::integral auto count) -> T* {
-  return reinterpret_cast<T*>(std::malloc(static_cast<size_t>(count) * sizeof(T)));
+[[nodiscard]] auto allocate_zeros(std::integral auto count) -> T* {
+  auto const bytes = static_cast<size_t>(count) * sizeof(T);
+  auto* const ptr  = std::malloc(bytes);
+  std::memset(ptr, 0, bytes);
+  return reinterpret_cast<T*>(ptr);
 }
 
 template<typename T>

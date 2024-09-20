@@ -27,10 +27,10 @@ auto readDataset(hid_t file, char const* dset_str, int ndims, hsize_t* dims, voi
   }
 
   switch (t) {
-    case DataType::Float64: *out = allocate<double>(N); break;
-    case DataType::Int64: *out = allocate<int64_t>(N); break;
-    case DataType::Int8: *out = allocate<int8_t>(N); break;
-    case DataType::Bool: *out = allocate<bool>(N); break;
+    case DataType::Float64: *out = allocate_zeros<double>(N); break;
+    case DataType::Int64: *out = allocate_zeros<int64_t>(N); break;
+    case DataType::Int8: *out = allocate_zeros<int8_t>(N); break;
+    case DataType::Bool: *out = allocate_zeros<bool>(N); break;
   }
   if (*out == nullptr) {
     raise<std::bad_alloc>();

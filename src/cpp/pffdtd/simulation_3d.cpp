@@ -180,7 +180,7 @@ namespace pffdtd {
   readDataset(vox_out.handle(), "saf_bn", expected_ndims, dims, (void**)&saf_bn, DataType::Float64);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nb);
 
-  allocate_zeros((void**)&ssaf_bn, Nb * sizeof(Real));
+  ssaf_bn = allocate_zeros<Real>(Nb);
   for (int64_t i = 0; i < Nb; i++) {
     if (fcc_flag > 0) {
       ssaf_bn[i] = (Real)(0.5 / std::numbers::sqrt2) * saf_bn[i]; // rescale for S*h/V and cast
@@ -270,10 +270,8 @@ namespace pffdtd {
   //////////////////
   // DEF (RLC) datasets
   //////////////////
-  MatQuad<Real>* mat_quads = nullptr;
-  Real* mat_beta           = nullptr; // one per material
-  allocate_zeros((void**)&mat_quads, static_cast<unsigned long>(Nm * MMb) * sizeof(MatQuad<Real>));
-  allocate_zeros((void**)&mat_beta, Nm * sizeof(Real));
+  auto* mat_beta  = allocate_zeros<Real>(Nm);
+  auto* mat_quads = allocate_zeros<MatQuad<Real>>(static_cast<unsigned long>(Nm * MMb));
   for (int8_t i = 0; i < Nm; i++) {
     double* DEF    = nullptr; // for one material
     auto id        = fmt::format("mat_{:02d}_DEF", i);
@@ -344,7 +342,7 @@ namespace pffdtd {
   //////////////////
   // bit-pack and check adj_bn
   //////////////////
-  allocate_zeros((void**)&adj_bn, Nb * sizeof(uint16_t));
+  adj_bn = allocate_zeros<uint16_t>(Nb);
 
   for (int64_t i = 0; i < Nb; i++) {
     for (int8_t j = 0; j < NN; j++) {
@@ -364,7 +362,7 @@ namespace pffdtd {
   //////////////////
   // calculate K_bn from adj_bn
   //////////////////
-  allocate_zeros((void**)&K_bn, Nb * sizeof(int8_t));
+  K_bn = allocate_zeros<int8_t>(Nb);
 
   for (int64_t nb = 0; nb < Nb; nb++) {
     K_bn[nb] = 0;
@@ -379,15 +377,14 @@ namespace pffdtd {
   //////////////////
   // make compressed bit-mask
   int64_t const Nbm = (Npts - 1) / 8 + 1;
-  allocate_zeros((void**)&bn_mask, Nbm); // one bit per
+  bn_mask           = allocate_zeros<uint8_t>(Nbm); // one bit per
   for (int64_t i = 0; i < Nb; i++) {
     int64_t const ii = bn_ixyz[i];
     SET_BIT(bn_mask[ii >> 3], ii % 8);
   }
 
   // create bn_mask_raw to double check
-  bool* bn_mask_raw = nullptr;
-  allocate_zeros((void**)&bn_mask_raw, Npts * sizeof(bool));
+  bool* bn_mask_raw = allocate_zeros<bool>(Npts);
 
   for (int64_t i = 0; i < Nb; i++) {
     int64_t const ii = bn_ixyz[i];
@@ -413,9 +410,9 @@ namespace pffdtd {
     Nbl += static_cast<int64_t>(mat_bn[i] >= 0);
   }
   fmt::println("Nbl = {}", Nbl);
-  allocate_zeros((void**)&mat_bnl, Nbl * sizeof(int8_t));
-  allocate_zeros((void**)&bnl_ixyz, Nbl * sizeof(int64_t));
-  allocate_zeros((void**)&ssaf_bnl, Nbl * sizeof(Real));
+  mat_bnl  = allocate_zeros<int8_t>(Nbl);
+  bnl_ixyz = allocate_zeros<int64_t>(Nbl);
+  ssaf_bnl = allocate_zeros<Real>(Nbl);
   {
     int64_t j = 0;
     for (int64_t i = 0; i < Nb; i++) {
@@ -440,8 +437,8 @@ namespace pffdtd {
     Nba /= 2;
   }
 
-  allocate_zeros((void**)&bna_ixyz, Nba * sizeof(int64_t));
-  allocate_zeros((void**)&Q_bna, Nba * sizeof(int8_t));
+  bna_ixyz = allocate_zeros<int64_t>(Nba);
+  Q_bna    = allocate_zeros<int8_t>(Nba);
   {
     int64_t ii = 0;
     for (int64_t ix = 1; ix < Nx - 1; ix++) {
@@ -471,14 +468,12 @@ namespace pffdtd {
     PFFDTD_ASSERT(ii == Nba);
     fmt::println("ABC nodes");
     if (fcc_flag == 2) { // need to sort bna_ixyz
-      int64_t* bna_sort_keys = nullptr;
-      allocate_zeros((void**)&bna_sort_keys, Nba * sizeof(int64_t));
+      auto* bna_sort_keys = allocate_zeros<int64_t>(Nba);
       sort_keys(bna_ixyz, bna_sort_keys, Nba);
 
       // now sort corresponding Q_bna array
-      int8_t* Q_bna_sorted   = nullptr;
       int8_t* Q_bna_unsorted = nullptr;
-      allocate_zeros((void**)&Q_bna_sorted, Nba * sizeof(int8_t));
+      auto* Q_bna_sorted     = allocate_zeros<int8_t>(Nba);
       // swap pointers
       Q_bna_unsorted = Q_bna;
       Q_bna          = Q_bna_sorted;
@@ -493,7 +488,7 @@ namespace pffdtd {
   }
 
   // for outputs
-  auto* u_out = allocate<double>(Nr * Nt);
+  auto* u_out = allocate_zeros<double>(Nr * Nt);
 
   /*------------------------
    * ATTACH

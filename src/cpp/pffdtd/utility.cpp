@@ -6,20 +6,8 @@
 #include "pffdtd/exception.hpp"
 
 #include <cstdlib>
-#include <cstring>
 
 namespace pffdtd {
-
-// malloc check malloc, and initialise to zero
-// hard stop program if failed
-void allocate_zeros(void** arr, uint64_t Nbytes) {
-  *arr = malloc(Nbytes);
-  if (*arr == nullptr) {
-    raise<std::bad_alloc>();
-  }
-  // initialise to zero
-  std::memset(*arr, 0, (size_t)Nbytes);
-}
 
 // sort and return indices
 void sort_keys(int64_t* val_arr, int64_t* key_arr, int64_t N) {
