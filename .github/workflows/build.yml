@@ -130,6 +130,7 @@ jobs:
         run: pytest --cov=pffdtd --cov-branch
 
       - name: GCOV
+        if: runner.os == 'Linux'
         run: gcovr --xml-pretty --exclude-unreachable-branches --exclude-throw-branches -r src -s build -o build/coverage.xml
 
       - name: Upload coverage report
@@ -138,3 +139,4 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
           files: ./.coverage,./build/coverage.xml
+          handle_no_reports_found: true
