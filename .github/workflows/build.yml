@@ -38,7 +38,7 @@ jobs:
             cxx_flags: "--coverage -march=native -Og"
             python_version: "3.12"
             pffdtd_engine_2d: "build/src/cpp/main_2d/pffdtd_2d"
-            pffdtd_engine_3d: ""
+            pffdtd_engine_3d: "build/src/cpp/main_3d/pffdtd_3d"
 
           - name: macOS-X64
             os: macos-13
