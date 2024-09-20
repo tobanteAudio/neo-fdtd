@@ -17,7 +17,6 @@
 #define SET_BIT_VAL(var, pos, val) ((var) = ((var) & ~(1ULL << (pos))) | ((val) << (pos)))
 
 namespace pffdtd {
-auto sort_keys(int64_t* val_arr, int64_t* key_arr, int64_t N) -> void;
 
 template<typename T>
 [[nodiscard]] auto allocate_zeros(std::integral auto count) -> T* {

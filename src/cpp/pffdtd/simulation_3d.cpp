@@ -17,7 +17,44 @@
 #include <limits>
 #include <numbers>
 
+namespace pffdtd {
+
 namespace {
+
+// sort and return indices
+void sort_keys(int64_t* val_arr, int64_t* key_arr, int64_t N) {
+  // for sorting int64 arrays and returning keys
+  struct sort_int64_struct {
+    int64_t val;
+    int64_t idx;
+  };
+
+  // comparator with indice keys (for FCC ABC nodes)
+  static constexpr auto cmpfunc_int64_keys = [](void const* a, void const* b) -> int {
+    if ((*(sort_int64_struct const*)a).val < (*(sort_int64_struct const*)b).val) {
+      return -1;
+    }
+    if ((*(sort_int64_struct const*)a).val > (*(sort_int64_struct const*)b).val) {
+      return 1;
+    }
+    return 0;
+  };
+
+  auto* struct_arr = (sort_int64_struct*)malloc(N * sizeof(sort_int64_struct));
+  if (struct_arr == nullptr) {
+    raise<std::bad_alloc>();
+  }
+  for (int64_t i = 0; i < N; i++) {
+    struct_arr[i].val = val_arr[i];
+    struct_arr[i].idx = i;
+  }
+  qsort(struct_arr, N, sizeof(sort_int64_struct), cmpfunc_int64_keys);
+  for (int64_t i = 0; i < N; i++) {
+    val_arr[i] = struct_arr[i].val;
+    key_arr[i] = struct_arr[i].idx;
+  }
+  free(struct_arr);
+}
 
 // linear indices to sub-indices in 3d, Nz continguous
 void ind2sub3d(int64_t idx, int64_t Nx, int64_t Ny, int64_t Nz, int64_t* ix, int64_t* iy, int64_t* iz) {
@@ -42,8 +79,6 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
   }
 }
 } // namespace
-
-namespace pffdtd {
 
 // load the sim data from Python-written HDF5 files
 [[nodiscard]] auto loadSimulation3D(std::filesystem::path const& simDir) -> Simulation3D {

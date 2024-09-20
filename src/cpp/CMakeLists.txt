@@ -35,7 +35,6 @@ target_sources(pffdtd
         pffdtd/simulation_3d.hpp
         pffdtd/sycl.hpp
         pffdtd/time.hpp
-        pffdtd/utility.cpp
         pffdtd/utility.hpp
 )
 
