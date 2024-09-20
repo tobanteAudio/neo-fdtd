@@ -9,6 +9,7 @@
 #include "pffdtd/utility.hpp"
 
 #include <cmath>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
@@ -18,8 +19,30 @@
 
 namespace pffdtd {
 
+template<typename Float>
+__device__ auto add(Float x, Float y) -> Float {
+  if constexpr (std::same_as<Float, double>) {
+    return __dadd_rn(x, y);
+  } else if constexpr (std::same_as<Float, float>) {
+    return __fadd_rz(x, y);
+  } else {
+    static_assert(always_false<Float>);
+  }
+}
+
+template<typename Float>
+__device__ auto fma(Float x, Float y, Float z) -> Float {
+  if constexpr (std::same_as<Float, double>) {
+    return __fma_rn(x, y, z);
+  } else if constexpr (std::same_as<Float, float>) {
+    return __fmaf_rn(x, y, z);
+  } else {
+    static_assert(always_false<Float>);
+  }
+}
+
 // want 0 to map to 1, otherwise kernel errors
-constexpr auto CU_DIV_CEIL(auto x, auto y) { return ((DIV_CEIL(x, y) == 0) ? (1) : (DIV_CEIL(x, y))); }
+constexpr auto cu_divceil(auto x, auto y) { return ((DIV_CEIL(x, y) == 0) ? (1) : (DIV_CEIL(x, y))); }
 
 // thread-block dims for 3d kernels
 constexpr auto cuBx = 32;
@@ -145,12 +168,12 @@ KernelAirCart(Float* __restrict__ u0, Float const* __restrict__ u1, uint8_t cons
     // divide-conquer add for better accuracy
     Float tmp1 = NAN;
     Float tmp2 = NAN;
-    tmp1       = ADD_O(u1[ii + cuNxNy], u1[ii - cuNxNy]);
-    tmp2       = ADD_O(u1[ii + cuNx], u1[ii - cuNx]);
-    tmp1       = ADD_O(tmp1, tmp2);
-    tmp2       = ADD_O(u1[ii + 1], u1[ii - 1]);
-    tmp1       = ADD_O(tmp1, tmp2);
-    tmp1       = FMA_D(c1, u1[ii], FMA_D(c2, tmp1, -u0[ii]));
+    tmp1       = add(u1[ii + cuNxNy], u1[ii - cuNxNy]);
+    tmp2       = add(u1[ii + cuNx], u1[ii - cuNx]);
+    tmp1       = add(tmp1, tmp2);
+    tmp2       = add(u1[ii + 1], u1[ii - 1]);
+    tmp1       = add(tmp1, tmp2);
+    tmp1       = fma(c1, u1[ii], fma(c2, tmp1, -u0[ii]));
 
     // write final value back to global memory
     if ((GET_BIT(bn_mask[ii >> 3], ii % 8)) == 0) {
@@ -175,18 +198,18 @@ KernelAirFCC(Float* __restrict__ u0, Float const* __restrict__ u1, uint8_t const
     Float tmp3       = NAN;
     Float tmp4       = NAN;
     // divide-conquer add as much as possible
-    tmp1 = ADD_O(u1[ii + cuNxNy + cuNx], u1[ii - cuNxNy - cuNx]);
-    tmp2 = ADD_O(u1[ii + cuNx + 1], u1[ii - cuNx - 1]);
-    tmp1 = ADD_O(tmp1, tmp2);
-    tmp3 = ADD_O(u1[ii + cuNxNy + 1], u1[ii - cuNxNy - 1]);
-    tmp4 = ADD_O(u1[ii + cuNxNy - cuNx], u1[ii - cuNxNy + cuNx]);
-    tmp3 = ADD_O(tmp3, tmp4);
-    tmp2 = ADD_O(u1[ii + cuNx - 1], u1[ii - cuNx + 1]);
-    tmp1 = ADD_O(tmp1, tmp2);
-    tmp4 = ADD_O(u1[ii + cuNxNy - 1], u1[ii - cuNxNy + 1]);
-    tmp3 = ADD_O(tmp3, tmp4);
-    tmp1 = ADD_O(tmp1, tmp3);
-    tmp1 = FMA_D(c1, u1[ii], FMA_D(c2, tmp1, -u0[ii]));
+    tmp1 = add(u1[ii + cuNxNy + cuNx], u1[ii - cuNxNy - cuNx]);
+    tmp2 = add(u1[ii + cuNx + 1], u1[ii - cuNx - 1]);
+    tmp1 = add(tmp1, tmp2);
+    tmp3 = add(u1[ii + cuNxNy + 1], u1[ii - cuNxNy - 1]);
+    tmp4 = add(u1[ii + cuNxNy - cuNx], u1[ii - cuNxNy + cuNx]);
+    tmp3 = add(tmp3, tmp4);
+    tmp2 = add(u1[ii + cuNx - 1], u1[ii - cuNx + 1]);
+    tmp1 = add(tmp1, tmp2);
+    tmp4 = add(u1[ii + cuNxNy - 1], u1[ii - cuNxNy + 1]);
+    tmp3 = add(tmp3, tmp4);
+    tmp1 = add(tmp1, tmp3);
+    tmp1 = fma(c1, u1[ii], fma(c2, tmp1, -u0[ii]));
     // write final value back to global memory
     if ((GET_BIT(bn_mask[ii >> 3], ii % 8)) == 0) {
       u0[ii] = tmp1;
@@ -227,12 +250,12 @@ __global__ void KernelBoundaryRigidCart(
 
     Float tmp1 = NAN;
     Float tmp2 = NAN;
-    tmp1       = ADD_O((Float)GET_BIT(adj, 0) * u1[ii + cuNxNy], (Float)GET_BIT(adj, 1) * u1[ii - cuNxNy]);
-    tmp2       = ADD_O((Float)GET_BIT(adj, 2) * u1[ii + cuNx], (Float)GET_BIT(adj, 3) * u1[ii - cuNx]);
-    tmp1       = ADD_O(tmp1, tmp2);
-    tmp2       = ADD_O((Float)GET_BIT(adj, 4) * u1[ii + 1], (Float)GET_BIT(adj, 5) * u1[ii - 1]);
-    tmp1       = ADD_O(tmp1, tmp2);
-    tmp1       = FMA_D(b1, u1[ii], FMA_D(b2, tmp1, -u0[ii]));
+    tmp1       = add((Float)GET_BIT(adj, 0) * u1[ii + cuNxNy], (Float)GET_BIT(adj, 1) * u1[ii - cuNxNy]);
+    tmp2       = add((Float)GET_BIT(adj, 2) * u1[ii + cuNx], (Float)GET_BIT(adj, 3) * u1[ii - cuNx]);
+    tmp1       = add(tmp1, tmp2);
+    tmp2       = add((Float)GET_BIT(adj, 4) * u1[ii + 1], (Float)GET_BIT(adj, 5) * u1[ii - 1]);
+    tmp1       = add(tmp1, tmp2);
+    tmp1       = fma(b1, u1[ii], fma(b2, tmp1, -u0[ii]));
 
     // u0[ii] = partial; //write back to global memory
     u0[ii] = tmp1; // write back to global memory
@@ -262,18 +285,18 @@ __global__ void KernelBoundaryRigidFCC(
     Float tmp2 = NAN;
     Float tmp3 = NAN;
     Float tmp4 = NAN;
-    tmp1 = ADD_O((Float)GET_BIT(adj, 0) * u1[ii + cuNxNy + cuNx], (Float)GET_BIT(adj, 1) * u1[ii - cuNxNy - cuNx]);
-    tmp2 = ADD_O((Float)GET_BIT(adj, 2) * u1[ii + cuNx + 1], (Float)GET_BIT(adj, 3) * u1[ii - cuNx - 1]);
-    tmp1 = ADD_O(tmp1, tmp2);
-    tmp3 = ADD_O((Float)GET_BIT(adj, 4) * u1[ii + cuNxNy + 1], (Float)GET_BIT(adj, 5) * u1[ii - cuNxNy - 1]);
-    tmp4 = ADD_O((Float)GET_BIT(adj, 6) * u1[ii + cuNxNy - cuNx], (Float)GET_BIT(adj, 7) * u1[ii - cuNxNy + cuNx]);
-    tmp3 = ADD_O(tmp3, tmp4);
-    tmp2 = ADD_O((Float)GET_BIT(adj, 8) * u1[ii + cuNx - 1], (Float)GET_BIT(adj, 9) * u1[ii - cuNx + 1]);
-    tmp1 = ADD_O(tmp1, tmp2);
-    tmp4 = ADD_O((Float)GET_BIT(adj, 10) * u1[ii + cuNxNy - 1], (Float)GET_BIT(adj, 11) * u1[ii - cuNxNy + 1]);
-    tmp3 = ADD_O(tmp3, tmp4);
-    tmp1 = ADD_O(tmp1, tmp3);
-    tmp1 = FMA_D(b1, u1[ii], FMA_D(b2, tmp1, -u0[ii]));
+    tmp1       = add((Float)GET_BIT(adj, 0) * u1[ii + cuNxNy + cuNx], (Float)GET_BIT(adj, 1) * u1[ii - cuNxNy - cuNx]);
+    tmp2       = add((Float)GET_BIT(adj, 2) * u1[ii + cuNx + 1], (Float)GET_BIT(adj, 3) * u1[ii - cuNx - 1]);
+    tmp1       = add(tmp1, tmp2);
+    tmp3       = add((Float)GET_BIT(adj, 4) * u1[ii + cuNxNy + 1], (Float)GET_BIT(adj, 5) * u1[ii - cuNxNy - 1]);
+    tmp4       = add((Float)GET_BIT(adj, 6) * u1[ii + cuNxNy - cuNx], (Float)GET_BIT(adj, 7) * u1[ii - cuNxNy + cuNx]);
+    tmp3       = add(tmp3, tmp4);
+    tmp2       = add((Float)GET_BIT(adj, 8) * u1[ii + cuNx - 1], (Float)GET_BIT(adj, 9) * u1[ii - cuNx + 1]);
+    tmp1       = add(tmp1, tmp2);
+    tmp4       = add((Float)GET_BIT(adj, 10) * u1[ii + cuNxNy - 1], (Float)GET_BIT(adj, 11) * u1[ii - cuNxNy + 1]);
+    tmp3       = add(tmp3, tmp4);
+    tmp1       = add(tmp1, tmp3);
+    tmp1       = fma(b1, u1[ii], fma(b2, tmp1, -u0[ii]));
 
     u0[ii] = tmp1; // write back to global memory
   }
@@ -758,7 +781,7 @@ auto run(Simulation3D const& sim) -> double {
     // calculate Npts for this device
     ghd->Npts = Nzy * (ghd->Nxh);
     // boundary mask
-    ghd->Nbm = CU_DIV_CEIL(ghd->Npts, 8);
+    ghd->Nbm = cu_divceil(ghd->Npts, 8);
 
     std::printf("Nx=%ld Ns=%ld Nr=%ld Nb=%ld, Npts=%ld\n", ghd->Nx, ghd->Ns, ghd->Nr, ghd->Nb, ghd->Npts);
 
@@ -924,16 +947,16 @@ auto run(Simulation3D const& sim) -> double {
     std::printf("\n");
 
     // threads grids and blocks (swap x and z)
-    int64_t const cuGx  = CU_DIV_CEIL(sim.Nz - 2, cuBx);
-    int64_t const cuGy  = CU_DIV_CEIL(sim.Ny - 2, cuBy);
-    int64_t const cuGz  = CU_DIV_CEIL(ghd->Nxh - 2, cuBz);
-    int64_t const cuGr  = CU_DIV_CEIL(ghd->Nr, cuBrw);
-    int64_t const cuGb  = CU_DIV_CEIL(ghd->Nb, cuBb);
-    int64_t const cuGbl = CU_DIV_CEIL(ghd->Nbl, cuBb);
-    int64_t const cuGba = CU_DIV_CEIL(ghd->Nba, cuBb);
+    int64_t const cuGx  = cu_divceil(sim.Nz - 2, cuBx);
+    int64_t const cuGy  = cu_divceil(sim.Ny - 2, cuBy);
+    int64_t const cuGz  = cu_divceil(ghd->Nxh - 2, cuBz);
+    int64_t const cuGr  = cu_divceil(ghd->Nr, cuBrw);
+    int64_t const cuGb  = cu_divceil(ghd->Nb, cuBb);
+    int64_t const cuGbl = cu_divceil(ghd->Nbl, cuBb);
+    int64_t const cuGba = cu_divceil(ghd->Nba, cuBb);
 
-    int64_t const cuGx2 = CU_DIV_CEIL(sim.Nz, cuBx2);   // full face
-    int64_t const cuGz2 = CU_DIV_CEIL(ghd->Nxh, cuBy2); // full face
+    int64_t const cuGx2 = cu_divceil(sim.Nz, cuBx2);   // full face
+    int64_t const cuGz2 = cu_divceil(ghd->Nxh, cuBy2); // full face
 
     PFFDTD_ASSERT(cuGx >= 1);
     PFFDTD_ASSERT(cuGy >= 1);
@@ -956,9 +979,9 @@ auto run(Simulation3D const& sim) -> double {
     gd->block_dim_halo_xy = dim3(cuBx2, cuBy2, 1);
     gd->block_dim_halo_yz = dim3(cuBx2, cuBy2, 1);
     gd->block_dim_halo_xz = dim3(cuBx2, cuBy2, 1);
-    gd->grid_dim_halo_xy  = dim3(CU_DIV_CEIL(sim.Nz, cuBx2), CU_DIV_CEIL(sim.Ny, cuBy2), 1);
-    gd->grid_dim_halo_yz  = dim3(CU_DIV_CEIL(sim.Ny, cuBx2), CU_DIV_CEIL(ghd->Nxh, cuBy2), 1);
-    gd->grid_dim_halo_xz  = dim3(CU_DIV_CEIL(sim.Nz, cuBx2), CU_DIV_CEIL(ghd->Nxh, cuBy2), 1);
+    gd->grid_dim_halo_xy  = dim3(cu_divceil(sim.Nz, cuBx2), cu_divceil(sim.Ny, cuBy2), 1);
+    gd->grid_dim_halo_yz  = dim3(cu_divceil(sim.Ny, cuBx2), cu_divceil(ghd->Nxh, cuBy2), 1);
+    gd->grid_dim_halo_xz  = dim3(cu_divceil(sim.Nz, cuBx2), cu_divceil(ghd->Nxh, cuBy2), 1);
 
     gd->block_dim_fold = dim3(cuBx2, cuBy2, 1);
     gd->grid_dim_fold  = dim3(cuGx2, cuGz2, 1);

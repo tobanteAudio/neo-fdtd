@@ -7,30 +7,18 @@
 
 // flag passed in at compilation (see Makefile)
 #if PFFDTD_PRECISION == 2 // double
-typedef double Real;
+namespace pffdtd {
+using Real = double;
+}
 
-  #define REAL_MAX_EXP DBL_MAX_EXP
-  #define REAL_MIN_EXP DBL_MIN_EXP
-
-  // using CUDA math intrinsics
-  #define FMA_O __fma_rn
-  #define FMA_D __fma_rn
-  #define ADD_O __dadd_rn
-  #define ADD_D __dadd_rn
-  #define EPS   0.0
+  #define EPS 0.0
 
 #elif PFFDTD_PRECISION == 1 // float with safeguards
-typedef float Real;
+namespace pffdtd {
+using Real = float;
+}
 
-  #define REAL_MAX_EXP FLT_MAX_EXP
-  #define REAL_MIN_EXP FLT_MIN_EXP
-
-  // using CUDA math intrinsics
-  #define FMA_O        __fmaf_rz // off-diag
-  #define FMA_D        __fmaf_rn // diag
-  #define ADD_O        __fadd_rz
-  #define ADD_D        __fadd_rn
-  #define EPS          1.19209289e-07 // helps with stability in single
+  #define EPS 1.19209289e-07 // helps with stability in single
 #else
   #error "PFFDTD_PRECISION = 1 (single) or 2 (double)"
 #endif

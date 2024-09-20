@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <limits>
 #include <numbers>
 
 namespace {
@@ -587,12 +588,15 @@ void scaleInput(Simulation3D& sim) {
       max_in = std::max(max_in, fabs(in_sigs[ns * Nt + n]));
     }
   }
-  double const aexp = 0.5; // normalise to middle power of two
-  auto pow2         = (int32_t)round(aexp * REAL_MAX_EXP + (1 - aexp) * REAL_MIN_EXP);
-  // int32_t pow2 = 0; //normalise to one
-  double const norm1     = pow(2.0, pow2);
-  double const inv_infac = norm1 / max_in;
-  double const infac     = 1.0 / inv_infac;
+
+  constexpr auto min_exp = static_cast<double>(std::numeric_limits<Real>::min_exponent);
+  constexpr auto max_exp = static_cast<double>(std::numeric_limits<Real>::max_exponent);
+
+  auto const aexp      = 0.5; // normalise to middle power of two
+  auto const pow2      = static_cast<int32_t>(std::round(aexp * max_exp + (1 - aexp) * min_exp));
+  auto const norm1     = std::pow(2.0, pow2);
+  auto const inv_infac = norm1 / max_in;
+  auto const infac     = 1.0 / inv_infac;
 
   printf(
       "max_in = %.16e, pow2 = %d, norm1 = %.16e, inv_infac = %.16e, infac = "
