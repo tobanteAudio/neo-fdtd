@@ -24,4 +24,9 @@ template<typename T>
   return reinterpret_cast<T*>(std::malloc(static_cast<size_t>(count) * sizeof(T)));
 }
 
+template<typename T>
+[[nodiscard]] constexpr auto get_bit_as(std::integral auto word, std::integral auto pos) -> T {
+  return static_cast<T>(GET_BIT(word, pos));
+}
+
 } // namespace pffdtd

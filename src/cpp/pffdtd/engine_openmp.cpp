@@ -121,21 +121,21 @@ auto run(Simulation3D& sd) -> double {
   auto vh1_buf  = std::vector<Real>(static_cast<size_t>(Nbl * MMb));
   auto gh1_buf  = std::vector<Real>(static_cast<size_t>(Nbl * MMb));
 
-  Real* u0   = u0_buf.data();
-  Real* u1   = u1_buf.data();
-  Real* u0b  = u0b_buf.data();
-  Real* u1b  = u1b_buf.data();
-  Real* u2b  = u2b_buf.data();
-  Real* u2ba = u2ba_buf.data();
-  Real* vh1  = vh1_buf.data();
-  Real* gh1  = gh1_buf.data();
+  auto* u0   = u0_buf.data();
+  auto* u1   = u1_buf.data();
+  auto* u0b  = u0b_buf.data();
+  auto* u1b  = u1b_buf.data();
+  auto* u2b  = u2b_buf.data();
+  auto* u2ba = u2ba_buf.data();
+  auto* vh1  = vh1_buf.data();
+  auto* gh1  = gh1_buf.data();
 
   // sim coefficients
-  Real const lo2 = sd.lo2;
-  Real const sl2 = sd.sl2;
-  Real const l   = sd.l;
-  Real const a1  = sd.a1;
-  Real const a2  = sd.a2;
+  auto const lo2 = sd.lo2;
+  auto const sl2 = sd.sl2;
+  auto const l   = sd.l;
+  auto const a1  = sd.a1;
+  auto const a2  = sd.a2;
 
   // can control outside with OMP_NUM_THREADS env variable
   int const numWorkers = omp_get_max_threads();
@@ -206,7 +206,7 @@ auto run(Simulation3D& sd) -> double {
           for (int64_t iz = 1; iz < Nz - 1; iz++) { // contiguous
             int64_t const ii = ix * NzNy + iy * Nz + iz;
             if ((GET_BIT(bn_mask[ii >> 3], ii % 8)) == 0) {
-              Real partial = a1 * u1[ii] - u0[ii];
+              auto partial = a1 * u1[ii] - u0[ii];
               partial += a2 * u1[ii + NzNy];
               partial += a2 * u1[ii - NzNy];
               partial += a2 * u1[ii + Nz];
@@ -270,12 +270,12 @@ auto run(Simulation3D& sd) -> double {
         auto const b1 = (_2 - sl2 * K);
 
         auto partial = b1 * u1[ii] - u0[ii];
-        partial += b2 * static_cast<Real>(GET_BIT(adj, 0)) * u1[ii + NzNy];
-        partial += b2 * static_cast<Real>(GET_BIT(adj, 1)) * u1[ii - NzNy];
-        partial += b2 * static_cast<Real>(GET_BIT(adj, 2)) * u1[ii + Nz];
-        partial += b2 * static_cast<Real>(GET_BIT(adj, 3)) * u1[ii - Nz];
-        partial += b2 * static_cast<Real>(GET_BIT(adj, 4)) * u1[ii + 1];
-        partial += b2 * static_cast<Real>(GET_BIT(adj, 5)) * u1[ii - 1];
+        partial += b2 * get_bit_as<Real>(adj, 0) * u1[ii + NzNy];
+        partial += b2 * get_bit_as<Real>(adj, 1) * u1[ii - NzNy];
+        partial += b2 * get_bit_as<Real>(adj, 2) * u1[ii + Nz];
+        partial += b2 * get_bit_as<Real>(adj, 3) * u1[ii - Nz];
+        partial += b2 * get_bit_as<Real>(adj, 4) * u1[ii + 1];
+        partial += b2 * get_bit_as<Real>(adj, 5) * u1[ii - 1];
         u0[ii] = partial;
       }
     } else if (fcc_flag > 0) {
@@ -291,18 +291,18 @@ auto run(Simulation3D& sd) -> double {
         auto const b1 = (_2 - sl2 * K);
 
         auto partial = b1 * u1[ii] - u0[ii];
-        partial += b2 * static_cast<Real>(GET_BIT(adj, 0)) * u1[ii + NzNy + Nz];
-        partial += b2 * static_cast<Real>(GET_BIT(adj, 1)) * u1[ii - NzNy - Nz];
-        partial += b2 * static_cast<Real>(GET_BIT(adj, 2)) * u1[ii + Nz + 1];
-        partial += b2 * static_cast<Real>(GET_BIT(adj, 3)) * u1[ii - Nz - 1];
-        partial += b2 * static_cast<Real>(GET_BIT(adj, 4)) * u1[ii + NzNy + 1];
-        partial += b2 * static_cast<Real>(GET_BIT(adj, 5)) * u1[ii - NzNy - 1];
-        partial += b2 * static_cast<Real>(GET_BIT(adj, 6)) * u1[ii + NzNy - Nz];
-        partial += b2 * static_cast<Real>(GET_BIT(adj, 7)) * u1[ii - NzNy + Nz];
-        partial += b2 * static_cast<Real>(GET_BIT(adj, 8)) * u1[ii + Nz - 1];
-        partial += b2 * static_cast<Real>(GET_BIT(adj, 9)) * u1[ii - Nz + 1];
-        partial += b2 * static_cast<Real>(GET_BIT(adj, 10)) * u1[ii + NzNy - 1];
-        partial += b2 * static_cast<Real>(GET_BIT(adj, 11)) * u1[ii - NzNy + 1];
+        partial += b2 * get_bit_as<Real>(adj, 0) * u1[ii + NzNy + Nz];
+        partial += b2 * get_bit_as<Real>(adj, 1) * u1[ii - NzNy - Nz];
+        partial += b2 * get_bit_as<Real>(adj, 2) * u1[ii + Nz + 1];
+        partial += b2 * get_bit_as<Real>(adj, 3) * u1[ii - Nz - 1];
+        partial += b2 * get_bit_as<Real>(adj, 4) * u1[ii + NzNy + 1];
+        partial += b2 * get_bit_as<Real>(adj, 5) * u1[ii - NzNy - 1];
+        partial += b2 * get_bit_as<Real>(adj, 6) * u1[ii + NzNy - Nz];
+        partial += b2 * get_bit_as<Real>(adj, 7) * u1[ii - NzNy + Nz];
+        partial += b2 * get_bit_as<Real>(adj, 8) * u1[ii + Nz - 1];
+        partial += b2 * get_bit_as<Real>(adj, 9) * u1[ii - Nz + 1];
+        partial += b2 * get_bit_as<Real>(adj, 10) * u1[ii + NzNy - 1];
+        partial += b2 * get_bit_as<Real>(adj, 11) * u1[ii - NzNy + 1];
         u0[ii] = partial;
       }
     }
