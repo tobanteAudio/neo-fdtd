@@ -16,12 +16,12 @@ def model(*, Lx=None, Ly=None, Nx=None, Ny=None, dx=None, X=None, Y=None, in_mas
 
 sim_setup_2d(
     sim_dir='../../sim_data/Modes2D/cpu',
-    room=(3, 3),
+    room=(3.65, 6),
     Tc=20,
     rh=50,
-    fmax=2000.0,
+    fmax=20000.0,
     ppw=10.5,
-    duration=6.0,
+    duration=8.0,
     refl_coeff=0.99,
     model_factory=model,
     apply_loss=True,

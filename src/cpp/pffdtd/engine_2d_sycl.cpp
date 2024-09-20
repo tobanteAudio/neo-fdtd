@@ -96,8 +96,7 @@ auto EngineSYCL::operator()(Simulation2D const& sim) const -> stdex::mdarray<dou
 
   summary(sim);
 
-  auto prop   = sycl::property_list{sycl::property::queue::in_order()};
-  auto queue  = sycl::queue{prop};
+  auto queue  = sycl::queue{};
   auto device = queue.get_device();
   summary(device);
 
