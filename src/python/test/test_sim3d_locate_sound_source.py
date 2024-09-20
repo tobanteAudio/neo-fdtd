@@ -6,9 +6,9 @@ import json
 import numpy as np
 import pytest
 
+from pffdtd.absorption.admittance import write_freq_ind_mat_from_Yn, convert_Sabs_to_Yn
 from pffdtd.common.wavfile import wavread
 from pffdtd.localization.tdoa import locate_sound_source
-from pffdtd.materials.adm_funcs import write_freq_ind_mat_from_Yn, convert_Sabs_to_Yn
 from pffdtd.sim3d.model_builder import RoomModelBuilder
 from pffdtd.sim3d.setup import sim_setup_3d
 from pffdtd.sim3d.testing import run_engine, skip_if_native_engine_unavailable

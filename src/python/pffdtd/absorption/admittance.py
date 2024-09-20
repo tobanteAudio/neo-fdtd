@@ -4,9 +4,9 @@
 """Miscellaneous functions for dealing with wall admittances (materials)
 DEF is normalised RLC triplet (i.e., for specific admittance)
 """
-
 from pathlib import Path
 
+import click
 import numpy as np
 import h5py
 import matplotlib.pyplot as plt
@@ -345,3 +345,18 @@ def fit_to_Sabs_oct_11(Sabs, filename, plot=False, verbose=False):
         print(f'{DEF=}')
     if plot:
         plot_DEF_admittance(fv, np.c_[D, E, F], model_Rf=R_target)
+
+
+@click.command(name='admittance', help='Plot admittance from material file.')
+@click.argument('material_file', nargs=1, type=click.Path(exists=True))
+def main(material_file):
+    frequencies = np.logspace(np.log10(10), np.log10(20e3), 4000)
+    material = read_mat_DEF(Path(material_file))
+    plot_DEF_admittance(frequencies, material)
+
+# freq-independent impedance from reflection coefficients
+# write_freq_ind_mat_from_Yn(convert_R_to_Yn(0.90),filename=Path(write_folder / 'R90_mat.h5'))
+# write_freq_ind_mat_from_Yn(convert_R_to_Yn(0.5),filename=Path(write_folder / 'R50.h5'))
+
+# #input DEF values directly
+# write_freq_dep_mat(npa([[0,1.0,0],[2,3,4]]),filename=Path(write_folder / 'ex_mat.h5'))

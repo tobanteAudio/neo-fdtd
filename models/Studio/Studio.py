@@ -4,8 +4,8 @@ from pathlib import Path
 
 import numpy as np
 
+from pffdtd.absorption.admittance import fit_to_Sabs_oct_11
 from pffdtd.geometry.math import find_third_vertex
-from pffdtd.materials.adm_funcs import fit_to_Sabs_oct_11
 from pffdtd.sim3d.model_builder import RoomModelBuilder
 from pffdtd.sim3d.setup import Setup3D
 

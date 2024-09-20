@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2024 Tobias Hienzsch
 from pathlib import Path
 
-from pffdtd.materials.adm_funcs import convert_Sabs_to_Yn, write_freq_ind_mat_from_Yn
+from pffdtd.absorption.admittance import convert_Sabs_to_Yn, write_freq_ind_mat_from_Yn
 from pffdtd.sim3d.model_builder import RoomModelBuilder
 from pffdtd.sim3d.setup import Setup3D
 

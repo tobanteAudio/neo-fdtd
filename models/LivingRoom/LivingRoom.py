@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-from pffdtd.materials.adm_funcs import fit_to_Sabs_oct_11
+from pffdtd.absorption.admittance import fit_to_Sabs_oct_11
 from pffdtd.sim3d.model_builder import MeshModelBuilder
 from pffdtd.sim3d.setup import Setup3D
 

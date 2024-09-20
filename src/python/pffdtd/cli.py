@@ -3,9 +3,9 @@
 
 import click
 
+from pffdtd.absorption.cli import absorption
 from pffdtd.analysis.cli import analysis
 from pffdtd.diffusor.cli import diffusor
-from pffdtd.materials.cli import materials
 from pffdtd.sim2d.cli import sim2d
 from pffdtd.sim3d.cli import sim3d
 
@@ -20,6 +20,6 @@ def main(ctx, verbose):
 
 main.add_command(analysis)
 main.add_command(diffusor)
-main.add_command(materials)
+main.add_command(absorption)
 main.add_command(sim2d)
 main.add_command(sim3d)
