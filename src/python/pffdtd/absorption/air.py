@@ -12,6 +12,36 @@ from tqdm import tqdm
 
 from pffdtd.geometry.math import iceil, iround
 
+GAS_CONSTANT = 287.05  # Gas constant (J/Kg.K)
+GAMMA = 1.402  # Specific heat ratio
+AIR_DENSITY_0C = 1.293  # Air density at 0C (Kg.m^-3)
+ONE_ATM = 101325.0  # One atmosphere (Pa)
+KELVIN_OFFSET = 273.15  # Zero celsius in degrees Kelvin
+AIR_VISCOSITY = 0.0000185  # Kinemetric viscosity of air (m^2/s)
+
+
+@dataclass
+class Air:
+    temperature: np.float64
+    pressure: np.float64
+    density: np.float64
+    velocity: np.float64
+    impedance: np.float64
+    tau_over_c: np.float64
+
+
+def air_density(pressure, temp):
+    return (pressure * ONE_ATM) / (GAS_CONSTANT * (temp + KELVIN_OFFSET))
+
+
+def sound_velocity(temp):
+    base = np.sqrt((GAMMA * ONE_ATM) / AIR_DENSITY_0C)
+    return base * np.sqrt(1.0 + (temp / KELVIN_OFFSET))
+
+
+def wave_number_in_air(air: Air, frequency):
+    return air.tau_over_c * frequency
+
 
 @dataclass
 class AirAbsorption:

@@ -263,3 +263,7 @@ def make_box(W, L, H, translate, rotate=None, first_idx=0):
     ]
 
     return points, triangles
+
+
+def difference_over_sum(a, b):
+    return (a - b) / (a + b)

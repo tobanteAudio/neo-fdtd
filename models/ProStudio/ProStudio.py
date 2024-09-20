@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 
 from pffdtd.absorption.admittance import fit_to_Sabs_oct_11
+from pffdtd.absorption.porous import porous_absorber
 from pffdtd.geometry.math import find_third_vertex, point_along_line
 from pffdtd.sim3d.model_builder import MeshModelBuilder
 from pffdtd.sim3d.setup import Setup3D
@@ -50,7 +51,7 @@ class ProStudio(Setup3D):
         folder = Path(self.mat_folder)
 
         # autopep8: off
-        absorber_8000_50mm            = np.array([0.01, 0.02, 0.03, 0.05, 0.26, 0.59, 0.88, 0.94, 0.95, 0.93, 0.90])
+        absorber_8000_50mm            = porous_absorber(0.05, 8000.0, 1000*(2.0**np.arange(-6, 5)), offset_zeros=True)
         absorber_8000_200mm_gap_100mm = np.array([0.10, 0.23, 0.59, 0.84, 0.91, 0.92, 0.95, 0.95, 0.94, 0.93, 0.90])
         absorber_8000_200mm_gap_200mm = np.array([0.19, 0.38, 0.69, 0.84, 0.88, 0.93, 0.95, 0.95, 0.94, 0.93, 0.90])
         glas_thick                    = np.array([0.15, 0.30, 0.27, 0.18, 0.06, 0.04, 0.03, 0.02, 0.02, 0.02, 0.01])
