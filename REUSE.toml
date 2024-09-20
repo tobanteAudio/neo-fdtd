@@ -26,6 +26,7 @@ SPDX-License-Identifier = "CC-BY-SA-4.0"
 path = [
     "cmake/profile/linux_sycl",
     "cmake/profile/windows_sycl",
+    "models/Diffusor3D/model.json",
     "models/InfiniteBaffle/model.json",
     "models/LivingRoom/model.json",
     "models/Localization/model.json",

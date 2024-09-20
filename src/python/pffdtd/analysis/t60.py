@@ -14,12 +14,7 @@ from scipy import signal
 from scipy.io import wavfile
 
 from pffdtd.common.plot import plot_styles
-
-
-def collect_wav_files(directory, pattern='*.wav'):
-    search_pattern = os.path.join(directory, pattern)
-    wav_files = glob.glob(search_pattern)
-    return wav_files
+from pffdtd.common.wavfile import collect_wav_files
 
 
 def third_octave_filter(sig, fs, center):

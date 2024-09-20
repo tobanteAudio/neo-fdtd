@@ -13,16 +13,13 @@ from scipy.io import wavfile
 
 from pffdtd.geometry.math import iceil
 from pffdtd.common.plot import plot_styles
+from pffdtd.common.wavfile import collect_wav_files
 
 
 def find_nearest(array, value):
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
     return array[idx]
-
-
-def collect_wav_paths(folder, pattern='*.wav'):
-    return list(sorted(glob.glob(os.path.join(folder, pattern))))
 
 
 def hz_to_note(frequency):
@@ -109,7 +106,7 @@ def detect_room_modes(
     directory = sim_dir
     paths = filename
     if not paths:
-        paths = collect_wav_paths(directory, '*_out_normalised.wav')
+        paths = collect_wav_files(directory, '*_out_normalised.wav')
 
     L = length
     W = width

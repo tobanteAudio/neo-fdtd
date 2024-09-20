@@ -40,14 +40,14 @@ class MeshModelBuilder:
             'receivers': []
         }
 
-    def add(self, name, obj_file, color, reverse=False):
+    def add(self, name, obj_file, color, reverse=False, sides=1):
         assert name not in self.root
         pts, tris = load_mesh(obj_file, reverse=reverse)
         self.root['mats_hash'][name] = {
             'tris': tris,
             'pts': pts,
             'color': color,
-            'sides': [1]*len(tris)
+            'sides': [sides]*len(tris)
         }
 
     def add_receiver(self, name, pos):

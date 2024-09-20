@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 # SPDX-FileCopyrightText: 2021 Brian Hamilton
-
+import glob
+import os
 from pathlib import Path
 
 import numpy as np
@@ -40,3 +41,20 @@ def save_as_wav_files(y, fs, sim_dir, verbose=True):
             # not scaled, direct sound amplitude ~1/4πR
             fname = Path(sim_dir / Path(f'R{i+1:03d}_out_native.wav'))
             wavwrite(fname, int(fs), y[i])
+
+
+def collect_wav_files(folder, pattern='*.wav'):
+    return list(sorted(glob.glob(os.path.join(folder, pattern))))
+
+
+def load_wav_files(files):
+    assert len(files) > 0
+    fs, y = wavread(files[0])
+    buf = np.zeros((len(files), y.shape[0]), dtype=np.float64)
+    buf[0, :] = y
+    for i, file in enumerate(files[1:]):
+        fs_f, y_f = wavread(file)
+        assert fs_f == fs
+        assert y_f.shape == y.shape
+        buf[i+1, :] = y_f
+    return fs, buf
