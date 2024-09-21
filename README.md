@@ -142,56 +142,15 @@ PFFDTD relies on a number of open-source projects to work properly:
 
 The above list is non-exhaustive. Use of the third-party software, libraries or code referred to above may be governed by separate licenses.
 
-## Some background references
-
-[^HW13]:
-    B. Hamilton and C. J. Webb. Room acoustics modelling using GPU-accelerated finite difference and
-    finite volume methods on a face-centered cubic grid. In Proc. Digital Audio Effects (DAFx), pages
-    336–343, Maynooth, Ireland, September 2013.
-
-[^HBW14]:
-    B. Hamilton, S. Bilbao, and C. J. Webb. Revisiting implicit finite difference schemes for 3-D room
-    acoustics simulations on GPU. In Proc. Digital Audio Effects (DAFx), pages 41–48, Erlangen, Germany,
-    September 2014.
-
-[^BHBS16]:
-    S. Bilbao, B. Hamilton, J. Botts, and L. Savioja. Finite volume time domain room acoustics simulation
-    under general impedance boundary conditions. IEEE/ACM Trans. Audio, Speech, Lang. Process.,
-    24(1):161–173, 2016.
-
-[^Ham16]:
-    B. Hamilton. Finite Difference and Finite Volume Methods for Wave-based Modelling of Room
-    Acoustics. Ph.D. thesis, University of Edinburgh, 2016.
-
-[^HWFB16]:
-    B. Hamilton, C. J. Webb, N. D. Fletcher, and S. Bilbao. Finite difference room acoustics simulation with
-    general impedance boundaries and viscothermal losses in air: Parallel implementation on multiple
-    GPUs. In Proc. Int. Symp. Music & Room Acoust., La Plata, Argentina, September 2016.
-
-[^BPH19]:
-    S. Bilbao, A. Politis, and B. Hamilton. Local time-domain spherical harmonic spatial encoding for
-    wave-based acoustic simulation. IEEE Signal Process. Lett., 26(4):617–621, 2019.
-
-[^BAH19]:
-    S. Bilbao, J. Ahrens, and B. Hamilton. Incorporating source directivity in wave-based virtual acoustics:
-    Time-domain models and fitting to measured data. J. Acoust. Soc. Am., 146(4):2692–2703, 2019.
-
-[^LH20]:
-    H. Lai and B. Hamilton. Computer modeling of barrel-vaulted sanctuary exhibiting flutter echo with
-    comparison to measurements. Acoustics, 2(1):87–109, 2020.
-
-[^HPB20]:
-    I. Henderson, A. Politis, and S. Bilbao. Filter design for real-time ambisonics encoding during
-    wave-based acoustic simulations. In Proc. e-Forum Acusticum, Lyon, France, December 2020.
-
-[^Ham21a]:
-    B. Hamilton. Adding air attenuation to simulated room impulse responses: A modal approach. In Proc.
-    Int. Conf. Immersive & 3D Audio, Bologna, Italy, September 2021.
-
-[^Ham21b]:
-    B. Hamilton. Air absorption filtering method based on approximate Green’s function for Stokes’
-    equation. In Proc. Digital Audio Effects (DAFx), Vienna, Austria, September 2021.
-
-[^SCM18]:
-    J. Saarelma, J. Califa, and R. Mehra. Challenges of distributed real-time finite-difference
-    time-domain room acoustic simulation for auralization. In AES Int. Conf. Spatial Reproduction, July 2018.
+[^HW13]: B. Hamilton and C. J. Webb. Room acoustics modelling using GPU-accelerated finite difference and finite volume methods on a face-centered cubic grid. In Proc. Digital Audio Effects (DAFx), pages 336–343, Maynooth, Ireland, September 2013.
+[^HBW14]: B. Hamilton, S. Bilbao, and C. J. Webb. Revisiting implicit finite difference schemes for 3-D room acoustics simulations on GPU. In Proc. Digital Audio Effects (DAFx), pages 41–48, Erlangen, Germany, September 2014.
+[^BHBS16]: S. Bilbao, B. Hamilton, J. Botts, and L. Savioja. Finite volume time domain room acoustics simulation under general impedance boundary conditions. IEEE/ACM Trans. Audio, Speech, Lang. Process., 24(1):161–173, 2016.
+[^Ham16]: B. Hamilton. Finite Difference and Finite Volume Methods for Wave-based Modelling of Room Acoustics. Ph.D. thesis, University of Edinburgh, 2016.
+[^HWFB16]: B. Hamilton, C. J. Webb, N. D. Fletcher, and S. Bilbao. Finite difference room acoustics simulation with general impedance boundaries and viscothermal losses in air: Parallel implementation on multiple GPUs. In Proc. Int. Symp. Music & Room Acoust., La Plata, Argentina, September 2016.
+[^SCM18]: J. Saarelma, J. Califa, and R. Mehra. Challenges of distributed real-time finite-difference time-domain room acoustic simulation for auralization. In AES Int. Conf. Spatial Reproduction, July 2018.
+[^BPH19]: S. Bilbao, A. Politis, and B. Hamilton. Local time-domain spherical harmonic spatial encoding for wave-based acoustic simulation. IEEE Signal Process. Lett., 26(4):617–621, 2019.
+[^BAH19]: S. Bilbao, J. Ahrens, and B. Hamilton. Incorporating source directivity in wave-based virtual acoustics: Time-domain models and fitting to measured data. J. Acoust. Soc. Am., 146(4):2692–2703, 2019.
+[^LH20]: H. Lai and B. Hamilton. Computer modeling of barrel-vaulted sanctuary exhibiting flutter echo with comparison to measurements. Acoustics, 2(1):87–109, 2020.
+[^HPB20]: I. Henderson, A. Politis, and S. Bilbao. Filter design for real-time ambisonics encoding during wave-based acoustic simulations. In Proc. e-Forum Acusticum, Lyon, France, December 2020.
+[^Ham21a]: B. Hamilton. Adding air attenuation to simulated room impulse responses: A modal approach. In Proc. Int. Conf. Immersive & 3D Audio, Bologna, Italy, September 2021.
+[^Ham21b]: B. Hamilton. Air absorption filtering method based on approximate Green’s function for Stokes’ equation. In Proc. Digital Audio Effects (DAFx), Vienna, Austria, September 2021.

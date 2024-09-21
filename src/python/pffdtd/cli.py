@@ -18,8 +18,8 @@ def main(ctx, verbose):
     ctx.obj['VERBOSE'] = verbose
 
 
+main.add_command(absorption)
 main.add_command(analysis)
 main.add_command(diffusor)
-main.add_command(absorption)
 main.add_command(sim2d)
 main.add_command(sim3d)
