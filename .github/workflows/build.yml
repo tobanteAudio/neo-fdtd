@@ -37,8 +37,8 @@ jobs:
             build_type: "Debug"
             cxx_flags: "--coverage -march=native -Og"
             python_version: "3.12"
-            pffdtd_engine_2d: "build/src/cpp/main_2d/pffdtd_2d"
-            pffdtd_engine_3d: "build/src/cpp/main_3d/pffdtd_3d"
+            pffdtd_engine_2d: "build/src/cpp/pffdtd-engine"
+            pffdtd_engine_3d: "build/src/cpp/pffdtd-engine"
 
           - name: macOS-X64
             os: macos-13
@@ -48,7 +48,7 @@ jobs:
             build_type: "Release"
             cxx_flags: ""
             python_version: "3.12"
-            pffdtd_engine_2d: "build/src/cpp/main_2d/pffdtd_2d"
+            pffdtd_engine_2d: "build/src/cpp/pffdtd-engine"
             pffdtd_engine_3d: ""
 
           - name: macOS-ARM64
@@ -59,8 +59,8 @@ jobs:
             build_type: "Release"
             cxx_flags: ""
             python_version: "3.12"
-            pffdtd_engine_2d: "build/src/cpp/main_2d/pffdtd_2d"
-            pffdtd_engine_3d: "build/src/cpp/main_3d/pffdtd_3d"
+            pffdtd_engine_2d: "build/src/cpp/pffdtd-engine"
+            pffdtd_engine_3d: "build/src/cpp/pffdtd-engine"
 
           - name: Windows
             os: windows-latest
@@ -70,8 +70,8 @@ jobs:
             build_type: "Release"
             cxx_flags: ""
             python_version: "3.12"
-            pffdtd_engine_2d: "build/src/cpp/main_2d/pffdtd_2d.exe"
-            pffdtd_engine_3d: "build/src/cpp/main_3d/pffdtd_3d.exe"
+            pffdtd_engine_2d: "build/src/cpp/pffdtd-engine.exe"
+            pffdtd_engine_3d: "build/src/cpp/pffdtd-engine.exe"
 
     steps:
       - name: Checkout code

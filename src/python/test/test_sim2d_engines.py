@@ -52,7 +52,7 @@ def test_sim2d_engines(tmp_path):
     assert exe.is_file()
 
     result = subprocess.run(
-        args=[str(exe), '-s', str(tmp_path), '-o', 'out-cpp.h5'],
+        args=[str(exe), 'sim2d', '-s', str(tmp_path), '-o', 'out-cpp.h5'],
         capture_output=True,
         text=True,
         check=True,

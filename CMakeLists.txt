@@ -47,5 +47,3 @@ if(PFFDTD_ENABLE_SYCL_ONEAPI)
 endif()
 
 add_subdirectory(src/cpp)
-add_subdirectory(src/cpp/main_2d)
-add_subdirectory(src/cpp/main_3d)

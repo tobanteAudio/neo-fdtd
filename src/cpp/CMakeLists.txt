@@ -63,3 +63,7 @@ if((CMAKE_CXX_COMPILER_ID STREQUAL "MSVC") OR (CMAKE_CXX_COMPILER_FRONTEND_VARIA
 else ()
     target_compile_options(pffdtd PUBLIC -Wall -Wextra -Wno-deprecated-declarations)
 endif ()
+
+
+add_executable(pffdtd-engine main.cpp)
+target_link_libraries(pffdtd-engine PRIVATE CLI11::CLI11 pffdtd::pffdtd)

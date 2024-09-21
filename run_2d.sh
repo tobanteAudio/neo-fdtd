@@ -12,7 +12,7 @@ build_dir=cmake-build-sycl
 
 root_dir="$(cd "$(dirname "$0")" && pwd)"
 python_dir="$root_dir/src/python"
-engine_exe="$root_dir/$build_dir/src/cpp/main_2d/pffdtd_2d"
+engine_exe="$root_dir/$build_dir/src/cpp/pffdtd-engine"
 
 sim_name="Modes2D"
 sim_dir="$root_dir/sim_data/$sim_name/cpu"
@@ -29,7 +29,7 @@ cd "$model_dir"
 python "$sim_setup"
 
 # Run sim
-DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=$jobs OMP_NUM_THREADS=$jobs "$engine_exe" -s "$sim_dir" -e sycl
+DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=$jobs OMP_NUM_THREADS=$jobs "$engine_exe" sim2d -s "$sim_dir" -e sycl
 # pffdtd sim2d run --sim_dir "$sim_dir" --video
 
 # Post-process

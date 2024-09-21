@@ -23,7 +23,7 @@ def run_engine(sim_dir, engine):
         assert exe.is_file()
 
         result = subprocess.run(
-            args=[str(exe), sim_dir],
+            args=[str(exe), 'sim3d', '-s', sim_dir],
             capture_output=True,
             check=True,
         )
