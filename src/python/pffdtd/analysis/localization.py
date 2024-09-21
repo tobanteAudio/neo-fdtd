@@ -18,14 +18,14 @@ def _cross_correlation(signal1, signal2):
 
 def time_difference_of_arrival(signal1, signal2, fs):
     correlation, lags = _cross_correlation(signal1, signal2)
-    # Find the index of the maximum correlation
-    lag_idx = np.argmax(correlation)
+    lag_idx = np.argmax(correlation)  # Find the index of the maximum correlation
     tdoa = lags[lag_idx] / fs  # Convert lag index to time difference
     return tdoa
 
 
 def tdoa_residuals(source_pos, mic_positions, tdoas, c):
-    # Function to compute the residual between observed and estimated TDOAs
+    """Function to compute the residual between observed and estimated TDOAs.
+    """
     estimated_tdoas = []
     for i, mic_i in enumerate(mic_positions):
         for j in range(i+1, len(mic_positions)):
@@ -35,7 +35,7 @@ def tdoa_residuals(source_pos, mic_positions, tdoas, c):
     return np.sum((np.array(estimated_tdoas) - tdoas)**2)
 
 
-def locate_sound_source(mic_positions, mic_sigs, fs, c=343.0, verbose=False):
+def tetrahedron_microphone_array(mic_positions, mic_sigs, fs, c=343.0, verbose=False):
     mic1 = _normalize(mic_sigs[0])
     mic2 = _normalize(mic_sigs[1])
     mic3 = _normalize(mic_sigs[2])
