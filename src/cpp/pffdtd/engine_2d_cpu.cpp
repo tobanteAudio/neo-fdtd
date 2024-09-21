@@ -19,7 +19,7 @@ to_ixy(std::integral auto x, std::integral auto y, std::integral auto /*Nx*/, st
   return x * Ny + y;
 }
 
-auto EngineNative::operator()(Simulation2D const& sim) const -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
+auto Engine2DCPU::operator()(Simulation2D const& sim) const -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
 
   auto const Nx         = sim.Nx;
   auto const Ny         = sim.Ny;

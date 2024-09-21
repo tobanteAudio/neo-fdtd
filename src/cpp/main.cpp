@@ -2,6 +2,7 @@
 // SPDX-FileCopyrightText: 2024 Tobias Hienzsch
 
 #include "pffdtd/engine_2d_cpu.hpp"
+#include "pffdtd/engine_3d_cpu.hpp"
 #include "pffdtd/exception.hpp"
 #include "pffdtd/hdf.hpp"
 #include "pffdtd/simulation_2d.hpp"
@@ -11,8 +12,6 @@
 
 #if defined(PFFDTD_HAS_CUDA)
   #include "pffdtd/engine_3d_cuda.hpp"
-#else
-  #include "pffdtd/engine_3d_cpu.hpp"
 #endif
 
 #if defined(PFFDTD_HAS_SYCL)
@@ -22,7 +21,6 @@
 #include <CLI/CLI.hpp>
 #include <fmt/format.h>
 
-#include <chrono>
 #include <filesystem>
 #include <string>
 
@@ -32,9 +30,9 @@ namespace {
   using pffdtd::Simulation2D;
   using Callback    = std::function<stdex::mdarray<double, stdex::dextents<size_t, 2>>(Simulation2D const&)>;
   auto engines      = std::map<std::string, Callback>{};
-  engines["native"] = pffdtd::EngineNative{};
+  engines["native"] = pffdtd::Engine2DCPU{};
 #if defined(PFFDTD_HAS_SYCL)
-  engines["sycl"] = pffdtd::EngineSYCL{};
+  engines["sycl"] = pffdtd::Engine2DSYCL{};
 #endif
   return engines;
 }
@@ -99,7 +97,13 @@ auto main(int argc, char** argv) -> int {
 
     auto sim = pffdtd::loadSimulation3D(simDir);
     pffdtd::scaleInput(sim);
-    pffdtd::run(sim);
+
+#if defined(PFFDTD_HAS_CUDA)
+    pffdtd::Engine3DCUDA{}(sim);
+#else
+    pffdtd::Engine3DCPU{}(sim);
+#endif
+
     pffdtd::rescaleOutput(sim);
     pffdtd::writeOutputs(sim, simDir);
     pffdtd::printLastSample(sim);

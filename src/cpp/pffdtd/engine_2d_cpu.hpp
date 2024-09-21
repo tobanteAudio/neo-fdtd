@@ -10,7 +10,7 @@
 
 namespace pffdtd {
 
-struct EngineNative {
+struct Engine2DCPU {
   [[nodiscard]] auto operator()(Simulation2D const& sim) const -> stdex::mdarray<double, stdex::dextents<size_t, 2>>;
 };
 

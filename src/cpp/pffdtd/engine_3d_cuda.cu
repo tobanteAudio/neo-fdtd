@@ -680,7 +680,7 @@ void split_data(Simulation3D const* sim, std::span<HostData<Real>> ghds) {
 }
 
 // run the sim!
-auto run(Simulation3D const& sim) -> double {
+static auto run(Simulation3D const& sim) -> double {
   // if you want to test synchronous, env variable for that
   char const* s = getenv("CUDA_LAUNCH_BLOCKING");
   if (s != nullptr) {
@@ -1359,5 +1359,7 @@ auto run(Simulation3D const& sim) -> double {
   std::printf("Combined (total): %.6fs, %.2f Mvox/s\n", elapsed, sim.Npts * sim.Nt / 1e6 / elapsed);
   return elapsed;
 }
+
+auto Engine3DCUDA::operator()(Simulation3D& sim) const -> double { return run(sim); }
 
 } // namespace pffdtd

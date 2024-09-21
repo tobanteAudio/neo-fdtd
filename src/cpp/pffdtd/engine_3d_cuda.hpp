@@ -7,9 +7,13 @@
 #include "pffdtd/simulation_3d.hpp"
 
 #if not defined(PFFDTD_HAS_CUDA)
-  #error "CUDA must be enabled in the Makefile"
+  #error "CUDA must be enabled in CMake via -D PFFDTD_ENABLE_CUDA"
 #endif
 
 namespace pffdtd {
-auto run(Simulation3D const& sim) -> double;
+
+struct Engine3DCUDA {
+  auto operator()(Simulation3D& sim) const -> double;
+};
+
 } // namespace pffdtd

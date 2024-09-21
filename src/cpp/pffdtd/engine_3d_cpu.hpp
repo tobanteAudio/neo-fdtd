@@ -7,5 +7,9 @@
 #include "pffdtd/simulation_3d.hpp"
 
 namespace pffdtd {
-auto run(Simulation3D& sd) -> double;
+
+struct Engine3DCPU {
+  auto operator()(Simulation3D& sim) const -> double;
+};
+
 } // namespace pffdtd

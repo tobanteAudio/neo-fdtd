@@ -78,8 +78,6 @@ auto process_bnl_fd(
   return getTime() - start;
 }
 
-} // namespace
-
 auto run(Simulation3D& sd) -> double {
   // keep local ints, scalars
   int64_t const Ns   = sd.Ns;
@@ -371,5 +369,9 @@ auto run(Simulation3D& sd) -> double {
 
   return elapsed;
 }
+
+} // namespace
+
+auto Engine3DCPU::operator()(Simulation3D& sim) const -> double { return run(sim); }
 
 } // namespace pffdtd
