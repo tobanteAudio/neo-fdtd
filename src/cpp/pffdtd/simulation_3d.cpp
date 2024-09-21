@@ -24,36 +24,34 @@ namespace {
 // sort and return indices
 void sort_keys(int64_t* val_arr, int64_t* key_arr, int64_t N) {
   // for sorting int64 arrays and returning keys
-  struct sort_int64_struct {
+  struct item {
     int64_t val;
     int64_t idx;
   };
 
+  auto tmp = std::vector<item>(static_cast<size_t>(N));
+  for (int64_t i = 0; i < N; i++) {
+    tmp[i].val = val_arr[i];
+    tmp[i].idx = i;
+  }
+
   // comparator with indice keys (for FCC ABC nodes)
-  static constexpr auto cmpfunc_int64_keys = [](void const* a, void const* b) -> int {
-    if ((*(sort_int64_struct const*)a).val < (*(sort_int64_struct const*)b).val) {
+  std::qsort(tmp.data(), N, sizeof(item), [](void const* a, void const* b) -> int {
+    auto const& as = *reinterpret_cast<item const*>(a);
+    auto const& bs = *reinterpret_cast<item const*>(b);
+    if (as.val < bs.val) {
       return -1;
     }
-    if ((*(sort_int64_struct const*)a).val > (*(sort_int64_struct const*)b).val) {
+    if (as.val > bs.val) {
       return 1;
     }
     return 0;
-  };
+  });
 
-  auto* struct_arr = (sort_int64_struct*)malloc(N * sizeof(sort_int64_struct));
-  if (struct_arr == nullptr) {
-    raise<std::bad_alloc>();
-  }
   for (int64_t i = 0; i < N; i++) {
-    struct_arr[i].val = val_arr[i];
-    struct_arr[i].idx = i;
+    val_arr[i] = tmp[i].val;
+    key_arr[i] = tmp[i].idx;
   }
-  qsort(struct_arr, N, sizeof(sort_int64_struct), cmpfunc_int64_keys);
-  for (int64_t i = 0; i < N; i++) {
-    val_arr[i] = struct_arr[i].val;
-    key_arr[i] = struct_arr[i].idx;
-  }
-  free(struct_arr);
 }
 
 // linear indices to sub-indices in 3d, Nz continguous
@@ -82,28 +80,8 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
 
 // load the sim data from Python-written HDF5 files
 [[nodiscard]] auto loadSimulation3D(std::filesystem::path const& simDir) -> Simulation3D {
-  // local values, to read in and attach to struct at end
-  int64_t* bn_ixyz     = nullptr;
-  int64_t* bnl_ixyz    = nullptr;
-  int64_t* bna_ixyz    = nullptr;
-  int8_t* Q_bna        = nullptr;
-  int64_t* in_ixyz     = nullptr;
-  int64_t* out_ixyz    = nullptr;
-  int64_t* out_reorder = nullptr;
-  bool* adj_bn_bool    = nullptr;
-  int8_t* K_bn         = nullptr;
-  uint16_t* adj_bn     = nullptr; // large enough for FCC
-  uint8_t* bn_mask     = nullptr;
-  int8_t* mat_bn       = nullptr;
-  int8_t* mat_bnl      = nullptr;
-  double* saf_bn       = nullptr;
-  Real* ssaf_bn        = nullptr;
-  Real* ssaf_bnl       = nullptr;
-  double* in_sigs      = nullptr;
-  int8_t* Mb           = nullptr;
-
-  hsize_t dims[2]; // HDF5 type
   int expected_ndims = 0;
+  hsize_t dims[2]    = {};
 
   ////////////////////////////////////////////////////////////////////////
   // Read constants HDF5 dataset
@@ -113,7 +91,7 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
     raisef<std::invalid_argument>("file '{}' does not exist", filename.string());
   }
 
-  auto constants = H5FReader(filename);
+  auto constants = H5FReader{filename};
 
   //////////////////
   // constants
@@ -147,10 +125,10 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
   double const da1  = (2.0 - dsl2 * NN);           // scaling for stability in single
   double const da2  = lfac * l2;
 
-  Real const a1  = da1;
-  Real const a2  = da2;
-  Real const sl2 = dsl2;
-  Real const lo2 = 0.5 * l;
+  auto const a1  = static_cast<Real>(da1);
+  auto const a2  = static_cast<Real>(da2);
+  auto const sl2 = static_cast<Real>(dsl2);
+  auto const lo2 = static_cast<Real>(0.5 * l);
 
   fmt::println("a2 (double): {:.16g}", da2);
   fmt::println("a2 (Real): {:.16g}", a2);
@@ -170,7 +148,7 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
     raisef<std::invalid_argument>("file '{}' does not exist", filename.string());
   }
 
-  auto vox_out = H5FReader(filename);
+  auto vox_out = H5FReader{filename};
 
   //////////////////
   // integers
@@ -189,14 +167,16 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
   //////////////////
   // bn_ixyz dataset
   //////////////////
-  expected_ndims = 1;
+  expected_ndims   = 1;
+  int64_t* bn_ixyz = nullptr;
   readDataset(vox_out.handle(), "bn_ixyz", expected_ndims, dims, (void**)&bn_ixyz, DataType::Int64);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nb);
 
   //////////////////
   // adj_bn dataset
   //////////////////
-  expected_ndims = 2;
+  expected_ndims    = 2;
+  bool* adj_bn_bool = nullptr;
   readDataset(vox_out.handle(), "adj_bn", expected_ndims, dims, (void**)&adj_bn_bool, DataType::Bool);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nb);
   PFFDTD_ASSERT(dims[1] == (hsize_t)NN);
@@ -205,6 +185,7 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
   // mat_bn dataset
   //////////////////
   expected_ndims = 1;
+  int8_t* mat_bn = nullptr;
   readDataset(vox_out.handle(), "mat_bn", expected_ndims, dims, (void**)&mat_bn, DataType::Int8);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nb);
 
@@ -212,10 +193,11 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
   // saf_bn dataset
   //////////////////
   expected_ndims = 1;
+  double* saf_bn = nullptr;
   readDataset(vox_out.handle(), "saf_bn", expected_ndims, dims, (void**)&saf_bn, DataType::Float64);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nb);
 
-  ssaf_bn = allocate_zeros<Real>(Nb);
+  auto* ssaf_bn = allocate_zeros<Real>(Nb);
   for (int64_t i = 0; i < Nb; i++) {
     if (fcc_flag > 0) {
       ssaf_bn[i] = (Real)(0.5 / std::numbers::sqrt2) * saf_bn[i]; // rescale for S*h/V and cast
@@ -233,7 +215,7 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
     raisef<std::invalid_argument>("file '{}' does not exist", filename.string());
   }
 
-  auto signals = H5FReader(filename);
+  auto signals = H5FReader{filename};
 
   //////////////////
   // integers
@@ -250,25 +232,29 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
   //////////////////
   // in_ixyz dataset
   //////////////////
-  expected_ndims = 1;
+  expected_ndims   = 1;
+  int64_t* in_ixyz = nullptr;
   readDataset(signals.handle(), "in_ixyz", expected_ndims, dims, (void**)&in_ixyz, DataType::Int64);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Ns);
 
   //////////////////
   // out_ixyz dataset
   //////////////////
-  expected_ndims = 1;
+  expected_ndims    = 1;
+  int64_t* out_ixyz = nullptr;
   readDataset(signals.handle(), "out_ixyz", expected_ndims, dims, (void**)&out_ixyz, DataType::Int64);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nr);
 
-  expected_ndims = 1;
+  expected_ndims       = 1;
+  int64_t* out_reorder = nullptr;
   readDataset(signals.handle(), "out_reorder", expected_ndims, dims, (void**)&out_reorder, DataType::Int64);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nr);
 
   //////////////////
   // in_sigs dataset
   //////////////////
-  expected_ndims = 2;
+  expected_ndims  = 2;
+  double* in_sigs = nullptr;
   readDataset(signals.handle(), "in_sigs", expected_ndims, dims, (void**)&in_sigs, DataType::Float64);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Ns);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[1]) == Nt);
@@ -286,7 +272,7 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
     raisef<std::invalid_argument>("file '{}' does not exist", filename.string());
   }
 
-  auto materials = H5FReader(filename);
+  auto materials = H5FReader{filename};
 
   //////////////////
   // integers
@@ -296,6 +282,7 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
   PFFDTD_ASSERT(Nm <= MNm);
 
   expected_ndims = 1;
+  int8_t* Mb     = nullptr;
   readDataset(materials.handle(), "Mb", expected_ndims, dims, (void**)&Mb, DataType::Int8);
 
   for (int8_t i = 0; i < Nm; i++) {
@@ -377,7 +364,7 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
   //////////////////
   // bit-pack and check adj_bn
   //////////////////
-  adj_bn = allocate_zeros<uint16_t>(Nb);
+  auto* adj_bn = allocate_zeros<uint16_t>(Nb);
 
   for (int64_t i = 0; i < Nb; i++) {
     for (int8_t j = 0; j < NN; j++) {
@@ -397,7 +384,7 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
   //////////////////
   // calculate K_bn from adj_bn
   //////////////////
-  K_bn = allocate_zeros<int8_t>(Nb);
+  auto* K_bn = allocate_zeros<int8_t>(Nb);
 
   for (int64_t nb = 0; nb < Nb; nb++) {
     K_bn[nb] = 0;
@@ -412,7 +399,7 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
   //////////////////
   // make compressed bit-mask
   int64_t const Nbm = (Npts - 1) / 8 + 1;
-  bn_mask           = allocate_zeros<uint8_t>(Nbm); // one bit per
+  auto* bn_mask     = allocate_zeros<uint8_t>(Nbm); // one bit per
   for (int64_t i = 0; i < Nb; i++) {
     int64_t const ii = bn_ixyz[i];
     SET_BIT(bn_mask[ii >> 3], ii % 8);
@@ -445,9 +432,9 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
     Nbl += static_cast<int64_t>(mat_bn[i] >= 0);
   }
   fmt::println("Nbl = {}", Nbl);
-  mat_bnl  = allocate_zeros<int8_t>(Nbl);
-  bnl_ixyz = allocate_zeros<int64_t>(Nbl);
-  ssaf_bnl = allocate_zeros<Real>(Nbl);
+  auto* mat_bnl  = allocate_zeros<int8_t>(Nbl);
+  auto* bnl_ixyz = allocate_zeros<int64_t>(Nbl);
+  auto* ssaf_bnl = allocate_zeros<Real>(Nbl);
   {
     int64_t j = 0;
     for (int64_t i = 0; i < Nb; i++) {
@@ -472,8 +459,8 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
     Nba /= 2;
   }
 
-  bna_ixyz = allocate_zeros<int64_t>(Nba);
-  Q_bna    = allocate_zeros<int8_t>(Nba);
+  auto* bna_ixyz = allocate_zeros<int64_t>(Nba);
+  auto* Q_bna    = allocate_zeros<int8_t>(Nba);
   {
     int64_t ii = 0;
     for (int64_t ix = 1; ix < Nx - 1; ix++) {
@@ -522,50 +509,45 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
     }
   }
 
-  // for outputs
-  auto* u_out = allocate_zeros<double>(Nr * Nt);
-
-  /*------------------------
-   * ATTACH
-  ------------------------*/
-  auto sim        = Simulation3D{};
-  sim.Ns          = Ns;
-  sim.Nr          = Nr;
-  sim.Nt          = Nt;
-  sim.Npts        = Npts;
-  sim.Nx          = Nx;
-  sim.Ny          = Ny;
-  sim.Nz          = Nz;
-  sim.Nb          = Nb;
-  sim.Nbl         = Nbl;
-  sim.Nba         = Nba;
-  sim.l           = l;
-  sim.l2          = l2;
-  sim.fcc_flag    = fcc_flag;
-  sim.Nm          = Nm;
-  sim.NN          = NN;
-  sim.a2          = a2;
-  sim.a1          = a1;
-  sim.sl2         = sl2;
-  sim.lo2         = lo2;
-  sim.Mb          = Mb;
-  sim.bn_ixyz     = bn_ixyz;
-  sim.bnl_ixyz    = bnl_ixyz;
-  sim.bna_ixyz    = bna_ixyz;
-  sim.Q_bna       = Q_bna;
-  sim.adj_bn      = adj_bn;
-  sim.ssaf_bnl    = ssaf_bnl;
-  sim.bn_mask     = bn_mask;
-  sim.mat_bnl     = mat_bnl;
-  sim.K_bn        = K_bn;
-  sim.out_ixyz    = out_ixyz;
-  sim.out_reorder = out_reorder;
-  sim.in_ixyz     = in_ixyz;
-  sim.in_sigs     = in_sigs;
-  sim.u_out       = u_out;
-  sim.mat_beta    = mat_beta;
-  sim.mat_quads   = mat_quads;
-  return sim;
+  return Simulation3D{
+      .bn_ixyz     = bn_ixyz,
+      .bnl_ixyz    = bnl_ixyz,
+      .bna_ixyz    = bna_ixyz,
+      .Q_bna       = Q_bna,
+      .in_ixyz     = in_ixyz,
+      .out_ixyz    = out_ixyz,
+      .out_reorder = out_reorder,
+      .adj_bn      = adj_bn,
+      .ssaf_bnl    = ssaf_bnl,
+      .bn_mask     = bn_mask,
+      .mat_bnl     = mat_bnl,
+      .K_bn        = K_bn,
+      .in_sigs     = in_sigs,
+      .u_out       = allocate_zeros<double>(Nr * Nt),
+      .Ns          = Ns,
+      .Nr          = Nr,
+      .Nt          = Nt,
+      .Npts        = Npts,
+      .Nx          = Nx,
+      .Ny          = Ny,
+      .Nz          = Nz,
+      .Nb          = Nb,
+      .Nbl         = Nbl,
+      .Nba         = Nba,
+      .l           = l,
+      .l2          = l2,
+      .fcc_flag    = fcc_flag,
+      .NN          = NN,
+      .Nm          = Nm,
+      .Mb          = Mb,
+      .mat_quads   = mat_quads,
+      .mat_beta    = mat_beta,
+      .infac       = 1.0,
+      .sl2         = sl2,
+      .lo2         = lo2,
+      .a2          = a2,
+      .a1          = a1,
+  };
 }
 
 void freeSimulation3D(Simulation3D& sim) {
