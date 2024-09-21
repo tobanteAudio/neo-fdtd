@@ -2,8 +2,8 @@
 # SPDX-FileCopyrightText: 2024 Tobias Hienzsch
 import click
 
-from pffdtd.absorption.admittance import main as admittance
-from pffdtd.absorption.porous import main as porous
+from pffdtd.absorption import admittance
+from pffdtd.absorption import porous
 
 
 @click.group(help='Absorption.')
@@ -11,5 +11,5 @@ def absorption():
     pass
 
 
-absorption.add_command(admittance)
-absorption.add_command(porous)
+absorption.add_command(admittance.main)
+absorption.add_command(porous.main)

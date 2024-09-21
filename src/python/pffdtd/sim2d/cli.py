@@ -3,8 +3,9 @@
 
 import click
 
-from pffdtd.sim2d import run
 from pffdtd.sim2d import process_outputs
+from pffdtd.sim2d import report
+from pffdtd.sim2d import run
 
 
 @click.group(help='2D wave-equation.')
@@ -13,4 +14,5 @@ def sim2d():
 
 
 sim2d.add_command(process_outputs.main)
+sim2d.add_command(report.main)
 sim2d.add_command(run.main)

@@ -8,7 +8,6 @@ set -e
 
 build_dir=build
 build_dir=cmake-build-sycl
-# build_dir=cmake-build-sycl-intel
 
 root_dir="$(cd "$(dirname "$0")" && pwd)"
 python_dir="$root_dir/src/python"
@@ -34,4 +33,4 @@ DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=$jobs OMP_
 
 # Post-process
 pffdtd sim2d process-outputs --fmin=20 --sim_dir="$sim_dir" "$sim_dir/out.h5"
-python -m pffdtd.sim2d.report --sim_dir="$sim_dir" "$sim_dir/out.h5"
+pffdtd sim2d report --sim_dir="$sim_dir" "$sim_dir/out.h5"

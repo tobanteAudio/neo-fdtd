@@ -274,15 +274,3 @@ def copy_sim_data(src_sim_dir, dst_sim_dir):
     for file in src_sim_dir.glob('*.h5'):
         _print(f'copying {file}')
         shutil.copy(file, dst_sim_dir)
-
-# def main():
-    # import argparse
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('--sim_dir', type=str,help='run directory')
-    # parser.set_defaults(sim_dir=None)
-#
-    # args = parser.parse_args()
-    # rotate(args.sim_dir)
-#
-# if __name__ == '__main__':
-    # main()
