@@ -21,6 +21,6 @@ struct ProgressReport {
   int numWorkers;
 };
 
-auto print(ProgressReport const progress) -> void;
+auto print(ProgressReport const& progress) -> void;
 
 } // namespace pffdtd

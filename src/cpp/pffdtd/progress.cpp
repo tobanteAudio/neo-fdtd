@@ -39,7 +39,7 @@ namespace {
 // N.B. this conflicts with tmux scrolling (stdout needs to flush)
 // and not great for piping output to log (better to disable or change for those
 // cases)
-auto print(ProgressReport const progress) -> void {
+auto print(ProgressReport const& progress) -> void {
   auto const& p = progress;
 
   // progress bar (doesn't impact performance unless simulation is really tiny)
