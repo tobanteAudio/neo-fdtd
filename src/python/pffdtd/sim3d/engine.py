@@ -18,6 +18,7 @@ import json
 import time
 from pathlib import Path
 
+import click
 import h5py
 import numpy as np
 import numba as nb
@@ -911,42 +912,25 @@ def nb_fcc_fill_plot_holes(uslice, i3):
                 uslice[i1, i2] = 0.25*(uslice[i1+1, i2] + uslice[i1-1, i2] + uslice[i1, i2+1] + uslice[i1, i2-1])
 
 
-def main():
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--sim_dir', type=str, help='run directory')
-    parser.add_argument('--json_model', type=str, help='json to plot section cuts')
-    parser.add_argument('--plot', action='store_true', help='plot 2d slice')
-    parser.add_argument('--draw_backend', type=str, help='matplotlib or mayavi')
-    parser.add_argument('--energy', action='store_true', help='do energy calc')
-    parser.add_argument('--nsteps', type=int, help='run in batches of steps (less frequent progress)')
-    parser.add_argument('--nthreads', type=int, help='number of threads for parallel execution')
-    parser.add_argument('--abc', action='store_true', help='apply ABCs')
-    parser.set_defaults(draw_backend='matplotlib')
-    parser.set_defaults(plot=False)
-    parser.set_defaults(energy=False)
-    parser.set_defaults(json_model=None)
-    parser.set_defaults(abc=False)
-    parser.set_defaults(sim_dir=None)
-    parser.set_defaults(nthreads=get_default_nprocs())
-    parser.set_defaults(nsteps=1)
+@click.command(name='engine', help='Run 3D python engine.')
+@click.option('--sim_dir', type=click.Path(exists=True))
+@click.option('--json_model', type=click.Path(exists=True))
+@click.option('--plot', is_flag=True, help='plot 2d slice')
+@click.option('--draw_backend', type=click.Choice(['matplotlib', 'mayavi']), default='matplotlib')
+@click.option('--energy', is_flag=True, help='do energy calc')
+@click.option('--nthreads', type=int, default=get_default_nprocs(), help='number of threads for parallel execution')
+@click.option('--nsteps', type=int, default=1, help='run in batches of steps (less frequent progress)')
+def main(sim_dir, json_model, plot, draw_backend, energy, nsteps, nthreads):
+    if json_model is not None:
+        assert draw_backend == 'mayavi'
 
-    args = parser.parse_args()
-
-    if args.json_model is not None:
-        assert args.draw_backend == 'mayavi'
-
-    eng = EnginePython3D(args.sim_dir, energy_on=args.energy, nthreads=args.nthreads)
-    if args.plot:
-        eng.run_plot(draw_backend=args.draw_backend, json_model=args.json_model)
+    eng = EnginePython3D(sim_dir, energy_on=energy, nthreads=nthreads)
+    if plot:
+        eng.run_plot(draw_backend=draw_backend, json_model=json_model)
     else:
-        eng.run_all(args.nsteps)
+        eng.run_all(nsteps)
     eng.save_outputs()
     eng.print_last_samples(5)
 
-    if args.energy:
+    if energy:
         eng.print_last_energy(5)
-
-
-if __name__ == '__main__':
-    main()

@@ -6,8 +6,8 @@
 set -e
 
 root_dir="$(cd "$(dirname "$0")" && pwd)"
-engine_exe="$root_dir/build/src/cpp/pffdtd-engine"
-engine_exe="$root_dir/cmake-build-cuda/src/cpp/pffdtd-engine"
+pffdtd_engine="$root_dir/build/src/cpp/pffdtd-engine"
+pffdtd_engine="$root_dir/cmake-build-cuda/src/cpp/pffdtd-engine"
 
 sim_name="ProStudio"
 sim_setup="${sim_name}.py"
@@ -28,7 +28,8 @@ cd "$model_dir"
 pffdtd sim3d setup "$sim_setup"
 
 # Run sim
-$engine_exe sim3d -s "$sim_dir"
+$pffdtd_engine sim3d -s "$sim_dir"
+# pffdtd sim3d engine --sim_dir="$sim_dir" --plot --draw_backend="mayavi" --json_model="${model_dir}/model.json"
 
 # Post-process
 pffdtd sim3d process-outputs --sim_dir="$sim_dir" --fcut_lowpass "$fmax" --order_lowpass=8 --symmetric_lowpass --fcut_lowcut "$fmin" --order_lowcut=4 --air_abs_filter="none" --save_wav --plot

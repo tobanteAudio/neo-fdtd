@@ -151,7 +151,7 @@ class Setup3D:
     mat_folder: str | None = None
 
     source_index: int
-    source_signal: Literal['impulse', 'hann10']
+    source_signal: Literal['impulse', 'hann10', 'hann20', 'hann5ms', 'dhann30']
     diff_source: bool = True
 
     compress: int = 0
