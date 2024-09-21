@@ -6,7 +6,7 @@ project(pffdtd)
 add_library(pffdtd)
 add_library(pffdtd::pffdtd ALIAS pffdtd)
 target_include_directories(pffdtd PUBLIC ${PROJECT_SOURCE_DIR})
-target_compile_definitions(pffdtd PUBLIC PFFDTD_PRECISION=2)
+target_compile_definitions(pffdtd PUBLIC PFFDTD_PRECISION=2 _CRT_SECURE_NO_WARNINGS=1)
 
 target_link_libraries(pffdtd
     PUBLIC
@@ -19,10 +19,10 @@ target_link_libraries(pffdtd
 target_sources(pffdtd
     PRIVATE
         pffdtd/config.hpp
-        pffdtd/engine_2d_native.cpp
-        pffdtd/engine_2d_native.hpp
-        pffdtd/engine_openmp.cpp
-        pffdtd/engine_openmp.hpp
+        pffdtd/engine_2d_cpu.cpp
+        pffdtd/engine_2d_cpu.hpp
+        pffdtd/engine_3d_cpu.cpp
+        pffdtd/engine_3d_cpu.hpp
         pffdtd/exception.hpp
         pffdtd/hdf.cpp
         pffdtd/hdf.hpp
@@ -38,7 +38,10 @@ target_sources(pffdtd
         pffdtd/utility.hpp
 )
 
-target_compile_definitions(pffdtd PUBLIC _CRT_SECURE_NO_WARNINGS=1)
+if(PFFDTD_ENABLE_CUDA)
+    target_sources(pffdtd PRIVATE pffdtd/engine_3d_cuda.cu pffdtd/engine_3d_cuda.hpp)
+    target_compile_definitions(pffdtd PUBLIC PFFDTD_HAS_CUDA=1)
+endif()
 
 if(PFFDTD_HAS_SYCL)
     target_sources(pffdtd PRIVATE pffdtd/engine_2d_sycl.cpp pffdtd/engine_2d_sycl.hpp)
@@ -51,19 +54,11 @@ if(PFFDTD_HAS_SYCL)
     endif()
 endif()
 
-if(PFFDTD_ENABLE_CUDA)
-    target_sources(pffdtd PRIVATE pffdtd/engine_cuda.cu pffdtd/engine_cuda.hpp)
-    target_compile_definitions(pffdtd PUBLIC PFFDTD_HAS_CUDA=1)
-else()
-    target_compile_definitions(pffdtd PUBLIC PFFDTD_HAS_CUDA=0)
-endif()
-
 if((CMAKE_CXX_COMPILER_ID STREQUAL "MSVC") OR (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC"))
     target_compile_options(pffdtd PUBLIC /W3)
 else ()
     target_compile_options(pffdtd PUBLIC -Wall -Wextra -Wno-deprecated-declarations)
 endif ()
-
 
 add_executable(pffdtd-engine main.cpp)
 target_link_libraries(pffdtd-engine PRIVATE CLI11::CLI11 pffdtd::pffdtd)

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 Tobias Hienzsch
 
-#include "pffdtd/engine_2d_native.hpp"
+#include "pffdtd/engine_2d_cpu.hpp"
 #include "pffdtd/exception.hpp"
 #include "pffdtd/hdf.hpp"
 #include "pffdtd/simulation_2d.hpp"
@@ -9,10 +9,10 @@
 #include "pffdtd/time.hpp"
 #include "pffdtd/utility.hpp"
 
-#if PFFDTD_HAS_CUDA
-  #include "pffdtd/engine_cuda.hpp"
+#if defined(PFFDTD_HAS_CUDA)
+  #include "pffdtd/engine_3d_cuda.hpp"
 #else
-  #include "pffdtd/engine_openmp.hpp"
+  #include "pffdtd/engine_3d_cpu.hpp"
 #endif
 
 #if defined(PFFDTD_HAS_SYCL)
@@ -24,7 +24,6 @@
 
 #include <chrono>
 #include <filesystem>
-#include <stdexcept>
 #include <string>
 
 namespace {

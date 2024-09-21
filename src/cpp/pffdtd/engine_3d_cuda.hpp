@@ -6,7 +6,7 @@
 
 #include "pffdtd/simulation_3d.hpp"
 
-#if !PFFDTD_HAS_CUDA
+#if not defined(PFFDTD_HAS_CUDA)
   #error "CUDA must be enabled in the Makefile"
 #endif
 

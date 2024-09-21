@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2021 Brian Hamilton
 // CPU-based implementation of FDTD engine, with OpenMP
 
-#include "engine_openmp.hpp"
+#include "engine_3d_cpu.hpp"
 
 #include "pffdtd/progress.hpp"
 #include "pffdtd/time.hpp"
