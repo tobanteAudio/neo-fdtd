@@ -78,7 +78,7 @@ auto process_bnl_fd(
   return getTime() - start;
 }
 
-auto run(Simulation3D& sd) -> double {
+auto run(Simulation3D& sd) -> void {
   // keep local ints, scalars
   int64_t const Ns   = sd.Ns;
   int64_t const Nr   = sd.Nr;
@@ -366,12 +366,10 @@ auto run(Simulation3D& sd) -> double {
   fmt::println("Air update: {:.6}s, {:.2} Mvox/s", elapsedAir, Npts * Nt / 1e6 / elapsedAir);
   fmt::println("Boundary loop: {:.6}s, {:.2} Mvox/s", elapsedBn, Nb * Nt / 1e6 / elapsedBn);
   fmt::println("Combined (total): {:.6}s, {:.2} Mvox/s", elapsed, Npts * Nt / 1e6 / elapsed);
-
-  return elapsed;
 }
 
 } // namespace
 
-auto Engine3DCPU::operator()(Simulation3D& sim) const -> double { return run(sim); }
+auto Engine3DCPU::operator()(Simulation3D& sim) const -> void { run(sim); }
 
 } // namespace pffdtd

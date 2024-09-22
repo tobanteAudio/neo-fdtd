@@ -680,7 +680,7 @@ void split_data(Simulation3D const* sim, std::span<HostData<Real>> ghds) {
 }
 
 // run the sim!
-static auto run(Simulation3D const& sim) -> double {
+static auto run(Simulation3D const& sim) -> void {
   // if you want to test synchronous, env variable for that
   char const* s = getenv("CUDA_LAUNCH_BLOCKING");
   if (s != nullptr) {
@@ -1357,9 +1357,8 @@ static auto run(Simulation3D const& sim) -> double {
   std::printf("Boundary loop: %.6fs, %.2f Mvox/s\n", elapsedBoundary, sim.Nb * sim.Nt / 1e6 / elapsedBoundary);
   std::printf("Air update: %.6fs, %.2f Mvox/s\n", elapsedAir, sim.Npts * sim.Nt / 1e6 / elapsedAir);
   std::printf("Combined (total): %.6fs, %.2f Mvox/s\n", elapsed, sim.Npts * sim.Nt / 1e6 / elapsed);
-  return elapsed;
 }
 
-auto Engine3DCUDA::operator()(Simulation3D& sim) const -> double { return run(sim); }
+auto Engine3DCUDA::operator()(Simulation3D& sim) const -> void { run(sim); }
 
 } // namespace pffdtd

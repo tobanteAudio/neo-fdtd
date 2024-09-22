@@ -11,7 +11,7 @@
 
 namespace pffdtd {
 
-auto Engine3DSYCL::operator()(Simulation3D& sim) const -> double {
+auto Engine3DSYCL::operator()(Simulation3D& sim) const -> void {
   PFFDTD_ASSERT(sim.fcc_flag == 0);
 
   auto queue  = sycl::queue{sycl::property::queue::enable_profiling{}};
@@ -318,10 +318,6 @@ auto Engine3DSYCL::operator()(Simulation3D& sim) const -> double {
   for (auto i{0UL}; i < static_cast<size_t>(Nr * Nt); ++i) {
     sim.u_out[i] = host[i];
   }
-
-  fmt::println("");
-
-  return 0.0;
 }
 
 } // namespace pffdtd
