@@ -16,6 +16,7 @@
 
 #if defined(PFFDTD_HAS_SYCL)
   #include "pffdtd/engine_2d_sycl.hpp"
+  #include "pffdtd/engine_3d_sycl.hpp"
 #endif
 
 #include <CLI/CLI.hpp>
@@ -100,6 +101,8 @@ auto main(int argc, char** argv) -> int {
 
 #if defined(PFFDTD_HAS_CUDA)
     pffdtd::Engine3DCUDA{}(sim);
+#elif defined(PFFDTD_HAS_SYCL)
+    pffdtd::Engine3DSYCL{}(sim);
 #else
     pffdtd::Engine3DCPU{}(sim);
 #endif

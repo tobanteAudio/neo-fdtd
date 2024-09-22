@@ -33,7 +33,6 @@ target_sources(pffdtd
         pffdtd/simulation_2d.hpp
         pffdtd/simulation_3d.cpp
         pffdtd/simulation_3d.hpp
-        pffdtd/sycl.hpp
         pffdtd/time.hpp
         pffdtd/utility.hpp
 )
@@ -45,11 +44,14 @@ endif()
 
 if(PFFDTD_HAS_SYCL)
     target_sources(pffdtd PRIVATE pffdtd/engine_2d_sycl.cpp pffdtd/engine_2d_sycl.hpp)
-    add_sycl_to_target(TARGET pffdtd SOURCES pffdtd/engine_2d_sycl.cpp)
+    target_sources(pffdtd PRIVATE pffdtd/engine_3d_sycl.cpp pffdtd/engine_3d_sycl.hpp)
+    target_sources(pffdtd PRIVATE pffdtd/sycl.cpp pffdtd/sycl.hpp)
+    add_sycl_to_target(TARGET pffdtd SOURCES pffdtd/engine_2d_sycl.cpp pffdtd/engine_3d_sycl.cpp pffdtd/sycl.cpp)
     target_compile_definitions(pffdtd PUBLIC PFFDTD_HAS_SYCL=1)
 
     if(PFFDTD_ENABLE_SYCL_ONEAPI)
         set_source_files_properties(pffdtd/engine_2d_sycl.cpp PROPERTIES COMPILE_FLAGS "-fsycl-targets=nvptx64-nvidia-cuda")
+        set_source_files_properties(pffdtd/engine_3d_sycl.cpp PROPERTIES COMPILE_FLAGS "-fsycl-targets=nvptx64-nvidia-cuda")
         target_link_libraries(pffdtd PRIVATE "-fsycl-targets=nvptx64-nvidia-cuda")
     endif()
 endif()
