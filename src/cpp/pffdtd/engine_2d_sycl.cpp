@@ -3,7 +3,9 @@
 
 #include "engine_2d_sycl.hpp"
 
+#include "pffdtd/progress.hpp"
 #include "pffdtd/sycl.hpp"
+#include "pffdtd/time.hpp"
 
 #include <fmt/format.h>
 
@@ -80,10 +82,7 @@ auto kernelBoundaryLoss(
 } // namespace
 
 auto Engine2DSYCL::operator()(Simulation2D const& sim) const -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
-
-  for (auto device : sycl::device::get_devices()) {
-    summary(device);
-  }
+  summary(sim);
 
   auto const Nx          = sim.Nx;
   auto const Ny          = sim.Ny;
@@ -94,98 +93,117 @@ auto Engine2DSYCL::operator()(Simulation2D const& sim) const -> stdex::mdarray<d
   auto const Nr          = sim.out_ixy.size();
   auto const loss_factor = sim.loss_factor;
 
-  summary(sim);
-
-  auto queue  = sycl::queue{};
+  auto queue  = sycl::queue{sycl::property::queue::enable_profiling{}};
   auto device = queue.get_device();
   summary(device);
 
-  auto u0  = sycl::buffer<double, 2>(sycl::range<2>(Nx, Ny));
-  auto u1  = sycl::buffer<double, 2>(sycl::range<2>(Nx, Ny));
-  auto u2  = sycl::buffer<double, 2>(sycl::range<2>(Nx, Ny));
-  auto out = sycl::buffer<double, 2>(sycl::range<2>(Nr, Nt));
+  auto u0_buf  = sycl::buffer<double, 2>(sycl::range<2>(Nx, Ny));
+  auto u1_buf  = sycl::buffer<double, 2>(sycl::range<2>(Nx, Ny));
+  auto u2_buf  = sycl::buffer<double, 2>(sycl::range<2>(Nx, Ny));
+  auto out_buf = sycl::buffer<double, 2>(sycl::range<2>(Nr, Nt));
 
-  auto in_mask = sycl::buffer<uint8_t, 1>{sim.in_mask};
-  auto bn_ixy  = sycl::buffer<int64_t, 1>{sim.bn_ixy};
-  auto adj_bn  = sycl::buffer<int64_t, 1>{sim.adj_bn};
-  auto out_ixy = sycl::buffer<int64_t, 1>{sim.out_ixy};
-  auto src_sig = sycl::buffer<double, 1>{sim.src_sig};
+  auto in_mask_buf = sycl::buffer<uint8_t, 1>{sim.in_mask};
+  auto bn_ixy_buf  = sycl::buffer<int64_t, 1>{sim.bn_ixy};
+  auto adj_bn_buf  = sycl::buffer<int64_t, 1>{sim.adj_bn};
+  auto out_ixy_buf = sycl::buffer<int64_t, 1>{sim.out_ixy};
+  auto src_sig_buf = sycl::buffer<double, 1>{sim.src_sig};
 
-  auto frame = std::vector<double>(Nx * Ny);
+  auto elapsedAir      = Seconds(0.0);
+  auto elapsedBoundary = Seconds(0.0);
+  auto const start     = getTime();
 
   for (auto n{0LL}; n < Nt; ++n) {
-    fmt::print(stdout, "\r\r\r\r\r\r\r\r\r");
-    fmt::print(stdout, "{:04d}/{:04d}", n, Nt);
-    std::fflush(stdout);
+    auto const sampleStart = getTime();
 
-    queue.submit([&](sycl::handler& cgh) {
-      auto u0a       = sycl::accessor{u0, cgh, sycl::write_only};
-      auto u1a       = sycl::accessor{u1, cgh, sycl::read_only};
-      auto u2a       = sycl::accessor{u2, cgh, sycl::read_only};
-      auto inMaskAcc = sycl::accessor{in_mask, cgh, sycl::read_only};
-      auto airRange  = sycl::range<2>(Nx - 2, Ny - 2);
+    auto const airEvent = queue.submit([&](sycl::handler& cgh) {
+      auto u0      = sycl::accessor{u0_buf, cgh, sycl::write_only};
+      auto u1      = sycl::accessor{u1_buf, cgh, sycl::read_only};
+      auto u2      = sycl::accessor{u2_buf, cgh, sycl::read_only};
+      auto in_mask = sycl::accessor{in_mask_buf, cgh, sycl::read_only};
 
-      cgh.parallel_for<struct AirUpdate>(airRange, [=](sycl::id<2> id) {
-        kernelAirUpdate(id, getPtr(u0a), getPtr(u1a), getPtr(u2a), getPtr(inMaskAcc), Ny);
+      cgh.parallel_for<struct AirUpdate>(sycl::range<2>(Nx - 2, Ny - 2), [=](sycl::id<2> id) {
+        kernelAirUpdate(id, getPtr(u0), getPtr(u1), getPtr(u2), getPtr(in_mask), Ny);
+      });
+    });
+
+    auto const boundaryStartEvent = queue.submit([&](sycl::handler& cgh) {
+      auto u0     = sycl::accessor{u0_buf, cgh, sycl::write_only};
+      auto u1     = sycl::accessor{u1_buf, cgh, sycl::read_only};
+      auto u2     = sycl::accessor{u2_buf, cgh, sycl::read_only};
+      auto bn_ixy = sycl::accessor{bn_ixy_buf, cgh, sycl::read_only};
+      auto adj_bn = sycl::accessor{adj_bn_buf, cgh, sycl::read_only};
+
+      cgh.parallel_for<struct BoundaryRigid>(Nb, [=](sycl::id<1> id) {
+        kernelBoundaryRigid(id, getPtr(u0), getPtr(u1), getPtr(u2), getPtr(bn_ixy), getPtr(adj_bn), Ny);
+      });
+    });
+
+    auto const boundaryEndEvent = queue.submit([&](sycl::handler& cgh) {
+      auto u0     = sycl::accessor{u0_buf, cgh, sycl::write_only};
+      auto u2     = sycl::accessor{u2_buf, cgh, sycl::read_only};
+      auto bn_ixy = sycl::accessor{bn_ixy_buf, cgh, sycl::read_only};
+      auto adj_bn = sycl::accessor{adj_bn_buf, cgh, sycl::read_only};
+
+      cgh.parallel_for<struct BoundaryLoss>(Nb, [=](sycl::id<1> id) {
+        kernelBoundaryLoss(id, getPtr(u0), getPtr(u2), getPtr(bn_ixy), getPtr(adj_bn), loss_factor);
       });
     });
 
     queue.submit([&](sycl::handler& cgh) {
-      auto u0a        = sycl::accessor{u0, cgh, sycl::write_only};
-      auto u1a        = sycl::accessor{u1, cgh, sycl::read_only};
-      auto u2a        = sycl::accessor{u2, cgh, sycl::read_only};
-      auto bn_ixy_acc = sycl::accessor{bn_ixy, cgh, sycl::read_only};
-      auto adj_bn_acc = sycl::accessor{adj_bn, cgh, sycl::read_only};
-      auto rigidRange = sycl::range<1>(Nb);
+      auto u0      = sycl::accessor{u0_buf, cgh, sycl::read_write};
+      auto src_sig = sycl::accessor{src_sig_buf, cgh, sycl::read_only};
 
-      cgh.parallel_for<struct BoundaryRigid>(rigidRange, [=](sycl::id<1> id) {
-        kernelBoundaryRigid(id, getPtr(u0a), getPtr(u1a), getPtr(u2a), getPtr(bn_ixy_acc), getPtr(adj_bn_acc), Ny);
-      });
+      cgh.parallel_for<struct CopyInput>(1, [=](sycl::id<1>) { u0[inx][iny] += src_sig[n]; });
     });
 
     queue.submit([&](sycl::handler& cgh) {
-      auto u0a        = sycl::accessor{u0, cgh, sycl::write_only};
-      auto u2a        = sycl::accessor{u2, cgh, sycl::read_only};
-      auto bn_ixy_acc = sycl::accessor{bn_ixy, cgh, sycl::read_only};
-      auto adj_bn_acc = sycl::accessor{adj_bn, cgh, sycl::read_only};
-      auto lossRange  = sycl::range<1>(Nb);
+      auto u0      = sycl::accessor{u0_buf, cgh, sycl::read_only};
+      auto out     = sycl::accessor{out_buf, cgh, sycl::write_only};
+      auto out_ixy = sycl::accessor{out_ixy_buf, cgh, sycl::read_only};
 
-      cgh.parallel_for<struct BoundaryLoss>(lossRange, [=](sycl::id<1> id) {
-        kernelBoundaryLoss(id, getPtr(u0a), getPtr(u2a), getPtr(bn_ixy_acc), getPtr(adj_bn_acc), loss_factor);
-      });
-    });
-
-    queue.submit([&](sycl::handler& cgh) {
-      auto u0a         = sycl::accessor{u0, cgh, sycl::read_write};
-      auto src_sig_acc = sycl::accessor{src_sig, cgh, sycl::read_only};
-      cgh.parallel_for<struct CopyInput>(sycl::range<1>(1), [=](sycl::id<1>) { u0a[inx][iny] += src_sig_acc[n]; });
-    });
-
-    queue.submit([&](sycl::handler& cgh) {
-      auto u0a         = sycl::accessor{u0, cgh, sycl::read_only};
-      auto out_acc     = sycl::accessor{out, cgh, sycl::write_only};
-      auto out_ixy_acc = sycl::accessor{out_ixy, cgh, sycl::read_only};
-      auto range       = sycl::range<1>(Nr);
-
-      cgh.parallel_for<struct CopyOutput>(range, [=](sycl::id<1> id) {
-        auto r        = id[0];
-        auto r_ixy    = out_ixy_acc[r];
-        auto p0       = getPtr(u0a);
-        out_acc[r][n] = p0[r_ixy];
+      cgh.parallel_for<struct CopyOutput>(Nr, [=](sycl::id<1> id) {
+        auto r     = id[0];
+        auto r_ixy = out_ixy[r];
+        auto p0    = getPtr(u0);
+        out[r][n]  = p0[r_ixy];
       });
     });
 
     queue.wait_and_throw();
 
-    auto tmp = u2;
+    auto tmp = u2_buf;
+    u2_buf   = u1_buf;
+    u1_buf   = u0_buf;
+    u0_buf   = tmp;
 
-    u2 = u1;
-    u1 = u0;
-    u0 = tmp;
+    auto const now = getTime();
+
+    auto const elapsed       = Seconds(now - start);
+    auto const elapsedSample = Seconds(now - sampleStart);
+
+    auto const elapsedAirSample = elapsedTime(airEvent);
+    elapsedAir += elapsedAirSample;
+
+    auto const elapsedBoundarySample = elapsedTime(boundaryStartEvent, boundaryEndEvent);
+    elapsedBoundary += elapsedBoundarySample;
+
+    print(ProgressReport{
+        .n                     = n,
+        .Nt                    = Nt,
+        .Npts                  = Nx * Ny,
+        .Nb                    = static_cast<int64_t>(Nb),
+        .elapsed               = elapsed.count(),
+        .elapsedSample         = elapsedSample.count(),
+        .elapsedAir            = elapsedAir.count(),
+        .elapsedSampleAir      = elapsedAirSample.count(),
+        .elapsedBoundary       = elapsedBoundary.count(),
+        .elapsedSampleBoundary = elapsedBoundarySample.count(),
+        .numWorkers            = 1,
+    });
   }
 
   auto outputs = stdex::mdarray<double, stdex::dextents<size_t, 2>>(Nr, Nt);
-  auto host    = sycl::host_accessor{out, sycl::read_only};
+  auto host    = sycl::host_accessor{out_buf, sycl::read_only};
   for (auto it{0UL}; it < static_cast<size_t>(Nt); ++it) {
     for (auto ir{0UL}; ir < Nr; ++ir) {
       outputs(ir, it) = host[ir][it];

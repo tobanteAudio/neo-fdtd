@@ -13,4 +13,10 @@ using Seconds = std::chrono::duration<double>;
   return std::chrono::steady_clock::now();
 }
 
+[[nodiscard]] auto timeit(auto const& callback) -> std::chrono::nanoseconds {
+  auto const start = getTime();
+  callback();
+  return getTime() - start;
+}
+
 } // namespace pffdtd
