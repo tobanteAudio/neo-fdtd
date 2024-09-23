@@ -62,8 +62,8 @@ auto Engine3DSYCL::operator()(Simulation3D& sim) const -> void {
   auto gh1_buf   = sycl::buffer<Real>(size_t(Nbl * MMb));
   auto u_out_buf = sycl::buffer<Real>(size_t(Nr * Nt));
 
-  auto elapsedAir      = Seconds(0.0);
-  auto elapsedBoundary = Seconds(0.0);
+  auto elapsedAir      = std::chrono::nanoseconds{0};
+  auto elapsedBoundary = std::chrono::nanoseconds{0};
   auto const start     = getTime();
 
   for (int64_t n = 0; n < Nt; n++) {
@@ -289,8 +289,8 @@ auto Engine3DSYCL::operator()(Simulation3D& sim) const -> void {
 
     auto const now = getTime();
 
-    auto const elapsed       = Seconds(now - start);
-    auto const elapsedSample = Seconds(now - sampleStart);
+    auto const elapsed       = now - start;
+    auto const elapsedSample = now - sampleStart;
 
     auto const elapsedAirSample = elapsedTime(airStartEvent, airEndEvent);
     elapsedAir += elapsedAirSample;
@@ -303,12 +303,12 @@ auto Engine3DSYCL::operator()(Simulation3D& sim) const -> void {
         .Nt                    = Nt,
         .Npts                  = Npts,
         .Nb                    = Nb,
-        .elapsed               = elapsed.count(),
-        .elapsedSample         = elapsedSample.count(),
-        .elapsedAir            = elapsedAir.count(),
-        .elapsedSampleAir      = elapsedAirSample.count(),
-        .elapsedBoundary       = elapsedBoundary.count(),
-        .elapsedSampleBoundary = elapsedBoundarySample.count(),
+        .elapsed               = elapsed,
+        .elapsedSample         = elapsedSample,
+        .elapsedAir            = elapsedAir,
+        .elapsedSampleAir      = elapsedAirSample,
+        .elapsedBoundary       = elapsedBoundary,
+        .elapsedSampleBoundary = elapsedBoundarySample,
         .numWorkers            = 1,
     });
   }

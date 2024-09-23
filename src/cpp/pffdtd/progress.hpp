@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 
 namespace pffdtd {
@@ -12,12 +13,12 @@ struct ProgressReport {
   int64_t Nt;
   int64_t Npts;
   int64_t Nb;
-  double elapsed;
-  double elapsedSample;
-  double elapsedAir;
-  double elapsedSampleAir;
-  double elapsedBoundary;
-  double elapsedSampleBoundary;
+  std::chrono::nanoseconds elapsed;
+  std::chrono::nanoseconds elapsedSample;
+  std::chrono::nanoseconds elapsedAir;
+  std::chrono::nanoseconds elapsedSampleAir;
+  std::chrono::nanoseconds elapsedBoundary;
+  std::chrono::nanoseconds elapsedSampleBoundary;
   int numWorkers;
 };
 

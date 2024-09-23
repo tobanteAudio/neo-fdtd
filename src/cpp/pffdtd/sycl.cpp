@@ -7,17 +7,13 @@
 
 namespace pffdtd {
 
-auto elapsedTime(sycl::event event) -> Seconds {
-  auto const start = event.get_profiling_info<sycl::info::event_profiling::command_start>();
-  auto const end   = event.get_profiling_info<sycl::info::event_profiling::command_end>();
-  return std::chrono::nanoseconds{end - start};
-}
-
-auto elapsedTime(sycl::event startEvent, sycl::event endEvent) -> Seconds {
+auto elapsedTime(sycl::event startEvent, sycl::event endEvent) -> std::chrono::nanoseconds {
   auto const start = startEvent.get_profiling_info<sycl::info::event_profiling::command_start>();
   auto const end   = endEvent.get_profiling_info<sycl::info::event_profiling::command_end>();
   return std::chrono::nanoseconds{end - start};
 }
+
+auto elapsedTime(sycl::event event) -> std::chrono::nanoseconds { return elapsedTime(event, event); }
 
 auto toString(sycl::info::device_type type) -> std::string {
   switch (type) {

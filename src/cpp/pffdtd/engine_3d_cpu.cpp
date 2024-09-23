@@ -37,7 +37,7 @@ auto process_bnl_fd(
     Float* gh1,
     MatQuad<Float> const* mat_quads,
     Float const* mat_beta
-) -> Seconds {
+) -> std::chrono::nanoseconds {
   auto const start = getTime();
 #pragma omp parallel for schedule(static)
   for (int64_t nb = 0; nb < Nbl; nb++) {
@@ -142,10 +142,10 @@ auto run(Simulation3D& sd) -> void {
   fmt::println("fcc={}", (fcc_flag > 0) ? "true" : "false");
 
   // for timing
-  auto elapsedAir       = 0.0;
-  auto elapsedBn        = 0.0;
-  auto elapsedSampleAir = 0.0;
-  auto elapsedSampleBn  = 0.0;
+  auto elapsedAir       = std::chrono::nanoseconds{0};
+  auto elapsedBn        = std::chrono::nanoseconds{0};
+  auto elapsedSampleAir = std::chrono::nanoseconds{0};
+  auto elapsedSampleBn  = std::chrono::nanoseconds{0};
   auto const startTime  = getTime();
 
   int64_t const NzNy = Nz * Ny;
@@ -253,7 +253,7 @@ auto run(Simulation3D& sd) -> void {
     }
 
     // rigid boundary nodes, using adj data
-    elapsedSampleAir = Seconds(getTime() - sampleStartTime).count();
+    elapsedSampleAir = getTime() - sampleStartTime;
     elapsedAir += elapsedSampleAir;
     if (fcc_flag == 0) {
 #pragma omp parallel for
@@ -311,7 +311,7 @@ auto run(Simulation3D& sd) -> void {
       u0b[nb] = u0[bnl_ixyz[nb]];
     }
     // process FD boundary nodes
-    elapsedSampleBn = process_bnl_fd(u0b, u2b, ssaf_bnl, mat_bnl, Nbl, Mb, lo2, vh1, gh1, mat_quads, mat_beta).count();
+    elapsedSampleBn = process_bnl_fd(u0b, u2b, ssaf_bnl, mat_bnl, Nbl, Mb, lo2, vh1, gh1, mat_quads, mat_beta);
     elapsedBn += elapsedSampleBn;
 // write back
 #pragma omp parallel for
@@ -341,8 +341,8 @@ auto run(Simulation3D& sd) -> void {
     u0b       = tmp;
 
     auto const now           = getTime();
-    auto const elapsed       = Seconds(now - startTime).count();
-    auto const elapsedSample = Seconds(now - sampleStartTime).count();
+    auto const elapsed       = now - startTime;
+    auto const elapsedSample = now - sampleStartTime;
 
     print(ProgressReport{
         .n                     = n,
@@ -360,11 +360,13 @@ auto run(Simulation3D& sd) -> void {
   }
   fmt::println("");
 
-  auto const endTime = getTime();
-  auto const elapsed = Seconds(endTime - startTime).count();
+  auto const endTime       = getTime();
+  auto const elapsed       = Seconds(endTime - startTime).count();
+  auto const elapsedAirSec = Seconds(elapsedAir).count();
+  auto const elapsedBnSec  = Seconds(elapsedBn).count();
 
-  fmt::println("Air update: {:.6}s, {:.2} Mvox/s", elapsedAir, Npts * Nt / 1e6 / elapsedAir);
-  fmt::println("Boundary loop: {:.6}s, {:.2} Mvox/s", elapsedBn, Nb * Nt / 1e6 / elapsedBn);
+  fmt::println("Air update: {:.6}s, {:.2} Mvox/s", elapsedAirSec, Npts * Nt / 1e6 / elapsedAirSec);
+  fmt::println("Boundary loop: {:.6}s, {:.2} Mvox/s", elapsedBnSec, Nb * Nt / 1e6 / elapsedBnSec);
   fmt::println("Combined (total): {:.6}s, {:.2} Mvox/s", elapsed, Npts * Nt / 1e6 / elapsed);
 }
 

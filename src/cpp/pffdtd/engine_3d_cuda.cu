@@ -1267,12 +1267,12 @@ static auto run(Simulation3D const& sim) -> void {
           .Nt                    = sim.Nt,
           .Npts                  = sim.Npts,
           .Nb                    = sim.Nb,
-          .elapsed               = elapsed,
-          .elapsedSample         = elapsedSample,
-          .elapsedAir            = elapsedAir,
-          .elapsedSampleAir      = elapsedSampleAir,
-          .elapsedBoundary       = elapsedBoundary,
-          .elapsedSampleBoundary = elapsedSampleBoundary,
+          .elapsed               = std::chrono::nanoseconds{static_cast<long>(elapsed * 1e9)},
+          .elapsedSample         = std::chrono::nanoseconds{static_cast<long>(elapsedSample * 1e9)},
+          .elapsedAir            = std::chrono::nanoseconds{static_cast<long>(elapsedAir * 1e9)},
+          .elapsedSampleAir      = std::chrono::nanoseconds{static_cast<long>(elapsedSampleAir * 1e9)},
+          .elapsedBoundary       = std::chrono::nanoseconds{static_cast<long>(elapsedBoundary * 1e9)},
+          .elapsedSampleBoundary = std::chrono::nanoseconds{static_cast<long>(elapsedSampleBoundary * 1e9)},
           .numWorkers            = ngpus,
       });
     }

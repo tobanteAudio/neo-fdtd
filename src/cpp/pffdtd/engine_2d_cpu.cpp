@@ -45,8 +45,8 @@ auto Engine2DCPU::operator()(Simulation2D const& sim) const -> stdex::mdarray<do
   auto u2  = u2_buf.to_mdspan();
   auto out = out_buf.to_mdspan();
 
-  auto elapsedAir      = Seconds(0.0);
-  auto elapsedBoundary = Seconds(0.0);
+  auto elapsedAir      = std::chrono::nanoseconds{0};
+  auto elapsedBoundary = std::chrono::nanoseconds{0};
 
   auto const numWorkers = omp_get_max_threads();
   auto const start      = getTime();
@@ -122,8 +122,8 @@ auto Engine2DCPU::operator()(Simulation2D const& sim) const -> stdex::mdarray<do
 
     auto const now = getTime();
 
-    auto const elapsed       = Seconds(now - start);
-    auto const elapsedSample = Seconds(now - sampleStart);
+    auto const elapsed       = now - start;
+    auto const elapsedSample = now - sampleStart;
     elapsedAir += elapsedAirSample;
     elapsedBoundary += elapsedBoundarySample;
 
@@ -132,12 +132,12 @@ auto Engine2DCPU::operator()(Simulation2D const& sim) const -> stdex::mdarray<do
         .Nt                    = Nt,
         .Npts                  = Nx * Ny,
         .Nb                    = static_cast<int64_t>(Nb),
-        .elapsed               = Seconds(elapsed).count(),
-        .elapsedSample         = Seconds(elapsedSample).count(),
-        .elapsedAir            = Seconds(elapsedAir).count(),
-        .elapsedSampleAir      = Seconds(elapsedAirSample).count(),
-        .elapsedBoundary       = Seconds(elapsedBoundary).count(),
-        .elapsedSampleBoundary = Seconds(elapsedBoundarySample).count(),
+        .elapsed               = elapsed,
+        .elapsedSample         = elapsedSample,
+        .elapsedAir            = elapsedAir,
+        .elapsedSampleAir      = elapsedAirSample,
+        .elapsedBoundary       = elapsedBoundary,
+        .elapsedSampleBoundary = elapsedBoundarySample,
         .numWorkers            = numWorkers,
     });
   }

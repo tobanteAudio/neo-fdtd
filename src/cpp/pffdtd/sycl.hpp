@@ -21,8 +21,8 @@ template<typename Accessor>
   return std::forward<Accessor>(a).template get_multi_ptr<sycl::access::decorated::no>().get();
 }
 
-[[nodiscard]] auto elapsedTime(sycl::event event) -> Seconds;
-[[nodiscard]] auto elapsedTime(sycl::event startEvent, sycl::event endEvent) -> Seconds;
+[[nodiscard]] auto elapsedTime(sycl::event event) -> std::chrono::nanoseconds;
+[[nodiscard]] auto elapsedTime(sycl::event startEvent, sycl::event endEvent) -> std::chrono::nanoseconds;
 
 auto toString(sycl::info::device_type type) -> std::string;
 auto summary(sycl::device dev) -> void;

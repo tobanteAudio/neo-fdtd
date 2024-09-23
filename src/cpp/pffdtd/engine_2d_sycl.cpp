@@ -108,8 +108,8 @@ auto Engine2DSYCL::operator()(Simulation2D const& sim) const -> stdex::mdarray<d
   auto out_ixy_buf = sycl::buffer<int64_t, 1>{sim.out_ixy};
   auto src_sig_buf = sycl::buffer<double, 1>{sim.src_sig};
 
-  auto elapsedAir      = Seconds(0.0);
-  auto elapsedBoundary = Seconds(0.0);
+  auto elapsedAir      = std::chrono::nanoseconds{0};
+  auto elapsedBoundary = std::chrono::nanoseconds{0};
   auto const start     = getTime();
 
   for (auto n{0LL}; n < Nt; ++n) {
@@ -178,8 +178,8 @@ auto Engine2DSYCL::operator()(Simulation2D const& sim) const -> stdex::mdarray<d
 
     auto const now = getTime();
 
-    auto const elapsed       = Seconds(now - start);
-    auto const elapsedSample = Seconds(now - sampleStart);
+    auto const elapsed       = now - start;
+    auto const elapsedSample = now - sampleStart;
 
     auto const elapsedAirSample = elapsedTime(airEvent);
     elapsedAir += elapsedAirSample;
@@ -192,12 +192,12 @@ auto Engine2DSYCL::operator()(Simulation2D const& sim) const -> stdex::mdarray<d
         .Nt                    = Nt,
         .Npts                  = Nx * Ny,
         .Nb                    = static_cast<int64_t>(Nb),
-        .elapsed               = elapsed.count(),
-        .elapsedSample         = elapsedSample.count(),
-        .elapsedAir            = elapsedAir.count(),
-        .elapsedSampleAir      = elapsedAirSample.count(),
-        .elapsedBoundary       = elapsedBoundary.count(),
-        .elapsedSampleBoundary = elapsedBoundarySample.count(),
+        .elapsed               = elapsed,
+        .elapsedSample         = elapsedSample,
+        .elapsedAir            = elapsedAir,
+        .elapsedSampleAir      = elapsedAirSample,
+        .elapsedBoundary       = elapsedBoundary,
+        .elapsedSampleBoundary = elapsedBoundarySample,
         .numWorkers            = 1,
     });
   }
