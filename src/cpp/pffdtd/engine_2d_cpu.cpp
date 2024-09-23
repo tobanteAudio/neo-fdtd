@@ -27,10 +27,10 @@ auto Engine2DCPU::operator()(Simulation2D const& sim) const -> stdex::mdarray<do
   auto const Nx         = sim.Nx;
   auto const Ny         = sim.Ny;
   auto const Nt         = sim.Nt;
-  auto const Nb         = sim.adj_bn.size();
+  auto const Nb         = static_cast<int64_t>(sim.adj_bn.size());
   auto const inx        = sim.inx;
   auto const iny        = sim.iny;
-  auto const Nr         = sim.out_ixy.size();
+  auto const Nr         = static_cast<int64_t>(sim.out_ixy.size());
   auto const lossFactor = sim.loss_factor;
 
   summary(sim);
@@ -75,7 +75,7 @@ auto Engine2DCPU::operator()(Simulation2D const& sim) const -> stdex::mdarray<do
     auto const elapsedBoundarySample = timeit([&] {
 // Boundary Rigid
 #pragma omp parallel for
-      for (size_t i = 0; i < Nb; ++i) {
+      for (int64_t i = 0; i < Nb; ++i) {
         auto const ib = sim.bn_ixy[i];
         auto const K  = sim.adj_bn[i];
 
@@ -93,7 +93,7 @@ auto Engine2DCPU::operator()(Simulation2D const& sim) const -> stdex::mdarray<do
 
 // Boundary Loss
 #pragma omp parallel for
-      for (size_t i = 0; i < Nb; ++i) {
+      for (int64_t i = 0; i < Nb; ++i) {
         auto const ib = sim.bn_ixy[i];
         auto const K  = sim.adj_bn[i];
         auto const K4 = 4 - K;
@@ -110,7 +110,7 @@ auto Engine2DCPU::operator()(Simulation2D const& sim) const -> stdex::mdarray<do
     u0(inx, iny) += sim.src_sig[n];
 
     // Copy Output
-    for (size_t i = 0; i < Nr; ++i) {
+    for (int64_t i = 0; i < Nr; ++i) {
       auto r_ixy = sim.out_ixy[i];
       out(i, n)  = u0.data_handle()[r_ixy];
     }
