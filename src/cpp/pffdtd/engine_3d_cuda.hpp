@@ -13,7 +13,8 @@
 namespace pffdtd {
 
 struct Engine3DCUDA {
-  auto operator()(Simulation3D& sim) const -> void;
+  auto operator()(Simulation3D<float>& sim) const -> void;
+  auto operator()(Simulation3D<double>& sim) const -> void;
 };
 
 } // namespace pffdtd

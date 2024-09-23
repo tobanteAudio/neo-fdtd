@@ -80,11 +80,16 @@ constexpr auto cuBb  = 128;
 
 // NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
 // constant memory (all per device)
-__constant__ Real c1;
-__constant__ Real c2;
-__constant__ Real cl;
-__constant__ Real csl2;
-__constant__ Real clo2;
+__constant__ float c1_f32;
+__constant__ float c2_f32;
+__constant__ float cl_f32;
+__constant__ float csl2_f32;
+__constant__ float clo2_f32;
+__constant__ double c1_f64;
+__constant__ double c2_f64;
+__constant__ double cl_f64;
+__constant__ double csl2_f64;
+__constant__ double clo2_f64;
 __constant__ int64_t cuNx;
 __constant__ int64_t cuNy;
 __constant__ int64_t cuNz;
@@ -175,6 +180,17 @@ struct DeviceData { // for or on gpu (arrays all on GPU)
   int64_t totalmembytes{};
 };
 
+template<typename Float>
+__device__ auto constant(float f32, double f64) -> Float {
+  if constexpr (std::is_same_v<Float, float>) {
+    return f32;
+  } else if constexpr (std::is_same_v<Float, double>) {
+    return f64;
+  } else {
+    static_assert(always_false<Float>);
+  }
+}
+
 // NB. 'x' is contiguous dim in CUDA domain
 
 // vanilla scheme, unrolled, intrinsics to control rounding errors
@@ -184,6 +200,10 @@ KernelAirCart(Float* __restrict__ u0, Float const* __restrict__ u1, uint8_t cons
   int64_t const cx = blockIdx.x * cuBx + threadIdx.x + 1;
   int64_t const cy = blockIdx.y * cuBy + threadIdx.y + 1;
   int64_t const cz = blockIdx.z * cuBz + threadIdx.z + 1;
+
+  auto const c1 = constant<Float>(c1_f32, c1_f64);
+  auto const c2 = constant<Float>(c2_f32, c2_f64);
+
   if ((cx < cuNx - 1) && (cy < cuNy - 1) && (cz < cuNz - 1)) {
     int64_t const ii = cz * cuNxNy + cy * cuNx + cx;
     // divide-conquer add for better accuracy
@@ -211,6 +231,10 @@ KernelAirFCC(Float* __restrict__ u0, Float const* __restrict__ u1, uint8_t const
   int64_t const cx = blockIdx.x * cuBx + threadIdx.x + 1;
   int64_t const cy = blockIdx.y * cuBy + threadIdx.y + 1;
   int64_t const cz = blockIdx.z * cuBz + threadIdx.z + 1;
+
+  auto const c1 = constant<Float>(c1_f32, c1_f64);
+  auto const c2 = constant<Float>(c2_f32, c2_f64);
+
   if ((cx < cuNx - 1) && (cy < cuNy - 1) && (cz < cuNz - 1)) {
     // x is contiguous
     int64_t const ii = cz * cuNxNy + cy * cuNx + cx;
@@ -260,6 +284,10 @@ __global__ void KernelBoundaryRigidCart(
     int8_t const* __restrict__ K_bn
 ) {
   int64_t const nb = blockIdx.x * cuBb + threadIdx.x;
+
+  auto const c2   = constant<Float>(c2_f32, c2_f64);
+  auto const csl2 = constant<Float>(csl2_f32, csl2_f64);
+
   if (nb < cuNb) {
     int64_t const ii   = bn_ixyz[nb];
     uint16_t const adj = adj_bn[nb];
@@ -293,6 +321,10 @@ __global__ void KernelBoundaryRigidFCC(
     int8_t const* __restrict__ K_bn
 ) {
   int64_t const nb = blockIdx.x * cuBb + threadIdx.x;
+
+  auto const c2   = constant<Float>(c2_f32, c2_f64);
+  auto const csl2 = constant<Float>(csl2_f32, csl2_f64);
+
   if (nb < cuNb) {
     int64_t const ii   = bn_ixyz[nb];
     uint16_t const adj = adj_bn[nb];
@@ -332,6 +364,8 @@ __global__ void KernelBoundaryABC(
     int64_t const* __restrict__ bna_ixyz
 ) {
   int64_t const nb = blockIdx.x * cuBb + threadIdx.x;
+  auto const cl    = constant<Float>(cl_f32, cl_f64);
+
   if (nb < cuNba) {
     Float const _1   = 1.0;
     Float const lQ   = cl * Q_bna[nb];
@@ -355,6 +389,9 @@ __global__ void KernelBoundaryFD(
     MatQuad<Float> const* __restrict__ mat_quads
 ) {
   int64_t const nb = blockIdx.x * cuBb + threadIdx.x;
+
+  auto const clo2 = constant<Float>(clo2_f32, clo2_f64);
+
   if (nb < cuNbl) {
     Float const _1     = 1.0;
     Float const _2     = 2.0;
@@ -509,7 +546,8 @@ auto print_gpu_details(int i) -> uint64_t {
 }
 
 // input indices need to be sorted for multi-device allocation
-void check_sorted(Simulation3D const* sim) {
+template<typename Float>
+void check_sorted(Simulation3D<Float> const* sim) {
   int64_t* bn_ixyz  = sim->bn_ixyz;
   int64_t* bnl_ixyz = sim->bnl_ixyz;
   int64_t* bna_ixyz = sim->bna_ixyz;
@@ -538,7 +576,8 @@ void check_sorted(Simulation3D const* sim) {
 }
 
 // counts for splitting data across GPUs
-void split_data(Simulation3D const* sim, std::span<HostData<Real>> ghds) {
+template<typename Float>
+void split_data(Simulation3D<Float> const* sim, std::span<HostData<Float>> ghds) {
   auto const Nx    = sim->Nx;
   auto const Ny    = sim->Ny;
   auto const Nz    = sim->Nz;
@@ -687,7 +726,8 @@ void split_data(Simulation3D const* sim, std::span<HostData<Real>> ghds) {
 }
 
 // run the sim!
-static auto run(Simulation3D const& sim) -> void {
+template<typename Float>
+static auto run(Simulation3D<Float> const& sim) -> void {
   // if you want to test synchronous, env variable for that
   char const* s = getenv("CUDA_LAUNCH_BLOCKING");
   if (s != nullptr) {
@@ -705,25 +745,25 @@ static auto run(Simulation3D const& sim) -> void {
   auto const ngpus = max_ngpus;
   PFFDTD_ASSERT(ngpus < (sim.Nx));
 
-  auto ghds = std::vector<HostData<Real>>(static_cast<size_t>(ngpus));
-  auto gds  = std::vector<DeviceData<Real>>(static_cast<size_t>(ngpus));
+  auto ghds = std::vector<HostData<Float>>(static_cast<size_t>(ngpus));
+  auto gds  = std::vector<DeviceData<Float>>(static_cast<size_t>(ngpus));
 
   if (ngpus > 1) {
     check_sorted(&sim); // needs to be sorted for multi-GPU
   }
 
   // get local counts for Nx,Nb,Nr,Ns
-  split_data(&sim, ghds);
+  split_data<Float>(&sim, ghds);
 
   for (int gid = 0; gid < ngpus; gid++) {
     gds[gid].totalmembytes = print_gpu_details(gid);
   }
 
-  Real lo2 = sim.lo2;
-  Real a1  = sim.a1;
-  Real a2  = sim.a2;
-  Real l   = sim.l;
-  Real sl2 = sim.sl2;
+  Float lo2 = sim.lo2;
+  Float a1  = sim.a1;
+  Float a2  = sim.a2;
+  Float l   = sim.l;
+  Float sl2 = sim.sl2;
 
   // timing stuff
   auto elapsed               = std::chrono::nanoseconds{0};
@@ -752,9 +792,9 @@ static auto run(Simulation3D const& sim) -> void {
   int64_t Nx_pos   = 0;
   // uint64_t Nx_pos2=0;
 
-  Real* u_out_buf = nullptr;
-  gpuErrchk(cudaMallocHost(&u_out_buf, (size_t)(sim.Nr * sizeof(Real))));
-  memset(u_out_buf, 0, (size_t)(sim.Nr * sizeof(Real))); // set floats to zero
+  Float* u_out_buf = nullptr;
+  gpuErrchk(cudaMallocHost(&u_out_buf, (size_t)(sim.Nr * sizeof(Float))));
+  memset(u_out_buf, 0, (size_t)(sim.Nr * sizeof(Float))); // set floats to zero
 
   int64_t Nzy = (sim.Nz) * (sim.Ny); // area-slice
 
@@ -762,8 +802,8 @@ static auto run(Simulation3D const& sim) -> void {
   for (int gid = 0; gid < ngpus; gid++) {
     gpuErrchk(cudaSetDevice(gid));
 
-    DeviceData<Real>* gd = &(gds[gid]);
-    HostData<Real>* ghd  = &(ghds[gid]);
+    DeviceData<Float>* gd = &(gds[gid]);
+    HostData<Float>* ghd  = &(ghds[gid]);
     std::printf("---------\n");
     std::printf("GPU %d\n", gid);
     std::printf("---------\n");
@@ -848,38 +888,38 @@ static auto run(Simulation3D const& sim) -> void {
       ghd->out_ixyz[nr] = jj;
     }
 
-    gpuErrchk(cudaMalloc(&(gd->u0), (size_t)((ghd->Npts) * sizeof(Real))));
-    gpuErrchk(cudaMemset(gd->u0, 0, (size_t)((ghd->Npts) * sizeof(Real))));
+    gpuErrchk(cudaMalloc(&(gd->u0), (size_t)((ghd->Npts) * sizeof(Float))));
+    gpuErrchk(cudaMemset(gd->u0, 0, (size_t)((ghd->Npts) * sizeof(Float))));
 
-    gpuErrchk(cudaMalloc(&(gd->u1), (size_t)((ghd->Npts) * sizeof(Real))));
-    gpuErrchk(cudaMemset(gd->u1, 0, (size_t)((ghd->Npts) * sizeof(Real))));
+    gpuErrchk(cudaMalloc(&(gd->u1), (size_t)((ghd->Npts) * sizeof(Float))));
+    gpuErrchk(cudaMemset(gd->u1, 0, (size_t)((ghd->Npts) * sizeof(Float))));
 
     gpuErrchk(cudaMalloc(&(gd->K_bn), (size_t)(ghd->Nb * sizeof(int8_t))));
     gpuErrchk(cudaMemcpy(gd->K_bn, ghd->K_bn, ghd->Nb * sizeof(int8_t), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->ssaf_bnl), (size_t)(ghd->Nbl * sizeof(Real))));
-    gpuErrchk(cudaMemcpy(gd->ssaf_bnl, ghd->ssaf_bnl, ghd->Nbl * sizeof(Real), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&(gd->ssaf_bnl), (size_t)(ghd->Nbl * sizeof(Float))));
+    gpuErrchk(cudaMemcpy(gd->ssaf_bnl, ghd->ssaf_bnl, ghd->Nbl * sizeof(Float), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->u0b), (size_t)(ghd->Nbl * sizeof(Real))));
-    gpuErrchk(cudaMemset(gd->u0b, 0, (size_t)(ghd->Nbl * sizeof(Real))));
+    gpuErrchk(cudaMalloc(&(gd->u0b), (size_t)(ghd->Nbl * sizeof(Float))));
+    gpuErrchk(cudaMemset(gd->u0b, 0, (size_t)(ghd->Nbl * sizeof(Float))));
 
-    gpuErrchk(cudaMalloc(&(gd->u1b), (size_t)(ghd->Nbl * sizeof(Real))));
-    gpuErrchk(cudaMemset(gd->u1b, 0, (size_t)(ghd->Nbl * sizeof(Real))));
+    gpuErrchk(cudaMalloc(&(gd->u1b), (size_t)(ghd->Nbl * sizeof(Float))));
+    gpuErrchk(cudaMemset(gd->u1b, 0, (size_t)(ghd->Nbl * sizeof(Float))));
 
-    gpuErrchk(cudaMalloc(&(gd->u2b), (size_t)(ghd->Nbl * sizeof(Real))));
-    gpuErrchk(cudaMemset(gd->u2b, 0, (size_t)(ghd->Nbl * sizeof(Real))));
+    gpuErrchk(cudaMalloc(&(gd->u2b), (size_t)(ghd->Nbl * sizeof(Float))));
+    gpuErrchk(cudaMemset(gd->u2b, 0, (size_t)(ghd->Nbl * sizeof(Float))));
 
-    gpuErrchk(cudaMalloc(&(gd->u2ba), (size_t)(ghd->Nba * sizeof(Real))));
-    gpuErrchk(cudaMemset(gd->u2ba, 0, (size_t)(ghd->Nba * sizeof(Real))));
+    gpuErrchk(cudaMalloc(&(gd->u2ba), (size_t)(ghd->Nba * sizeof(Float))));
+    gpuErrchk(cudaMemset(gd->u2ba, 0, (size_t)(ghd->Nba * sizeof(Float))));
 
-    gpuErrchk(cudaMalloc(&(gd->vh1), (size_t)(ghd->Nbl * MMb * sizeof(Real))));
-    gpuErrchk(cudaMemset(gd->vh1, 0, (size_t)(ghd->Nbl * MMb * sizeof(Real))));
+    gpuErrchk(cudaMalloc(&(gd->vh1), (size_t)(ghd->Nbl * MMb * sizeof(Float))));
+    gpuErrchk(cudaMemset(gd->vh1, 0, (size_t)(ghd->Nbl * MMb * sizeof(Float))));
 
-    gpuErrchk(cudaMalloc(&(gd->gh1), (size_t)(ghd->Nbl * MMb * sizeof(Real))));
-    gpuErrchk(cudaMemset(gd->gh1, 0, (size_t)(ghd->Nbl * MMb * sizeof(Real))));
+    gpuErrchk(cudaMalloc(&(gd->gh1), (size_t)(ghd->Nbl * MMb * sizeof(Float))));
+    gpuErrchk(cudaMemset(gd->gh1, 0, (size_t)(ghd->Nbl * MMb * sizeof(Float))));
 
-    gpuErrchk(cudaMalloc(&(gd->u_out_buf), (size_t)(ghd->Nr * sizeof(Real))));
-    gpuErrchk(cudaMemset(gd->u_out_buf, 0, (size_t)(ghd->Nr * sizeof(Real))));
+    gpuErrchk(cudaMalloc(&(gd->u_out_buf), (size_t)(ghd->Nr * sizeof(Float))));
+    gpuErrchk(cudaMemset(gd->u_out_buf, 0, (size_t)(ghd->Nr * sizeof(Float))));
 
     gpuErrchk(cudaMalloc(&(gd->bn_ixyz), (size_t)(ghd->Nb * sizeof(int64_t))));
     gpuErrchk(cudaMemcpy(gd->bn_ixyz, ghd->bn_ixyz, (size_t)ghd->Nb * sizeof(int64_t), cudaMemcpyHostToDevice));
@@ -902,12 +942,12 @@ static auto run(Simulation3D const& sim) -> void {
     gpuErrchk(cudaMalloc(&(gd->mat_bnl), (size_t)(ghd->Nbl * sizeof(int8_t))));
     gpuErrchk(cudaMemcpy(gd->mat_bnl, ghd->mat_bnl, (size_t)ghd->Nbl * sizeof(int8_t), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->mat_beta), (size_t)sim.Nm * sizeof(Real)));
-    gpuErrchk(cudaMemcpy(gd->mat_beta, sim.mat_beta, (size_t)sim.Nm * sizeof(Real), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&(gd->mat_beta), (size_t)sim.Nm * sizeof(Float)));
+    gpuErrchk(cudaMemcpy(gd->mat_beta, sim.mat_beta, (size_t)sim.Nm * sizeof(Float), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->mat_quads), (size_t)sim.Nm * MMb * sizeof(MatQuad<Real>)));
+    gpuErrchk(cudaMalloc(&(gd->mat_quads), (size_t)sim.Nm * MMb * sizeof(MatQuad<Float>)));
     gpuErrchk(
-        cudaMemcpy(gd->mat_quads, sim.mat_quads, (size_t)sim.Nm * MMb * sizeof(MatQuad<Real>), cudaMemcpyHostToDevice)
+        cudaMemcpy(gd->mat_quads, sim.mat_quads, (size_t)sim.Nm * MMb * sizeof(MatQuad<Float>), cudaMemcpyHostToDevice)
     );
 
     gpuErrchk(cudaMalloc(&(gd->bn_mask), (size_t)(ghd->Nbm * sizeof(uint8_t))));
@@ -941,11 +981,21 @@ static auto run(Simulation3D const& sim) -> void {
     gpuErrchk(cudaMemcpyToSymbol(cuNxNy, &Nzy,
                                  sizeof(int64_t))); // same for all devices
 
-    gpuErrchk(cudaMemcpyToSymbol(c1, &a1, sizeof(Real)));
-    gpuErrchk(cudaMemcpyToSymbol(c2, &a2, sizeof(Real)));
-    gpuErrchk(cudaMemcpyToSymbol(cl, &l, sizeof(Real)));
-    gpuErrchk(cudaMemcpyToSymbol(csl2, &sl2, sizeof(Real)));
-    gpuErrchk(cudaMemcpyToSymbol(clo2, &lo2, sizeof(Real)));
+    if constexpr (std::is_same_v<Float, float>) {
+      gpuErrchk(cudaMemcpyToSymbol(c1_f32, &a1, sizeof(float)));
+      gpuErrchk(cudaMemcpyToSymbol(c2_f32, &a2, sizeof(float)));
+      gpuErrchk(cudaMemcpyToSymbol(cl_f32, &l, sizeof(float)));
+      gpuErrchk(cudaMemcpyToSymbol(csl2_f32, &sl2, sizeof(float)));
+      gpuErrchk(cudaMemcpyToSymbol(clo2_f32, &lo2, sizeof(float)));
+    } else if constexpr (std::is_same_v<Float, double>) {
+      gpuErrchk(cudaMemcpyToSymbol(c1_f64, &a1, sizeof(double)));
+      gpuErrchk(cudaMemcpyToSymbol(c2_f64, &a2, sizeof(double)));
+      gpuErrchk(cudaMemcpyToSymbol(cl_f64, &l, sizeof(double)));
+      gpuErrchk(cudaMemcpyToSymbol(csl2_f64, &sl2, sizeof(double)));
+      gpuErrchk(cudaMemcpyToSymbol(clo2_f64, &lo2, sizeof(double)));
+    } else {
+      static_assert(always_false<Float>);
+    }
 
     std::printf("Constant memory loaded\n");
     std::printf("\n");
@@ -1022,8 +1072,8 @@ static auto run(Simulation3D const& sim) -> void {
   for (int64_t n = 0; n < sim.Nt; n++) {    // loop over time-steps
     for (int gid = 0; gid < ngpus; gid++) { // loop over GPUs (one thread launches all kernels)
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData<Real>* gd = &(gds[gid]);  // get struct of device pointers
-      HostData<Real>* ghd  = &(ghds[gid]); // get struct of host points (corresponding to device)
+      DeviceData<Float>* gd = &(gds[gid]);  // get struct of device pointers
+      HostData<Float>* ghd  = &(ghds[gid]); // get struct of host points (corresponding to device)
 
       // start first timer
       if (gid == 0) {
@@ -1111,7 +1161,7 @@ static auto run(Simulation3D const& sim) -> void {
       // injecting source first, negating sample to add it in first (NB source
       // on different stream than bn)
       for (int64_t ns = 0; ns < ghd->Ns; ns++) {
-        AddIn<<<1, 1, 0, gd->cuStream_air>>>(gd->u0 + ghd->in_ixyz[ns], (Real)(-(ghd->in_sigs[ns * sim.Nt + n])));
+        AddIn<<<1, 1, 0, gd->cuStream_air>>>(gd->u0 + ghd->in_ixyz[ns], (Float)(-(ghd->in_sigs[ns * sim.Nt + n])));
       }
       // now air updates (not conflicting with bn updates because of bn_mask)
       if (sim.fcc_flag == 0) {
@@ -1140,7 +1190,7 @@ static auto run(Simulation3D const& sim) -> void {
       gpuErrchk(cudaMemcpyAsync(
           ghd->u_out_buf,
           gd->u_out_buf,
-          ghd->Nr * sizeof(Real),
+          ghd->Nr * sizeof(Float),
           cudaMemcpyDeviceToHost,
           gd->cuStream_bn
       ));
@@ -1150,8 +1200,8 @@ static auto run(Simulation3D const& sim) -> void {
     // readouts
     for (int gid = 0; gid < ngpus; gid++) {
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData<Real>* gd = &(gds[gid]);
-      HostData<Real>* ghd  = &(ghds[gid]);
+      DeviceData<Float>* gd = &(gds[gid]);
+      HostData<Float>* ghd  = &(ghds[gid]);
       gpuErrchk(cudaEventSynchronize(gd->cuEv_readout_end));
       // copy grid points off output buffer
       for (int64_t nr = 0; nr < ghd->Nr; nr++) {
@@ -1161,7 +1211,7 @@ static auto run(Simulation3D const& sim) -> void {
     // synchronise streams
     for (int gid = 0; gid < ngpus; gid++) {
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData<Real>* gd = &(gds[gid]);                 // don't really need to set gpu device to sync
+      DeviceData<Float>* gd = &(gds[gid]);                // don't really need to set gpu device to sync
       gpuErrchk(cudaStreamSynchronize(gd->cuStream_air)); // interior complete
       gpuErrchk(cudaStreamSynchronize(gd->cuStream_bn));  // transfer complete
     }
@@ -1178,7 +1228,7 @@ static auto run(Simulation3D const& sim) -> void {
           gid + 1,
           gds[gid].u0 + Nzy * (ghds[gid].Nxh - 2),
           gid,
-          (size_t)(Nzy * sizeof(Real)),
+          (size_t)(Nzy * sizeof(Float)),
           gds[gid].cuStream_bn
       ));
     }
@@ -1190,7 +1240,7 @@ static auto run(Simulation3D const& sim) -> void {
           gid - 1,
           gds[gid].u0 + Nzy,
           gid,
-          (size_t)(Nzy * sizeof(Real)),
+          (size_t)(Nzy * sizeof(Float)),
           gds[gid].cuStream_bn
       ));
     }
@@ -1202,7 +1252,7 @@ static auto run(Simulation3D const& sim) -> void {
           gid + 1,
           gds[gid].u0 + Nzy * (ghds[gid].Nxh - 2),
           gid,
-          (size_t)(Nzy * sizeof(Real)),
+          (size_t)(Nzy * sizeof(Float)),
           gds[gid].cuStream_bn
       ));
     }
@@ -1214,23 +1264,23 @@ static auto run(Simulation3D const& sim) -> void {
           gid - 1,
           gds[gid].u0 + Nzy,
           gid,
-          (size_t)(Nzy * sizeof(Real)),
+          (size_t)(Nzy * sizeof(Float)),
           gds[gid].cuStream_bn
       ));
     }
 
     for (int gid = 0; gid < ngpus; gid++) {
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData<Real>* gd = &(gds[gid]);
+      DeviceData<Float>* gd = &(gds[gid]);
       gpuErrchk(cudaStreamSynchronize(gd->cuStream_bn)); // transfer complete
     }
     for (int gid = 0; gid < ngpus; gid++) {
-      DeviceData<Real>* gd = &(gds[gid]);
+      DeviceData<Float>* gd = &(gds[gid]);
       // update pointers
-      Real* tmp_ptr = nullptr;
-      tmp_ptr       = gd->u1;
-      gd->u1        = gd->u0;
-      gd->u0        = tmp_ptr;
+      Float* tmp_ptr = nullptr;
+      tmp_ptr        = gd->u1;
+      gd->u1         = gd->u0;
+      gd->u0         = tmp_ptr;
 
       // will use extra vector for this (simpler than extra copy kernel)
       tmp_ptr = gd->u2b;
@@ -1249,7 +1299,7 @@ static auto run(Simulation3D const& sim) -> void {
       gpuErrchk(cudaSetDevice(0));
       gpuErrchk(cudaEventSynchronize(cuEv_main_sample_end)); // not sure this is correct
 
-      DeviceData<Real>& gd  = gds[0];
+      DeviceData<Float>& gd = gds[0];
       elapsed               = elapsedTime(cuEv_main_start, cuEv_main_sample_end);
       elapsedSample         = elapsedTime(cuEv_main_sample_start, cuEv_main_sample_end);
       elapsedSampleAir      = elapsedTime(gd.cuEv_air_start, gd.cuEv_air_end);
@@ -1299,8 +1349,8 @@ static auto run(Simulation3D const& sim) -> void {
   gpuErrchk(cudaEventDestroy(cuEv_main_sample_end));
   for (int gid = 0; gid < ngpus; gid++) {
     gpuErrchk(cudaSetDevice(gid));
-    DeviceData<Real>* gd = &(gds[gid]);
-    HostData<Real>* ghd  = &(ghds[gid]);
+    DeviceData<Float>* gd = &(gds[gid]);
+    HostData<Float>* ghd  = &(ghds[gid]);
     // cleanup streams
     gpuErrchk(cudaStreamDestroy(gd->cuStream_air));
     gpuErrchk(cudaStreamDestroy(gd->cuStream_bn));
@@ -1358,6 +1408,8 @@ static auto run(Simulation3D const& sim) -> void {
   std::printf("Combined (total): %.6fs, %.2f Mvox/s\n", elapsedSec, sim.Npts * sim.Nt / 1e6 / elapsedSec);
 }
 
-auto Engine3DCUDA::operator()(Simulation3D& sim) const -> void { run(sim); }
+auto Engine3DCUDA::operator()(Simulation3D<float>& sim) const -> void { run(sim); }
+
+auto Engine3DCUDA::operator()(Simulation3D<double>& sim) const -> void { run(sim); }
 
 } // namespace pffdtd

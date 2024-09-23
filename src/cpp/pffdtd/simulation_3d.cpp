@@ -8,12 +8,8 @@
 
 #include <fmt/format.h>
 
-#include <algorithm>
-#include <cmath>
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
-#include <filesystem>
 #include <limits>
 #include <numbers>
 
@@ -79,7 +75,7 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
 } // namespace
 
 // load the sim data from Python-written HDF5 files
-[[nodiscard]] auto loadSimulation3D(std::filesystem::path const& simDir) -> Simulation3D {
+[[nodiscard]] auto loadSimulation3D(std::filesystem::path const& simDir) -> Simulation3D<Real> {
   int expected_ndims = 0;
   hsize_t dims[2]    = {};
 
@@ -550,29 +546,8 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
   };
 }
 
-void freeSimulation3D(Simulation3D& sim) {
-  std::free(sim.bn_ixyz);
-  std::free(sim.bnl_ixyz);
-  std::free(sim.bna_ixyz);
-  std::free(sim.Q_bna);
-  std::free(sim.adj_bn);
-  std::free(sim.mat_bnl);
-  std::free(sim.bn_mask);
-  std::free(sim.ssaf_bnl);
-  std::free(sim.K_bn);
-  std::free(sim.in_ixyz);
-  std::free(sim.out_ixyz);
-  std::free(sim.out_reorder);
-  std::free(sim.in_sigs);
-  std::free(sim.u_out);
-  std::free(sim.Mb);
-  std::free(sim.mat_beta);
-  std::free(sim.mat_quads);
-  fmt::println("sim data freed");
-}
-
 // print last samples of simulation (for correctness checking..)
-void printLastSample(Simulation3D& sim) {
+void printLastSample(Simulation3D<Real>& sim) {
   int64_t const Nt     = sim.Nt;
   int64_t const Nr     = sim.Nr;
   double* u_out        = sim.u_out;
@@ -587,61 +562,7 @@ void printLastSample(Simulation3D& sim) {
   }
 }
 
-// scale input to be in middle of floating-point range
-void scaleInput(Simulation3D& sim) {
-  double* in_sigs  = sim.in_sigs;
-  int64_t const Nt = sim.Nt;
-  int64_t const Ns = sim.Ns;
-
-  // normalise input signals (and save gain)
-  double max_in = 0.0;
-  for (int64_t n = 0; n < Nt; n++) {
-    for (int64_t ns = 0; ns < Ns; ns++) {
-      max_in = std::max(max_in, fabs(in_sigs[ns * Nt + n]));
-    }
-  }
-
-  constexpr auto min_exp = static_cast<double>(std::numeric_limits<Real>::min_exponent);
-  constexpr auto max_exp = static_cast<double>(std::numeric_limits<Real>::max_exponent);
-
-  auto const aexp      = 0.5; // normalise to middle power of two
-  auto const pow2      = static_cast<int32_t>(std::round(aexp * max_exp + (1 - aexp) * min_exp));
-  auto const norm1     = std::pow(2.0, pow2);
-  auto const inv_infac = norm1 / max_in;
-  auto const infac     = 1.0 / inv_infac;
-
-  printf(
-      "max_in = %.16e, pow2 = %d, norm1 = %.16e, inv_infac = %.16e, infac = "
-      "%.16e\n",
-      max_in,
-      pow2,
-      norm1,
-      inv_infac,
-      infac
-  );
-
-  // normalise input data
-  for (int64_t ns = 0; ns < Ns; ns++) {
-    for (int64_t n = 0; n < Nt; n++) {
-      in_sigs[ns * Nt + n] *= inv_infac;
-    }
-  }
-
-  sim.infac   = infac;
-  sim.in_sigs = in_sigs;
-}
-
-// undo that scaling
-void rescaleOutput(Simulation3D& sim) {
-  int64_t const Nt = sim.Nt;
-  int64_t const Nr = sim.Nr;
-  double infac     = sim.infac;
-  double* u_out    = sim.u_out;
-
-  std::transform(u_out, u_out + Nr * Nt, u_out, [infac](auto sample) { return sample * infac; });
-}
-
-void writeOutputs(Simulation3D& sim, std::filesystem::path const& simDir) {
+void writeOutputs(Simulation3D<Real>& sim, std::filesystem::path const& simDir) {
   auto Nt           = static_cast<size_t>(sim.Nt);
   auto Nr           = static_cast<size_t>(sim.Nr);
   auto* out_reorder = sim.out_reorder;

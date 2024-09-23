@@ -78,7 +78,8 @@ auto process_bnl_fd(
   return getTime() - start;
 }
 
-auto run(Simulation3D& sd) -> void {
+template<typename Float>
+auto run(Simulation3D<Float>& sd) -> void {
   // keep local ints, scalars
   int64_t const Ns   = sd.Ns;
   int64_t const Nr   = sd.Nr;
@@ -93,31 +94,31 @@ auto run(Simulation3D& sd) -> void {
   int8_t* Mb         = sd.Mb;
 
   // keep local copies of pointers (style choice)
-  int64_t* bn_ixyz         = sd.bn_ixyz;
-  int64_t* bnl_ixyz        = sd.bnl_ixyz;
-  int64_t* bna_ixyz        = sd.bna_ixyz;
-  int64_t* in_ixyz         = sd.in_ixyz;
-  int64_t* out_ixyz        = sd.out_ixyz;
-  uint16_t* adj_bn         = sd.adj_bn;
-  uint8_t* bn_mask         = sd.bn_mask;
-  int8_t* mat_bnl          = sd.mat_bnl;
-  int8_t* Q_bna            = sd.Q_bna;
-  double* in_sigs          = sd.in_sigs;
-  double* u_out            = sd.u_out;
-  int8_t const fcc_flag    = sd.fcc_flag;
-  Real* ssaf_bnl           = sd.ssaf_bnl;
-  Real* mat_beta           = sd.mat_beta;
-  MatQuad<Real>* mat_quads = sd.mat_quads;
+  int64_t* bn_ixyz          = sd.bn_ixyz;
+  int64_t* bnl_ixyz         = sd.bnl_ixyz;
+  int64_t* bna_ixyz         = sd.bna_ixyz;
+  int64_t* in_ixyz          = sd.in_ixyz;
+  int64_t* out_ixyz         = sd.out_ixyz;
+  uint16_t* adj_bn          = sd.adj_bn;
+  uint8_t* bn_mask          = sd.bn_mask;
+  int8_t* mat_bnl           = sd.mat_bnl;
+  int8_t* Q_bna             = sd.Q_bna;
+  double* in_sigs           = sd.in_sigs;
+  double* u_out             = sd.u_out;
+  int8_t const fcc_flag     = sd.fcc_flag;
+  Float* ssaf_bnl           = sd.ssaf_bnl;
+  Float* mat_beta           = sd.mat_beta;
+  MatQuad<Float>* mat_quads = sd.mat_quads;
 
   // allocate memory
-  auto u0_buf   = std::vector<Real>(static_cast<size_t>(Npts));
-  auto u1_buf   = std::vector<Real>(static_cast<size_t>(Npts));
-  auto u0b_buf  = std::vector<Real>(static_cast<size_t>(Nbl));
-  auto u1b_buf  = std::vector<Real>(static_cast<size_t>(Nbl));
-  auto u2b_buf  = std::vector<Real>(static_cast<size_t>(Nbl));
-  auto u2ba_buf = std::vector<Real>(static_cast<size_t>(Nba));
-  auto vh1_buf  = std::vector<Real>(static_cast<size_t>(Nbl * MMb));
-  auto gh1_buf  = std::vector<Real>(static_cast<size_t>(Nbl * MMb));
+  auto u0_buf   = std::vector<Float>(static_cast<size_t>(Npts));
+  auto u1_buf   = std::vector<Float>(static_cast<size_t>(Npts));
+  auto u0b_buf  = std::vector<Float>(static_cast<size_t>(Nbl));
+  auto u1b_buf  = std::vector<Float>(static_cast<size_t>(Nbl));
+  auto u2b_buf  = std::vector<Float>(static_cast<size_t>(Nbl));
+  auto u2ba_buf = std::vector<Float>(static_cast<size_t>(Nba));
+  auto vh1_buf  = std::vector<Float>(static_cast<size_t>(Nbl * MMb));
+  auto gh1_buf  = std::vector<Float>(static_cast<size_t>(Nbl * MMb));
 
   auto* u0   = u0_buf.data();
   auto* u1   = u1_buf.data();
@@ -225,7 +226,7 @@ auto run(Simulation3D& sd) -> void {
           while (iz < Nz - 1) {
             int64_t const ii = ix * NzNy + iy * Nz + iz;
             if ((GET_BIT(bn_mask[ii >> 3], ii % 8)) == 0) {
-              Real partial = a1 * u1[ii] - u0[ii];
+              Float partial = a1 * u1[ii] - u0[ii];
               partial += a2 * u1[ii + NzNy + Nz];
               partial += a2 * u1[ii - NzNy - Nz];
               partial += a2 * u1[ii + Nz + 1];
@@ -247,7 +248,7 @@ auto run(Simulation3D& sd) -> void {
     }
     // ABC loss (2nd-order accurate first-order Engquist-Majda)
     for (int64_t nb = 0; nb < Nba; nb++) {
-      Real const lQ    = l * Q_bna[nb];
+      Float const lQ   = l * Q_bna[nb];
       int64_t const ib = bna_ixyz[nb];
       u0[ib]           = (u0[ib] + lQ * u2ba[nb]) / (1.0 + lQ);
     }
@@ -262,18 +263,18 @@ auto run(Simulation3D& sd) -> void {
         auto const adj  = adj_bn[nb];
         auto const Kint = std::popcount(adj);
 
-        auto const _2 = static_cast<Real>(2.0);
-        auto const K  = static_cast<Real>(Kint);
-        auto const b2 = static_cast<Real>(a2);
+        auto const _2 = static_cast<Float>(2.0);
+        auto const K  = static_cast<Float>(Kint);
+        auto const b2 = static_cast<Float>(a2);
         auto const b1 = (_2 - sl2 * K);
 
         auto partial = b1 * u1[ii] - u0[ii];
-        partial += b2 * get_bit_as<Real>(adj, 0) * u1[ii + NzNy];
-        partial += b2 * get_bit_as<Real>(adj, 1) * u1[ii - NzNy];
-        partial += b2 * get_bit_as<Real>(adj, 2) * u1[ii + Nz];
-        partial += b2 * get_bit_as<Real>(adj, 3) * u1[ii - Nz];
-        partial += b2 * get_bit_as<Real>(adj, 4) * u1[ii + 1];
-        partial += b2 * get_bit_as<Real>(adj, 5) * u1[ii - 1];
+        partial += b2 * get_bit_as<Float>(adj, 0) * u1[ii + NzNy];
+        partial += b2 * get_bit_as<Float>(adj, 1) * u1[ii - NzNy];
+        partial += b2 * get_bit_as<Float>(adj, 2) * u1[ii + Nz];
+        partial += b2 * get_bit_as<Float>(adj, 3) * u1[ii - Nz];
+        partial += b2 * get_bit_as<Float>(adj, 4) * u1[ii + 1];
+        partial += b2 * get_bit_as<Float>(adj, 5) * u1[ii - 1];
         u0[ii] = partial;
       }
     } else if (fcc_flag > 0) {
@@ -283,24 +284,24 @@ auto run(Simulation3D& sd) -> void {
         auto const adj  = adj_bn[nb];
         auto const Kint = std::popcount(adj);
 
-        auto const _2 = static_cast<Real>(2.0);
-        auto const K  = static_cast<Real>(Kint);
-        auto const b2 = static_cast<Real>(a2);
+        auto const _2 = static_cast<Float>(2.0);
+        auto const K  = static_cast<Float>(Kint);
+        auto const b2 = static_cast<Float>(a2);
         auto const b1 = (_2 - sl2 * K);
 
         auto partial = b1 * u1[ii] - u0[ii];
-        partial += b2 * get_bit_as<Real>(adj, 0) * u1[ii + NzNy + Nz];
-        partial += b2 * get_bit_as<Real>(adj, 1) * u1[ii - NzNy - Nz];
-        partial += b2 * get_bit_as<Real>(adj, 2) * u1[ii + Nz + 1];
-        partial += b2 * get_bit_as<Real>(adj, 3) * u1[ii - Nz - 1];
-        partial += b2 * get_bit_as<Real>(adj, 4) * u1[ii + NzNy + 1];
-        partial += b2 * get_bit_as<Real>(adj, 5) * u1[ii - NzNy - 1];
-        partial += b2 * get_bit_as<Real>(adj, 6) * u1[ii + NzNy - Nz];
-        partial += b2 * get_bit_as<Real>(adj, 7) * u1[ii - NzNy + Nz];
-        partial += b2 * get_bit_as<Real>(adj, 8) * u1[ii + Nz - 1];
-        partial += b2 * get_bit_as<Real>(adj, 9) * u1[ii - Nz + 1];
-        partial += b2 * get_bit_as<Real>(adj, 10) * u1[ii + NzNy - 1];
-        partial += b2 * get_bit_as<Real>(adj, 11) * u1[ii - NzNy + 1];
+        partial += b2 * get_bit_as<Float>(adj, 0) * u1[ii + NzNy + Nz];
+        partial += b2 * get_bit_as<Float>(adj, 1) * u1[ii - NzNy - Nz];
+        partial += b2 * get_bit_as<Float>(adj, 2) * u1[ii + Nz + 1];
+        partial += b2 * get_bit_as<Float>(adj, 3) * u1[ii - Nz - 1];
+        partial += b2 * get_bit_as<Float>(adj, 4) * u1[ii + NzNy + 1];
+        partial += b2 * get_bit_as<Float>(adj, 5) * u1[ii - NzNy - 1];
+        partial += b2 * get_bit_as<Float>(adj, 6) * u1[ii + NzNy - Nz];
+        partial += b2 * get_bit_as<Float>(adj, 7) * u1[ii - NzNy + Nz];
+        partial += b2 * get_bit_as<Float>(adj, 8) * u1[ii + Nz - 1];
+        partial += b2 * get_bit_as<Float>(adj, 9) * u1[ii - Nz + 1];
+        partial += b2 * get_bit_as<Float>(adj, 10) * u1[ii + NzNy - 1];
+        partial += b2 * get_bit_as<Float>(adj, 11) * u1[ii - NzNy + 1];
         u0[ii] = partial;
       }
     }
@@ -328,7 +329,7 @@ auto run(Simulation3D& sd) -> void {
     // add current sample to next (as per update)
     for (int64_t ns = 0; ns < Ns; ns++) {
       int64_t const ii = in_ixyz[ns];
-      u0[ii] += static_cast<Real>(in_sigs[ns * Nt + n]);
+      u0[ii] += static_cast<Float>(in_sigs[ns * Nt + n]);
     }
 
     // swap pointers
@@ -372,6 +373,8 @@ auto run(Simulation3D& sd) -> void {
 
 } // namespace
 
-auto Engine3DCPU::operator()(Simulation3D& sim) const -> void { run(sim); }
+auto Engine3DCPU::operator()(Simulation3D<float>& sim) const -> void { run(sim); }
+
+auto Engine3DCPU::operator()(Simulation3D<double>& sim) const -> void { run(sim); }
 
 } // namespace pffdtd
