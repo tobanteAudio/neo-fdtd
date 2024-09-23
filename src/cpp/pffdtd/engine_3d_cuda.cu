@@ -6,6 +6,7 @@
 #include "pffdtd/assert.hpp"
 #include "pffdtd/config.hpp"
 #include "pffdtd/progress.hpp"
+#include "pffdtd/time.hpp"
 #include "pffdtd/utility.hpp"
 
 #include <cmath>
@@ -39,6 +40,26 @@ __device__ auto fma(Float x, Float y, Float z) -> Float {
   } else {
     static_assert(always_false<Float>);
   }
+}
+
+// standard error checking
+// NOLINTNEXTLINE
+#define gpuErrchk(ans)                                                                                                 \
+  { gpuAssert((ans), __FILE__, __LINE__); }
+
+inline void gpuAssert(cudaError_t code, char const* file, int line, bool abort = true) {
+  if (code != cudaSuccess) {
+    fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+    if (abort) {
+      exit(code);
+    }
+  }
+}
+
+[[nodiscard]] auto elapsedTime(cudaEvent_t start, cudaEvent_t end) -> std::chrono::nanoseconds {
+  auto millis = 0.0F;
+  gpuErrchk(cudaEventElapsedTime(&millis, start, end));
+  return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::duration<float, std::milli>(millis));
 }
 
 // want 0 to map to 1, otherwise kernel errors
@@ -467,20 +488,6 @@ __global__ void FlipHaloYZ_Xend(Float* __restrict__ u1) {
   }
 }
 
-// standard error checking
-// NOLINTNEXTLINE
-#define gpuErrchk(ans)                                                                                                 \
-  { gpuAssert((ans), __FILE__, __LINE__); }
-
-inline void gpuAssert(cudaError_t code, char const* file, int line, bool abort = true) {
-  if (code != cudaSuccess) {
-    fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-    if (abort) {
-      exit(code);
-    }
-  }
-}
-
 // print some device details
 auto print_gpu_details(int i) -> uint64_t {
   cudaDeviceProp prop{};
@@ -719,14 +726,12 @@ static auto run(Simulation3D const& sim) -> void {
   Real sl2 = sim.sl2;
 
   // timing stuff
-  double elapsed                  = 0.0;
-  double elapsedBoundary          = 0.0;
-  double elapsedSample            = 0.0;
-  double elapsedSampleBoundary    = 0.0;
-  double elapsedAir               = 0.0; // feed into print/process
-  double elapsedSampleAir         = 0.0; // feed into print/process
-  float millis_since_start        = 0.0;
-  float millis_since_sample_start = 0.0;
+  auto elapsed               = std::chrono::nanoseconds{0};
+  auto elapsedBoundary       = std::chrono::nanoseconds{0};
+  auto elapsedSample         = std::chrono::nanoseconds{0};
+  auto elapsedSampleBoundary = std::chrono::nanoseconds{0};
+  auto elapsedAir            = std::chrono::nanoseconds{0};
+  auto elapsedSampleAir      = std::chrono::nanoseconds{0};
 
   std::printf("a1 = %.16g\n", a1);
   std::printf("a2 = %.16g\n", a2);
@@ -1242,24 +1247,15 @@ static auto run(Simulation3D const& sim) -> void {
     {
       // timing only on gpu0
       gpuErrchk(cudaSetDevice(0));
-      DeviceData<Real>* gd = &(gds[0]);
       gpuErrchk(cudaEventSynchronize(cuEv_main_sample_end)); // not sure this is correct
-      gpuErrchk(cudaEventElapsedTime(&millis_since_start, cuEv_main_start, cuEv_main_sample_end));
-      gpuErrchk(cudaEventElapsedTime(&millis_since_sample_start, cuEv_main_sample_start, cuEv_main_sample_end));
 
-      elapsed       = millis_since_start / 1000;
-      elapsedSample = millis_since_sample_start / 1000;
+      DeviceData<Real>& gd  = gds[0];
+      elapsed               = elapsedTime(cuEv_main_start, cuEv_main_sample_end);
+      elapsedSample         = elapsedTime(cuEv_main_sample_start, cuEv_main_sample_end);
+      elapsedSampleAir      = elapsedTime(gd.cuEv_air_start, gd.cuEv_air_end);
+      elapsedSampleBoundary = elapsedTime(gd.cuEv_bn_roundtrip_start, gd.cuEv_bn_roundtrip_end);
 
-      float millis_air = NAN;
-      float millis_bn  = NAN;
-      gpuErrchk(cudaEventElapsedTime(&millis_air, gd->cuEv_air_start, gd->cuEv_air_end));
-      elapsedSampleAir = 0.001 * millis_air;
       elapsedAir += elapsedSampleAir;
-
-      // not full picutre, only first gpu
-      gpuErrchk(cudaEventElapsedTime(&millis_bn, gd->cuEv_bn_roundtrip_start, gd->cuEv_bn_roundtrip_end));
-
-      elapsedSampleBoundary = millis_bn / 1000.0;
       elapsedBoundary += elapsedSampleBoundary;
 
       print(ProgressReport{
@@ -1267,12 +1263,12 @@ static auto run(Simulation3D const& sim) -> void {
           .Nt                    = sim.Nt,
           .Npts                  = sim.Npts,
           .Nb                    = sim.Nb,
-          .elapsed               = std::chrono::nanoseconds{static_cast<long>(elapsed * 1e9)},
-          .elapsedSample         = std::chrono::nanoseconds{static_cast<long>(elapsedSample * 1e9)},
-          .elapsedAir            = std::chrono::nanoseconds{static_cast<long>(elapsedAir * 1e9)},
-          .elapsedSampleAir      = std::chrono::nanoseconds{static_cast<long>(elapsedSampleAir * 1e9)},
-          .elapsedBoundary       = std::chrono::nanoseconds{static_cast<long>(elapsedBoundary * 1e9)},
-          .elapsedSampleBoundary = std::chrono::nanoseconds{static_cast<long>(elapsedSampleBoundary * 1e9)},
+          .elapsed               = elapsed,
+          .elapsedSample         = elapsedSample,
+          .elapsedAir            = elapsedAir,
+          .elapsedSampleAir      = elapsedSampleAir,
+          .elapsedBoundary       = elapsedBoundary,
+          .elapsedSampleBoundary = elapsedSampleBoundary,
           .numWorkers            = ngpus,
       });
     }
@@ -1290,8 +1286,7 @@ static auto run(Simulation3D const& sim) -> void {
     gpuErrchk(cudaEventRecord(cuEv_main_end));
     gpuErrchk(cudaEventSynchronize(cuEv_main_end));
 
-    gpuErrchk(cudaEventElapsedTime(&millis_since_start, cuEv_main_start, cuEv_main_end));
-    elapsed = millis_since_start / 1000;
+    elapsed = elapsedTime(cuEv_main_start, cuEv_main_end);
   }
 
   /*------------------------
@@ -1354,9 +1349,13 @@ static auto run(Simulation3D const& sim) -> void {
     gpuErrchk(cudaDeviceReset());
   }
 
-  std::printf("Boundary loop: %.6fs, %.2f Mvox/s\n", elapsedBoundary, sim.Nb * sim.Nt / 1e6 / elapsedBoundary);
-  std::printf("Air update: %.6fs, %.2f Mvox/s\n", elapsedAir, sim.Npts * sim.Nt / 1e6 / elapsedAir);
-  std::printf("Combined (total): %.6fs, %.2f Mvox/s\n", elapsed, sim.Npts * sim.Nt / 1e6 / elapsed);
+  auto const elapsedSec         = Seconds(elapsed).count();
+  auto const elapsedAirSec      = Seconds(elapsedAir).count();
+  auto const elapsedBoundarySec = Seconds(elapsedBoundary).count();
+
+  std::printf("Boundary loop: %.6fs, %.2f Mvox/s\n", elapsedBoundarySec, sim.Nb * sim.Nt / 1e6 / elapsedBoundarySec);
+  std::printf("Air update: %.6fs, %.2f Mvox/s\n", elapsedAirSec, sim.Npts * sim.Nt / 1e6 / elapsedAirSec);
+  std::printf("Combined (total): %.6fs, %.2f Mvox/s\n", elapsedSec, sim.Npts * sim.Nt / 1e6 / elapsedSec);
 }
 
 auto Engine3DCUDA::operator()(Simulation3D& sim) const -> void { run(sim); }
