@@ -15,6 +15,7 @@
 #include <cstring>
 #include <filesystem>
 #include <limits>
+#include <vector>
 
 namespace pffdtd {
 
@@ -33,43 +34,43 @@ struct MatQuad {
 // main sim data, on host
 template<typename Real>
 struct Simulation3D {
-  int64_t* bn_ixyz;         // boundary node indices
-  int64_t* bnl_ixyz;        // lossy boundary node indices
-  int64_t* bna_ixyz;        // absorbing boundary node indices
-  int8_t* Q_bna;            // integer for ABCs (wall 1,edge 2,corner 3)
-  int64_t* in_ixyz;         // input points
-  int64_t* out_ixyz;        // output points
-  int64_t* out_reorder;     // ordering for outputs point for final print/save
-  uint16_t* adj_bn;         // nearest-neighbour adjancencies for all boundary nodes
-  Real* ssaf_bnl;           // surface area corrections (with extra volume scaling)
-  uint8_t* bn_mask;         // bit mask for bounday nodes
-  int8_t* mat_bnl;          // material indices for lossy boundary nodes
-  int8_t* K_bn;             // number of adjacent neighbours, boundary nodesa
-  double* in_sigs;          // input signals
-  double* u_out;            // for output signals
-  int64_t Ns;               // number of input grid points
-  int64_t Nr;               // number of output grid points
-  int64_t Nt;               // number of samples simulation
-  int64_t Npts;             // number of Cartesian grid points
-  int64_t Nx;               // x-dim (non-continguous)
-  int64_t Ny;               // y-dim
-  int64_t Nz;               // z-dim (continguous)
-  int64_t Nb;               // number of boundary nodes
-  int64_t Nbl;              // number of lossy boundary nodes
-  int64_t Nba;              // number of ABC nodes
-  double l;                 // Courant number (CFL)
-  double l2;                // CFL number squared
-  int8_t fcc_flag;          // boolean for FCC
-  int8_t NN;                // integer, neareast neighbours
-  int8_t Nm;                // number of materials used
-  int8_t* Mb;               // number of branches per material
-  MatQuad<Real>* mat_quads; // RLC coefficients (essentially)
-  Real* mat_beta;           // part of FD-boundaries one per material
-  double infac;             // rescaling of input (for numerical reason)
-  Real sl2;                 // scaled l2 (for single precision)
-  Real lo2;                 // 0.5*l
-  Real a2;                  // update stencil coefficient
-  Real a1;                  // update stencil coefficient
+  std::vector<int64_t> bn_ixyz;         // boundary node indices
+  std::vector<int64_t> bnl_ixyz;        // lossy boundary node indices
+  std::vector<int64_t> bna_ixyz;        // absorbing boundary node indices
+  int8_t* Q_bna;                        // integer for ABCs (wall 1,edge 2,corner 3)
+  std::vector<int64_t> in_ixyz;         // input points
+  std::vector<int64_t> out_ixyz;        // output points
+  std::vector<int64_t> out_reorder;     // ordering for outputs point for final print/save
+  std::vector<uint16_t> adj_bn;         // nearest-neighbour adjancencies for all boundary nodes
+  std::vector<Real> ssaf_bnl;           // surface area corrections (with extra volume scaling)
+  std::vector<uint8_t> bn_mask;         // bit mask for bounday nodes
+  std::vector<int8_t> mat_bnl;          // material indices for lossy boundary nodes
+  std::vector<int8_t> K_bn;             // number of adjacent neighbours, boundary nodesa
+  std::vector<double> in_sigs;          // input signals
+  std::unique_ptr<double[]> u_out;      // for output signals
+  int64_t Ns;                           // number of input grid points
+  int64_t Nr;                           // number of output grid points
+  int64_t Nt;                           // number of samples simulation
+  int64_t Npts;                         // number of Cartesian grid points
+  int64_t Nx;                           // x-dim (non-continguous)
+  int64_t Ny;                           // y-dim
+  int64_t Nz;                           // z-dim (continguous)
+  int64_t Nb;                           // number of boundary nodes
+  int64_t Nbl;                          // number of lossy boundary nodes
+  int64_t Nba;                          // number of ABC nodes
+  double l;                             // Courant number (CFL)
+  double l2;                            // CFL number squared
+  int8_t fcc_flag;                      // boolean for FCC
+  int8_t NN;                            // integer, neareast neighbours
+  int8_t Nm;                            // number of materials used
+  std::vector<int8_t> Mb;               // number of branches per material
+  std::vector<MatQuad<Real>> mat_quads; // RLC coefficients (essentially)
+  std::vector<Real> mat_beta;           // part of FD-boundaries one per material
+  double infac;                         // rescaling of input (for numerical reason)
+  Real sl2;                             // scaled l2 (for single precision)
+  Real lo2;                             // 0.5*l
+  Real a2;                              // update stencil coefficient
+  Real a1;                              // update stencil coefficient
 };
 
 [[nodiscard]] auto loadSimulation3D_float(std::filesystem::path const& simDir) -> Simulation3D<float>;
@@ -95,7 +96,7 @@ template<typename Real>
 // scale input to be in middle of floating-point range
 template<typename Real>
 void scaleInput(Simulation3D<Real>& sim) {
-  double* in_sigs  = sim.in_sigs;
+  auto* in_sigs    = sim.in_sigs.data();
   int64_t const Nt = sim.Nt;
   int64_t const Ns = sim.Ns;
 
@@ -133,8 +134,7 @@ void scaleInput(Simulation3D<Real>& sim) {
     }
   }
 
-  sim.infac   = infac;
-  sim.in_sigs = in_sigs;
+  sim.infac = infac;
 }
 
 template<typename Real>
@@ -142,30 +142,14 @@ void rescaleOutput(Simulation3D<Real>& sim) {
   int64_t const Nt = sim.Nt;
   int64_t const Nr = sim.Nr;
   double infac     = sim.infac;
-  double* u_out    = sim.u_out;
+  double* u_out    = sim.u_out.get();
 
   std::transform(u_out, u_out + Nr * Nt, u_out, [infac](auto sample) { return sample * infac; });
 }
 
 template<typename Real>
 void freeSimulation3D(Simulation3D<Real> const& sim) {
-  delete[] sim.bn_ixyz;
-  delete[] sim.bnl_ixyz;
-  delete[] sim.bna_ixyz;
   delete[] sim.Q_bna;
-  delete[] sim.adj_bn;
-  delete[] sim.mat_bnl;
-  delete[] sim.bn_mask;
-  delete[] sim.ssaf_bnl;
-  delete[] sim.K_bn;
-  delete[] sim.in_ixyz;
-  delete[] sim.out_ixyz;
-  delete[] sim.out_reorder;
-  delete[] sim.in_sigs;
-  delete[] sim.u_out;
-  delete[] sim.Mb;
-  delete[] sim.mat_beta;
-  delete[] sim.mat_quads;
 }
 
 } // namespace pffdtd

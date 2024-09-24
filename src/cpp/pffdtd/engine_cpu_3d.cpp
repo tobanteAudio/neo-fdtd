@@ -91,24 +91,24 @@ auto run(Simulation3D<Real> const& sd) -> void {
   int64_t const Nb   = sd.Nb;
   int64_t const Nbl  = sd.Nbl;
   int64_t const Nba  = sd.Nba;
-  int8_t* Mb         = sd.Mb;
 
   // keep local copies of pointers (style choice)
-  int64_t* bn_ixyz         = sd.bn_ixyz;
-  int64_t* bnl_ixyz        = sd.bnl_ixyz;
-  int64_t* bna_ixyz        = sd.bna_ixyz;
-  int64_t* in_ixyz         = sd.in_ixyz;
-  int64_t* out_ixyz        = sd.out_ixyz;
-  uint16_t* adj_bn         = sd.adj_bn;
-  uint8_t* bn_mask         = sd.bn_mask;
-  int8_t* mat_bnl          = sd.mat_bnl;
-  int8_t* Q_bna            = sd.Q_bna;
-  double* in_sigs          = sd.in_sigs;
-  double* u_out            = sd.u_out;
-  int8_t const fcc_flag    = sd.fcc_flag;
-  Real* ssaf_bnl           = sd.ssaf_bnl;
-  Real* mat_beta           = sd.mat_beta;
-  MatQuad<Real>* mat_quads = sd.mat_quads;
+  int8_t const* Mb               = sd.Mb.data();
+  int64_t const* bn_ixyz         = sd.bn_ixyz.data();
+  int64_t const* bnl_ixyz        = sd.bnl_ixyz.data();
+  int64_t const* bna_ixyz        = sd.bna_ixyz.data();
+  int64_t const* in_ixyz         = sd.in_ixyz.data();
+  int64_t const* out_ixyz        = sd.out_ixyz.data();
+  uint16_t const* adj_bn         = sd.adj_bn.data();
+  uint8_t const* bn_mask         = sd.bn_mask.data();
+  int8_t const* mat_bnl          = sd.mat_bnl.data();
+  int8_t* Q_bna                  = sd.Q_bna;
+  double const* in_sigs          = sd.in_sigs.data();
+  int8_t const fcc_flag          = sd.fcc_flag;
+  Real const* ssaf_bnl           = sd.ssaf_bnl.data();
+  Real const* mat_beta           = sd.mat_beta.data();
+  MatQuad<Real> const* mat_quads = sd.mat_quads.data();
+  double* u_out                  = sd.u_out.get();
 
   // allocate memory
   auto u0_buf   = std::vector<Real>(static_cast<size_t>(Npts));

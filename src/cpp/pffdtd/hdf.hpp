@@ -79,20 +79,14 @@ struct H5FReader {
     auto set   = H5Dopen(_handle, dataset, H5P_DEFAULT);
     auto space = H5Dget_space(set);
 
-    auto ndims = 1;
+    // auto ndims = 1;
+    // PFFDTD_ASSERT(H5Sget_simple_extent_ndims(space) == ndims);
+
+    auto ndims = H5Sget_simple_extent_ndims(space);
     auto dims  = std::array<hsize_t, 3>{};
-    PFFDTD_ASSERT(H5Sget_simple_extent_ndims(space) == ndims);
     H5Sget_simple_extent_dims(space, dims.data(), nullptr);
 
     auto size = ndims == 1 ? dims[0] : dims[0] * dims[1];
-
-    if constexpr (std::is_same_v<T, uint8_t>) {
-      auto type = H5T_NATIVE_UINT8;
-      auto buf  = std::vector<T>(size);
-      auto err  = H5Dread(set, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, buf.data());
-      checkErrorAndCloseDataset(dataset, set, err);
-      return buf;
-    }
 
     if constexpr (std::is_same_v<T, int64_t>) {
       auto type = H5T_NATIVE_INT64;
@@ -100,14 +94,26 @@ struct H5FReader {
       auto err  = H5Dread(set, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, buf.data());
       checkErrorAndCloseDataset(dataset, set, err);
       return buf;
-    }
-
-    if constexpr (std::is_same_v<T, double>) {
+    } else if constexpr (std::is_same_v<T, uint8_t>) {
+      auto type = H5T_NATIVE_UINT8;
+      auto buf  = std::vector<T>(size);
+      auto err  = H5Dread(set, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, buf.data());
+      checkErrorAndCloseDataset(dataset, set, err);
+      return buf;
+    } else if constexpr (std::is_same_v<T, int8_t>) {
+      auto type = H5T_NATIVE_INT8;
+      auto buf  = std::vector<T>(size);
+      auto err  = H5Dread(set, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, buf.data());
+      checkErrorAndCloseDataset(dataset, set, err);
+      return buf;
+    } else if constexpr (std::is_same_v<T, double>) {
       auto type = H5T_NATIVE_DOUBLE;
       auto buf  = std::vector<T>(size);
       auto err  = H5Dread(set, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, buf.data());
       checkErrorAndCloseDataset(dataset, set, err);
       return buf;
+    } else {
+      static_assert(always_false<T>);
     }
   }
 

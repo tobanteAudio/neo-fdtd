@@ -106,21 +106,21 @@ __constant__ int8_t cuMb[MNm]; // to store Mb per mat
 // this is data on host, sometimes copied and recomputed for copy to GPU devices
 // (indices), sometimes just aliased pointers (scalar arrays)
 template<typename Real>
-struct HostData {      // arrays on host (for copy), mirrors gpu local data
-  double* in_sigs{};   // aliased
-  Real* u_out_buf{};   // aliased
-  double* u_out{};     // aliased
-  Real* ssaf_bnl{};    // aliased
-  int64_t* in_ixyz{};  // recomputed
-  int64_t* out_ixyz{}; // recomputed
-  int64_t* bn_ixyz{};  // recomputed
-  int64_t* bnl_ixyz{}; // recomputed
-  int64_t* bna_ixyz{}; // recomputed
-  int8_t* Q_bna{};     // aliased
-  uint16_t* adj_bn{};  // aliased
-  int8_t* mat_bnl{};   // aliased
-  uint8_t* bn_mask{};  // recomputed
-  int8_t* K_bn{};      // aliased
+struct HostData {           // arrays on host (for copy), mirrors gpu local data
+  double const* in_sigs{};  // aliased
+  Real* u_out_buf{};        // aliased
+  double* u_out{};          // aliased
+  Real const* ssaf_bnl{};   // aliased
+  int64_t* in_ixyz{};       // recomputed
+  int64_t* out_ixyz{};      // recomputed
+  int64_t* bn_ixyz{};       // recomputed
+  int64_t* bnl_ixyz{};      // recomputed
+  int64_t* bna_ixyz{};      // recomputed
+  int8_t* Q_bna{};          // aliased
+  uint16_t const* adj_bn{}; // aliased
+  int8_t const* mat_bnl{};  // aliased
+  uint8_t* bn_mask{};       // recomputed
+  int8_t const* K_bn{};     // aliased
   int64_t Ns{};
   int64_t Nr{};
   int64_t Npts{};
@@ -546,16 +546,16 @@ auto print_gpu_details(int i) -> uint64_t {
 // input indices need to be sorted for multi-device allocation
 template<typename Real>
 void checkSorted(Simulation3D<Real> const& sim) {
-  int64_t* bn_ixyz  = sim.bn_ixyz;
-  int64_t* bnl_ixyz = sim.bnl_ixyz;
-  int64_t* bna_ixyz = sim.bna_ixyz;
-  int64_t* in_ixyz  = sim.in_ixyz;
-  int64_t* out_ixyz = sim.out_ixyz;
-  int64_t const Nb  = sim.Nb;
-  int64_t const Nbl = sim.Nbl;
-  int64_t const Nba = sim.Nba;
-  int64_t const Ns  = sim.Ns;
-  int64_t const Nr  = sim.Nr;
+  int64_t const* bn_ixyz  = sim.bn_ixyz.data();
+  int64_t const* bnl_ixyz = sim.bnl_ixyz.data();
+  int64_t const* bna_ixyz = sim.bna_ixyz.data();
+  int64_t const* in_ixyz  = sim.in_ixyz.data();
+  int64_t const* out_ixyz = sim.out_ixyz.data();
+  int64_t const Nb        = sim.Nb;
+  int64_t const Nbl       = sim.Nbl;
+  int64_t const Nba       = sim.Nba;
+  int64_t const Ns        = sim.Ns;
+  int64_t const Nr        = sim.Nr;
   for (int64_t i = 1; i < Nb; i++) {
     PFFDTD_ASSERT(bn_ixyz[i] > bn_ixyz[i - 1]); // check save_gpu_folder
   }
@@ -624,8 +624,8 @@ void splitData(Simulation3D<Real> const& sim, std::span<HostData<Real>> ghds) {
   }
 
   // bn_ixyz - Nb
-  int64_t* bn_ixyz = sim.bn_ixyz;
-  int64_t const Nb = sim.Nb;
+  int64_t const* bn_ixyz = sim.bn_ixyz.data();
+  int64_t const Nb       = sim.Nb;
   {
     int gid = 0;
     for (int64_t i = 0; i < Nb; i++) {
@@ -644,8 +644,8 @@ void splitData(Simulation3D<Real> const& sim, std::span<HostData<Real>> ghds) {
   PFFDTD_ASSERT(Nb_check == Nb);
 
   // bnl_ixyz - Nbl
-  int64_t* bnl_ixyz = sim.bnl_ixyz;
-  int64_t const Nbl = sim.Nbl;
+  int64_t const* bnl_ixyz = sim.bnl_ixyz.data();
+  int64_t const Nbl       = sim.Nbl;
   {
     int gid = 0;
     for (int64_t i = 0; i < Nbl; i++) {
@@ -664,8 +664,8 @@ void splitData(Simulation3D<Real> const& sim, std::span<HostData<Real>> ghds) {
   PFFDTD_ASSERT(Nbl_check == Nbl);
 
   // bna_ixyz - Nba
-  int64_t* bna_ixyz = sim.bna_ixyz;
-  int64_t const Nba = sim.Nba;
+  int64_t const* bna_ixyz = sim.bna_ixyz.data();
+  int64_t const Nba       = sim.Nba;
   {
     int gid = 0;
     for (int64_t i = 0; i < Nba; i++) {
@@ -684,8 +684,8 @@ void splitData(Simulation3D<Real> const& sim, std::span<HostData<Real>> ghds) {
   PFFDTD_ASSERT(Nba_check == Nba);
 
   // in_ixyz - Ns
-  int64_t* in_ixyz = sim.in_ixyz;
-  int64_t const Ns = sim.Ns;
+  int64_t const* in_ixyz = sim.in_ixyz.data();
+  int64_t const Ns       = sim.Ns;
   {
     int gid = 0;
     for (int64_t i = 0; i < Ns; i++) {
@@ -704,8 +704,8 @@ void splitData(Simulation3D<Real> const& sim, std::span<HostData<Real>> ghds) {
   PFFDTD_ASSERT(Ns_check == Ns);
 
   // out_ixyz - Nr
-  int64_t* out_ixyz = sim.out_ixyz;
-  int64_t const Nr  = sim.Nr;
+  int64_t const* out_ixyz = sim.out_ixyz.data();
+  int64_t const Nr        = sim.Nr;
   {
     int gid = 0;
     for (int64_t i = 0; i < Nr; i++) {
@@ -829,13 +829,13 @@ auto run(Simulation3D<Real> const& sim) -> void {
     std::printf("Nx=%ld Ns=%ld Nr=%ld Nb=%ld, Npts=%ld\n", host.Nx, host.Ns, host.Nr, host.Nb, host.Npts);
 
     // aliased pointers (to memory already allocated)
-    host.in_sigs   = sim.in_sigs + Ns_read * sim.Nt;
-    host.ssaf_bnl  = sim.ssaf_bnl + Nbl_read;
-    host.adj_bn    = sim.adj_bn + Nb_read;
-    host.mat_bnl   = sim.mat_bnl + Nbl_read;
-    host.K_bn      = sim.K_bn + Nb_read;
+    host.in_sigs   = sim.in_sigs.data() + Ns_read * sim.Nt;
+    host.ssaf_bnl  = sim.ssaf_bnl.data() + Nbl_read;
+    host.adj_bn    = sim.adj_bn.data() + Nb_read;
+    host.mat_bnl   = sim.mat_bnl.data() + Nbl_read;
+    host.K_bn      = sim.K_bn.data() + Nb_read;
     host.Q_bna     = sim.Q_bna + Nba_read;
-    host.u_out     = sim.u_out + Nr_read * sim.Nt;
+    host.u_out     = sim.u_out.get() + Nr_read * sim.Nt;
     host.u_out_buf = u_out_buf + Nr_read;
 
     // recalculate indices, these are associated host versions to copy over to devices
@@ -941,12 +941,15 @@ auto run(Simulation3D<Real> const& sim) -> void {
     gpuErrchk(cudaMemcpy(gpu.mat_bnl, host.mat_bnl, (size_t)host.Nbl * sizeof(int8_t), cudaMemcpyHostToDevice));
 
     gpuErrchk(cudaMalloc(&(gpu.mat_beta), (size_t)sim.Nm * sizeof(Real)));
-    gpuErrchk(cudaMemcpy(gpu.mat_beta, sim.mat_beta, (size_t)sim.Nm * sizeof(Real), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(gpu.mat_beta, sim.mat_beta.data(), (size_t)sim.Nm * sizeof(Real), cudaMemcpyHostToDevice));
 
     gpuErrchk(cudaMalloc(&(gpu.mat_quads), (size_t)sim.Nm * MMb * sizeof(MatQuad<Real>)));
-    gpuErrchk(
-        cudaMemcpy(gpu.mat_quads, sim.mat_quads, (size_t)sim.Nm * MMb * sizeof(MatQuad<Real>), cudaMemcpyHostToDevice)
-    );
+    gpuErrchk(cudaMemcpy(
+        gpu.mat_quads,
+        sim.mat_quads.data(),
+        (size_t)sim.Nm * MMb * sizeof(MatQuad<Real>),
+        cudaMemcpyHostToDevice
+    ));
 
     gpuErrchk(cudaMalloc(&(gpu.bn_mask), (size_t)(host.Nbm * sizeof(uint8_t))));
     gpuErrchk(cudaMemcpy(gpu.bn_mask, host.bn_mask, (size_t)host.Nbm * sizeof(uint8_t), cudaMemcpyHostToDevice));
@@ -969,15 +972,15 @@ auto run(Simulation3D<Real> const& sim) -> void {
     std::printf("\n");
 
     // swapping x and z here (CUDA has first dim contiguous)
+    // same for all devices
     gpuErrchk(cudaMemcpyToSymbol(cuNx, &(sim.Nz), sizeof(int64_t)));
     gpuErrchk(cudaMemcpyToSymbol(cuNy, &(sim.Ny), sizeof(int64_t)));
     gpuErrchk(cudaMemcpyToSymbol(cuNz, &(host.Nxh), sizeof(int64_t)));
     gpuErrchk(cudaMemcpyToSymbol(cuNb, &(host.Nb), sizeof(int64_t)));
     gpuErrchk(cudaMemcpyToSymbol(cuNbl, &(host.Nbl), sizeof(int64_t)));
     gpuErrchk(cudaMemcpyToSymbol(cuNba, &(host.Nba), sizeof(int64_t)));
-    gpuErrchk(cudaMemcpyToSymbol(cuMb, sim.Mb, sim.Nm * sizeof(int8_t)));
-    gpuErrchk(cudaMemcpyToSymbol(cuNxNy, &Nzy,
-                                 sizeof(int64_t))); // same for all devices
+    gpuErrchk(cudaMemcpyToSymbol(cuMb, sim.Mb.data(), sim.Nm * sizeof(int8_t)));
+    gpuErrchk(cudaMemcpyToSymbol(cuNxNy, &Nzy, sizeof(int64_t)));
 
     if constexpr (std::is_same_v<Real, float>) {
       gpuErrchk(cudaMemcpyToSymbol(c1_f32, &a1, sizeof(float)));

@@ -70,7 +70,7 @@ void ind2sub3d(int64_t idx, int64_t Nx, int64_t Ny, int64_t Nz, int64_t* ix, int
 }
 
 // double check some index inside grid
-void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t Nz) {
+void check_inside_grid(int64_t const* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t Nz) {
   for (int64_t i = 0; i < N; i++) {
     int64_t iz = 0;
     int64_t iy = 0;
@@ -169,9 +169,8 @@ template<typename Real>
   //////////////////
   // bn_ixyz dataset
   //////////////////
-  expected_ndims   = 1;
-  int64_t* bn_ixyz = read<int64_t>(vox_out, "bn_ixyz", expected_ndims, dims);
-  PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nb);
+  auto bn_ixyz = vox_out.read<std::vector<int64_t>>("bn_ixyz");
+  PFFDTD_ASSERT(std::cmp_equal(bn_ixyz.size(), Nb));
 
   //////////////////
   // adj_bn dataset
@@ -184,9 +183,8 @@ template<typename Real>
   //////////////////
   // mat_bn dataset
   //////////////////
-  expected_ndims = 1;
-  int8_t* mat_bn = read<int8_t>(vox_out, "mat_bn", expected_ndims, dims);
-  PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nb);
+  auto mat_bn = vox_out.read<std::vector<int8_t>>("mat_bn");
+  PFFDTD_ASSERT(std::cmp_equal(mat_bn.size(), Nb));
 
   //////////////////
   // saf_bn dataset
@@ -230,28 +228,23 @@ template<typename Real>
   //////////////////
   // in_ixyz dataset
   //////////////////
-  expected_ndims   = 1;
-  int64_t* in_ixyz = read<int64_t>(signals, "in_ixyz", expected_ndims, dims);
-  PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Ns);
+  auto in_ixyz = signals.read<std::vector<int64_t>>("in_ixyz");
+  PFFDTD_ASSERT(std::cmp_equal(in_ixyz.size(), Ns));
 
   //////////////////
   // out_ixyz dataset
   //////////////////
-  expected_ndims    = 1;
-  int64_t* out_ixyz = read<int64_t>(signals, "out_ixyz", expected_ndims, dims);
-  PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nr);
+  auto out_ixyz = signals.read<std::vector<int64_t>>("out_ixyz");
+  PFFDTD_ASSERT(std::cmp_equal(out_ixyz.size(), Nr));
 
-  expected_ndims       = 1;
-  int64_t* out_reorder = read<int64_t>(signals, "out_reorder", expected_ndims, dims);
-  PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nr);
+  auto out_reorder = signals.read<std::vector<int64_t>>("out_reorder");
+  PFFDTD_ASSERT(std::cmp_equal(out_reorder.size(), Nr));
 
   //////////////////
   // in_sigs dataset
   //////////////////
-  expected_ndims  = 2;
-  double* in_sigs = read<double>(signals, "in_sigs", expected_ndims, dims);
-  PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Ns);
-  PFFDTD_ASSERT(static_cast<int64_t>(dims[1]) == Nt);
+  auto in_sigs = signals.read<std::vector<double>>("in_sigs");
+  PFFDTD_ASSERT(std::cmp_equal(in_sigs.size(), Ns * Nt));
 
   // not recommended to run single without differentiating input
   if (sizeof(Real) == 4) {
@@ -275,8 +268,8 @@ template<typename Real>
   fmt::println("Nm={}", Nm);
   PFFDTD_ASSERT(Nm <= MNm);
 
-  expected_ndims = 1;
-  int8_t* Mb     = read<int8_t>(materials, "Mb", expected_ndims, dims);
+  auto Mb = materials.read<std::vector<int8_t>>("Mb");
+  PFFDTD_ASSERT(std::cmp_equal(Mb.size(), Nm));
 
   for (int8_t i = 0; i < Nm; i++) {
     fmt::println("Mb[{}]={}", i, Mb[i]);
@@ -285,8 +278,8 @@ template<typename Real>
   //////////////////
   // DEF (RLC) datasets
   //////////////////
-  auto* mat_beta  = allocate_zeros<Real>(Nm);
-  auto* mat_quads = allocate_zeros<MatQuad<Real>>(static_cast<unsigned long>(Nm) * MMb);
+  auto mat_beta  = std::vector<Real>(size_t(Nm));
+  auto mat_quads = std::vector<MatQuad<Real>>(static_cast<unsigned long>(Nm) * size_t(MMb));
   for (int8_t i = 0; i < Nm; i++) {
     expected_ndims = 2;
     auto* DEF      = read<double>(materials, fmt::format("mat_{:02d}_DEF", i).c_str(), expected_ndims, dims);
@@ -331,7 +324,7 @@ template<typename Real>
   //////////////////
   // check bn_ixyz
   //////////////////
-  check_inside_grid(bn_ixyz, Nb, Nx, Ny, Nz);
+  check_inside_grid(bn_ixyz.data(), Nb, Nx, Ny, Nz);
   fmt::println("bn_ixyz checked");
 
   //////////////////
@@ -355,7 +348,7 @@ template<typename Real>
   //////////////////
   // bit-pack and check adj_bn
   //////////////////
-  auto* adj_bn = allocate_zeros<uint16_t>(Nb);
+  auto adj_bn = std::vector<uint16_t>(size_t(Nb));
 
   for (int64_t i = 0; i < Nb; i++) {
     for (int8_t j = 0; j < NN; j++) {
@@ -375,8 +368,7 @@ template<typename Real>
   //////////////////
   // calculate K_bn from adj_bn
   //////////////////
-  auto* K_bn = allocate_zeros<int8_t>(Nb);
-
+  auto K_bn = std::vector<int8_t>(size_t(Nb));
   for (int64_t nb = 0; nb < Nb; nb++) {
     K_bn[nb] = 0;
     for (uint8_t nn = 0; nn < NN; nn++) {
@@ -390,14 +382,14 @@ template<typename Real>
   //////////////////
   // make compressed bit-mask
   int64_t const Nbm = (Npts - 1) / 8 + 1;
-  auto* bn_mask     = allocate_zeros<uint8_t>(Nbm); // one bit per
+  auto bn_mask      = std::vector<uint8_t>(size_t(Nbm)); // one bit per
   for (int64_t i = 0; i < Nb; i++) {
     int64_t const ii = bn_ixyz[i];
     SET_BIT(bn_mask[ii >> 3], ii % 8);
   }
 
   // create bn_mask_raw to double check
-  bool* bn_mask_raw = allocate_zeros<bool>(Npts);
+  auto bn_mask_raw = std::vector<bool>(size_t(Npts));
 
   for (int64_t i = 0; i < Nb; i++) {
     int64_t const ii = bn_ixyz[i];
@@ -415,7 +407,6 @@ template<typename Real>
     }
   }
   fmt::println("bn_mask double checked");
-  delete[] bn_mask_raw;
 
   // count Nbl
   int64_t Nbl = 0;
@@ -423,9 +414,9 @@ template<typename Real>
     Nbl += static_cast<int64_t>(mat_bn[i] >= 0);
   }
   fmt::println("Nbl = {}", Nbl);
-  auto* mat_bnl  = allocate_zeros<int8_t>(Nbl);
-  auto* bnl_ixyz = allocate_zeros<int64_t>(Nbl);
-  auto* ssaf_bnl = allocate_zeros<Real>(Nbl);
+  auto mat_bnl  = std::vector<int8_t>(static_cast<size_t>(Nbl));
+  auto bnl_ixyz = std::vector<int64_t>(static_cast<size_t>(Nbl));
+  auto ssaf_bnl = std::vector<Real>(static_cast<size_t>(Nbl));
   {
     int64_t j = 0;
     for (int64_t i = 0; i < Nb; i++) {
@@ -438,7 +429,6 @@ template<typename Real>
     }
     PFFDTD_ASSERT(j == Nbl);
   }
-  delete[] mat_bn;
   delete[] ssaf_bn;
 
   fmt::println("separated non-rigid bn");
@@ -450,8 +440,8 @@ template<typename Real>
     Nba /= 2;
   }
 
-  auto* bna_ixyz = allocate_zeros<int64_t>(Nba);
-  auto* Q_bna    = allocate_zeros<int8_t>(Nba);
+  auto bna_ixyz = std::vector<int64_t>(size_t(Nba));
+  auto* Q_bna   = allocate_zeros<int8_t>(Nba);
   {
     int64_t ii = 0;
     for (int64_t ix = 1; ix < Nx - 1; ix++) {
@@ -482,7 +472,7 @@ template<typename Real>
     fmt::println("ABC nodes");
     if (fcc_flag == 2) { // need to sort bna_ixyz
       auto* bna_sort_keys = allocate_zeros<int64_t>(Nba);
-      sort_keys(bna_ixyz, bna_sort_keys, Nba);
+      sort_keys(bna_ixyz.data(), bna_sort_keys, Nba);
 
       // now sort corresponding Q_bna array
       int8_t* Q_bna_unsorted = nullptr;
@@ -501,20 +491,20 @@ template<typename Real>
   }
 
   return Simulation3D<Real>{
-      .bn_ixyz     = bn_ixyz,
-      .bnl_ixyz    = bnl_ixyz,
-      .bna_ixyz    = bna_ixyz,
+      .bn_ixyz     = std::move(bn_ixyz),
+      .bnl_ixyz    = std::move(bnl_ixyz),
+      .bna_ixyz    = std::move(bna_ixyz),
       .Q_bna       = Q_bna,
-      .in_ixyz     = in_ixyz,
-      .out_ixyz    = out_ixyz,
-      .out_reorder = out_reorder,
-      .adj_bn      = adj_bn,
-      .ssaf_bnl    = ssaf_bnl,
-      .bn_mask     = bn_mask,
-      .mat_bnl     = mat_bnl,
-      .K_bn        = K_bn,
-      .in_sigs     = in_sigs,
-      .u_out       = allocate_zeros<double>(Nr * Nt),
+      .in_ixyz     = std::move(in_ixyz),
+      .out_ixyz    = std::move(out_ixyz),
+      .out_reorder = std::move(out_reorder),
+      .adj_bn      = std::move(adj_bn),
+      .ssaf_bnl    = std::move(ssaf_bnl),
+      .bn_mask     = std::move(bn_mask),
+      .mat_bnl     = std::move(mat_bnl),
+      .K_bn        = std::move(K_bn),
+      .in_sigs     = std::move(in_sigs),
+      .u_out       = std::unique_ptr<double[]>{allocate_zeros<double>(Nr * Nt)},
       .Ns          = Ns,
       .Nr          = Nr,
       .Nt          = Nt,
@@ -530,9 +520,9 @@ template<typename Real>
       .fcc_flag    = fcc_flag,
       .NN          = NN,
       .Nm          = Nm,
-      .Mb          = Mb,
-      .mat_quads   = mat_quads,
-      .mat_beta    = mat_beta,
+      .Mb          = std::move(Mb),
+      .mat_quads   = std::move(mat_quads),
+      .mat_beta    = std::move(mat_beta),
       .infac       = 1.0,
       .sl2         = sl2,
       .lo2         = lo2,
@@ -543,10 +533,10 @@ template<typename Real>
 
 template<typename Real>
 void writeOutputs_impl(Simulation3D<Real> const& sim, std::filesystem::path const& simDir) {
-  auto Nt           = static_cast<size_t>(sim.Nt);
-  auto Nr           = static_cast<size_t>(sim.Nr);
-  auto* out_reorder = sim.out_reorder;
-  auto u_out        = stdex::mdarray<double, stdex::dextents<size_t, 2>>(Nr, Nt);
+  auto const* out_reorder = sim.out_reorder.data();
+  auto Nt                 = static_cast<size_t>(sim.Nt);
+  auto Nr                 = static_cast<size_t>(sim.Nr);
+  auto u_out              = stdex::mdarray<double, stdex::dextents<size_t, 2>>(Nr, Nt);
 
   // write outputs in correct order
   for (auto nr = size_t{0}; nr < Nr; ++nr) {
@@ -563,10 +553,10 @@ void writeOutputs_impl(Simulation3D<Real> const& sim, std::filesystem::path cons
 // print last samples of simulation (for correctness checking..)
 template<typename Real>
 void printLastSample_impl(Simulation3D<Real> const& sim) {
-  int64_t const Nt     = sim.Nt;
-  int64_t const Nr     = sim.Nr;
-  double* u_out        = sim.u_out;
-  int64_t* out_reorder = sim.out_reorder;
+  int64_t const Nt           = sim.Nt;
+  int64_t const Nr           = sim.Nr;
+  double* u_out              = sim.u_out.get();
+  int64_t const* out_reorder = sim.out_reorder.data();
   // print last samples
   fmt::println("RAW OUTPUTS");
   for (int64_t nr = 0; nr < Nr; nr++) {
