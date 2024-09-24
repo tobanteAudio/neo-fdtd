@@ -4,7 +4,7 @@
 // preparing for simulation, and writing outputs
 #pragma once
 
-#include "pffdtd/config.hpp"
+#include "pffdtd/assert.hpp"
 #include "pffdtd/utility.hpp"
 
 #include <algorithm>
@@ -75,9 +75,25 @@ struct Simulation3D {
   Float a1;                  // update stencil coefficient
 };
 
-[[nodiscard]] auto loadSimulation3D(std::filesystem::path const& simDir) -> Simulation3D<Real>;
-void printLastSample(Simulation3D<Real>& sim);
-void writeOutputs(Simulation3D<Real>& sim, std::filesystem::path const& simDir);
+[[nodiscard]] auto loadSimulation3D_float(std::filesystem::path const& simDir) -> Simulation3D<float>;
+[[nodiscard]] auto loadSimulation3D_double(std::filesystem::path const& simDir) -> Simulation3D<double>;
+
+auto printLastSample(Simulation3D<float>& sim) -> void;
+auto printLastSample(Simulation3D<double>& sim) -> void;
+
+auto writeOutputs(Simulation3D<float>& sim, std::filesystem::path const& simDir) -> void;
+auto writeOutputs(Simulation3D<double>& sim, std::filesystem::path const& simDir) -> void;
+
+template<typename Float>
+[[nodiscard]] auto loadSimulation3D(std::filesystem::path const& simDir) -> Simulation3D<Float> {
+  if constexpr (std::is_same_v<Float, float>) {
+    return loadSimulation3D_float(simDir);
+  } else if constexpr (std::is_same_v<Float, double>) {
+    return loadSimulation3D_double(simDir);
+  } else {
+    static_assert(always_false<Float>);
+  }
+}
 
 // scale input to be in middle of floating-point range
 template<typename Float>
@@ -94,8 +110,8 @@ void scaleInput(Simulation3D<Float>& sim) {
     }
   }
 
-  constexpr auto min_exp = static_cast<double>(std::numeric_limits<Real>::min_exponent);
-  constexpr auto max_exp = static_cast<double>(std::numeric_limits<Real>::max_exponent);
+  constexpr auto min_exp = static_cast<double>(std::numeric_limits<Float>::min_exponent);
+  constexpr auto max_exp = static_cast<double>(std::numeric_limits<Float>::max_exponent);
 
   auto const aexp      = 0.5; // normalise to middle power of two
   auto const pow2      = static_cast<int32_t>(std::round(aexp * max_exp + (1 - aexp) * min_exp));

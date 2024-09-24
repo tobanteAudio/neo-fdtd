@@ -52,15 +52,46 @@ struct Arguments {
 
   struct Sim3D {
     std::string simDir;
+    std::string precision{"64"};
   };
 
   Sim2D sim2d;
   Sim3D sim3d;
 };
+
+template<typename Float>
+auto run3D(Arguments::Sim3D const& args) {
+  using namespace pffdtd;
+
+  fmt::println("Running: {} with precision {}", args.simDir, args.precision);
+  auto const simDir = std::filesystem::path{args.simDir};
+  auto const start  = getTime();
+
+  auto sim = loadSimulation3D<Float>(simDir);
+  scaleInput(sim);
+
+#if defined(PFFDTD_HAS_CUDA)
+  Engine3DCUDA{}(sim);
+#elif defined(PFFDTD_HAS_SYCL)
+  Engine3DSYCL{}(sim);
+#else
+  Engine3DCPU{}(sim);
+#endif
+
+  rescaleOutput(sim);
+  writeOutputs(sim, simDir);
+  printLastSample(sim);
+  freeSimulation3D(sim);
+
+  auto const stop = getTime();
+  auto const sec  = Seconds(stop - start);
+  fmt::println("--Simulation time: {} s", sec.count());
+}
+
 } // namespace
 
 auto main(int argc, char** argv) -> int {
-  auto app  = CLI::App{"pffdtd-2d"};
+  auto app  = CLI::App{"pffdtd-engine"};
   auto args = Arguments{};
 
   auto* sim2d = app.add_subcommand("sim2d", "Run 2D simulation");
@@ -70,6 +101,7 @@ auto main(int argc, char** argv) -> int {
 
   auto* sim3d = app.add_subcommand("sim3d", "Run 3D simulation");
   sim3d->add_option("-s,--sim_dir", args.sim3d.simDir)->check(CLI::ExistingDirectory)->required();
+  sim3d->add_option("-p,--precision", args.sim3d.precision)->transform(toLower);
 
   CLI11_PARSE(app, argc, argv);
 
@@ -92,29 +124,13 @@ auto main(int argc, char** argv) -> int {
   }
 
   if (*sim3d) {
-    fmt::println("Running: {} ...", args.sim3d.simDir);
-    auto const simDir = std::filesystem::path{args.sim3d.simDir};
-    auto const start  = pffdtd::getTime();
-
-    auto sim = pffdtd::loadSimulation3D(simDir);
-    pffdtd::scaleInput(sim);
-
-#if defined(PFFDTD_HAS_CUDA)
-    pffdtd::Engine3DCUDA{}(sim);
-#elif defined(PFFDTD_HAS_SYCL)
-    pffdtd::Engine3DSYCL{}(sim);
-#else
-    pffdtd::Engine3DCPU{}(sim);
-#endif
-
-    pffdtd::rescaleOutput(sim);
-    pffdtd::writeOutputs(sim, simDir);
-    pffdtd::printLastSample(sim);
-    pffdtd::freeSimulation3D(sim);
-
-    auto const stop = pffdtd::getTime();
-    auto const sec  = pffdtd::Seconds(stop - start);
-    fmt::println("--Simulation time: {} s", sec.count());
+    if (args.sim3d.precision == "32") {
+      run3D<float>(args.sim3d);
+    } else if (args.sim3d.precision == "64") {
+      run3D<double>(args.sim3d);
+    } else {
+      pffdtd::raisef<std::invalid_argument>("invalid precision '{}'", args.sim3d.precision);
+    }
   }
 
   return EXIT_SUCCESS;

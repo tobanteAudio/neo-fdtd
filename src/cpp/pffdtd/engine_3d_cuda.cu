@@ -4,7 +4,6 @@
 #include "engine_3d_cuda.hpp"
 
 #include "pffdtd/assert.hpp"
-#include "pffdtd/config.hpp"
 #include "pffdtd/progress.hpp"
 #include "pffdtd/time.hpp"
 #include "pffdtd/utility.hpp"

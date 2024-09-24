@@ -6,7 +6,7 @@ project(pffdtd)
 add_library(pffdtd)
 add_library(pffdtd::pffdtd ALIAS pffdtd)
 target_include_directories(pffdtd PUBLIC ${PROJECT_SOURCE_DIR})
-target_compile_definitions(pffdtd PUBLIC PFFDTD_PRECISION=2 _CRT_SECURE_NO_WARNINGS=1)
+target_compile_definitions(pffdtd PUBLIC _CRT_SECURE_NO_WARNINGS=1)
 
 target_link_libraries(pffdtd
     PUBLIC
@@ -18,7 +18,6 @@ target_link_libraries(pffdtd
 
 target_sources(pffdtd
     PRIVATE
-        pffdtd/config.hpp
         pffdtd/engine_2d_cpu.cpp
         pffdtd/engine_2d_cpu.hpp
         pffdtd/engine_3d_cpu.cpp

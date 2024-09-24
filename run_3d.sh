@@ -28,7 +28,7 @@ cd "$model_dir"
 pffdtd sim3d setup "$sim_setup"
 
 # Run sim
-$pffdtd_engine sim3d -s "$sim_dir"
+$pffdtd_engine sim3d -p "64" -s "$sim_dir"
 # pffdtd sim3d engine --sim_dir="$sim_dir" --plot --draw_backend="mayavi" --json_model="${model_dir}/model.json"
 
 # Post-process
