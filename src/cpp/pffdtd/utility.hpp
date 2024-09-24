@@ -23,7 +23,7 @@ template<typename T>
   auto* const ptr  = new T[count];
   auto const bytes = static_cast<size_t>(count) * sizeof(T);
   std::memset(static_cast<void*>(ptr), 0, bytes);
-  return reinterpret_cast<T*>(ptr);
+  return ptr;
 }
 
 template<typename T>

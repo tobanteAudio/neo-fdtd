@@ -148,7 +148,7 @@ auto run(Simulation3D<Real> const& sim) -> void {
       auto gh1       = sycl::accessor{gh1_buf, cgh, sycl::read_write};
       auto vh1       = sycl::accessor{vh1_buf, cgh, sycl::read_write};
       cgh.parallel_for<ApplyBoundaryLoss<Real>>(Nbl, [=](sycl::id<1> id) {
-        auto nb         = id[0];
+        auto nb         = static_cast<int64_t>(id[0]);
         Real _1         = 1.0;
         Real _2         = 2.0;
         int32_t const k = mat_bnl[nb];
