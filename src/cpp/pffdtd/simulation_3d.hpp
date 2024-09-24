@@ -18,61 +18,58 @@
 
 namespace pffdtd {
 
-// maximum number of RLC branches in freq-dep (FD) boundaries (needed at
-// compile-time for CUDA kernels)
-inline constexpr auto MMb = 12; // change as necssary
-// maximum number of materials allows (needed at compile-time for CUDA)
-inline constexpr auto MNm = 64; // change as necssary
+inline constexpr auto MMb = 12; // maximum number of RLC branches in freq-dep (FD) boundaries
+inline constexpr auto MNm = 64; // maximum number of materials allows
 
 // see python code and 2016 ISMRA paper
-template<typename Float>
+template<typename Real>
 struct MatQuad {
-  Float b;   // b
-  Float bd;  // b*d
-  Float bDh; // b*D-hat
-  Float bFh; // b*F-hat
+  Real b;   // b
+  Real bd;  // b*d
+  Real bDh; // b*D-hat
+  Real bFh; // b*F-hat
 };
 
 // main sim data, on host
-template<typename Float>
+template<typename Real>
 struct Simulation3D {
-  int64_t* bn_ixyz;          // boundary node indices
-  int64_t* bnl_ixyz;         // lossy boundary node indices
-  int64_t* bna_ixyz;         // absorbing boundary node indices
-  int8_t* Q_bna;             // integer for ABCs (wall 1,edge 2,corner 3)
-  int64_t* in_ixyz;          // input points
-  int64_t* out_ixyz;         // output points
-  int64_t* out_reorder;      // ordering for outputs point for final print/save
-  uint16_t* adj_bn;          // nearest-neighbour adjancencies for all boundary nodes
-  Float* ssaf_bnl;           // surface area corrections (with extra volume scaling)
-  uint8_t* bn_mask;          // bit mask for bounday nodes
-  int8_t* mat_bnl;           // material indices for lossy boundary nodes
-  int8_t* K_bn;              // number of adjacent neighbours, boundary nodesa
-  double* in_sigs;           // input signals
-  double* u_out;             // for output signals
-  int64_t Ns;                // number of input grid points
-  int64_t Nr;                // number of output grid points
-  int64_t Nt;                // number of samples simulation
-  int64_t Npts;              // number of Cartesian grid points
-  int64_t Nx;                // x-dim (non-continguous)
-  int64_t Ny;                // y-dim
-  int64_t Nz;                // z-dim (continguous)
-  int64_t Nb;                // number of boundary nodes
-  int64_t Nbl;               // number of lossy boundary nodes
-  int64_t Nba;               // number of ABC nodes
-  double l;                  // Courant number (CFL)
-  double l2;                 // CFL number squared
-  int8_t fcc_flag;           // boolean for FCC
-  int8_t NN;                 // integer, neareast neighbours
-  int8_t Nm;                 // number of materials used
-  int8_t* Mb;                // number of branches per material
-  MatQuad<Float>* mat_quads; // RLC coefficients (essentially)
-  Float* mat_beta;           // part of FD-boundaries one per material
-  double infac;              // rescaling of input (for numerical reason)
-  Float sl2;                 // scaled l2 (for single precision)
-  Float lo2;                 // 0.5*l
-  Float a2;                  // update stencil coefficient
-  Float a1;                  // update stencil coefficient
+  int64_t* bn_ixyz;         // boundary node indices
+  int64_t* bnl_ixyz;        // lossy boundary node indices
+  int64_t* bna_ixyz;        // absorbing boundary node indices
+  int8_t* Q_bna;            // integer for ABCs (wall 1,edge 2,corner 3)
+  int64_t* in_ixyz;         // input points
+  int64_t* out_ixyz;        // output points
+  int64_t* out_reorder;     // ordering for outputs point for final print/save
+  uint16_t* adj_bn;         // nearest-neighbour adjancencies for all boundary nodes
+  Real* ssaf_bnl;           // surface area corrections (with extra volume scaling)
+  uint8_t* bn_mask;         // bit mask for bounday nodes
+  int8_t* mat_bnl;          // material indices for lossy boundary nodes
+  int8_t* K_bn;             // number of adjacent neighbours, boundary nodesa
+  double* in_sigs;          // input signals
+  double* u_out;            // for output signals
+  int64_t Ns;               // number of input grid points
+  int64_t Nr;               // number of output grid points
+  int64_t Nt;               // number of samples simulation
+  int64_t Npts;             // number of Cartesian grid points
+  int64_t Nx;               // x-dim (non-continguous)
+  int64_t Ny;               // y-dim
+  int64_t Nz;               // z-dim (continguous)
+  int64_t Nb;               // number of boundary nodes
+  int64_t Nbl;              // number of lossy boundary nodes
+  int64_t Nba;              // number of ABC nodes
+  double l;                 // Courant number (CFL)
+  double l2;                // CFL number squared
+  int8_t fcc_flag;          // boolean for FCC
+  int8_t NN;                // integer, neareast neighbours
+  int8_t Nm;                // number of materials used
+  int8_t* Mb;               // number of branches per material
+  MatQuad<Real>* mat_quads; // RLC coefficients (essentially)
+  Real* mat_beta;           // part of FD-boundaries one per material
+  double infac;             // rescaling of input (for numerical reason)
+  Real sl2;                 // scaled l2 (for single precision)
+  Real lo2;                 // 0.5*l
+  Real a2;                  // update stencil coefficient
+  Real a1;                  // update stencil coefficient
 };
 
 [[nodiscard]] auto loadSimulation3D_float(std::filesystem::path const& simDir) -> Simulation3D<float>;
@@ -84,20 +81,20 @@ auto printLastSample(Simulation3D<double>& sim) -> void;
 auto writeOutputs(Simulation3D<float>& sim, std::filesystem::path const& simDir) -> void;
 auto writeOutputs(Simulation3D<double>& sim, std::filesystem::path const& simDir) -> void;
 
-template<typename Float>
-[[nodiscard]] auto loadSimulation3D(std::filesystem::path const& simDir) -> Simulation3D<Float> {
-  if constexpr (std::is_same_v<Float, float>) {
+template<typename Real>
+[[nodiscard]] auto loadSimulation3D(std::filesystem::path const& simDir) -> Simulation3D<Real> {
+  if constexpr (std::is_same_v<Real, float>) {
     return loadSimulation3D_float(simDir);
-  } else if constexpr (std::is_same_v<Float, double>) {
+  } else if constexpr (std::is_same_v<Real, double>) {
     return loadSimulation3D_double(simDir);
   } else {
-    static_assert(always_false<Float>);
+    static_assert(always_false<Real>);
   }
 }
 
 // scale input to be in middle of floating-point range
-template<typename Float>
-void scaleInput(Simulation3D<Float>& sim) {
+template<typename Real>
+void scaleInput(Simulation3D<Real>& sim) {
   double* in_sigs  = sim.in_sigs;
   int64_t const Nt = sim.Nt;
   int64_t const Ns = sim.Ns;
@@ -110,8 +107,8 @@ void scaleInput(Simulation3D<Float>& sim) {
     }
   }
 
-  constexpr auto min_exp = static_cast<double>(std::numeric_limits<Float>::min_exponent);
-  constexpr auto max_exp = static_cast<double>(std::numeric_limits<Float>::max_exponent);
+  constexpr auto min_exp = static_cast<double>(std::numeric_limits<Real>::min_exponent);
+  constexpr auto max_exp = static_cast<double>(std::numeric_limits<Real>::max_exponent);
 
   auto const aexp      = 0.5; // normalise to middle power of two
   auto const pow2      = static_cast<int32_t>(std::round(aexp * max_exp + (1 - aexp) * min_exp));
@@ -140,8 +137,8 @@ void scaleInput(Simulation3D<Float>& sim) {
   sim.in_sigs = in_sigs;
 }
 
-template<typename Float>
-void rescaleOutput(Simulation3D<Float>& sim) {
+template<typename Real>
+void rescaleOutput(Simulation3D<Real>& sim) {
   int64_t const Nt = sim.Nt;
   int64_t const Nr = sim.Nr;
   double infac     = sim.infac;
@@ -150,8 +147,8 @@ void rescaleOutput(Simulation3D<Float>& sim) {
   std::transform(u_out, u_out + Nr * Nt, u_out, [infac](auto sample) { return sample * infac; });
 }
 
-template<typename Float>
-void freeSimulation3D(Simulation3D<Float>& sim) {
+template<typename Real>
+void freeSimulation3D(Simulation3D<Real>& sim) {
   std::free(sim.bn_ixyz);
   std::free(sim.bnl_ixyz);
   std::free(sim.bna_ixyz);

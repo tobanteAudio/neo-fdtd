@@ -17,8 +17,8 @@ namespace {
 
 [[nodiscard]] constexpr auto to_ixy(auto x, auto y, auto /*Nx*/, auto Ny) { return x * Ny + y; }
 
-template<typename Float>
-auto kernelAirUpdate(sycl::id<2> id, Float* u0, Float const* u1, Float const* u2, uint8_t const* inMask, int64_t Ny)
+template<typename Real>
+auto kernelAirUpdate(sycl::id<2> id, Real* u0, Real const* u1, Real const* u2, uint8_t const* inMask, int64_t Ny)
     -> void {
   auto const x   = id.get(0) + 1;
   auto const y   = id.get(1) + 1;
@@ -34,15 +34,15 @@ auto kernelAirUpdate(sycl::id<2> id, Float* u0, Float const* u1, Float const* u2
   auto const top    = u1[idx + Ny];
   auto const last   = u2[idx];
 
-  u0[idx] = Float(0.5) * (left + right + bottom + top) - last;
+  u0[idx] = Real(0.5) * (left + right + bottom + top) - last;
 }
 
-template<typename Float>
+template<typename Real>
 auto kernelBoundaryRigid(
     sycl::id<1> idx,
-    Float* u0,
-    Float const* u1,
-    Float const* u2,
+    Real* u0,
+    Real const* u1,
+    Real const* u2,
     int64_t const* bn_ixy,
     int64_t const* adj_bn,
     int64_t Ny
@@ -59,17 +59,17 @@ auto kernelBoundaryRigid(
   auto const top       = u1[ib + Ny];
   auto const neighbors = left + right + top + bottom;
 
-  u0[ib] = (Float(2) - Float(0.5) * K) * last1 + Float(0.5) * neighbors - last2;
+  u0[ib] = (Real(2) - Real(0.5) * K) * last1 + Real(0.5) * neighbors - last2;
 }
 
-template<typename Float>
+template<typename Real>
 auto kernelBoundaryLoss(
     sycl::id<1> idx,
-    Float* u0,
-    Float const* u2,
+    Real* u0,
+    Real const* u2,
     int64_t const* bn_ixy,
     int64_t const* adj_bn,
-    Float lossFactor
+    Real lossFactor
 ) -> void {
   auto const ib      = bn_ixy[idx];
   auto const K       = adj_bn[idx];
@@ -77,7 +77,7 @@ auto kernelBoundaryLoss(
   auto const prev    = u2[ib];
   auto const K4      = 4 - K;
 
-  u0[ib] = (current + lossFactor * K4 * prev) / (Float(1) + lossFactor * K4);
+  u0[ib] = (current + lossFactor * K4 * prev) / (Real(1) + lossFactor * K4);
 }
 } // namespace
 

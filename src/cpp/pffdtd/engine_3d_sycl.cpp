@@ -38,8 +38,8 @@ struct LossABC;
 template<typename T>
 struct ReadOutput;
 
-template<typename Float>
-auto run(Simulation3D<Float>& sim) -> void {
+template<typename Real>
+auto run(Simulation3D<Real>& sim) -> void {
   PFFDTD_ASSERT(sim.fcc_flag == 0);
 
   auto queue  = sycl::queue{sycl::property::queue::enable_profiling{}};
@@ -59,11 +59,11 @@ auto run(Simulation3D<Float>& sim) -> void {
   auto const Ns   = sim.Ns;
   auto const Nt   = sim.Nt;
 
-  auto const lo2 = static_cast<Float>(sim.lo2);
-  auto const sl2 = static_cast<Float>(sim.sl2);
-  auto const l   = static_cast<Float>(sim.l);
-  auto const a1  = static_cast<Float>(sim.a1);
-  auto const a2  = static_cast<Float>(sim.a2);
+  auto const lo2 = static_cast<Real>(sim.lo2);
+  auto const sl2 = static_cast<Real>(sim.sl2);
+  auto const l   = static_cast<Real>(sim.l);
+  auto const a1  = static_cast<Real>(sim.a1);
+  auto const a2  = static_cast<Real>(sim.a2);
 
   auto Q_bna_buf     = sycl::buffer{sim.Q_bna, sycl::range(size_t(Nba))};
   auto bn_mask_buf   = sycl::buffer{sim.bn_mask, sycl::range(size_t(Npts))};
@@ -80,15 +80,15 @@ auto run(Simulation3D<Float>& sim) -> void {
   auto Mb_buf        = sycl::buffer{sim.Mb, sycl::range(size_t(Nm))};
   auto ssaf_bnl_buf  = sycl::buffer{sim.ssaf_bnl, sycl::range(size_t(Nbl))};
 
-  auto u0_buf    = sycl::buffer<Float>(size_t(Npts));
-  auto u1_buf    = sycl::buffer<Float>(size_t(Npts));
-  auto u0b_buf   = sycl::buffer<Float>(size_t(Nbl));
-  auto u1b_buf   = sycl::buffer<Float>(size_t(Nbl));
-  auto u2b_buf   = sycl::buffer<Float>(size_t(Nbl));
-  auto u2ba_buf  = sycl::buffer<Float>(size_t(Nba));
-  auto vh1_buf   = sycl::buffer<Float>(size_t(Nbl * MMb));
-  auto gh1_buf   = sycl::buffer<Float>(size_t(Nbl * MMb));
-  auto u_out_buf = sycl::buffer<Float>(size_t(Nr * Nt));
+  auto u0_buf    = sycl::buffer<Real>(size_t(Npts));
+  auto u1_buf    = sycl::buffer<Real>(size_t(Npts));
+  auto u0b_buf   = sycl::buffer<Real>(size_t(Nbl));
+  auto u1b_buf   = sycl::buffer<Real>(size_t(Nbl));
+  auto u2b_buf   = sycl::buffer<Real>(size_t(Nbl));
+  auto u2ba_buf  = sycl::buffer<Real>(size_t(Nba));
+  auto vh1_buf   = sycl::buffer<Real>(size_t(Nbl * MMb));
+  auto gh1_buf   = sycl::buffer<Real>(size_t(Nbl * MMb));
+  auto u_out_buf = sycl::buffer<Real>(size_t(Nr * Nt));
 
   auto elapsedAir      = std::chrono::nanoseconds{0};
   auto elapsedBoundary = std::chrono::nanoseconds{0};
@@ -103,24 +103,24 @@ auto run(Simulation3D<Float>& sim) -> void {
       auto u1      = sycl::accessor{u1_buf, cgh, sycl::read_only};
       auto bn_ixyz = sycl::accessor{bn_ixyz_buf, cgh, sycl::read_only};
       auto adj_bn  = sycl::accessor{adj_bn_buf, cgh, sycl::read_only};
-      cgh.parallel_for<RigidUpdateCart<Float>>(Nb, [=](sycl::id<1> id) {
+      cgh.parallel_for<RigidUpdateCart<Real>>(Nb, [=](sycl::id<1> id) {
         auto const nb   = id[0];
         auto const ii   = bn_ixyz[nb];
         auto const adj  = adj_bn[nb];
         auto const Kint = sycl::popcount(adj);
 
-        auto const _2 = static_cast<Float>(2.0);
-        auto const K  = static_cast<Float>(Kint);
-        auto const b2 = static_cast<Float>(a2);
+        auto const _2 = static_cast<Real>(2.0);
+        auto const K  = static_cast<Real>(Kint);
+        auto const b2 = static_cast<Real>(a2);
         auto const b1 = (_2 - sl2 * K);
 
         auto partial = b1 * u1[ii] - u0[ii];
-        partial += b2 * get_bit_as<Float>(adj, 0) * u1[ii + NzNy];
-        partial += b2 * get_bit_as<Float>(adj, 1) * u1[ii - NzNy];
-        partial += b2 * get_bit_as<Float>(adj, 2) * u1[ii + Nz];
-        partial += b2 * get_bit_as<Float>(adj, 3) * u1[ii - Nz];
-        partial += b2 * get_bit_as<Float>(adj, 4) * u1[ii + 1];
-        partial += b2 * get_bit_as<Float>(adj, 5) * u1[ii - 1];
+        partial += b2 * get_bit_as<Real>(adj, 0) * u1[ii + NzNy];
+        partial += b2 * get_bit_as<Real>(adj, 1) * u1[ii - NzNy];
+        partial += b2 * get_bit_as<Real>(adj, 2) * u1[ii + Nz];
+        partial += b2 * get_bit_as<Real>(adj, 3) * u1[ii - Nz];
+        partial += b2 * get_bit_as<Real>(adj, 4) * u1[ii + 1];
+        partial += b2 * get_bit_as<Real>(adj, 5) * u1[ii - 1];
         u0[ii] = partial;
       });
     });
@@ -130,7 +130,7 @@ auto run(Simulation3D<Float>& sim) -> void {
       auto u0       = sycl::accessor{u0_buf, cgh, sycl::read_only};
       auto u0b      = sycl::accessor{u0b_buf, cgh, sycl::write_only};
       auto bnl_ixyz = sycl::accessor{bnl_ixyz_buf, cgh, sycl::read_only};
-      cgh.parallel_for<CopyToBoundary<Float>>(Nbl, [=](sycl::id<1> id) {
+      cgh.parallel_for<CopyToBoundary<Real>>(Nbl, [=](sycl::id<1> id) {
         auto nb = id[0];
         u0b[nb] = u0[bnl_ixyz[nb]];
       });
@@ -147,21 +147,21 @@ auto run(Simulation3D<Float>& sim) -> void {
       auto u0b       = sycl::accessor{u0b_buf, cgh, sycl::read_write};
       auto gh1       = sycl::accessor{gh1_buf, cgh, sycl::read_write};
       auto vh1       = sycl::accessor{vh1_buf, cgh, sycl::read_write};
-      cgh.parallel_for<ApplyBoundaryLoss<Float>>(Nbl, [=](sycl::id<1> id) {
+      cgh.parallel_for<ApplyBoundaryLoss<Real>>(Nbl, [=](sycl::id<1> id) {
         auto nb         = id[0];
-        Float _1        = 1.0;
-        Float _2        = 2.0;
+        Real _1         = 1.0;
+        Real _2         = 2.0;
         int32_t const k = mat_bnl[nb];
 
-        Float lo2Kbg = lo2 * ssaf_bnl[nb] * mat_beta[k];
-        Float fac    = _2 * lo2 * ssaf_bnl[nb] / (_1 + lo2Kbg);
+        Real lo2Kbg = lo2 * ssaf_bnl[nb] * mat_beta[k];
+        Real fac    = _2 * lo2 * ssaf_bnl[nb] / (_1 + lo2Kbg);
 
-        Float u0bint = u0b[nb];
-        Float u2bint = u2b[nb];
+        Real u0bint = u0b[nb];
+        Real u2bint = u2b[nb];
 
         u0bint = (u0bint + lo2Kbg * u2bint) / (_1 + lo2Kbg);
 
-        Float vh1nb[MMb];
+        Real vh1nb[MMb];
         for (int8_t m = 0; m < Mb[k]; m++) {
           int64_t const nbm = nb * MMb + m;
           int32_t const mbk = k * MMb + m;
@@ -170,13 +170,13 @@ auto run(Simulation3D<Float>& sim) -> void {
           u0bint -= fac * (_2 * (tm->bDh) * vh1nb[m] - (tm->bFh) * gh1[nbm]);
         }
 
-        Float du = u0bint - u2bint;
+        Real du = u0bint - u2bint;
 
         for (int8_t m = 0; m < Mb[k]; m++) {
           int64_t const nbm = nb * MMb + m;
           int32_t const mbk = k * MMb + m;
           auto const* tm    = &(mat_quads[mbk]);
-          Float vh0nbm      = (tm->b) * du + (tm->bd) * vh1nb[m] - _2 * (tm->bFh) * gh1[nbm];
+          Real vh0nbm       = (tm->b) * du + (tm->bd) * vh1nb[m] - _2 * (tm->bFh) * gh1[nbm];
           gh1[nbm] += (vh0nbm + vh1nb[m]) / _2;
           vh1[nbm] = vh0nbm;
         }
@@ -190,7 +190,7 @@ auto run(Simulation3D<Float>& sim) -> void {
       auto u0       = sycl::accessor{u0_buf, cgh, sycl::write_only};
       auto u0b      = sycl::accessor{u0b_buf, cgh, sycl::read_only};
       auto bnl_ixyz = sycl::accessor{bnl_ixyz_buf, cgh, sycl::read_only};
-      cgh.parallel_for<CopyFromBoundary<Float>>(Nbl, [=](sycl::id<1> id) {
+      cgh.parallel_for<CopyFromBoundary<Real>>(Nbl, [=](sycl::id<1> id) {
         auto nb          = id[0];
         u0[bnl_ixyz[nb]] = u0b[nb];
       });
@@ -202,7 +202,7 @@ auto run(Simulation3D<Float>& sim) -> void {
       auto u0       = sycl::accessor{u0_buf, cgh, sycl::read_only};
       auto bna_ixyz = sycl::accessor{bna_ixyz_buf, cgh, sycl::read_only};
 
-      cgh.parallel_for<CopyABCs<Float>>(Nba, [=](sycl::id<1> id) {
+      cgh.parallel_for<CopyABCs<Real>>(Nba, [=](sycl::id<1> id) {
         auto nb  = id[0];
         u2ba[nb] = u0[bna_ixyz[nb]];
       });
@@ -211,7 +211,7 @@ auto run(Simulation3D<Float>& sim) -> void {
     // Flip halo XY
     queue.submit([&](sycl::handler& cgh) {
       auto u1 = sycl::accessor{u1_buf, cgh, sycl::read_write};
-      cgh.parallel_for<FlipHaloXY<Float>>(sycl::range<2>(Nx, Ny), [=](sycl::id<2> id) {
+      cgh.parallel_for<FlipHaloXY<Real>>(sycl::range<2>(Nx, Ny), [=](sycl::id<2> id) {
         auto const i   = id[0] * NzNy + id[1] * Nz;
         u1[i + 0]      = u1[i + 2];
         u1[i + Nz - 1] = u1[i + Nz - 3];
@@ -221,7 +221,7 @@ auto run(Simulation3D<Float>& sim) -> void {
     // Flip halo XZ
     queue.submit([&](sycl::handler& cgh) {
       auto u1 = sycl::accessor{u1_buf, cgh, sycl::read_write};
-      cgh.parallel_for<FlipHaloXZ<Float>>(sycl::range<2>(Nx, Nz), [=](sycl::id<2> id) {
+      cgh.parallel_for<FlipHaloXZ<Real>>(sycl::range<2>(Nx, Nz), [=](sycl::id<2> id) {
         auto const ix = id[0];
         auto const iz = id[1];
 
@@ -233,7 +233,7 @@ auto run(Simulation3D<Float>& sim) -> void {
     // Flip halo YZ
     queue.submit([&](sycl::handler& cgh) {
       auto u1 = sycl::accessor{u1_buf, cgh, sycl::read_write};
-      cgh.parallel_for<FlipHaloYZ<Float>>(sycl::range<2>(Ny, Nz), [=](sycl::id<2> id) {
+      cgh.parallel_for<FlipHaloYZ<Real>>(sycl::range<2>(Ny, Nz), [=](sycl::id<2> id) {
         auto const iy = id[0];
         auto const iz = id[1];
 
@@ -247,7 +247,7 @@ auto run(Simulation3D<Float>& sim) -> void {
       auto u0      = sycl::accessor{u0_buf, cgh, sycl::read_write};
       auto in_sigs = sycl::accessor{in_sigs_buf, cgh, sycl::read_only};
       auto in_ixyz = sycl::accessor{in_ixyz_buf, cgh, sycl::read_only};
-      cgh.parallel_for<AddSources<Float>>(Ns, [=](sycl::id<1> id) {
+      cgh.parallel_for<AddSources<Real>>(Ns, [=](sycl::id<1> id) {
         auto const ns = id[0];
         auto const ii = in_ixyz[ns];
         u0[ii] += in_sigs[ns * Nt + n];
@@ -259,7 +259,7 @@ auto run(Simulation3D<Float>& sim) -> void {
       auto u0      = sycl::accessor{u0_buf, cgh, sycl::write_only};
       auto u1      = sycl::accessor{u1_buf, cgh, sycl::read_only};
       auto bn_mask = sycl::accessor{bn_mask_buf, cgh, sycl::read_only};
-      cgh.parallel_for<AirUpdateCart<Float>>(sycl::range<3>(Nx - 2, Ny - 2, Nz - 2), [=](sycl::id<3> id) {
+      cgh.parallel_for<AirUpdateCart<Real>>(sycl::range<3>(Nx - 2, Ny - 2, Nz - 2), [=](sycl::id<3> id) {
         auto const ix = id[0] + 1;
         auto const iy = id[1] + 1;
         auto const iz = id[2] + 1;
@@ -286,11 +286,11 @@ auto run(Simulation3D<Float>& sim) -> void {
       auto u2ba     = sycl::accessor{u2ba_buf, cgh, sycl::read_only};
       auto Q_bna    = sycl::accessor{Q_bna_buf, cgh, sycl::read_only};
       auto bna_ixyz = sycl::accessor{bna_ixyz_buf, cgh, sycl::read_only};
-      cgh.parallel_for<LossABC<Float>>(Nba, [=](sycl::id<1> id) {
+      cgh.parallel_for<LossABC<Real>>(Nba, [=](sycl::id<1> id) {
         auto const nb = id[0];
         auto const lQ = l * Q_bna[nb];
         auto const ib = bna_ixyz[nb];
-        u0[ib]        = (u0[ib] + lQ * u2ba[nb]) / (Float(1) + lQ);
+        u0[ib]        = (u0[ib] + lQ * u2ba[nb]) / (Real(1) + lQ);
       });
     });
 
@@ -299,7 +299,7 @@ auto run(Simulation3D<Float>& sim) -> void {
       auto u1       = sycl::accessor{u1_buf, cgh, sycl::read_only};
       auto out_ixyz = sycl::accessor{out_ixyz_buf, cgh, sycl::read_only};
       auto u_out    = sycl::accessor{u_out_buf, cgh, sycl::write_only};
-      cgh.parallel_for<ReadOutput<Float>>(Nr, [=](sycl::id<1> id) {
+      cgh.parallel_for<ReadOutput<Real>>(Nr, [=](sycl::id<1> id) {
         auto const nr      = id[0];
         auto const ii      = out_ixyz[nr];
         u_out[nr * Nt + n] = static_cast<double>(u1[ii]);

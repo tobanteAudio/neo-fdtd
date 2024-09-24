@@ -19,25 +19,25 @@
 
 namespace pffdtd {
 
-template<typename Float>
-__device__ auto add(Float x, Float y) -> Float {
-  if constexpr (std::same_as<Float, double>) {
+template<typename Real>
+__device__ auto add(Real x, Real y) -> Real {
+  if constexpr (std::same_as<Real, double>) {
     return __dadd_rn(x, y);
-  } else if constexpr (std::same_as<Float, float>) {
+  } else if constexpr (std::same_as<Real, float>) {
     return __fadd_rz(x, y);
   } else {
-    static_assert(always_false<Float>);
+    static_assert(always_false<Real>);
   }
 }
 
-template<typename Float>
-__device__ auto fma(Float x, Float y, Float z) -> Float {
-  if constexpr (std::same_as<Float, double>) {
+template<typename Real>
+__device__ auto fma(Real x, Real y, Real z) -> Real {
+  if constexpr (std::same_as<Real, double>) {
     return __fma_rn(x, y, z);
-  } else if constexpr (std::same_as<Float, float>) {
+  } else if constexpr (std::same_as<Real, float>) {
     return __fmaf_rn(x, y, z);
   } else {
-    static_assert(always_false<Float>);
+    static_assert(always_false<Real>);
   }
 }
 
@@ -102,12 +102,12 @@ __constant__ int8_t cuMb[MNm]; // to store Mb per mat
 
 // this is data on host, sometimes copied and recomputed for copy to GPU devices
 // (indices), sometimes just aliased pointers (scalar arrays)
-template<typename Float>
+template<typename Real>
 struct HostData {      // arrays on host (for copy), mirrors gpu local data
   double* in_sigs{};   // aliased
-  Float* u_out_buf{};  // aliased
+  Real* u_out_buf{};   // aliased
   double* u_out{};     // aliased
-  Float* ssaf_bnl{};   // aliased
+  Real* ssaf_bnl{};    // aliased
   int64_t* in_ixyz{};  // recomputed
   int64_t* out_ixyz{}; // recomputed
   int64_t* bn_ixyz{};  // recomputed
@@ -130,7 +130,7 @@ struct HostData {      // arrays on host (for copy), mirrors gpu local data
 };
 
 // these are arrays pointing to GPU device memory, or CUDA stuff (dim3, events)
-template<typename Float>
+template<typename Real>
 struct DeviceData { // for or on gpu (arrays all on GPU)
   int64_t* bn_ixyz{};
   int64_t* bnl_ixyz{};
@@ -138,21 +138,21 @@ struct DeviceData { // for or on gpu (arrays all on GPU)
   int8_t* Q_bna{};
   int64_t* out_ixyz{};
   uint16_t* adj_bn{};
-  Float* ssaf_bnl{};
+  Real* ssaf_bnl{};
   uint8_t* bn_mask{};
   int8_t* mat_bnl{};
   int8_t* K_bn{};
-  Float* mat_beta{};
-  MatQuad<Float>* mat_quads{};
-  Float* u0{};
-  Float* u1{};
-  Float* u0b{};
-  Float* u1b{};
-  Float* u2b{};
-  Float* u2ba{};
-  Float* vh1{};
-  Float* gh1{};
-  Float* u_out_buf{};
+  Real* mat_beta{};
+  MatQuad<Real>* mat_quads{};
+  Real* u0{};
+  Real* u1{};
+  Real* u0b{};
+  Real* u1b{};
+  Real* u2b{};
+  Real* u2ba{};
+  Real* vh1{};
+  Real* gh1{};
+  Real* u_out_buf{};
   dim3 block_dim_air;
   dim3 grid_dim_air;
   dim3 block_dim_fold;
@@ -179,41 +179,40 @@ struct DeviceData { // for or on gpu (arrays all on GPU)
   int64_t totalmembytes{};
 };
 
-template<typename Float>
-__device__ auto constant(float f32, double f64) -> Float {
-  if constexpr (std::is_same_v<Float, float>) {
+template<typename Real>
+__device__ auto constant(float f32, double f64) -> Real {
+  if constexpr (std::is_same_v<Real, float>) {
     return f32;
-  } else if constexpr (std::is_same_v<Float, double>) {
+  } else if constexpr (std::is_same_v<Real, double>) {
     return f64;
   } else {
-    static_assert(always_false<Float>);
+    static_assert(always_false<Real>);
   }
 }
 
 // NB. 'x' is contiguous dim in CUDA domain
 
 // vanilla scheme, unrolled, intrinsics to control rounding errors
-template<typename Float>
-__global__ void
-KernelAirCart(Float* __restrict__ u0, Float const* __restrict__ u1, uint8_t const* __restrict__ bn_mask) {
+template<typename Real>
+__global__ void KernelAirCart(Real* __restrict__ u0, Real const* __restrict__ u1, uint8_t const* __restrict__ bn_mask) {
   int64_t const cx = blockIdx.x * cuBx + threadIdx.x + 1;
   int64_t const cy = blockIdx.y * cuBy + threadIdx.y + 1;
   int64_t const cz = blockIdx.z * cuBz + threadIdx.z + 1;
 
-  auto const c1 = constant<Float>(c1_f32, c1_f64);
-  auto const c2 = constant<Float>(c2_f32, c2_f64);
+  auto const c1 = constant<Real>(c1_f32, c1_f64);
+  auto const c2 = constant<Real>(c2_f32, c2_f64);
 
   if ((cx < cuNx - 1) && (cy < cuNy - 1) && (cz < cuNz - 1)) {
     int64_t const ii = cz * cuNxNy + cy * cuNx + cx;
     // divide-conquer add for better accuracy
-    Float tmp1 = NAN;
-    Float tmp2 = NAN;
-    tmp1       = add(u1[ii + cuNxNy], u1[ii - cuNxNy]);
-    tmp2       = add(u1[ii + cuNx], u1[ii - cuNx]);
-    tmp1       = add(tmp1, tmp2);
-    tmp2       = add(u1[ii + 1], u1[ii - 1]);
-    tmp1       = add(tmp1, tmp2);
-    tmp1       = fma(c1, u1[ii], fma(c2, tmp1, -u0[ii]));
+    Real tmp1 = NAN;
+    Real tmp2 = NAN;
+    tmp1      = add(u1[ii + cuNxNy], u1[ii - cuNxNy]);
+    tmp2      = add(u1[ii + cuNx], u1[ii - cuNx]);
+    tmp1      = add(tmp1, tmp2);
+    tmp2      = add(u1[ii + 1], u1[ii - 1]);
+    tmp1      = add(tmp1, tmp2);
+    tmp1      = fma(c1, u1[ii], fma(c2, tmp1, -u0[ii]));
 
     // write final value back to global memory
     if ((GET_BIT(bn_mask[ii >> 3], ii % 8)) == 0) {
@@ -223,24 +222,23 @@ KernelAirCart(Float* __restrict__ u0, Float const* __restrict__ u1, uint8_t cons
 }
 
 // air update for FCC, on folded grid (improvement to 2013 DAFx paper)
-template<typename Float>
-__global__ void
-KernelAirFCC(Float* __restrict__ u0, Float const* __restrict__ u1, uint8_t const* __restrict__ bn_mask) {
+template<typename Real>
+__global__ void KernelAirFCC(Real* __restrict__ u0, Real const* __restrict__ u1, uint8_t const* __restrict__ bn_mask) {
   // get ix,iy,iz from thread and block Id's
   int64_t const cx = blockIdx.x * cuBx + threadIdx.x + 1;
   int64_t const cy = blockIdx.y * cuBy + threadIdx.y + 1;
   int64_t const cz = blockIdx.z * cuBz + threadIdx.z + 1;
 
-  auto const c1 = constant<Float>(c1_f32, c1_f64);
-  auto const c2 = constant<Float>(c2_f32, c2_f64);
+  auto const c1 = constant<Real>(c1_f32, c1_f64);
+  auto const c2 = constant<Real>(c2_f32, c2_f64);
 
   if ((cx < cuNx - 1) && (cy < cuNy - 1) && (cz < cuNz - 1)) {
     // x is contiguous
     int64_t const ii = cz * cuNxNy + cy * cuNx + cx;
-    Float tmp1       = NAN;
-    Float tmp2       = NAN;
-    Float tmp3       = NAN;
-    Float tmp4       = NAN;
+    Real tmp1        = NAN;
+    Real tmp2        = NAN;
+    Real tmp3        = NAN;
+    Real tmp4        = NAN;
     // divide-conquer add as much as possible
     tmp1 = add(u1[ii + cuNxNy + cuNx], u1[ii - cuNxNy - cuNx]);
     tmp2 = add(u1[ii + cuNx + 1], u1[ii - cuNx - 1]);
@@ -263,8 +261,8 @@ KernelAirFCC(Float* __restrict__ u0, Float const* __restrict__ u1, uint8_t const
 
 // this folds in half of FCC subgrid so everything is nicely homogenous (no
 // braching for stencil)
-template<typename Float>
-__global__ void KernelFoldFCC(Float* __restrict__ u1) {
+template<typename Real>
+__global__ void KernelFoldFCC(Real* __restrict__ u1) {
   int64_t const cx = blockIdx.x * cuBx2 + threadIdx.x;
   int64_t const cz = blockIdx.y * cuBy2 + threadIdx.y;
   // fold is along middle dimension
@@ -274,36 +272,36 @@ __global__ void KernelFoldFCC(Float* __restrict__ u1) {
 }
 
 // rigid boundaries, cartesian, using adj info
-template<typename Float>
+template<typename Real>
 __global__ void KernelBoundaryRigidCart(
-    Float* __restrict__ u0,
-    Float const* __restrict__ u1,
+    Real* __restrict__ u0,
+    Real const* __restrict__ u1,
     uint16_t const* __restrict__ adj_bn,
     int64_t const* __restrict__ bn_ixyz,
     int8_t const* __restrict__ K_bn
 ) {
   int64_t const nb = blockIdx.x * cuBb + threadIdx.x;
 
-  auto const c2   = constant<Float>(c2_f32, c2_f64);
-  auto const csl2 = constant<Float>(csl2_f32, csl2_f64);
+  auto const c2   = constant<Real>(c2_f32, c2_f64);
+  auto const csl2 = constant<Real>(csl2_f32, csl2_f64);
 
   if (nb < cuNb) {
     int64_t const ii   = bn_ixyz[nb];
     uint16_t const adj = adj_bn[nb];
-    Float const K      = K_bn[nb];
+    Real const K       = K_bn[nb];
 
-    Float const _2 = 2.0;
-    Float const b1 = (_2 - csl2 * K);
-    Float const b2 = c2;
+    Real const _2 = 2.0;
+    Real const b1 = (_2 - csl2 * K);
+    Real const b2 = c2;
 
-    Float tmp1 = NAN;
-    Float tmp2 = NAN;
-    tmp1       = add((Float)GET_BIT(adj, 0) * u1[ii + cuNxNy], (Float)GET_BIT(adj, 1) * u1[ii - cuNxNy]);
-    tmp2       = add((Float)GET_BIT(adj, 2) * u1[ii + cuNx], (Float)GET_BIT(adj, 3) * u1[ii - cuNx]);
-    tmp1       = add(tmp1, tmp2);
-    tmp2       = add((Float)GET_BIT(adj, 4) * u1[ii + 1], (Float)GET_BIT(adj, 5) * u1[ii - 1]);
-    tmp1       = add(tmp1, tmp2);
-    tmp1       = fma(b1, u1[ii], fma(b2, tmp1, -u0[ii]));
+    Real tmp1 = NAN;
+    Real tmp2 = NAN;
+    tmp1      = add((Real)GET_BIT(adj, 0) * u1[ii + cuNxNy], (Real)GET_BIT(adj, 1) * u1[ii - cuNxNy]);
+    tmp2      = add((Real)GET_BIT(adj, 2) * u1[ii + cuNx], (Real)GET_BIT(adj, 3) * u1[ii - cuNx]);
+    tmp1      = add(tmp1, tmp2);
+    tmp2      = add((Real)GET_BIT(adj, 4) * u1[ii + 1], (Real)GET_BIT(adj, 5) * u1[ii - 1]);
+    tmp1      = add(tmp1, tmp2);
+    tmp1      = fma(b1, u1[ii], fma(b2, tmp1, -u0[ii]));
 
     // u0[ii] = partial; //write back to global memory
     u0[ii] = tmp1; // write back to global memory
@@ -311,122 +309,122 @@ __global__ void KernelBoundaryRigidCart(
 }
 
 // rigid boundaries, FCC, using adj info
-template<typename Float>
+template<typename Real>
 __global__ void KernelBoundaryRigidFCC(
-    Float* __restrict__ u0,
-    Float const* __restrict__ u1,
+    Real* __restrict__ u0,
+    Real const* __restrict__ u1,
     uint16_t const* __restrict__ adj_bn,
     int64_t const* __restrict__ bn_ixyz,
     int8_t const* __restrict__ K_bn
 ) {
   int64_t const nb = blockIdx.x * cuBb + threadIdx.x;
 
-  auto const c2   = constant<Float>(c2_f32, c2_f64);
-  auto const csl2 = constant<Float>(csl2_f32, csl2_f64);
+  auto const c2   = constant<Real>(c2_f32, c2_f64);
+  auto const csl2 = constant<Real>(csl2_f32, csl2_f64);
 
   if (nb < cuNb) {
     int64_t const ii   = bn_ixyz[nb];
     uint16_t const adj = adj_bn[nb];
-    Float const K      = K_bn[nb];
+    Real const K       = K_bn[nb];
 
-    Float const _2 = 2.0;
-    Float const b1 = (_2 - csl2 * K);
-    Float const b2 = c2;
+    Real const _2 = 2.0;
+    Real const b1 = (_2 - csl2 * K);
+    Real const b2 = c2;
 
-    Float tmp1 = NAN;
-    Float tmp2 = NAN;
-    Float tmp3 = NAN;
-    Float tmp4 = NAN;
-    tmp1       = add((Float)GET_BIT(adj, 0) * u1[ii + cuNxNy + cuNx], (Float)GET_BIT(adj, 1) * u1[ii - cuNxNy - cuNx]);
-    tmp2       = add((Float)GET_BIT(adj, 2) * u1[ii + cuNx + 1], (Float)GET_BIT(adj, 3) * u1[ii - cuNx - 1]);
-    tmp1       = add(tmp1, tmp2);
-    tmp3       = add((Float)GET_BIT(adj, 4) * u1[ii + cuNxNy + 1], (Float)GET_BIT(adj, 5) * u1[ii - cuNxNy - 1]);
-    tmp4       = add((Float)GET_BIT(adj, 6) * u1[ii + cuNxNy - cuNx], (Float)GET_BIT(adj, 7) * u1[ii - cuNxNy + cuNx]);
-    tmp3       = add(tmp3, tmp4);
-    tmp2       = add((Float)GET_BIT(adj, 8) * u1[ii + cuNx - 1], (Float)GET_BIT(adj, 9) * u1[ii - cuNx + 1]);
-    tmp1       = add(tmp1, tmp2);
-    tmp4       = add((Float)GET_BIT(adj, 10) * u1[ii + cuNxNy - 1], (Float)GET_BIT(adj, 11) * u1[ii - cuNxNy + 1]);
-    tmp3       = add(tmp3, tmp4);
-    tmp1       = add(tmp1, tmp3);
-    tmp1       = fma(b1, u1[ii], fma(b2, tmp1, -u0[ii]));
+    Real tmp1 = NAN;
+    Real tmp2 = NAN;
+    Real tmp3 = NAN;
+    Real tmp4 = NAN;
+    tmp1      = add((Real)GET_BIT(adj, 0) * u1[ii + cuNxNy + cuNx], (Real)GET_BIT(adj, 1) * u1[ii - cuNxNy - cuNx]);
+    tmp2      = add((Real)GET_BIT(adj, 2) * u1[ii + cuNx + 1], (Real)GET_BIT(adj, 3) * u1[ii - cuNx - 1]);
+    tmp1      = add(tmp1, tmp2);
+    tmp3      = add((Real)GET_BIT(adj, 4) * u1[ii + cuNxNy + 1], (Real)GET_BIT(adj, 5) * u1[ii - cuNxNy - 1]);
+    tmp4      = add((Real)GET_BIT(adj, 6) * u1[ii + cuNxNy - cuNx], (Real)GET_BIT(adj, 7) * u1[ii - cuNxNy + cuNx]);
+    tmp3      = add(tmp3, tmp4);
+    tmp2      = add((Real)GET_BIT(adj, 8) * u1[ii + cuNx - 1], (Real)GET_BIT(adj, 9) * u1[ii - cuNx + 1]);
+    tmp1      = add(tmp1, tmp2);
+    tmp4      = add((Real)GET_BIT(adj, 10) * u1[ii + cuNxNy - 1], (Real)GET_BIT(adj, 11) * u1[ii - cuNxNy + 1]);
+    tmp3      = add(tmp3, tmp4);
+    tmp1      = add(tmp1, tmp3);
+    tmp1      = fma(b1, u1[ii], fma(b2, tmp1, -u0[ii]));
 
     u0[ii] = tmp1; // write back to global memory
   }
 }
 
 // ABC loss at boundaries of simulation grid
-template<typename Float>
+template<typename Real>
 __global__ void KernelBoundaryABC(
-    Float* __restrict__ u0,
-    Float const* __restrict__ u2ba,
+    Real* __restrict__ u0,
+    Real const* __restrict__ u2ba,
     int8_t const* __restrict__ Q_bna,
     int64_t const* __restrict__ bna_ixyz
 ) {
   int64_t const nb = blockIdx.x * cuBb + threadIdx.x;
-  auto const cl    = constant<Float>(cl_f32, cl_f64);
+  auto const cl    = constant<Real>(cl_f32, cl_f64);
 
   if (nb < cuNba) {
-    Float const _1   = 1.0;
-    Float const lQ   = cl * Q_bna[nb];
+    Real const _1    = 1.0;
+    Real const lQ    = cl * Q_bna[nb];
     int64_t const ib = bna_ixyz[nb];
-    Float partial    = u0[ib];
+    Real partial     = u0[ib];
     partial          = (partial + lQ * u2ba[nb]) / (_1 + lQ);
     u0[ib]           = partial;
   }
 }
 
 // Part of freq-dep boundary update
-template<typename Float>
+template<typename Real>
 __global__ void KernelBoundaryFD(
-    Float* __restrict__ u0b,
-    Float const* u2b,
-    Float* __restrict__ vh1,
-    Float* __restrict__ gh1,
-    Float const* ssaf_bnl,
+    Real* __restrict__ u0b,
+    Real const* u2b,
+    Real* __restrict__ vh1,
+    Real* __restrict__ gh1,
+    Real const* ssaf_bnl,
     int8_t const* mat_bnl,
-    Float const* __restrict__ mat_beta,
-    MatQuad<Float> const* __restrict__ mat_quads
+    Real const* __restrict__ mat_beta,
+    MatQuad<Real> const* __restrict__ mat_quads
 ) {
   int64_t const nb = blockIdx.x * cuBb + threadIdx.x;
 
-  auto const clo2 = constant<Float>(clo2_f32, clo2_f64);
+  auto const clo2 = constant<Real>(clo2_f32, clo2_f64);
 
   if (nb < cuNbl) {
-    Float const _1     = 1.0;
-    Float const _2     = 2.0;
-    int32_t const k    = mat_bnl[nb];
-    Float const ssaf   = ssaf_bnl[nb];
-    Float const lo2Kbg = clo2 * ssaf * mat_beta[k];
-    Float const fac    = _2 * clo2 * ssaf / (_1 + lo2Kbg);
+    Real const _1     = 1.0;
+    Real const _2     = 2.0;
+    int32_t const k   = mat_bnl[nb];
+    Real const ssaf   = ssaf_bnl[nb];
+    Real const lo2Kbg = clo2 * ssaf * mat_beta[k];
+    Real const fac    = _2 * clo2 * ssaf / (_1 + lo2Kbg);
 
-    Float u0bint       = u0b[nb];
-    Float const u2bint = u2b[nb];
+    Real u0bint       = u0b[nb];
+    Real const u2bint = u2b[nb];
 
     u0bint = (u0bint + lo2Kbg * u2bint) / (_1 + lo2Kbg);
 
-    Float vh1int[MMb]; // size has to be constant at compile time
-    Float gh1int[MMb];
+    Real vh1int[MMb]; // size has to be constant at compile time
+    Real gh1int[MMb];
     for (int8_t m = 0; m < cuMb[k]; m++) { // faster on average than MMb
-      int64_t const nbm        = m * cuNbl + nb;
-      int32_t const mbk        = k * MMb + m;
-      MatQuad<Float> const* tm = nullptr;
-      tm                       = &(mat_quads[mbk]);
-      vh1int[m]                = vh1[nbm];
-      gh1int[m]                = gh1[nbm];
+      int64_t const nbm       = m * cuNbl + nb;
+      int32_t const mbk       = k * MMb + m;
+      MatQuad<Real> const* tm = nullptr;
+      tm                      = &(mat_quads[mbk]);
+      vh1int[m]               = vh1[nbm];
+      gh1int[m]               = gh1[nbm];
       u0bint -= fac * (_2 * (tm->bDh) * vh1int[m] - (tm->bFh) * gh1int[m]);
     }
 
-    Float const du = u0bint - u2bint;
+    Real const du = u0bint - u2bint;
 
     // NOLINTBEGIN(clang-analyzer-core.UndefinedBinaryOperatorResult)
     for (int8_t m = 0; m < cuMb[k]; m++) { // faster on average than MMb
-      int64_t const nbm        = m * cuNbl + nb;
-      int32_t const mbk        = k * MMb + m;
-      MatQuad<Float> const* tm = nullptr;
-      tm                       = &(mat_quads[mbk]);
-      Float const vh0m         = (tm->b) * du + (tm->bd) * vh1int[m] - _2 * (tm->bFh) * gh1int[m];
-      gh1[nbm]                 = gh1int[m] + (vh0m + vh1int[m]) / _2;
-      vh1[nbm]                 = vh0m;
+      int64_t const nbm       = m * cuNbl + nb;
+      int32_t const mbk       = k * MMb + m;
+      MatQuad<Real> const* tm = nullptr;
+      tm                      = &(mat_quads[mbk]);
+      Real const vh0m         = (tm->b) * du + (tm->bd) * vh1int[m] - _2 * (tm->bFh) * gh1int[m];
+      gh1[nbm]                = gh1int[m] + (vh0m + vh1int[m]) / _2;
+      vh1[nbm]                = vh0m;
     }
     // NOLINTEND(clang-analyzer-core.UndefinedBinaryOperatorResult)
     u0b[nb] = u0bint;
@@ -434,14 +432,14 @@ __global__ void KernelBoundaryFD(
 }
 
 // add source input (one at a time for simplicity)
-template<typename Float>
-__global__ void AddIn(Float* u0, Float sample) {
+template<typename Real>
+__global__ void AddIn(Real* u0, Real sample) {
   u0[0] += sample;
 }
 
 // dst-src copy from buffer to grid
-template<typename Float>
-__global__ void CopyToGridKernel(Float* u, Float const* buffer, int64_t const* locs, int64_t N) {
+template<typename Real>
+__global__ void CopyToGridKernel(Real* u, Real const* buffer, int64_t const* locs, int64_t N) {
   int64_t const i = blockIdx.x * cuBrw + threadIdx.x;
   if (i < N) {
     u[locs[i]] = buffer[i];
@@ -449,8 +447,8 @@ __global__ void CopyToGridKernel(Float* u, Float const* buffer, int64_t const* l
 }
 
 // dst-src copy to buffer from  grid (not needed, but to make more explicit)
-template<typename Float>
-__global__ void CopyFromGridKernel(Float* buffer, Float const* u, int64_t const* locs, int64_t N) {
+template<typename Real>
+__global__ void CopyFromGridKernel(Real* buffer, Real const* u, int64_t const* locs, int64_t N) {
   int64_t const i = blockIdx.x * cuBrw + threadIdx.x;
   if (i < N) {
     buffer[i] = u[locs[i]];
@@ -458,8 +456,8 @@ __global__ void CopyFromGridKernel(Float* buffer, Float const* u, int64_t const*
 }
 
 // flip halos for ABCs
-template<typename Float>
-__global__ void FlipHaloXY_Zbeg(Float* __restrict__ u1) {
+template<typename Real>
+__global__ void FlipHaloXY_Zbeg(Real* __restrict__ u1) {
   int64_t const cx = blockIdx.x * cuBx2 + threadIdx.x;
   int64_t const cy = blockIdx.y * cuBy2 + threadIdx.y;
   if ((cx < cuNx) && (cy < cuNy)) {
@@ -469,8 +467,8 @@ __global__ void FlipHaloXY_Zbeg(Float* __restrict__ u1) {
   }
 }
 
-template<typename Float>
-__global__ void FlipHaloXY_Zend(Float* __restrict__ u1) {
+template<typename Real>
+__global__ void FlipHaloXY_Zend(Real* __restrict__ u1) {
   int64_t const cx = blockIdx.x * cuBx2 + threadIdx.x;
   int64_t const cy = blockIdx.y * cuBy2 + threadIdx.y;
   if ((cx < cuNx) && (cy < cuNy)) {
@@ -480,8 +478,8 @@ __global__ void FlipHaloXY_Zend(Float* __restrict__ u1) {
   }
 }
 
-template<typename Float>
-__global__ void FlipHaloXZ_Ybeg(Float* __restrict__ u1) {
+template<typename Real>
+__global__ void FlipHaloXZ_Ybeg(Real* __restrict__ u1) {
   int64_t const cx = blockIdx.x * cuBx2 + threadIdx.x;
   int64_t const cz = blockIdx.y * cuBy2 + threadIdx.y;
   if ((cx < cuNx) && (cz < cuNz)) {
@@ -491,8 +489,8 @@ __global__ void FlipHaloXZ_Ybeg(Float* __restrict__ u1) {
   }
 }
 
-template<typename Float>
-__global__ void FlipHaloXZ_Yend(Float* __restrict__ u1) {
+template<typename Real>
+__global__ void FlipHaloXZ_Yend(Real* __restrict__ u1) {
   int64_t const cx = blockIdx.x * cuBx2 + threadIdx.x;
   int64_t const cz = blockIdx.y * cuBy2 + threadIdx.y;
   if ((cx < cuNx) && (cz < cuNz)) {
@@ -502,8 +500,8 @@ __global__ void FlipHaloXZ_Yend(Float* __restrict__ u1) {
   }
 }
 
-template<typename Float>
-__global__ void FlipHaloYZ_Xbeg(Float* __restrict__ u1) {
+template<typename Real>
+__global__ void FlipHaloYZ_Xbeg(Real* __restrict__ u1) {
   int64_t const cy = blockIdx.x * cuBx2 + threadIdx.x;
   int64_t const cz = blockIdx.y * cuBy2 + threadIdx.y;
   if ((cy < cuNy) && (cz < cuNz)) {
@@ -513,8 +511,8 @@ __global__ void FlipHaloYZ_Xbeg(Float* __restrict__ u1) {
   }
 }
 
-template<typename Float>
-__global__ void FlipHaloYZ_Xend(Float* __restrict__ u1) {
+template<typename Real>
+__global__ void FlipHaloYZ_Xend(Real* __restrict__ u1) {
   int64_t const cy = blockIdx.x * cuBx2 + threadIdx.x;
   int64_t const cz = blockIdx.y * cuBy2 + threadIdx.y;
   if ((cy < cuNy) && (cz < cuNz)) {
@@ -545,8 +543,8 @@ auto print_gpu_details(int i) -> uint64_t {
 }
 
 // input indices need to be sorted for multi-device allocation
-template<typename Float>
-void check_sorted(Simulation3D<Float> const* sim) {
+template<typename Real>
+void check_sorted(Simulation3D<Real> const* sim) {
   int64_t* bn_ixyz  = sim->bn_ixyz;
   int64_t* bnl_ixyz = sim->bnl_ixyz;
   int64_t* bna_ixyz = sim->bna_ixyz;
@@ -575,8 +573,8 @@ void check_sorted(Simulation3D<Float> const* sim) {
 }
 
 // counts for splitting data across GPUs
-template<typename Float>
-void split_data(Simulation3D<Float> const* sim, std::span<HostData<Float>> ghds) {
+template<typename Real>
+void split_data(Simulation3D<Real> const* sim, std::span<HostData<Real>> ghds) {
   auto const Nx    = sim->Nx;
   auto const Ny    = sim->Ny;
   auto const Nz    = sim->Nz;
@@ -725,8 +723,8 @@ void split_data(Simulation3D<Float> const* sim, std::span<HostData<Float>> ghds)
 }
 
 // run the sim!
-template<typename Float>
-static auto run(Simulation3D<Float> const& sim) -> void {
+template<typename Real>
+static auto run(Simulation3D<Real> const& sim) -> void {
   // if you want to test synchronous, env variable for that
   char const* s = getenv("CUDA_LAUNCH_BLOCKING");
   if (s != nullptr) {
@@ -744,25 +742,25 @@ static auto run(Simulation3D<Float> const& sim) -> void {
   auto const ngpus = max_ngpus;
   PFFDTD_ASSERT(ngpus < (sim.Nx));
 
-  auto ghds = std::vector<HostData<Float>>(static_cast<size_t>(ngpus));
-  auto gds  = std::vector<DeviceData<Float>>(static_cast<size_t>(ngpus));
+  auto ghds = std::vector<HostData<Real>>(static_cast<size_t>(ngpus));
+  auto gds  = std::vector<DeviceData<Real>>(static_cast<size_t>(ngpus));
 
   if (ngpus > 1) {
     check_sorted(&sim); // needs to be sorted for multi-GPU
   }
 
   // get local counts for Nx,Nb,Nr,Ns
-  split_data<Float>(&sim, ghds);
+  split_data<Real>(&sim, ghds);
 
   for (int gid = 0; gid < ngpus; gid++) {
     gds[gid].totalmembytes = print_gpu_details(gid);
   }
 
-  Float lo2 = sim.lo2;
-  Float a1  = sim.a1;
-  Float a2  = sim.a2;
-  Float l   = sim.l;
-  Float sl2 = sim.sl2;
+  Real lo2 = sim.lo2;
+  Real a1  = sim.a1;
+  Real a2  = sim.a2;
+  Real l   = sim.l;
+  Real sl2 = sim.sl2;
 
   // timing stuff
   auto elapsed               = std::chrono::nanoseconds{0};
@@ -791,9 +789,9 @@ static auto run(Simulation3D<Float> const& sim) -> void {
   int64_t Nx_pos   = 0;
   // uint64_t Nx_pos2=0;
 
-  Float* u_out_buf = nullptr;
-  gpuErrchk(cudaMallocHost(&u_out_buf, (size_t)(sim.Nr * sizeof(Float))));
-  memset(u_out_buf, 0, (size_t)(sim.Nr * sizeof(Float))); // set floats to zero
+  Real* u_out_buf = nullptr;
+  gpuErrchk(cudaMallocHost(&u_out_buf, (size_t)(sim.Nr * sizeof(Real))));
+  memset(u_out_buf, 0, (size_t)(sim.Nr * sizeof(Real))); // set floats to zero
 
   int64_t Nzy = (sim.Nz) * (sim.Ny); // area-slice
 
@@ -801,8 +799,8 @@ static auto run(Simulation3D<Float> const& sim) -> void {
   for (int gid = 0; gid < ngpus; gid++) {
     gpuErrchk(cudaSetDevice(gid));
 
-    DeviceData<Float>* gd = &(gds[gid]);
-    HostData<Float>* ghd  = &(ghds[gid]);
+    DeviceData<Real>* gd = &(gds[gid]);
+    HostData<Real>* ghd  = &(ghds[gid]);
     std::printf("---------\n");
     std::printf("GPU %d\n", gid);
     std::printf("---------\n");
@@ -887,38 +885,38 @@ static auto run(Simulation3D<Float> const& sim) -> void {
       ghd->out_ixyz[nr] = jj;
     }
 
-    gpuErrchk(cudaMalloc(&(gd->u0), (size_t)((ghd->Npts) * sizeof(Float))));
-    gpuErrchk(cudaMemset(gd->u0, 0, (size_t)((ghd->Npts) * sizeof(Float))));
+    gpuErrchk(cudaMalloc(&(gd->u0), (size_t)((ghd->Npts) * sizeof(Real))));
+    gpuErrchk(cudaMemset(gd->u0, 0, (size_t)((ghd->Npts) * sizeof(Real))));
 
-    gpuErrchk(cudaMalloc(&(gd->u1), (size_t)((ghd->Npts) * sizeof(Float))));
-    gpuErrchk(cudaMemset(gd->u1, 0, (size_t)((ghd->Npts) * sizeof(Float))));
+    gpuErrchk(cudaMalloc(&(gd->u1), (size_t)((ghd->Npts) * sizeof(Real))));
+    gpuErrchk(cudaMemset(gd->u1, 0, (size_t)((ghd->Npts) * sizeof(Real))));
 
     gpuErrchk(cudaMalloc(&(gd->K_bn), (size_t)(ghd->Nb * sizeof(int8_t))));
     gpuErrchk(cudaMemcpy(gd->K_bn, ghd->K_bn, ghd->Nb * sizeof(int8_t), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->ssaf_bnl), (size_t)(ghd->Nbl * sizeof(Float))));
-    gpuErrchk(cudaMemcpy(gd->ssaf_bnl, ghd->ssaf_bnl, ghd->Nbl * sizeof(Float), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&(gd->ssaf_bnl), (size_t)(ghd->Nbl * sizeof(Real))));
+    gpuErrchk(cudaMemcpy(gd->ssaf_bnl, ghd->ssaf_bnl, ghd->Nbl * sizeof(Real), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->u0b), (size_t)(ghd->Nbl * sizeof(Float))));
-    gpuErrchk(cudaMemset(gd->u0b, 0, (size_t)(ghd->Nbl * sizeof(Float))));
+    gpuErrchk(cudaMalloc(&(gd->u0b), (size_t)(ghd->Nbl * sizeof(Real))));
+    gpuErrchk(cudaMemset(gd->u0b, 0, (size_t)(ghd->Nbl * sizeof(Real))));
 
-    gpuErrchk(cudaMalloc(&(gd->u1b), (size_t)(ghd->Nbl * sizeof(Float))));
-    gpuErrchk(cudaMemset(gd->u1b, 0, (size_t)(ghd->Nbl * sizeof(Float))));
+    gpuErrchk(cudaMalloc(&(gd->u1b), (size_t)(ghd->Nbl * sizeof(Real))));
+    gpuErrchk(cudaMemset(gd->u1b, 0, (size_t)(ghd->Nbl * sizeof(Real))));
 
-    gpuErrchk(cudaMalloc(&(gd->u2b), (size_t)(ghd->Nbl * sizeof(Float))));
-    gpuErrchk(cudaMemset(gd->u2b, 0, (size_t)(ghd->Nbl * sizeof(Float))));
+    gpuErrchk(cudaMalloc(&(gd->u2b), (size_t)(ghd->Nbl * sizeof(Real))));
+    gpuErrchk(cudaMemset(gd->u2b, 0, (size_t)(ghd->Nbl * sizeof(Real))));
 
-    gpuErrchk(cudaMalloc(&(gd->u2ba), (size_t)(ghd->Nba * sizeof(Float))));
-    gpuErrchk(cudaMemset(gd->u2ba, 0, (size_t)(ghd->Nba * sizeof(Float))));
+    gpuErrchk(cudaMalloc(&(gd->u2ba), (size_t)(ghd->Nba * sizeof(Real))));
+    gpuErrchk(cudaMemset(gd->u2ba, 0, (size_t)(ghd->Nba * sizeof(Real))));
 
-    gpuErrchk(cudaMalloc(&(gd->vh1), (size_t)(ghd->Nbl * MMb * sizeof(Float))));
-    gpuErrchk(cudaMemset(gd->vh1, 0, (size_t)(ghd->Nbl * MMb * sizeof(Float))));
+    gpuErrchk(cudaMalloc(&(gd->vh1), (size_t)(ghd->Nbl * MMb * sizeof(Real))));
+    gpuErrchk(cudaMemset(gd->vh1, 0, (size_t)(ghd->Nbl * MMb * sizeof(Real))));
 
-    gpuErrchk(cudaMalloc(&(gd->gh1), (size_t)(ghd->Nbl * MMb * sizeof(Float))));
-    gpuErrchk(cudaMemset(gd->gh1, 0, (size_t)(ghd->Nbl * MMb * sizeof(Float))));
+    gpuErrchk(cudaMalloc(&(gd->gh1), (size_t)(ghd->Nbl * MMb * sizeof(Real))));
+    gpuErrchk(cudaMemset(gd->gh1, 0, (size_t)(ghd->Nbl * MMb * sizeof(Real))));
 
-    gpuErrchk(cudaMalloc(&(gd->u_out_buf), (size_t)(ghd->Nr * sizeof(Float))));
-    gpuErrchk(cudaMemset(gd->u_out_buf, 0, (size_t)(ghd->Nr * sizeof(Float))));
+    gpuErrchk(cudaMalloc(&(gd->u_out_buf), (size_t)(ghd->Nr * sizeof(Real))));
+    gpuErrchk(cudaMemset(gd->u_out_buf, 0, (size_t)(ghd->Nr * sizeof(Real))));
 
     gpuErrchk(cudaMalloc(&(gd->bn_ixyz), (size_t)(ghd->Nb * sizeof(int64_t))));
     gpuErrchk(cudaMemcpy(gd->bn_ixyz, ghd->bn_ixyz, (size_t)ghd->Nb * sizeof(int64_t), cudaMemcpyHostToDevice));
@@ -941,12 +939,12 @@ static auto run(Simulation3D<Float> const& sim) -> void {
     gpuErrchk(cudaMalloc(&(gd->mat_bnl), (size_t)(ghd->Nbl * sizeof(int8_t))));
     gpuErrchk(cudaMemcpy(gd->mat_bnl, ghd->mat_bnl, (size_t)ghd->Nbl * sizeof(int8_t), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->mat_beta), (size_t)sim.Nm * sizeof(Float)));
-    gpuErrchk(cudaMemcpy(gd->mat_beta, sim.mat_beta, (size_t)sim.Nm * sizeof(Float), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&(gd->mat_beta), (size_t)sim.Nm * sizeof(Real)));
+    gpuErrchk(cudaMemcpy(gd->mat_beta, sim.mat_beta, (size_t)sim.Nm * sizeof(Real), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->mat_quads), (size_t)sim.Nm * MMb * sizeof(MatQuad<Float>)));
+    gpuErrchk(cudaMalloc(&(gd->mat_quads), (size_t)sim.Nm * MMb * sizeof(MatQuad<Real>)));
     gpuErrchk(
-        cudaMemcpy(gd->mat_quads, sim.mat_quads, (size_t)sim.Nm * MMb * sizeof(MatQuad<Float>), cudaMemcpyHostToDevice)
+        cudaMemcpy(gd->mat_quads, sim.mat_quads, (size_t)sim.Nm * MMb * sizeof(MatQuad<Real>), cudaMemcpyHostToDevice)
     );
 
     gpuErrchk(cudaMalloc(&(gd->bn_mask), (size_t)(ghd->Nbm * sizeof(uint8_t))));
@@ -980,20 +978,20 @@ static auto run(Simulation3D<Float> const& sim) -> void {
     gpuErrchk(cudaMemcpyToSymbol(cuNxNy, &Nzy,
                                  sizeof(int64_t))); // same for all devices
 
-    if constexpr (std::is_same_v<Float, float>) {
+    if constexpr (std::is_same_v<Real, float>) {
       gpuErrchk(cudaMemcpyToSymbol(c1_f32, &a1, sizeof(float)));
       gpuErrchk(cudaMemcpyToSymbol(c2_f32, &a2, sizeof(float)));
       gpuErrchk(cudaMemcpyToSymbol(cl_f32, &l, sizeof(float)));
       gpuErrchk(cudaMemcpyToSymbol(csl2_f32, &sl2, sizeof(float)));
       gpuErrchk(cudaMemcpyToSymbol(clo2_f32, &lo2, sizeof(float)));
-    } else if constexpr (std::is_same_v<Float, double>) {
+    } else if constexpr (std::is_same_v<Real, double>) {
       gpuErrchk(cudaMemcpyToSymbol(c1_f64, &a1, sizeof(double)));
       gpuErrchk(cudaMemcpyToSymbol(c2_f64, &a2, sizeof(double)));
       gpuErrchk(cudaMemcpyToSymbol(cl_f64, &l, sizeof(double)));
       gpuErrchk(cudaMemcpyToSymbol(csl2_f64, &sl2, sizeof(double)));
       gpuErrchk(cudaMemcpyToSymbol(clo2_f64, &lo2, sizeof(double)));
     } else {
-      static_assert(always_false<Float>);
+      static_assert(always_false<Real>);
     }
 
     std::printf("Constant memory loaded\n");
@@ -1071,8 +1069,8 @@ static auto run(Simulation3D<Float> const& sim) -> void {
   for (int64_t n = 0; n < sim.Nt; n++) {    // loop over time-steps
     for (int gid = 0; gid < ngpus; gid++) { // loop over GPUs (one thread launches all kernels)
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData<Float>* gd = &(gds[gid]);  // get struct of device pointers
-      HostData<Float>* ghd  = &(ghds[gid]); // get struct of host points (corresponding to device)
+      DeviceData<Real>* gd = &(gds[gid]);  // get struct of device pointers
+      HostData<Real>* ghd  = &(ghds[gid]); // get struct of host points (corresponding to device)
 
       // start first timer
       if (gid == 0) {
@@ -1160,7 +1158,7 @@ static auto run(Simulation3D<Float> const& sim) -> void {
       // injecting source first, negating sample to add it in first (NB source
       // on different stream than bn)
       for (int64_t ns = 0; ns < ghd->Ns; ns++) {
-        AddIn<<<1, 1, 0, gd->cuStream_air>>>(gd->u0 + ghd->in_ixyz[ns], (Float)(-(ghd->in_sigs[ns * sim.Nt + n])));
+        AddIn<<<1, 1, 0, gd->cuStream_air>>>(gd->u0 + ghd->in_ixyz[ns], (Real)(-(ghd->in_sigs[ns * sim.Nt + n])));
       }
       // now air updates (not conflicting with bn updates because of bn_mask)
       if (sim.fcc_flag == 0) {
@@ -1189,7 +1187,7 @@ static auto run(Simulation3D<Float> const& sim) -> void {
       gpuErrchk(cudaMemcpyAsync(
           ghd->u_out_buf,
           gd->u_out_buf,
-          ghd->Nr * sizeof(Float),
+          ghd->Nr * sizeof(Real),
           cudaMemcpyDeviceToHost,
           gd->cuStream_bn
       ));
@@ -1199,8 +1197,8 @@ static auto run(Simulation3D<Float> const& sim) -> void {
     // readouts
     for (int gid = 0; gid < ngpus; gid++) {
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData<Float>* gd = &(gds[gid]);
-      HostData<Float>* ghd  = &(ghds[gid]);
+      DeviceData<Real>* gd = &(gds[gid]);
+      HostData<Real>* ghd  = &(ghds[gid]);
       gpuErrchk(cudaEventSynchronize(gd->cuEv_readout_end));
       // copy grid points off output buffer
       for (int64_t nr = 0; nr < ghd->Nr; nr++) {
@@ -1210,7 +1208,7 @@ static auto run(Simulation3D<Float> const& sim) -> void {
     // synchronise streams
     for (int gid = 0; gid < ngpus; gid++) {
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData<Float>* gd = &(gds[gid]);                // don't really need to set gpu device to sync
+      DeviceData<Real>* gd = &(gds[gid]);                 // don't really need to set gpu device to sync
       gpuErrchk(cudaStreamSynchronize(gd->cuStream_air)); // interior complete
       gpuErrchk(cudaStreamSynchronize(gd->cuStream_bn));  // transfer complete
     }
@@ -1227,7 +1225,7 @@ static auto run(Simulation3D<Float> const& sim) -> void {
           gid + 1,
           gds[gid].u0 + Nzy * (ghds[gid].Nxh - 2),
           gid,
-          (size_t)(Nzy * sizeof(Float)),
+          (size_t)(Nzy * sizeof(Real)),
           gds[gid].cuStream_bn
       ));
     }
@@ -1239,7 +1237,7 @@ static auto run(Simulation3D<Float> const& sim) -> void {
           gid - 1,
           gds[gid].u0 + Nzy,
           gid,
-          (size_t)(Nzy * sizeof(Float)),
+          (size_t)(Nzy * sizeof(Real)),
           gds[gid].cuStream_bn
       ));
     }
@@ -1251,7 +1249,7 @@ static auto run(Simulation3D<Float> const& sim) -> void {
           gid + 1,
           gds[gid].u0 + Nzy * (ghds[gid].Nxh - 2),
           gid,
-          (size_t)(Nzy * sizeof(Float)),
+          (size_t)(Nzy * sizeof(Real)),
           gds[gid].cuStream_bn
       ));
     }
@@ -1263,23 +1261,23 @@ static auto run(Simulation3D<Float> const& sim) -> void {
           gid - 1,
           gds[gid].u0 + Nzy,
           gid,
-          (size_t)(Nzy * sizeof(Float)),
+          (size_t)(Nzy * sizeof(Real)),
           gds[gid].cuStream_bn
       ));
     }
 
     for (int gid = 0; gid < ngpus; gid++) {
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData<Float>* gd = &(gds[gid]);
+      DeviceData<Real>* gd = &(gds[gid]);
       gpuErrchk(cudaStreamSynchronize(gd->cuStream_bn)); // transfer complete
     }
     for (int gid = 0; gid < ngpus; gid++) {
-      DeviceData<Float>* gd = &(gds[gid]);
+      DeviceData<Real>* gd = &(gds[gid]);
       // update pointers
-      Float* tmp_ptr = nullptr;
-      tmp_ptr        = gd->u1;
-      gd->u1         = gd->u0;
-      gd->u0         = tmp_ptr;
+      Real* tmp_ptr = nullptr;
+      tmp_ptr       = gd->u1;
+      gd->u1        = gd->u0;
+      gd->u0        = tmp_ptr;
 
       // will use extra vector for this (simpler than extra copy kernel)
       tmp_ptr = gd->u2b;
@@ -1298,7 +1296,7 @@ static auto run(Simulation3D<Float> const& sim) -> void {
       gpuErrchk(cudaSetDevice(0));
       gpuErrchk(cudaEventSynchronize(cuEv_main_sample_end)); // not sure this is correct
 
-      DeviceData<Float>& gd = gds[0];
+      DeviceData<Real>& gd  = gds[0];
       elapsed               = elapsedTime(cuEv_main_start, cuEv_main_sample_end);
       elapsedSample         = elapsedTime(cuEv_main_sample_start, cuEv_main_sample_end);
       elapsedSampleAir      = elapsedTime(gd.cuEv_air_start, gd.cuEv_air_end);
@@ -1348,8 +1346,8 @@ static auto run(Simulation3D<Float> const& sim) -> void {
   gpuErrchk(cudaEventDestroy(cuEv_main_sample_end));
   for (int gid = 0; gid < ngpus; gid++) {
     gpuErrchk(cudaSetDevice(gid));
-    DeviceData<Float>* gd = &(gds[gid]);
-    HostData<Float>* ghd  = &(ghds[gid]);
+    DeviceData<Real>* gd = &(gds[gid]);
+    HostData<Real>* ghd  = &(ghds[gid]);
     // cleanup streams
     gpuErrchk(cudaStreamDestroy(gd->cuStream_air));
     gpuErrchk(cudaStreamDestroy(gd->cuStream_bn));

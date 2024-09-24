@@ -80,8 +80,8 @@ void check_inside_grid(int64_t* idx, int64_t N, int64_t Nx, int64_t Ny, int64_t 
 }
 
 // load the sim data from Python-written HDF5 files
-template<typename Float>
-[[nodiscard]] auto loadSimulation3D_impl(std::filesystem::path const& simDir) -> Simulation3D<Float> {
+template<typename Real>
+[[nodiscard]] auto loadSimulation3D_impl(std::filesystem::path const& simDir) -> Simulation3D<Real> {
   int expected_ndims = 0;
   hsize_t dims[2]    = {};
 
@@ -122,22 +122,22 @@ template<typename Float>
   }
 
   // calculate some update coefficients
-  double const lfac = (fcc_flag > 0) ? 0.25 : 1.0;  // laplacian factor
-  double const dsl2 = (1.0 + EPS<Float>)*lfac * l2; // scale for stability (EPS in fdtd_common.hpp)
-  double const da1  = (2.0 - dsl2 * NN);            // scaling for stability in single
+  double const lfac = (fcc_flag > 0) ? 0.25 : 1.0; // laplacian factor
+  double const dsl2 = (1.0 + EPS<Real>)*lfac * l2; // scale for stability (EPS in fdtd_common.hpp)
+  double const da1  = (2.0 - dsl2 * NN);           // scaling for stability in single
   double const da2  = lfac * l2;
 
-  auto const a1  = static_cast<Float>(da1);
-  auto const a2  = static_cast<Float>(da2);
-  auto const sl2 = static_cast<Float>(dsl2);
-  auto const lo2 = static_cast<Float>(0.5 * l);
+  auto const a1  = static_cast<Real>(da1);
+  auto const a2  = static_cast<Real>(da2);
+  auto const sl2 = static_cast<Real>(dsl2);
+  auto const lo2 = static_cast<Real>(0.5 * l);
 
   fmt::println("a2 (double): {:.16g}", da2);
-  fmt::println("a2 (Float): {:.16g}", a2);
+  fmt::println("a2 (Real): {:.16g}", a2);
   fmt::println("a1 (double): {:.16g}", da1);
-  fmt::println("a1 (Float): {:.16g}", a1);
+  fmt::println("a1 (Real): {:.16g}", a1);
   fmt::println("sl2 (double): {:.16g}", dsl2);
-  fmt::println("sl2 (Float): {:.16g}", sl2);
+  fmt::println("sl2 (Real): {:.16g}", sl2);
 
   fmt::println("l2={:.16g}", l2);
   fmt::println("NN={}", NN);
@@ -199,12 +199,12 @@ template<typename Float>
   readDataset(vox_out.handle(), "saf_bn", expected_ndims, dims, (void**)&saf_bn, DataType::Float64);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nb);
 
-  auto* ssaf_bn = allocate_zeros<Float>(Nb);
+  auto* ssaf_bn = allocate_zeros<Real>(Nb);
   for (int64_t i = 0; i < Nb; i++) {
     if (fcc_flag > 0) {
-      ssaf_bn[i] = (Float)(0.5 / std::numbers::sqrt2) * saf_bn[i]; // rescale for S*h/V and cast
+      ssaf_bn[i] = (Real)(0.5 / std::numbers::sqrt2) * saf_bn[i]; // rescale for S*h/V and cast
     } else {
-      ssaf_bn[i] = (Float)saf_bn[i]; // just cast
+      ssaf_bn[i] = (Real)saf_bn[i]; // just cast
     }
   }
   std::free(saf_bn);
@@ -262,7 +262,7 @@ template<typename Float>
   PFFDTD_ASSERT(static_cast<int64_t>(dims[1]) == Nt);
 
   // not recommended to run single without differentiating input
-  if (sizeof(Float) == 4) {
+  if (sizeof(Real) == 4) {
     PFFDTD_ASSERT(diff);
   }
 
@@ -294,8 +294,8 @@ template<typename Float>
   //////////////////
   // DEF (RLC) datasets
   //////////////////
-  auto* mat_beta  = allocate_zeros<Float>(Nm);
-  auto* mat_quads = allocate_zeros<MatQuad<Float>>(static_cast<unsigned long>(Nm * MMb));
+  auto* mat_beta  = allocate_zeros<Real>(Nm);
+  auto* mat_quads = allocate_zeros<MatQuad<Real>>(static_cast<unsigned long>(Nm * MMb));
   for (int8_t i = 0; i < Nm; i++) {
     double* DEF    = nullptr; // for one material
     auto id        = fmt::format("mat_{:02d}_DEF", i);
@@ -326,11 +326,11 @@ template<typename Float>
       PFFDTD_ASSERT(not std::isnan(bd));
 
       int32_t const mij  = (int32_t)MMb * i + j;
-      mat_quads[mij].b   = (Float)b;
-      mat_quads[mij].bd  = (Float)bd;
-      mat_quads[mij].bDh = (Float)bDh;
-      mat_quads[mij].bFh = (Float)bFh;
-      mat_beta[i] += (Float)b;
+      mat_quads[mij].b   = (Real)b;
+      mat_quads[mij].bd  = (Real)bd;
+      mat_quads[mij].bDh = (Real)bDh;
+      mat_quads[mij].bFh = (Real)bFh;
+      mat_beta[i] += (Real)b;
     }
     std::free(DEF);
   }
@@ -436,7 +436,7 @@ template<typename Float>
   fmt::println("Nbl = {}", Nbl);
   auto* mat_bnl  = allocate_zeros<int8_t>(Nbl);
   auto* bnl_ixyz = allocate_zeros<int64_t>(Nbl);
-  auto* ssaf_bnl = allocate_zeros<Float>(Nbl);
+  auto* ssaf_bnl = allocate_zeros<Real>(Nbl);
   {
     int64_t j = 0;
     for (int64_t i = 0; i < Nb; i++) {
@@ -552,8 +552,8 @@ template<typename Float>
   };
 }
 
-template<typename Float>
-void writeOutputs_impl(Simulation3D<Float>& sim, std::filesystem::path const& simDir) {
+template<typename Real>
+void writeOutputs_impl(Simulation3D<Real>& sim, std::filesystem::path const& simDir) {
   auto Nt           = static_cast<size_t>(sim.Nt);
   auto Nr           = static_cast<size_t>(sim.Nr);
   auto* out_reorder = sim.out_reorder;
@@ -572,8 +572,8 @@ void writeOutputs_impl(Simulation3D<Float>& sim, std::filesystem::path const& si
 }
 
 // print last samples of simulation (for correctness checking..)
-template<typename Float>
-void printLastSample_impl(Simulation3D<Float>& sim) {
+template<typename Real>
+void printLastSample_impl(Simulation3D<Real>& sim) {
   int64_t const Nt     = sim.Nt;
   int64_t const Nr     = sim.Nr;
   double* u_out        = sim.u_out;

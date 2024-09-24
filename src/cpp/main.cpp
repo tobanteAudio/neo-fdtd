@@ -59,7 +59,7 @@ struct Arguments {
   Sim3D sim3d;
 };
 
-template<typename Float>
+template<typename Real>
 auto run3D(Arguments::Sim3D const& args) {
   using namespace pffdtd;
 
@@ -67,7 +67,7 @@ auto run3D(Arguments::Sim3D const& args) {
   auto const simDir = std::filesystem::path{args.simDir};
   auto const start  = getTime();
 
-  auto sim = loadSimulation3D<Float>(simDir);
+  auto sim = loadSimulation3D<Real>(simDir);
   scaleInput(sim);
 
 #if defined(PFFDTD_HAS_CUDA)
