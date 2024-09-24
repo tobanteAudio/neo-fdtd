@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2021 Brian Hamilton
 
-#include "engine_3d_cuda.hpp"
+#include "engine_cuda_3d.hpp"
 
 #include "pffdtd/assert.hpp"
 #include "pffdtd/progress.hpp"
@@ -1405,8 +1405,8 @@ static auto run(Simulation3D<Real> const& sim) -> void {
   std::printf("Combined (total): %.6fs, %.2f Mvox/s\n", elapsedSec, sim.Npts * sim.Nt / 1e6 / elapsedSec);
 }
 
-auto Engine3DCUDA::operator()(Simulation3D<float>& sim) const -> void { run(sim); }
+auto EngineCUDA3D::operator()(Simulation3D<float>& sim) const -> void { run(sim); }
 
-auto Engine3DCUDA::operator()(Simulation3D<double>& sim) const -> void { run(sim); }
+auto EngineCUDA3D::operator()(Simulation3D<double>& sim) const -> void { run(sim); }
 
 } // namespace pffdtd

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 Tobias Hienzsch
 
-#include "pffdtd/engine_2d_cpu.hpp"
-#include "pffdtd/engine_3d_cpu.hpp"
+#include "pffdtd/engine_cpu_2d.hpp"
+#include "pffdtd/engine_cpu_3d.hpp"
 #include "pffdtd/exception.hpp"
 #include "pffdtd/hdf.hpp"
 #include "pffdtd/simulation_2d.hpp"
@@ -11,12 +11,12 @@
 #include "pffdtd/utility.hpp"
 
 #if defined(PFFDTD_HAS_CUDA)
-  #include "pffdtd/engine_3d_cuda.hpp"
+  #include "pffdtd/engine_cuda_3d.hpp"
 #endif
 
 #if defined(PFFDTD_HAS_SYCL)
-  #include "pffdtd/engine_2d_sycl.hpp"
-  #include "pffdtd/engine_3d_sycl.hpp"
+  #include "pffdtd/engine_sycl_2d.hpp"
+  #include "pffdtd/engine_sycl_3d.hpp"
 #endif
 
 #include <CLI/CLI.hpp>
@@ -31,9 +31,9 @@ namespace {
   using pffdtd::Simulation2D;
   using Callback    = std::function<stdex::mdarray<double, stdex::dextents<size_t, 2>>(Simulation2D const&)>;
   auto engines      = std::map<std::string, Callback>{};
-  engines["native"] = pffdtd::Engine2DCPU{};
+  engines["native"] = pffdtd::EngineCPU2D{};
 #if defined(PFFDTD_HAS_SYCL)
-  engines["sycl"] = pffdtd::Engine2DSYCL{};
+  engines["sycl"] = pffdtd::EngineSYCL2D{};
 #endif
   return engines;
 }
@@ -71,11 +71,11 @@ auto run3D(Arguments::Sim3D const& args) {
   scaleInput(sim);
 
 #if defined(PFFDTD_HAS_CUDA)
-  Engine3DCUDA{}(sim);
+  EngineCUDA3D{}(sim);
 #elif defined(PFFDTD_HAS_SYCL)
-  Engine3DSYCL{}(sim);
+  EngineSYCL3D{}(sim);
 #else
-  Engine3DCPU{}(sim);
+  EngineCPU3D{}(sim);
 #endif
 
   rescaleOutput(sim);

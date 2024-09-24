@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2021 Brian Hamilton
 // CPU-based implementation of FDTD engine, with OpenMP
 
-#include "engine_3d_cpu.hpp"
+#include "engine_cpu_3d.hpp"
 
 #include "pffdtd/progress.hpp"
 #include "pffdtd/time.hpp"
@@ -373,8 +373,8 @@ auto run(Simulation3D<Real>& sd) -> void {
 
 } // namespace
 
-auto Engine3DCPU::operator()(Simulation3D<float>& sim) const -> void { run(sim); }
+auto EngineCPU3D::operator()(Simulation3D<float>& sim) const -> void { run(sim); }
 
-auto Engine3DCPU::operator()(Simulation3D<double>& sim) const -> void { run(sim); }
+auto EngineCPU3D::operator()(Simulation3D<double>& sim) const -> void { run(sim); }
 
 } // namespace pffdtd

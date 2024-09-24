@@ -8,7 +8,7 @@
 
 namespace pffdtd {
 
-struct Engine3DCPU {
+struct EngineCPU3D {
   auto operator()(Simulation3D<float>& sim) const -> void;
   auto operator()(Simulation3D<double>& sim) const -> void;
 };

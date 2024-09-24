@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 Tobias Hienzsch
 
-#include "engine_2d_cpu.hpp"
+#include "engine_cpu_2d.hpp"
 
 #include "pffdtd/progress.hpp"
 #include "pffdtd/time.hpp"
@@ -22,7 +22,7 @@ to_ixy(std::integral auto x, std::integral auto y, std::integral auto /*Nx*/, st
   return x * Ny + y;
 }
 
-auto Engine2DCPU::operator()(Simulation2D const& sim) const -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
+auto EngineCPU2D::operator()(Simulation2D const& sim) const -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
 
   auto const Nx         = sim.Nx;
   auto const Ny         = sim.Ny;

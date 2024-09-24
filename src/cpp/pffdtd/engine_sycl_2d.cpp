@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 Tobias Hienzsch
 
-#include "engine_2d_sycl.hpp"
+#include "engine_sycl_2d.hpp"
 
 #include "pffdtd/progress.hpp"
 #include "pffdtd/sycl.hpp"
@@ -81,7 +81,7 @@ auto kernelBoundaryLoss(
 }
 } // namespace
 
-auto Engine2DSYCL::operator()(Simulation2D const& sim) const -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
+auto EngineSYCL2D::operator()(Simulation2D const& sim) const -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
   summary(sim);
 
   auto const Nx          = sim.Nx;

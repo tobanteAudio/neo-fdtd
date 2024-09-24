@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 Tobias Hienzsch
-#include "engine_3d_sycl.hpp"
+#include "engine_sycl_3d.hpp"
 
 #include "pffdtd/assert.hpp"
 #include "pffdtd/progress.hpp"
@@ -350,8 +350,8 @@ auto run(Simulation3D<Real>& sim) -> void {
 
 } // namespace
 
-auto Engine3DSYCL::operator()(Simulation3D<float>& sim) const -> void { run(sim); }
+auto EngineSYCL3D::operator()(Simulation3D<float>& sim) const -> void { run(sim); }
 
-auto Engine3DSYCL::operator()(Simulation3D<double>& sim) const -> void { run(sim); }
+auto EngineSYCL3D::operator()(Simulation3D<double>& sim) const -> void { run(sim); }
 
 } // namespace pffdtd
