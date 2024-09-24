@@ -26,21 +26,21 @@ constexpr auto EPS<float> = 1.19209289e-07;
 // sort and return indices
 void sort_keys(int64_t* val_arr, int64_t* key_arr, int64_t N) {
   // for sorting int64 arrays and returning keys
-  struct item {
+  struct Item {
     int64_t val;
     int64_t idx;
   };
 
-  auto tmp = std::vector<item>(static_cast<size_t>(N));
+  auto tmp = std::vector<Item>(static_cast<size_t>(N));
   for (int64_t i = 0; i < N; i++) {
     tmp[i].val = val_arr[i];
     tmp[i].idx = i;
   }
 
   // comparator with indice keys (for FCC ABC nodes)
-  std::qsort(tmp.data(), N, sizeof(item), [](void const* a, void const* b) -> int {
-    auto const& as = *reinterpret_cast<item const*>(a);
-    auto const& bs = *reinterpret_cast<item const*>(b);
+  std::qsort(tmp.data(), N, sizeof(Item), [](void const* a, void const* b) -> int {
+    auto const& as = *reinterpret_cast<Item const*>(a);
+    auto const& bs = *reinterpret_cast<Item const*>(b);
     if (as.val < bs.val) {
       return -1;
     }
@@ -405,7 +405,7 @@ template<typename Real>
   for (int64_t nb = 0; nb < Nb; nb++) {
     K_bn[nb] = 0;
     for (uint8_t nn = 0; nn < NN; nn++) {
-      K_bn[nb] += GET_BIT(adj_bn[nb], nn);
+      K_bn[nb] = static_cast<int8_t>(K_bn[nb] + get_bit_as<int>(adj_bn[nb], nn));
     }
   }
   fmt::println("K_bn calculated");
@@ -488,9 +488,9 @@ template<typename Real>
           }
 
           int8_t Q = 0;
-          Q += static_cast<int>((ix == 1) || (ix == Nx - 2));
-          Q += static_cast<int>((iy == 1) || (iy == Nyf - 2));
-          Q += static_cast<int>((iz == 1) || (iz == Nz - 2));
+          Q        = static_cast<int8_t>(Q + static_cast<int>((ix == 1) || (ix == Nx - 2)));
+          Q        = static_cast<int8_t>(Q + static_cast<int>((iy == 1) || (iy == Nyf - 2)));
+          Q        = static_cast<int8_t>(Q + static_cast<int>((iz == 1) || (iz == Nz - 2)));
           if (Q > 0) {
             if ((fcc_flag == 2) && (iy >= Nyf / 2)) {
               bna_ixyz[ii] = ix * Nz * Ny + (Nyf - iy - 1) * Nz + iz; // index on folded grid

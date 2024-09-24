@@ -6,16 +6,11 @@ Checks: >
 
   bugprone-*,
   -bugprone-branch-clone,
-  -bugprone-easily-swappable-parameters,
   -bugprone-exception-escape,
-  -bugprone-macro-parentheses,
   -bugprone-signed-char-misuse,
 
   cert-*,
-  -cert-dcl03-c,
   -cert-err33-c,
-  -cert-err58-cpp,
-  -cert-oop54-cpp,
   -cert-str34-c,
 
   clang-analyzer-*,
@@ -45,13 +40,12 @@ Checks: >
   performance-*,
 
   readability-*,
+  readability-identifier-naming,
   -readability-function-cognitive-complexity,
   -readability-identifier-length,
-  -readability-identifier-naming,
 
   -*-avoid-c-arrays,
   -*-magic-numbers,
-  -*-narrowing-conversions,
   -*-no-malloc,
   -*-vararg,
 
@@ -64,23 +58,11 @@ CheckOptions:
     value: true
   - key: readability-identifier-naming.ClassCase
     value: CamelCase
-  - key: readability-identifier-naming.ClassMemberCase
-    value: camelBack
-  - key: readability-identifier-naming.ClassConstantCase
-    value: camelBack
   - key: readability-identifier-naming.PrivateMemberPrefix
     value: _
   - key: readability-identifier-naming.EnumCase
     value: CamelCase
-  - key: readability-identifier-naming.FunctionCase
-    value: camelBack
-  - key: readability-identifier-naming.GlobalConstantCase
-    value: CamelCase
   - key: readability-identifier-naming.IgnoreMainLikeFunctions
     value: 1
-  - key: readability-identifier-naming.ParameterCase
-    value: camelBack
   - key: readability-identifier-naming.UnionCase
     value: CamelCase
-  - key: readability-identifier-naming.VariableCase
-    value: camelBack

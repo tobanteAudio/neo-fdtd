@@ -77,7 +77,7 @@ auto EngineCPU2D::operator()(Simulation2D const& sim) const -> stdex::mdarray<do
 #pragma omp parallel for
       for (int64_t i = 0; i < Nb; ++i) {
         auto const ib = sim.bn_ixy[i];
-        auto const K  = sim.adj_bn[i];
+        auto const K  = static_cast<double>(sim.adj_bn[i]);
 
         auto const last1 = u1.data_handle()[ib];
         auto const last2 = u2.data_handle()[ib];
@@ -96,7 +96,7 @@ auto EngineCPU2D::operator()(Simulation2D const& sim) const -> stdex::mdarray<do
       for (int64_t i = 0; i < Nb; ++i) {
         auto const ib = sim.bn_ixy[i];
         auto const K  = sim.adj_bn[i];
-        auto const K4 = 4 - K;
+        auto const K4 = static_cast<double>(4 - K);
         auto const lf = lossFactor;
 
         auto const current = u0.data_handle()[ib];
