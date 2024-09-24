@@ -3,6 +3,7 @@
 
 #include "progress.hpp"
 
+#include "pffdtd/assert.hpp"
 #include "pffdtd/time.hpp"
 
 #include <fmt/format.h>
@@ -132,7 +133,8 @@ auto print(ProgressReport const& progress) -> void {
   fmt::print("I: {:02.1f}%", 100.0 * elapsedSampleAir / elapsedSample); //% for air (inst)
   fmt::println("");
 
-  fflush(stdout);
+  auto const status = std::fflush(stdout);
+  PFFDTD_ASSERT(status == 0);
 }
 
 } // namespace pffdtd

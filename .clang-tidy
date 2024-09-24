@@ -10,14 +10,10 @@ Checks: >
   -bugprone-signed-char-misuse,
 
   cert-*,
-  -cert-err33-c,
   -cert-str34-c,
 
   clang-analyzer-*,
-  -clang-analyzer-optin.portability.UnixAPI,
-
   clang-diagnostics-*,
-
   concurrency-*,
 
   cppcoreguidelines-*,
@@ -36,7 +32,12 @@ Checks: >
   -misc-include-cleaner,
 
   modernize-*,
+
+  openmp-*,
+  -openmp-use-default-none,
+
   performance-*,
+  portability-*,
 
   readability-*,
   readability-identifier-naming,

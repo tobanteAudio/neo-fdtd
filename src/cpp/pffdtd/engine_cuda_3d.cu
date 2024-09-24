@@ -46,14 +46,15 @@ __device__ auto fma(Real x, Real y, Real z) -> Real {
 // standard error checking
 // NOLINTNEXTLINE
 #define gpuErrchk(ans)                                                                                                 \
-  { gpuAssert((ans), __FILE__, __LINE__); }
+  do {                                                                                                                 \
+    gpuAssert((ans), __FILE__, __LINE__);                                                                              \
+  } while (false)
 
-inline void gpuAssert(cudaError_t code, char const* file, int line, bool abort = true) {
+auto gpuAssert(cudaError_t code, char const* file, int line) -> void {
   if (code != cudaSuccess) {
-    fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-    if (abort) {
-      exit(code);
-    }
+    throw std::runtime_error{
+        cudaGetErrorString(code) + std::string(":") + std::string(file) + ":" + std::to_string(line)
+    };
   }
 }
 
@@ -726,12 +727,12 @@ void splitData(Simulation3D<Real> const& sim, std::span<HostData<Real>> ghds) {
 template<typename Real>
 auto run(Simulation3D<Real> const& sim) -> void {
   // if you want to test synchronous, env variable for that
-  char const* s = getenv("CUDA_LAUNCH_BLOCKING");
+  auto const* s = std::getenv("CUDA_LAUNCH_BLOCKING"); // NOLINT(concurrency-mt-unsafe)
   if (s != nullptr) {
     if (s[0] == '1') {
       std::printf("******************SYNCHRONOUS (DEBUG  ONLY!!!)*********************\n");
       std::printf("...continue?\n");
-      getchar();
+      [[maybe_unused]] auto ch = std::getchar();
     }
   }
 
@@ -1069,8 +1070,8 @@ auto run(Simulation3D<Real> const& sim) -> void {
   for (int64_t n = 0; n < sim.Nt; n++) {    // loop over time-steps
     for (int gid = 0; gid < ngpus; gid++) { // loop over GPUs (one thread launches all kernels)
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData<Real>& gpu = gds[gid];  // get struct of gpu pointers
-      HostData<Real>& host  = ghds[gid]; // get struct of host points (corresponding to gpu)
+      DeviceData<Real> const& gpu = gds[gid];  // get struct of gpu pointers
+      HostData<Real> const& host  = ghds[gid]; // get struct of host points (corresponding to gpu)
 
       // start first timer
       if (gid == 0) {
@@ -1197,8 +1198,8 @@ auto run(Simulation3D<Real> const& sim) -> void {
     // readouts
     for (int gid = 0; gid < ngpus; gid++) {
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData<Real>& gpu = gds[gid];
-      HostData<Real>& host  = ghds[gid];
+      DeviceData<Real> const& gpu = gds[gid];
+      HostData<Real> const& host  = ghds[gid];
       gpuErrchk(cudaEventSynchronize(gpu.cuEv_readout_end));
       // copy grid points off output buffer
       for (int64_t nr = 0; nr < host.Nr; nr++) {
@@ -1208,7 +1209,7 @@ auto run(Simulation3D<Real> const& sim) -> void {
     // synchronise streams
     for (int gid = 0; gid < ngpus; gid++) {
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData<Real>& gpu = gds[gid];                   // don't really need to set gpu gpu to sync
+      DeviceData<Real> const& gpu = gds[gid];             // don't really need to set gpu gpu to sync
       gpuErrchk(cudaStreamSynchronize(gpu.cuStream_air)); // interior complete
       gpuErrchk(cudaStreamSynchronize(gpu.cuStream_bn));  // transfer complete
     }
@@ -1268,7 +1269,7 @@ auto run(Simulation3D<Real> const& sim) -> void {
 
     for (int gid = 0; gid < ngpus; gid++) {
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData<Real>& gpu = gds[gid];
+      DeviceData<Real> const& gpu = gds[gid];
       gpuErrchk(cudaStreamSynchronize(gpu.cuStream_bn)); // transfer complete
     }
     for (int gid = 0; gid < ngpus; gid++) {
@@ -1347,8 +1348,8 @@ auto run(Simulation3D<Real> const& sim) -> void {
   gpuErrchk(cudaEventDestroy(cuEv_main_sample_end));
   for (int gid = 0; gid < ngpus; gid++) {
     gpuErrchk(cudaSetDevice(gid));
-    DeviceData<Real>& gpu = gds[gid];
-    HostData<Real>& host  = ghds[gid];
+    DeviceData<Real> const& gpu = gds[gid];
+    HostData<Real> const& host  = ghds[gid];
     // cleanup streams
     gpuErrchk(cudaStreamDestroy(gpu.cuStream_air));
     gpuErrchk(cudaStreamDestroy(gpu.cuStream_bn));
