@@ -162,10 +162,10 @@ auto EngineSYCL2D::operator()(Simulation2D const& sim) const -> stdex::mdarray<d
       auto out_ixy = sycl::accessor{out_ixy_buf, cgh, sycl::read_only};
 
       cgh.parallel_for<struct CopyOutput>(Nr, [=](sycl::id<1> id) {
-        auto r     = id[0];
-        auto r_ixy = out_ixy[r];
-        auto p0    = getPtr(u0);
-        out[r][n]  = p0[r_ixy];
+        auto r         = id[0];
+        auto r_ixy     = out_ixy[r];
+        auto const* p0 = getPtr(u0);
+        out[r][n]      = p0[r_ixy];
       });
     });
 

@@ -9,7 +9,6 @@ Checks: >
   -bugprone-easily-swappable-parameters,
   -bugprone-exception-escape,
   -bugprone-macro-parentheses,
-  -bugprone-narrowing-conversions,
   -bugprone-signed-char-misuse,
 
   cert-*,
@@ -20,19 +19,18 @@ Checks: >
   -cert-str34-c,
 
   clang-analyzer-*,
+  -clang-analyzer-optin.portability.UnixAPI,
+
   clang-diagnostics-*,
 
   concurrency-*,
   -concurrency-mt-unsafe,
 
   cppcoreguidelines-*,
-  -cppcoreguidelines-avoid-magic-numbers,
-  -cppcoreguidelines-avoid-const-or-ref-data-members,
-  -cppcoreguidelines-pro-type-cstyle-cast,
-  -cppcoreguidelines-narrowing-conversions,
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
   -cppcoreguidelines-pro-bounds-constant-array-index,
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
   -cppcoreguidelines-owning-memory,
 
   hicpp-*,
@@ -42,7 +40,6 @@ Checks: >
   misc-*,
   -misc-confusable-identifiers,
   -misc-include-cleaner,
-  -misc-use-anonymous-namespace,
 
   modernize-*,
   performance-*,
@@ -51,13 +48,11 @@ Checks: >
   -readability-function-cognitive-complexity,
   -readability-identifier-length,
   -readability-identifier-naming,
-  -readability-magic-numbers,
 
   -*-avoid-c-arrays,
+  -*-magic-numbers,
+  -*-narrowing-conversions,
   -*-no-malloc,
-  -*-non-private-member-variables-in-classes,
-  -*-special-member-functions,
-  -*-static-assert,
   -*-vararg,
 
 WarningsAsErrors: "*"

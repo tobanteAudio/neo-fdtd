@@ -171,7 +171,7 @@ template<typename Real>
   //////////////////
   expected_ndims   = 1;
   int64_t* bn_ixyz = nullptr;
-  readDataset(vox_out.handle(), "bn_ixyz", expected_ndims, dims, (void**)&bn_ixyz, DataType::Int64);
+  readDataset(vox_out.handle(), "bn_ixyz", expected_ndims, dims, reinterpret_cast<void**>(&bn_ixyz), DataType::Int64);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nb);
 
   //////////////////
@@ -179,7 +179,7 @@ template<typename Real>
   //////////////////
   expected_ndims    = 2;
   bool* adj_bn_bool = nullptr;
-  readDataset(vox_out.handle(), "adj_bn", expected_ndims, dims, (void**)&adj_bn_bool, DataType::Bool);
+  readDataset(vox_out.handle(), "adj_bn", expected_ndims, dims, reinterpret_cast<void**>(&adj_bn_bool), DataType::Bool);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nb);
   PFFDTD_ASSERT(dims[1] == (hsize_t)NN);
 
@@ -188,7 +188,7 @@ template<typename Real>
   //////////////////
   expected_ndims = 1;
   int8_t* mat_bn = nullptr;
-  readDataset(vox_out.handle(), "mat_bn", expected_ndims, dims, (void**)&mat_bn, DataType::Int8);
+  readDataset(vox_out.handle(), "mat_bn", expected_ndims, dims, reinterpret_cast<void**>(&mat_bn), DataType::Int8);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nb);
 
   //////////////////
@@ -196,7 +196,7 @@ template<typename Real>
   //////////////////
   expected_ndims = 1;
   double* saf_bn = nullptr;
-  readDataset(vox_out.handle(), "saf_bn", expected_ndims, dims, (void**)&saf_bn, DataType::Float64);
+  readDataset(vox_out.handle(), "saf_bn", expected_ndims, dims, reinterpret_cast<void**>(&saf_bn), DataType::Float64);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nb);
 
   auto* ssaf_bn = allocate_zeros<Real>(Nb);
@@ -236,7 +236,7 @@ template<typename Real>
   //////////////////
   expected_ndims   = 1;
   int64_t* in_ixyz = nullptr;
-  readDataset(signals.handle(), "in_ixyz", expected_ndims, dims, (void**)&in_ixyz, DataType::Int64);
+  readDataset(signals.handle(), "in_ixyz", expected_ndims, dims, reinterpret_cast<void**>(&in_ixyz), DataType::Int64);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Ns);
 
   //////////////////
@@ -244,12 +244,19 @@ template<typename Real>
   //////////////////
   expected_ndims    = 1;
   int64_t* out_ixyz = nullptr;
-  readDataset(signals.handle(), "out_ixyz", expected_ndims, dims, (void**)&out_ixyz, DataType::Int64);
+  readDataset(signals.handle(), "out_ixyz", expected_ndims, dims, reinterpret_cast<void**>(&out_ixyz), DataType::Int64);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nr);
 
   expected_ndims       = 1;
   int64_t* out_reorder = nullptr;
-  readDataset(signals.handle(), "out_reorder", expected_ndims, dims, (void**)&out_reorder, DataType::Int64);
+  readDataset(
+      signals.handle(),
+      "out_reorder",
+      expected_ndims,
+      dims,
+      reinterpret_cast<void**>(&out_reorder),
+      DataType::Int64
+  );
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nr);
 
   //////////////////
@@ -257,7 +264,7 @@ template<typename Real>
   //////////////////
   expected_ndims  = 2;
   double* in_sigs = nullptr;
-  readDataset(signals.handle(), "in_sigs", expected_ndims, dims, (void**)&in_sigs, DataType::Float64);
+  readDataset(signals.handle(), "in_sigs", expected_ndims, dims, reinterpret_cast<void**>(&in_sigs), DataType::Float64);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Ns);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[1]) == Nt);
 
@@ -285,7 +292,7 @@ template<typename Real>
 
   expected_ndims = 1;
   int8_t* Mb     = nullptr;
-  readDataset(materials.handle(), "Mb", expected_ndims, dims, (void**)&Mb, DataType::Int8);
+  readDataset(materials.handle(), "Mb", expected_ndims, dims, reinterpret_cast<void**>(&Mb), DataType::Int8);
 
   for (int8_t i = 0; i < Nm; i++) {
     fmt::println("Mb[{}]={}", i, Mb[i]);
@@ -295,12 +302,19 @@ template<typename Real>
   // DEF (RLC) datasets
   //////////////////
   auto* mat_beta  = allocate_zeros<Real>(Nm);
-  auto* mat_quads = allocate_zeros<MatQuad<Real>>(static_cast<unsigned long>(Nm * MMb));
+  auto* mat_quads = allocate_zeros<MatQuad<Real>>(static_cast<unsigned long>(Nm) * MMb);
   for (int8_t i = 0; i < Nm; i++) {
     double* DEF    = nullptr; // for one material
     auto id        = fmt::format("mat_{:02d}_DEF", i);
     expected_ndims = 2;
-    readDataset(materials.handle(), id.c_str(), expected_ndims, dims, (void**)&DEF, DataType::Float64);
+    readDataset(
+        materials.handle(),
+        id.c_str(),
+        expected_ndims,
+        dims,
+        reinterpret_cast<void**>(&DEF),
+        DataType::Float64
+    );
     PFFDTD_ASSERT((int8_t)dims[0] == Mb[i]);
     PFFDTD_ASSERT((int8_t)dims[1] == 3);
     PFFDTD_ASSERT(Mb[i] <= MMb);

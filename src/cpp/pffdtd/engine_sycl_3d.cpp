@@ -161,7 +161,7 @@ auto run(Simulation3D<Real> const& sim) -> void {
 
         u0bint = (u0bint + lo2Kbg * u2bint) / (_1 + lo2Kbg);
 
-        Real vh1nb[MMb];
+        Real vh1nb[MMb]{};
         for (int8_t m = 0; m < Mb[k]; m++) {
           int64_t const nbm = nb * MMb + m;
           int32_t const mbk = k * MMb + m;

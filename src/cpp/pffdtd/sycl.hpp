@@ -21,10 +21,10 @@ template<typename Accessor>
   return std::forward<Accessor>(a).template get_multi_ptr<sycl::access::decorated::no>().get();
 }
 
-[[nodiscard]] auto elapsedTime(sycl::event event) -> std::chrono::nanoseconds;
-[[nodiscard]] auto elapsedTime(sycl::event startEvent, sycl::event endEvent) -> std::chrono::nanoseconds;
+[[nodiscard]] auto elapsedTime(sycl::event const& event) -> std::chrono::nanoseconds;
+[[nodiscard]] auto elapsedTime(sycl::event const& startEvent, sycl::event const& endEvent) -> std::chrono::nanoseconds;
 
 auto toString(sycl::info::device_type type) -> std::string;
-auto summary(sycl::device dev) -> void;
+auto summary(sycl::device const& dev) -> void;
 
 } // namespace pffdtd

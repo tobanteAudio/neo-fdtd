@@ -19,6 +19,8 @@
 
 namespace pffdtd {
 
+namespace {
+
 template<typename Real>
 __device__ auto add(Real x, Real y) -> Real {
   if constexpr (std::same_as<Real, double>) {
@@ -592,6 +594,7 @@ void split_data(Simulation3D<Real> const* sim, std::span<HostData<Real>> ghds) {
   }
 
   // split Nx layers (Nz contiguous)
+  PFFDTD_ASSERT(ngpus > 0);
   int64_t const Nxm = Nx / ngpus;
   int64_t const Nxl = Nx % ngpus;
 
@@ -722,9 +725,8 @@ void split_data(Simulation3D<Real> const* sim, std::span<HostData<Real>> ghds) {
   PFFDTD_ASSERT(Nr_check == Nr);
 }
 
-// run the sim!
 template<typename Real>
-static auto run(Simulation3D<Real> const& sim) -> void {
+auto run(Simulation3D<Real> const& sim) -> void {
   // if you want to test synchronous, env variable for that
   char const* s = getenv("CUDA_LAUNCH_BLOCKING");
   if (s != nullptr) {
@@ -1296,7 +1298,8 @@ static auto run(Simulation3D<Real> const& sim) -> void {
       gpuErrchk(cudaSetDevice(0));
       gpuErrchk(cudaEventSynchronize(cuEv_main_sample_end)); // not sure this is correct
 
-      DeviceData<Real>& gd  = gds[0];
+      auto const& gd = gds[0];
+
       elapsed               = elapsedTime(cuEv_main_start, cuEv_main_sample_end);
       elapsedSample         = elapsedTime(cuEv_main_sample_start, cuEv_main_sample_end);
       elapsedSampleAir      = elapsedTime(gd.cuEv_air_start, gd.cuEv_air_end);
@@ -1404,6 +1407,8 @@ static auto run(Simulation3D<Real> const& sim) -> void {
   std::printf("Air update: %.6fs, %.2f Mvox/s\n", elapsedAirSec, sim.Npts * sim.Nt / 1e6 / elapsedAirSec);
   std::printf("Combined (total): %.6fs, %.2f Mvox/s\n", elapsedSec, sim.Npts * sim.Nt / 1e6 / elapsedSec);
 }
+
+} // namespace
 
 auto EngineCUDA3D::operator()(Simulation3D<float> const& sim) const -> void { run(sim); }
 
