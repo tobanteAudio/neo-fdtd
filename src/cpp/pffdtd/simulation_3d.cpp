@@ -525,7 +525,7 @@ template<typename Real>
     }
   }
 
-  return Simulation3D{
+  return Simulation3D<Real>{
       .bn_ixyz     = bn_ixyz,
       .bnl_ixyz    = bnl_ixyz,
       .bna_ixyz    = bna_ixyz,
