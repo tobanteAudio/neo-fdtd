@@ -1384,12 +1384,12 @@ auto run(Simulation3D<Real> const& sim) -> void {
     gpuErrchk(cudaFree(gd->vh1));
     gpuErrchk(cudaFree(gd->gh1));
     gpuErrchk(cudaFree(gd->u_out_buf));
-    free(ghd->bn_mask);
-    free(ghd->bn_ixyz);
-    free(ghd->bnl_ixyz);
-    free(ghd->bna_ixyz);
-    free(ghd->in_ixyz);
-    free(ghd->out_ixyz);
+    delete[] ghd->bn_mask;
+    delete[] ghd->bn_ixyz;
+    delete[] ghd->bnl_ixyz;
+    delete[] ghd->bna_ixyz;
+    delete[] ghd->in_ixyz;
+    delete[] ghd->out_ixyz;
   }
   gpuErrchk(cudaFreeHost(u_out_buf));
 

@@ -149,23 +149,23 @@ void rescaleOutput(Simulation3D<Real>& sim) {
 
 template<typename Real>
 void freeSimulation3D(Simulation3D<Real> const& sim) {
-  std::free(sim.bn_ixyz);
-  std::free(sim.bnl_ixyz);
-  std::free(sim.bna_ixyz);
-  std::free(sim.Q_bna);
-  std::free(sim.adj_bn);
-  std::free(sim.mat_bnl);
-  std::free(sim.bn_mask);
-  std::free(sim.ssaf_bnl);
-  std::free(sim.K_bn);
-  std::free(sim.in_ixyz);
-  std::free(sim.out_ixyz);
-  std::free(sim.out_reorder);
-  std::free(sim.in_sigs);
-  std::free(sim.u_out);
-  std::free(sim.Mb);
-  std::free(sim.mat_beta);
-  std::free(sim.mat_quads);
+  delete[] sim.bn_ixyz;
+  delete[] sim.bnl_ixyz;
+  delete[] sim.bna_ixyz;
+  delete[] sim.Q_bna;
+  delete[] sim.adj_bn;
+  delete[] sim.mat_bnl;
+  delete[] sim.bn_mask;
+  delete[] sim.ssaf_bnl;
+  delete[] sim.K_bn;
+  delete[] sim.in_ixyz;
+  delete[] sim.out_ixyz;
+  delete[] sim.out_reorder;
+  delete[] sim.in_sigs;
+  delete[] sim.u_out;
+  delete[] sim.Mb;
+  delete[] sim.mat_beta;
+  delete[] sim.mat_quads;
 }
 
 } // namespace pffdtd

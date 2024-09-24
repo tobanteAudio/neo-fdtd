@@ -20,9 +20,9 @@ namespace pffdtd {
 
 template<typename T>
 [[nodiscard]] auto allocate_zeros(std::integral auto count) -> T* {
+  auto* const ptr  = new T[count];
   auto const bytes = static_cast<size_t>(count) * sizeof(T);
-  auto* const ptr  = std::malloc(bytes);
-  std::memset(ptr, 0, bytes);
+  std::memset(static_cast<void*>(ptr), 0, bytes);
   return reinterpret_cast<T*>(ptr);
 }
 

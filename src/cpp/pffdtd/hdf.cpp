@@ -32,9 +32,6 @@ auto readDataset(hid_t file, char const* dset_str, int ndims, hsize_t* dims, voi
     case DataType::Int8: *out = allocate_zeros<int8_t>(N); break;
     case DataType::Bool: *out = allocate_zeros<bool>(N); break;
   }
-  if (*out == nullptr) {
-    raise<std::bad_alloc>();
-  }
 
   herr_t status = 0;
   switch (t) {

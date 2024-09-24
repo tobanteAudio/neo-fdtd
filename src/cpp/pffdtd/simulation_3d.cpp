@@ -207,7 +207,7 @@ template<typename Real>
       ssaf_bn[i] = (Real)saf_bn[i]; // just cast
     }
   }
-  std::free(saf_bn);
+  delete[] saf_bn;
 
   ////////////////////////////////////////////////////////////////////////
   // Read signals HDF5 dataset
@@ -346,7 +346,7 @@ template<typename Real>
       mat_quads[mij].bFh = (Real)bFh;
       mat_beta[i] += (Real)b;
     }
-    std::free(DEF);
+    delete[] DEF;
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -395,7 +395,7 @@ template<typename Real>
     }
   }
   fmt::println("adj_bn double checked");
-  std::free(adj_bn_bool);
+  delete[] adj_bn_bool;
 
   //////////////////
   // calculate K_bn from adj_bn
@@ -440,7 +440,7 @@ template<typename Real>
     }
   }
   fmt::println("bn_mask double checked");
-  std::free(bn_mask_raw);
+  delete[] bn_mask_raw;
 
   // count Nbl
   int64_t Nbl = 0;
@@ -463,8 +463,8 @@ template<typename Real>
     }
     PFFDTD_ASSERT(j == Nbl);
   }
-  std::free(mat_bn);
-  std::free(ssaf_bn);
+  delete[] mat_bn;
+  delete[] ssaf_bn;
 
   fmt::println("separated non-rigid bn");
 
@@ -519,8 +519,8 @@ template<typename Real>
       for (int64_t cc = 0; cc < Nba; cc++) {
         Q_bna_sorted[cc] = Q_bna_unsorted[bna_sort_keys[cc]];
       }
-      std::free(bna_sort_keys);
-      std::free(Q_bna_unsorted);
+      delete[] bna_sort_keys;
+      delete[] Q_bna_unsorted;
       fmt::println("sorted ABC nodes for FCC/GPU");
     }
   }
