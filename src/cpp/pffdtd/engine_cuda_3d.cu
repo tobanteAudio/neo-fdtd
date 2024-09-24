@@ -409,11 +409,10 @@ __global__ void KernelBoundaryFD(
     for (int8_t m = 0; m < cuMb[k]; m++) { // faster on average than MMb
       int64_t const nbm       = m * cuNbl + nb;
       int32_t const mbk       = k * MMb + m;
-      MatQuad<Real> const* tm = nullptr;
-      tm                      = &(mat_quads[mbk]);
+      MatQuad<Real> const& tm = mat_quads[mbk];
       vh1int[m]               = vh1[nbm];
       gh1int[m]               = gh1[nbm];
-      u0bint -= fac * (_2 * (tm->bDh) * vh1int[m] - (tm->bFh) * gh1int[m]);
+      u0bint -= fac * (_2 * tm.bDh * vh1int[m] - tm.bFh * gh1int[m]);
     }
 
     Real const du = u0bint - u2bint;
@@ -422,9 +421,8 @@ __global__ void KernelBoundaryFD(
     for (int8_t m = 0; m < cuMb[k]; m++) { // faster on average than MMb
       int64_t const nbm       = m * cuNbl + nb;
       int32_t const mbk       = k * MMb + m;
-      MatQuad<Real> const* tm = nullptr;
-      tm                      = &(mat_quads[mbk]);
-      Real const vh0m         = (tm->b) * du + (tm->bd) * vh1int[m] - _2 * (tm->bFh) * gh1int[m];
+      MatQuad<Real> const& tm = mat_quads[mbk];
+      Real const vh0m         = tm.b * du + tm.bd * vh1int[m] - _2 * tm.bFh * gh1int[m];
       gh1[nbm]                = gh1int[m] + (vh0m + vh1int[m]) / _2;
       vh1[nbm]                = vh0m;
     }
@@ -524,7 +522,7 @@ __global__ void FlipHaloYZ_Xend(Real* __restrict__ u1) {
   }
 }
 
-// print some device details
+// print some gpu details
 auto print_gpu_details(int i) -> uint64_t {
   cudaDeviceProp prop{};
   cudaGetDeviceProperties(&prop, i);
@@ -546,17 +544,17 @@ auto print_gpu_details(int i) -> uint64_t {
 
 // input indices need to be sorted for multi-device allocation
 template<typename Real>
-void check_sorted(Simulation3D<Real> const* sim) {
-  int64_t* bn_ixyz  = sim->bn_ixyz;
-  int64_t* bnl_ixyz = sim->bnl_ixyz;
-  int64_t* bna_ixyz = sim->bna_ixyz;
-  int64_t* in_ixyz  = sim->in_ixyz;
-  int64_t* out_ixyz = sim->out_ixyz;
-  int64_t const Nb  = sim->Nb;
-  int64_t const Nbl = sim->Nbl;
-  int64_t const Nba = sim->Nba;
-  int64_t const Ns  = sim->Ns;
-  int64_t const Nr  = sim->Nr;
+void checkSorted(Simulation3D<Real> const& sim) {
+  int64_t* bn_ixyz  = sim.bn_ixyz;
+  int64_t* bnl_ixyz = sim.bnl_ixyz;
+  int64_t* bna_ixyz = sim.bna_ixyz;
+  int64_t* in_ixyz  = sim.in_ixyz;
+  int64_t* out_ixyz = sim.out_ixyz;
+  int64_t const Nb  = sim.Nb;
+  int64_t const Nbl = sim.Nbl;
+  int64_t const Nba = sim.Nba;
+  int64_t const Ns  = sim.Ns;
+  int64_t const Nr  = sim.Nr;
   for (int64_t i = 1; i < Nb; i++) {
     PFFDTD_ASSERT(bn_ixyz[i] > bn_ixyz[i - 1]); // check save_gpu_folder
   }
@@ -576,10 +574,10 @@ void check_sorted(Simulation3D<Real> const* sim) {
 
 // counts for splitting data across GPUs
 template<typename Real>
-void split_data(Simulation3D<Real> const* sim, std::span<HostData<Real>> ghds) {
-  auto const Nx    = sim->Nx;
-  auto const Ny    = sim->Ny;
-  auto const Nz    = sim->Nz;
+void splitData(Simulation3D<Real> const& sim, std::span<HostData<Real>> ghds) {
+  auto const Nx    = sim.Nx;
+  auto const Ny    = sim.Ny;
+  auto const Nz    = sim.Nz;
   auto const ngpus = static_cast<int>(ghds.size());
 
   // initialise
@@ -614,7 +612,7 @@ void split_data(Simulation3D<Real> const* sim, std::span<HostData<Real>> ghds) {
   }
   PFFDTD_ASSERT(Nx_check == Nx);
 
-  // now count Nr,Ns,Nb for each device
+  // now count Nr,Ns,Nb for each gpu
   auto Nxcc = std::vector<int64_t>(static_cast<size_t>(ngpus));
   Nxcc[0]   = ghds[0].Nx;
   std::printf("Nxcc[%d]=%ld\n", 0, Nxcc[0]);
@@ -625,8 +623,8 @@ void split_data(Simulation3D<Real> const* sim, std::span<HostData<Real>> ghds) {
   }
 
   // bn_ixyz - Nb
-  int64_t* bn_ixyz = sim->bn_ixyz;
-  int64_t const Nb = sim->Nb;
+  int64_t* bn_ixyz = sim.bn_ixyz;
+  int64_t const Nb = sim.Nb;
   {
     int gid = 0;
     for (int64_t i = 0; i < Nb; i++) {
@@ -645,8 +643,8 @@ void split_data(Simulation3D<Real> const* sim, std::span<HostData<Real>> ghds) {
   PFFDTD_ASSERT(Nb_check == Nb);
 
   // bnl_ixyz - Nbl
-  int64_t* bnl_ixyz = sim->bnl_ixyz;
-  int64_t const Nbl = sim->Nbl;
+  int64_t* bnl_ixyz = sim.bnl_ixyz;
+  int64_t const Nbl = sim.Nbl;
   {
     int gid = 0;
     for (int64_t i = 0; i < Nbl; i++) {
@@ -665,8 +663,8 @@ void split_data(Simulation3D<Real> const* sim, std::span<HostData<Real>> ghds) {
   PFFDTD_ASSERT(Nbl_check == Nbl);
 
   // bna_ixyz - Nba
-  int64_t* bna_ixyz = sim->bna_ixyz;
-  int64_t const Nba = sim->Nba;
+  int64_t* bna_ixyz = sim.bna_ixyz;
+  int64_t const Nba = sim.Nba;
   {
     int gid = 0;
     for (int64_t i = 0; i < Nba; i++) {
@@ -685,8 +683,8 @@ void split_data(Simulation3D<Real> const* sim, std::span<HostData<Real>> ghds) {
   PFFDTD_ASSERT(Nba_check == Nba);
 
   // in_ixyz - Ns
-  int64_t* in_ixyz = sim->in_ixyz;
-  int64_t const Ns = sim->Ns;
+  int64_t* in_ixyz = sim.in_ixyz;
+  int64_t const Ns = sim.Ns;
   {
     int gid = 0;
     for (int64_t i = 0; i < Ns; i++) {
@@ -705,8 +703,8 @@ void split_data(Simulation3D<Real> const* sim, std::span<HostData<Real>> ghds) {
   PFFDTD_ASSERT(Ns_check == Ns);
 
   // out_ixyz - Nr
-  int64_t* out_ixyz = sim->out_ixyz;
-  int64_t const Nr  = sim->Nr;
+  int64_t* out_ixyz = sim.out_ixyz;
+  int64_t const Nr  = sim.Nr;
   {
     int gid = 0;
     for (int64_t i = 0; i < Nr; i++) {
@@ -748,11 +746,11 @@ auto run(Simulation3D<Real> const& sim) -> void {
   auto gds  = std::vector<DeviceData<Real>>(static_cast<size_t>(ngpus));
 
   if (ngpus > 1) {
-    check_sorted(&sim); // needs to be sorted for multi-GPU
+    checkSorted(sim); // needs to be sorted for multi-GPU
   }
 
   // get local counts for Nx,Nb,Nr,Ns
-  split_data<Real>(&sim, ghds);
+  splitData<Real>(sim, ghds);
 
   for (int gid = 0; gid < ngpus; gid++) {
     gds[gid].totalmembytes = print_gpu_details(gid);
@@ -777,9 +775,9 @@ auto run(Simulation3D<Real> const& sim) -> void {
 
   // start moving data to GPUs
   for (int gid = 0; gid < ngpus; gid++) {
-    auto& ghd = ghds[gid];
+    auto& h = ghds[gid];
     std::printf("GPU %d -- ", gid);
-    std::printf("Nx=%ld Ns=%ld Nr=%ld Nb=%ld Nbl=%ld Nba=%ld\n", ghd.Nx, ghd.Ns, ghd.Nr, ghd.Nb, ghd.Nbl, ghd.Nba);
+    std::printf("Nx=%ld Ns=%ld Nr=%ld Nb=%ld Nbl=%ld Nba=%ld\n", h.Nx, h.Ns, h.Nr, h.Nb, h.Nbl, h.Nba);
   }
 
   int64_t Ns_read  = 0;
@@ -801,163 +799,163 @@ auto run(Simulation3D<Real> const& sim) -> void {
   for (int gid = 0; gid < ngpus; gid++) {
     gpuErrchk(cudaSetDevice(gid));
 
-    DeviceData<Real>* gd = &(gds[gid]);
-    HostData<Real>* ghd  = &(ghds[gid]);
+    DeviceData<Real>& gpu = gds[gid];
+    HostData<Real>& host  = ghds[gid];
     std::printf("---------\n");
     std::printf("GPU %d\n", gid);
     std::printf("---------\n");
 
-    std::printf("Nx to read = %ld\n", ghd->Nx);
-    std::printf("Nb to read = %ld\n", ghd->Nb);
-    std::printf("Nbl to read = %ld\n", ghd->Nbl);
-    std::printf("Nba to read = %ld\n", ghd->Nba);
-    std::printf("Ns to read = %ld\n", ghd->Ns);
-    std::printf("Nr to read = %ld\n", ghd->Nr);
+    std::printf("Nx to read = %ld\n", host.Nx);
+    std::printf("Nb to read = %ld\n", host.Nb);
+    std::printf("Nbl to read = %ld\n", host.Nbl);
+    std::printf("Nba to read = %ld\n", host.Nba);
+    std::printf("Ns to read = %ld\n", host.Ns);
+    std::printf("Nr to read = %ld\n", host.Nr);
 
     // Nxh (effective Nx with extra halos)
-    ghd->Nxh = ghd->Nx;
+    host.Nxh = host.Nx;
     if (gid > 0) {
-      (ghd->Nxh)++; // add bottom halo
+      (host.Nxh)++; // add bottom halo
     }
     if (gid < ngpus - 1) {
-      (ghd->Nxh)++; // add top halo
+      (host.Nxh)++; // add top halo
     }
-    // calculate Npts for this device
-    ghd->Npts = Nzy * (ghd->Nxh);
+    // calculate Npts for this gpu
+    host.Npts = Nzy * (host.Nxh);
     // boundary mask
-    ghd->Nbm = cu_divceil(ghd->Npts, 8);
+    host.Nbm = cu_divceil(host.Npts, 8);
 
-    std::printf("Nx=%ld Ns=%ld Nr=%ld Nb=%ld, Npts=%ld\n", ghd->Nx, ghd->Ns, ghd->Nr, ghd->Nb, ghd->Npts);
+    std::printf("Nx=%ld Ns=%ld Nr=%ld Nb=%ld, Npts=%ld\n", host.Nx, host.Ns, host.Nr, host.Nb, host.Npts);
 
     // aliased pointers (to memory already allocated)
-    ghd->in_sigs   = sim.in_sigs + Ns_read * sim.Nt;
-    ghd->ssaf_bnl  = sim.ssaf_bnl + Nbl_read;
-    ghd->adj_bn    = sim.adj_bn + Nb_read;
-    ghd->mat_bnl   = sim.mat_bnl + Nbl_read;
-    ghd->K_bn      = sim.K_bn + Nb_read;
-    ghd->Q_bna     = sim.Q_bna + Nba_read;
-    ghd->u_out     = sim.u_out + Nr_read * sim.Nt;
-    ghd->u_out_buf = u_out_buf + Nr_read;
+    host.in_sigs   = sim.in_sigs + Ns_read * sim.Nt;
+    host.ssaf_bnl  = sim.ssaf_bnl + Nbl_read;
+    host.adj_bn    = sim.adj_bn + Nb_read;
+    host.mat_bnl   = sim.mat_bnl + Nbl_read;
+    host.K_bn      = sim.K_bn + Nb_read;
+    host.Q_bna     = sim.Q_bna + Nba_read;
+    host.u_out     = sim.u_out + Nr_read * sim.Nt;
+    host.u_out_buf = u_out_buf + Nr_read;
 
     // recalculate indices, these are associated host versions to copy over to devices
-    ghd->bn_ixyz  = allocate_zeros<int64_t>(ghd->Nb);
-    ghd->bnl_ixyz = allocate_zeros<int64_t>(ghd->Nbl);
-    ghd->bna_ixyz = allocate_zeros<int64_t>(ghd->Nba);
-    ghd->bn_mask  = allocate_zeros<uint8_t>(ghd->Nbm);
-    ghd->in_ixyz  = allocate_zeros<int64_t>(ghd->Ns);
-    ghd->out_ixyz = allocate_zeros<int64_t>(ghd->Nr);
+    host.bn_ixyz  = allocate_zeros<int64_t>(host.Nb);
+    host.bnl_ixyz = allocate_zeros<int64_t>(host.Nbl);
+    host.bna_ixyz = allocate_zeros<int64_t>(host.Nba);
+    host.bn_mask  = allocate_zeros<uint8_t>(host.Nbm);
+    host.in_ixyz  = allocate_zeros<int64_t>(host.Ns);
+    host.out_ixyz = allocate_zeros<int64_t>(host.Nr);
 
     int64_t const offset = Nzy * Nx_pos;
-    for (int64_t nb = 0; nb < (ghd->Nb); nb++) {
+    for (int64_t nb = 0; nb < (host.Nb); nb++) {
       int64_t const ii = sim.bn_ixyz[nb + Nb_read]; // global index
       int64_t const jj = ii - offset;               // local index
       PFFDTD_ASSERT(jj >= 0);
-      PFFDTD_ASSERT(jj < ghd->Npts);
-      ghd->bn_ixyz[nb] = jj;
-      SET_BIT_VAL(ghd->bn_mask[jj >> 3], jj % 8, GET_BIT(sim.bn_mask[ii >> 3], ii % 8)); // set bit
+      PFFDTD_ASSERT(jj < host.Npts);
+      host.bn_ixyz[nb] = jj;
+      SET_BIT_VAL(host.bn_mask[jj >> 3], jj % 8, GET_BIT(sim.bn_mask[ii >> 3], ii % 8)); // set bit
     }
-    for (int64_t nb = 0; nb < (ghd->Nbl); nb++) {
+    for (int64_t nb = 0; nb < (host.Nbl); nb++) {
       int64_t const ii = sim.bnl_ixyz[nb + Nbl_read]; // global index
       int64_t const jj = ii - offset;                 // local index
       PFFDTD_ASSERT(jj >= 0);
-      PFFDTD_ASSERT(jj < ghd->Npts);
-      ghd->bnl_ixyz[nb] = jj;
+      PFFDTD_ASSERT(jj < host.Npts);
+      host.bnl_ixyz[nb] = jj;
     }
 
-    for (int64_t nb = 0; nb < (ghd->Nba); nb++) {
+    for (int64_t nb = 0; nb < (host.Nba); nb++) {
       int64_t const ii = sim.bna_ixyz[nb + Nba_read]; // global index
       int64_t const jj = ii - offset;                 // local index
       PFFDTD_ASSERT(jj >= 0);
-      PFFDTD_ASSERT(jj < ghd->Npts);
-      ghd->bna_ixyz[nb] = jj;
+      PFFDTD_ASSERT(jj < host.Npts);
+      host.bna_ixyz[nb] = jj;
     }
 
-    for (int64_t ns = 0; ns < (ghd->Ns); ns++) {
+    for (int64_t ns = 0; ns < (host.Ns); ns++) {
       int64_t const ii = sim.in_ixyz[ns + Ns_read];
       int64_t const jj = ii - offset;
       PFFDTD_ASSERT(jj >= 0);
-      PFFDTD_ASSERT(jj < ghd->Npts);
-      ghd->in_ixyz[ns] = jj;
+      PFFDTD_ASSERT(jj < host.Npts);
+      host.in_ixyz[ns] = jj;
     }
-    for (int64_t nr = 0; nr < (ghd->Nr); nr++) {
+    for (int64_t nr = 0; nr < (host.Nr); nr++) {
       int64_t const ii = sim.out_ixyz[nr + Nr_read];
       int64_t const jj = ii - offset;
       PFFDTD_ASSERT(jj >= 0);
-      PFFDTD_ASSERT(jj < ghd->Npts);
-      ghd->out_ixyz[nr] = jj;
+      PFFDTD_ASSERT(jj < host.Npts);
+      host.out_ixyz[nr] = jj;
     }
 
-    gpuErrchk(cudaMalloc(&(gd->u0), (size_t)((ghd->Npts) * sizeof(Real))));
-    gpuErrchk(cudaMemset(gd->u0, 0, (size_t)((ghd->Npts) * sizeof(Real))));
+    gpuErrchk(cudaMalloc(&(gpu.u0), (size_t)((host.Npts) * sizeof(Real))));
+    gpuErrchk(cudaMemset(gpu.u0, 0, (size_t)((host.Npts) * sizeof(Real))));
 
-    gpuErrchk(cudaMalloc(&(gd->u1), (size_t)((ghd->Npts) * sizeof(Real))));
-    gpuErrchk(cudaMemset(gd->u1, 0, (size_t)((ghd->Npts) * sizeof(Real))));
+    gpuErrchk(cudaMalloc(&(gpu.u1), (size_t)((host.Npts) * sizeof(Real))));
+    gpuErrchk(cudaMemset(gpu.u1, 0, (size_t)((host.Npts) * sizeof(Real))));
 
-    gpuErrchk(cudaMalloc(&(gd->K_bn), (size_t)(ghd->Nb * sizeof(int8_t))));
-    gpuErrchk(cudaMemcpy(gd->K_bn, ghd->K_bn, ghd->Nb * sizeof(int8_t), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&(gpu.K_bn), (size_t)(host.Nb * sizeof(int8_t))));
+    gpuErrchk(cudaMemcpy(gpu.K_bn, host.K_bn, host.Nb * sizeof(int8_t), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->ssaf_bnl), (size_t)(ghd->Nbl * sizeof(Real))));
-    gpuErrchk(cudaMemcpy(gd->ssaf_bnl, ghd->ssaf_bnl, ghd->Nbl * sizeof(Real), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&(gpu.ssaf_bnl), (size_t)(host.Nbl * sizeof(Real))));
+    gpuErrchk(cudaMemcpy(gpu.ssaf_bnl, host.ssaf_bnl, host.Nbl * sizeof(Real), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->u0b), (size_t)(ghd->Nbl * sizeof(Real))));
-    gpuErrchk(cudaMemset(gd->u0b, 0, (size_t)(ghd->Nbl * sizeof(Real))));
+    gpuErrchk(cudaMalloc(&(gpu.u0b), (size_t)(host.Nbl * sizeof(Real))));
+    gpuErrchk(cudaMemset(gpu.u0b, 0, (size_t)(host.Nbl * sizeof(Real))));
 
-    gpuErrchk(cudaMalloc(&(gd->u1b), (size_t)(ghd->Nbl * sizeof(Real))));
-    gpuErrchk(cudaMemset(gd->u1b, 0, (size_t)(ghd->Nbl * sizeof(Real))));
+    gpuErrchk(cudaMalloc(&(gpu.u1b), (size_t)(host.Nbl * sizeof(Real))));
+    gpuErrchk(cudaMemset(gpu.u1b, 0, (size_t)(host.Nbl * sizeof(Real))));
 
-    gpuErrchk(cudaMalloc(&(gd->u2b), (size_t)(ghd->Nbl * sizeof(Real))));
-    gpuErrchk(cudaMemset(gd->u2b, 0, (size_t)(ghd->Nbl * sizeof(Real))));
+    gpuErrchk(cudaMalloc(&(gpu.u2b), (size_t)(host.Nbl * sizeof(Real))));
+    gpuErrchk(cudaMemset(gpu.u2b, 0, (size_t)(host.Nbl * sizeof(Real))));
 
-    gpuErrchk(cudaMalloc(&(gd->u2ba), (size_t)(ghd->Nba * sizeof(Real))));
-    gpuErrchk(cudaMemset(gd->u2ba, 0, (size_t)(ghd->Nba * sizeof(Real))));
+    gpuErrchk(cudaMalloc(&(gpu.u2ba), (size_t)(host.Nba * sizeof(Real))));
+    gpuErrchk(cudaMemset(gpu.u2ba, 0, (size_t)(host.Nba * sizeof(Real))));
 
-    gpuErrchk(cudaMalloc(&(gd->vh1), (size_t)(ghd->Nbl * MMb * sizeof(Real))));
-    gpuErrchk(cudaMemset(gd->vh1, 0, (size_t)(ghd->Nbl * MMb * sizeof(Real))));
+    gpuErrchk(cudaMalloc(&(gpu.vh1), (size_t)(host.Nbl * MMb * sizeof(Real))));
+    gpuErrchk(cudaMemset(gpu.vh1, 0, (size_t)(host.Nbl * MMb * sizeof(Real))));
 
-    gpuErrchk(cudaMalloc(&(gd->gh1), (size_t)(ghd->Nbl * MMb * sizeof(Real))));
-    gpuErrchk(cudaMemset(gd->gh1, 0, (size_t)(ghd->Nbl * MMb * sizeof(Real))));
+    gpuErrchk(cudaMalloc(&(gpu.gh1), (size_t)(host.Nbl * MMb * sizeof(Real))));
+    gpuErrchk(cudaMemset(gpu.gh1, 0, (size_t)(host.Nbl * MMb * sizeof(Real))));
 
-    gpuErrchk(cudaMalloc(&(gd->u_out_buf), (size_t)(ghd->Nr * sizeof(Real))));
-    gpuErrchk(cudaMemset(gd->u_out_buf, 0, (size_t)(ghd->Nr * sizeof(Real))));
+    gpuErrchk(cudaMalloc(&(gpu.u_out_buf), (size_t)(host.Nr * sizeof(Real))));
+    gpuErrchk(cudaMemset(gpu.u_out_buf, 0, (size_t)(host.Nr * sizeof(Real))));
 
-    gpuErrchk(cudaMalloc(&(gd->bn_ixyz), (size_t)(ghd->Nb * sizeof(int64_t))));
-    gpuErrchk(cudaMemcpy(gd->bn_ixyz, ghd->bn_ixyz, (size_t)ghd->Nb * sizeof(int64_t), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&(gpu.bn_ixyz), (size_t)(host.Nb * sizeof(int64_t))));
+    gpuErrchk(cudaMemcpy(gpu.bn_ixyz, host.bn_ixyz, (size_t)host.Nb * sizeof(int64_t), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->bnl_ixyz), (size_t)(ghd->Nbl * sizeof(int64_t))));
-    gpuErrchk(cudaMemcpy(gd->bnl_ixyz, ghd->bnl_ixyz, (size_t)ghd->Nbl * sizeof(int64_t), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&(gpu.bnl_ixyz), (size_t)(host.Nbl * sizeof(int64_t))));
+    gpuErrchk(cudaMemcpy(gpu.bnl_ixyz, host.bnl_ixyz, (size_t)host.Nbl * sizeof(int64_t), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->bna_ixyz), (size_t)(ghd->Nba * sizeof(int64_t))));
-    gpuErrchk(cudaMemcpy(gd->bna_ixyz, ghd->bna_ixyz, (size_t)ghd->Nba * sizeof(int64_t), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&(gpu.bna_ixyz), (size_t)(host.Nba * sizeof(int64_t))));
+    gpuErrchk(cudaMemcpy(gpu.bna_ixyz, host.bna_ixyz, (size_t)host.Nba * sizeof(int64_t), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->Q_bna), (size_t)(ghd->Nba * sizeof(int8_t))));
-    gpuErrchk(cudaMemcpy(gd->Q_bna, ghd->Q_bna, ghd->Nba * sizeof(int8_t), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&(gpu.Q_bna), (size_t)(host.Nba * sizeof(int8_t))));
+    gpuErrchk(cudaMemcpy(gpu.Q_bna, host.Q_bna, host.Nba * sizeof(int8_t), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->out_ixyz), (size_t)(ghd->Nr * sizeof(int64_t))));
-    gpuErrchk(cudaMemcpy(gd->out_ixyz, ghd->out_ixyz, (size_t)ghd->Nr * sizeof(int64_t), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&(gpu.out_ixyz), (size_t)(host.Nr * sizeof(int64_t))));
+    gpuErrchk(cudaMemcpy(gpu.out_ixyz, host.out_ixyz, (size_t)host.Nr * sizeof(int64_t), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->adj_bn), (size_t)(ghd->Nb * sizeof(uint16_t))));
-    gpuErrchk(cudaMemcpy(gd->adj_bn, ghd->adj_bn, (size_t)ghd->Nb * sizeof(uint16_t), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&(gpu.adj_bn), (size_t)(host.Nb * sizeof(uint16_t))));
+    gpuErrchk(cudaMemcpy(gpu.adj_bn, host.adj_bn, (size_t)host.Nb * sizeof(uint16_t), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->mat_bnl), (size_t)(ghd->Nbl * sizeof(int8_t))));
-    gpuErrchk(cudaMemcpy(gd->mat_bnl, ghd->mat_bnl, (size_t)ghd->Nbl * sizeof(int8_t), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&(gpu.mat_bnl), (size_t)(host.Nbl * sizeof(int8_t))));
+    gpuErrchk(cudaMemcpy(gpu.mat_bnl, host.mat_bnl, (size_t)host.Nbl * sizeof(int8_t), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->mat_beta), (size_t)sim.Nm * sizeof(Real)));
-    gpuErrchk(cudaMemcpy(gd->mat_beta, sim.mat_beta, (size_t)sim.Nm * sizeof(Real), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&(gpu.mat_beta), (size_t)sim.Nm * sizeof(Real)));
+    gpuErrchk(cudaMemcpy(gpu.mat_beta, sim.mat_beta, (size_t)sim.Nm * sizeof(Real), cudaMemcpyHostToDevice));
 
-    gpuErrchk(cudaMalloc(&(gd->mat_quads), (size_t)sim.Nm * MMb * sizeof(MatQuad<Real>)));
+    gpuErrchk(cudaMalloc(&(gpu.mat_quads), (size_t)sim.Nm * MMb * sizeof(MatQuad<Real>)));
     gpuErrchk(
-        cudaMemcpy(gd->mat_quads, sim.mat_quads, (size_t)sim.Nm * MMb * sizeof(MatQuad<Real>), cudaMemcpyHostToDevice)
+        cudaMemcpy(gpu.mat_quads, sim.mat_quads, (size_t)sim.Nm * MMb * sizeof(MatQuad<Real>), cudaMemcpyHostToDevice)
     );
 
-    gpuErrchk(cudaMalloc(&(gd->bn_mask), (size_t)(ghd->Nbm * sizeof(uint8_t))));
-    gpuErrchk(cudaMemcpy(gd->bn_mask, ghd->bn_mask, (size_t)ghd->Nbm * sizeof(uint8_t), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMalloc(&(gpu.bn_mask), (size_t)(host.Nbm * sizeof(uint8_t))));
+    gpuErrchk(cudaMemcpy(gpu.bn_mask, host.bn_mask, (size_t)host.Nbm * sizeof(uint8_t), cudaMemcpyHostToDevice));
 
-    Ns_read += ghd->Ns;
-    Nr_read += ghd->Nr;
-    Nb_read += ghd->Nb;
-    Nbl_read += ghd->Nbl;
-    Nba_read += ghd->Nba;
-    Nx_read += ghd->Nx;
+    Ns_read += host.Ns;
+    Nr_read += host.Nr;
+    Nb_read += host.Nb;
+    Nbl_read += host.Nbl;
+    Nba_read += host.Nba;
+    Nx_read += host.Nx;
     Nx_pos = Nx_read - 1; // back up one at subsequent stage
 
     std::printf("Nx_read = %ld\n", Nx_read);
@@ -972,10 +970,10 @@ auto run(Simulation3D<Real> const& sim) -> void {
     // swapping x and z here (CUDA has first dim contiguous)
     gpuErrchk(cudaMemcpyToSymbol(cuNx, &(sim.Nz), sizeof(int64_t)));
     gpuErrchk(cudaMemcpyToSymbol(cuNy, &(sim.Ny), sizeof(int64_t)));
-    gpuErrchk(cudaMemcpyToSymbol(cuNz, &(ghd->Nxh), sizeof(int64_t)));
-    gpuErrchk(cudaMemcpyToSymbol(cuNb, &(ghd->Nb), sizeof(int64_t)));
-    gpuErrchk(cudaMemcpyToSymbol(cuNbl, &(ghd->Nbl), sizeof(int64_t)));
-    gpuErrchk(cudaMemcpyToSymbol(cuNba, &(ghd->Nba), sizeof(int64_t)));
+    gpuErrchk(cudaMemcpyToSymbol(cuNz, &(host.Nxh), sizeof(int64_t)));
+    gpuErrchk(cudaMemcpyToSymbol(cuNb, &(host.Nb), sizeof(int64_t)));
+    gpuErrchk(cudaMemcpyToSymbol(cuNbl, &(host.Nbl), sizeof(int64_t)));
+    gpuErrchk(cudaMemcpyToSymbol(cuNba, &(host.Nba), sizeof(int64_t)));
     gpuErrchk(cudaMemcpyToSymbol(cuMb, sim.Mb, sim.Nm * sizeof(int8_t)));
     gpuErrchk(cudaMemcpyToSymbol(cuNxNy, &Nzy,
                                  sizeof(int64_t))); // same for all devices
@@ -1002,14 +1000,14 @@ auto run(Simulation3D<Real> const& sim) -> void {
     // threads grids and blocks (swap x and z)
     int64_t const cuGx  = cu_divceil(sim.Nz - 2, cuBx);
     int64_t const cuGy  = cu_divceil(sim.Ny - 2, cuBy);
-    int64_t const cuGz  = cu_divceil(ghd->Nxh - 2, cuBz);
-    int64_t const cuGr  = cu_divceil(ghd->Nr, cuBrw);
-    int64_t const cuGb  = cu_divceil(ghd->Nb, cuBb);
-    int64_t const cuGbl = cu_divceil(ghd->Nbl, cuBb);
-    int64_t const cuGba = cu_divceil(ghd->Nba, cuBb);
+    int64_t const cuGz  = cu_divceil(host.Nxh - 2, cuBz);
+    int64_t const cuGr  = cu_divceil(host.Nr, cuBrw);
+    int64_t const cuGb  = cu_divceil(host.Nb, cuBb);
+    int64_t const cuGbl = cu_divceil(host.Nbl, cuBb);
+    int64_t const cuGba = cu_divceil(host.Nba, cuBb);
 
     int64_t const cuGx2 = cu_divceil(sim.Nz, cuBx2);   // full face
-    int64_t const cuGz2 = cu_divceil(ghd->Nxh, cuBy2); // full face
+    int64_t const cuGz2 = cu_divceil(host.Nxh, cuBy2); // full face
 
     PFFDTD_ASSERT(cuGx >= 1);
     PFFDTD_ASSERT(cuGy >= 1);
@@ -1019,36 +1017,36 @@ auto run(Simulation3D<Real> const& sim) -> void {
     PFFDTD_ASSERT(cuGbl >= 1);
     PFFDTD_ASSERT(cuGba >= 1);
 
-    gd->block_dim_air     = dim3(cuBx, cuBy, cuBz);
-    gd->block_dim_readout = dim3(cuBrw, 1, 1);
-    gd->block_dim_bn      = dim3(cuBb, 1, 1);
+    gpu.block_dim_air     = dim3(cuBx, cuBy, cuBz);
+    gpu.block_dim_readout = dim3(cuBrw, 1, 1);
+    gpu.block_dim_bn      = dim3(cuBb, 1, 1);
 
-    gd->grid_dim_air     = dim3(cuGx, cuGy, cuGz);
-    gd->grid_dim_readout = dim3(cuGr, 1, 1);
-    gd->grid_dim_bn      = dim3(cuGb, 1, 1);
-    gd->grid_dim_bnl     = dim3(cuGbl, 1, 1);
-    gd->grid_dim_bna     = dim3(cuGba, 1, 1);
+    gpu.grid_dim_air     = dim3(cuGx, cuGy, cuGz);
+    gpu.grid_dim_readout = dim3(cuGr, 1, 1);
+    gpu.grid_dim_bn      = dim3(cuGb, 1, 1);
+    gpu.grid_dim_bnl     = dim3(cuGbl, 1, 1);
+    gpu.grid_dim_bna     = dim3(cuGba, 1, 1);
 
-    gd->block_dim_halo_xy = dim3(cuBx2, cuBy2, 1);
-    gd->block_dim_halo_yz = dim3(cuBx2, cuBy2, 1);
-    gd->block_dim_halo_xz = dim3(cuBx2, cuBy2, 1);
-    gd->grid_dim_halo_xy  = dim3(cu_divceil(sim.Nz, cuBx2), cu_divceil(sim.Ny, cuBy2), 1);
-    gd->grid_dim_halo_yz  = dim3(cu_divceil(sim.Ny, cuBx2), cu_divceil(ghd->Nxh, cuBy2), 1);
-    gd->grid_dim_halo_xz  = dim3(cu_divceil(sim.Nz, cuBx2), cu_divceil(ghd->Nxh, cuBy2), 1);
+    gpu.block_dim_halo_xy = dim3(cuBx2, cuBy2, 1);
+    gpu.block_dim_halo_yz = dim3(cuBx2, cuBy2, 1);
+    gpu.block_dim_halo_xz = dim3(cuBx2, cuBy2, 1);
+    gpu.grid_dim_halo_xy  = dim3(cu_divceil(sim.Nz, cuBx2), cu_divceil(sim.Ny, cuBy2), 1);
+    gpu.grid_dim_halo_yz  = dim3(cu_divceil(sim.Ny, cuBx2), cu_divceil(host.Nxh, cuBy2), 1);
+    gpu.grid_dim_halo_xz  = dim3(cu_divceil(sim.Nz, cuBx2), cu_divceil(host.Nxh, cuBy2), 1);
 
-    gd->block_dim_fold = dim3(cuBx2, cuBy2, 1);
-    gd->grid_dim_fold  = dim3(cuGx2, cuGz2, 1);
+    gpu.block_dim_fold = dim3(cuBx2, cuBy2, 1);
+    gpu.grid_dim_fold  = dim3(cuGx2, cuGz2, 1);
 
     // create streams
-    gpuErrchk(cudaStreamCreate(&(gd->cuStream_air)));
-    gpuErrchk(cudaStreamCreate(&(gd->cuStream_bn))); // no priority
+    gpuErrchk(cudaStreamCreate(&(gpu.cuStream_air)));
+    gpuErrchk(cudaStreamCreate(&(gpu.cuStream_bn))); // no priority
 
     // cuda events
-    gpuErrchk(cudaEventCreate(&(gd->cuEv_air_start)));
-    gpuErrchk(cudaEventCreate(&(gd->cuEv_air_end)));
-    gpuErrchk(cudaEventCreate(&(gd->cuEv_bn_roundtrip_start)));
-    gpuErrchk(cudaEventCreate(&(gd->cuEv_bn_roundtrip_end)));
-    gpuErrchk(cudaEventCreate(&(gd->cuEv_readout_end)));
+    gpuErrchk(cudaEventCreate(&(gpu.cuEv_air_start)));
+    gpuErrchk(cudaEventCreate(&(gpu.cuEv_air_end)));
+    gpuErrchk(cudaEventCreate(&(gpu.cuEv_bn_roundtrip_start)));
+    gpuErrchk(cudaEventCreate(&(gpu.cuEv_bn_roundtrip_end)));
+    gpuErrchk(cudaEventCreate(&(gpu.cuEv_readout_end)));
   }
   PFFDTD_ASSERT(Nb_read == sim.Nb);
   PFFDTD_ASSERT(Nbl_read == sim.Nbl);
@@ -1071,8 +1069,8 @@ auto run(Simulation3D<Real> const& sim) -> void {
   for (int64_t n = 0; n < sim.Nt; n++) {    // loop over time-steps
     for (int gid = 0; gid < ngpus; gid++) { // loop over GPUs (one thread launches all kernels)
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData<Real>* gd = &(gds[gid]);  // get struct of device pointers
-      HostData<Real>* ghd  = &(ghds[gid]); // get struct of host points (corresponding to device)
+      DeviceData<Real>& gpu = gds[gid];  // get struct of gpu pointers
+      HostData<Real>& host  = ghds[gid]; // get struct of host points (corresponding to gpu)
 
       // start first timer
       if (gid == 0) {
@@ -1083,136 +1081,136 @@ auto run(Simulation3D<Real> const& sim) -> void {
         gpuErrchk(cudaEventRecord(cuEv_main_sample_start, nullptr));
       }
       // boundary updates (using intermediate buffer)
-      gpuErrchk(cudaEventRecord(gd->cuEv_bn_roundtrip_start, gd->cuStream_bn));
+      gpuErrchk(cudaEventRecord(gpu.cuEv_bn_roundtrip_start, gpu.cuStream_bn));
 
       // boundary updates
       if (sim.fcc_flag == 0) {
-        KernelBoundaryRigidCart<<<gd->grid_dim_bn, gd->block_dim_bn, 0, gd->cuStream_bn>>>(
-            gd->u0,
-            gd->u1,
-            gd->adj_bn,
-            gd->bn_ixyz,
-            gd->K_bn
+        KernelBoundaryRigidCart<<<gpu.grid_dim_bn, gpu.block_dim_bn, 0, gpu.cuStream_bn>>>(
+            gpu.u0,
+            gpu.u1,
+            gpu.adj_bn,
+            gpu.bn_ixyz,
+            gpu.K_bn
         );
       } else {
-        KernelFoldFCC<<<gd->grid_dim_fold, gd->block_dim_fold, 0, gd->cuStream_bn>>>(gd->u1);
-        KernelBoundaryRigidFCC<<<gd->grid_dim_bn, gd->block_dim_bn, 0, gd->cuStream_bn>>>(
-            gd->u0,
-            gd->u1,
-            gd->adj_bn,
-            gd->bn_ixyz,
-            gd->K_bn
+        KernelFoldFCC<<<gpu.grid_dim_fold, gpu.block_dim_fold, 0, gpu.cuStream_bn>>>(gpu.u1);
+        KernelBoundaryRigidFCC<<<gpu.grid_dim_bn, gpu.block_dim_bn, 0, gpu.cuStream_bn>>>(
+            gpu.u0,
+            gpu.u1,
+            gpu.adj_bn,
+            gpu.bn_ixyz,
+            gpu.K_bn
         );
       }
       // using buffer to then update FD boundaries
-      CopyFromGridKernel<<<gd->grid_dim_bnl, gd->block_dim_bn, 0, gd->cuStream_bn>>>(
-          gd->u0b,
-          gd->u0,
-          gd->bnl_ixyz,
-          ghd->Nbl
+      CopyFromGridKernel<<<gpu.grid_dim_bnl, gpu.block_dim_bn, 0, gpu.cuStream_bn>>>(
+          gpu.u0b,
+          gpu.u0,
+          gpu.bnl_ixyz,
+          host.Nbl
       );
       // possible this could be moved to host
-      KernelBoundaryFD<<<gd->grid_dim_bnl, gd->block_dim_bn, 0, gd->cuStream_bn>>>(
-          gd->u0b,
-          gd->u2b,
-          gd->vh1,
-          gd->gh1,
-          gd->ssaf_bnl,
-          gd->mat_bnl,
-          gd->mat_beta,
-          gd->mat_quads
+      KernelBoundaryFD<<<gpu.grid_dim_bnl, gpu.block_dim_bn, 0, gpu.cuStream_bn>>>(
+          gpu.u0b,
+          gpu.u2b,
+          gpu.vh1,
+          gpu.gh1,
+          gpu.ssaf_bnl,
+          gpu.mat_bnl,
+          gpu.mat_beta,
+          gpu.mat_quads
       );
       // copy to back to grid
-      CopyToGridKernel<<<gd->grid_dim_bnl, gd->block_dim_bn, 0, gd->cuStream_bn>>>(
-          gd->u0,
-          gd->u0b,
-          gd->bnl_ixyz,
-          ghd->Nbl
+      CopyToGridKernel<<<gpu.grid_dim_bnl, gpu.block_dim_bn, 0, gpu.cuStream_bn>>>(
+          gpu.u0,
+          gpu.u0b,
+          gpu.bnl_ixyz,
+          host.Nbl
       );
-      gpuErrchk(cudaEventRecord(gd->cuEv_bn_roundtrip_end, gd->cuStream_bn));
+      gpuErrchk(cudaEventRecord(gpu.cuEv_bn_roundtrip_end, gpu.cuStream_bn));
 
       // air updates (including source
-      gpuErrchk(cudaStreamWaitEvent(gd->cuStream_air, gd->cuEv_bn_roundtrip_end,
+      gpuErrchk(cudaStreamWaitEvent(gpu.cuStream_air, gpu.cuEv_bn_roundtrip_end,
                                     0)); // might as well wait
       // run air kernel (with mask)
-      gpuErrchk(cudaEventRecord(gd->cuEv_air_start, gd->cuStream_air));
+      gpuErrchk(cudaEventRecord(gpu.cuEv_air_start, gpu.cuStream_air));
 
       // for absorbing boundaries at boundaries of grid
-      CopyFromGridKernel<<<gd->grid_dim_bna, gd->block_dim_bn, 0, gd->cuStream_air>>>(
-          gd->u2ba,
-          gd->u0,
-          gd->bna_ixyz,
-          ghd->Nba
+      CopyFromGridKernel<<<gpu.grid_dim_bna, gpu.block_dim_bn, 0, gpu.cuStream_air>>>(
+          gpu.u2ba,
+          gpu.u0,
+          gpu.bna_ixyz,
+          host.Nba
       );
       if (gid == 0) {
-        FlipHaloXY_Zbeg<<<gd->grid_dim_halo_xy, gd->block_dim_halo_xy, 0, gd->cuStream_air>>>(gd->u1);
+        FlipHaloXY_Zbeg<<<gpu.grid_dim_halo_xy, gpu.block_dim_halo_xy, 0, gpu.cuStream_air>>>(gpu.u1);
       }
       if (gid == ngpus - 1) {
-        FlipHaloXY_Zend<<<gd->grid_dim_halo_xy, gd->block_dim_halo_xy, 0, gd->cuStream_air>>>(gd->u1);
+        FlipHaloXY_Zend<<<gpu.grid_dim_halo_xy, gpu.block_dim_halo_xy, 0, gpu.cuStream_air>>>(gpu.u1);
       }
-      FlipHaloXZ_Ybeg<<<gd->grid_dim_halo_xz, gd->block_dim_halo_xz, 0, gd->cuStream_air>>>(gd->u1);
+      FlipHaloXZ_Ybeg<<<gpu.grid_dim_halo_xz, gpu.block_dim_halo_xz, 0, gpu.cuStream_air>>>(gpu.u1);
       if (sim.fcc_flag == 0) {
-        FlipHaloXZ_Yend<<<gd->grid_dim_halo_xz, gd->block_dim_halo_xz, 0, gd->cuStream_air>>>(gd->u1);
+        FlipHaloXZ_Yend<<<gpu.grid_dim_halo_xz, gpu.block_dim_halo_xz, 0, gpu.cuStream_air>>>(gpu.u1);
       }
-      FlipHaloYZ_Xbeg<<<gd->grid_dim_halo_yz, gd->block_dim_halo_yz, 0, gd->cuStream_air>>>(gd->u1);
-      FlipHaloYZ_Xend<<<gd->grid_dim_halo_yz, gd->block_dim_halo_yz, 0, gd->cuStream_air>>>(gd->u1);
+      FlipHaloYZ_Xbeg<<<gpu.grid_dim_halo_yz, gpu.block_dim_halo_yz, 0, gpu.cuStream_air>>>(gpu.u1);
+      FlipHaloYZ_Xend<<<gpu.grid_dim_halo_yz, gpu.block_dim_halo_yz, 0, gpu.cuStream_air>>>(gpu.u1);
 
       // injecting source first, negating sample to add it in first (NB source
       // on different stream than bn)
-      for (int64_t ns = 0; ns < ghd->Ns; ns++) {
-        AddIn<<<1, 1, 0, gd->cuStream_air>>>(gd->u0 + ghd->in_ixyz[ns], (Real)(-(ghd->in_sigs[ns * sim.Nt + n])));
+      for (int64_t ns = 0; ns < host.Ns; ns++) {
+        AddIn<<<1, 1, 0, gpu.cuStream_air>>>(gpu.u0 + host.in_ixyz[ns], (Real)(-(host.in_sigs[ns * sim.Nt + n])));
       }
       // now air updates (not conflicting with bn updates because of bn_mask)
       if (sim.fcc_flag == 0) {
-        KernelAirCart<<<gd->grid_dim_air, gd->block_dim_air, 0, gd->cuStream_air>>>(gd->u0, gd->u1, gd->bn_mask);
+        KernelAirCart<<<gpu.grid_dim_air, gpu.block_dim_air, 0, gpu.cuStream_air>>>(gpu.u0, gpu.u1, gpu.bn_mask);
       } else {
-        KernelAirFCC<<<gd->grid_dim_air, gd->block_dim_air, 0, gd->cuStream_air>>>(gd->u0, gd->u1, gd->bn_mask);
+        KernelAirFCC<<<gpu.grid_dim_air, gpu.block_dim_air, 0, gpu.cuStream_air>>>(gpu.u0, gpu.u1, gpu.bn_mask);
       }
       // boundary ABC loss
-      KernelBoundaryABC<<<gd->grid_dim_bna, gd->block_dim_bn, 0, gd->cuStream_air>>>(
-          gd->u0,
-          gd->u2ba,
-          gd->Q_bna,
-          gd->bna_ixyz
+      KernelBoundaryABC<<<gpu.grid_dim_bna, gpu.block_dim_bn, 0, gpu.cuStream_air>>>(
+          gpu.u0,
+          gpu.u2ba,
+          gpu.Q_bna,
+          gpu.bna_ixyz
       );
-      gpuErrchk(cudaEventRecord(gd->cuEv_air_end, gd->cuStream_air)); // for timing
+      gpuErrchk(cudaEventRecord(gpu.cuEv_air_end, gpu.cuStream_air)); // for timing
 
       // readouts
-      CopyFromGridKernel<<<gd->grid_dim_readout, gd->block_dim_readout, 0, gd->cuStream_bn>>>(
-          gd->u_out_buf,
-          gd->u1,
-          gd->out_ixyz,
-          ghd->Nr
+      CopyFromGridKernel<<<gpu.grid_dim_readout, gpu.block_dim_readout, 0, gpu.cuStream_bn>>>(
+          gpu.u_out_buf,
+          gpu.u1,
+          gpu.out_ixyz,
+          host.Nr
       );
       // then async memory copy of outputs (not really async because on same
       // stream as CopyFromGridKernel)
       gpuErrchk(cudaMemcpyAsync(
-          ghd->u_out_buf,
-          gd->u_out_buf,
-          ghd->Nr * sizeof(Real),
+          host.u_out_buf,
+          gpu.u_out_buf,
+          host.Nr * sizeof(Real),
           cudaMemcpyDeviceToHost,
-          gd->cuStream_bn
+          gpu.cuStream_bn
       ));
-      gpuErrchk(cudaEventRecord(gd->cuEv_readout_end, gd->cuStream_bn));
+      gpuErrchk(cudaEventRecord(gpu.cuEv_readout_end, gpu.cuStream_bn));
     }
 
     // readouts
     for (int gid = 0; gid < ngpus; gid++) {
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData<Real>* gd = &(gds[gid]);
-      HostData<Real>* ghd  = &(ghds[gid]);
-      gpuErrchk(cudaEventSynchronize(gd->cuEv_readout_end));
+      DeviceData<Real>& gpu = gds[gid];
+      HostData<Real>& host  = ghds[gid];
+      gpuErrchk(cudaEventSynchronize(gpu.cuEv_readout_end));
       // copy grid points off output buffer
-      for (int64_t nr = 0; nr < ghd->Nr; nr++) {
-        ghd->u_out[nr * sim.Nt + n] = (double)(ghd->u_out_buf[nr]);
+      for (int64_t nr = 0; nr < host.Nr; nr++) {
+        host.u_out[nr * sim.Nt + n] = (double)(host.u_out_buf[nr]);
       }
     }
     // synchronise streams
     for (int gid = 0; gid < ngpus; gid++) {
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData<Real>* gd = &(gds[gid]);                 // don't really need to set gpu device to sync
-      gpuErrchk(cudaStreamSynchronize(gd->cuStream_air)); // interior complete
-      gpuErrchk(cudaStreamSynchronize(gd->cuStream_bn));  // transfer complete
+      DeviceData<Real>& gpu = gds[gid];                   // don't really need to set gpu gpu to sync
+      gpuErrchk(cudaStreamSynchronize(gpu.cuStream_air)); // interior complete
+      gpuErrchk(cudaStreamSynchronize(gpu.cuStream_bn));  // transfer complete
     }
     // dst then src, stream with src gives best performance (CUDA thing)
 
@@ -1270,22 +1268,22 @@ auto run(Simulation3D<Real> const& sim) -> void {
 
     for (int gid = 0; gid < ngpus; gid++) {
       gpuErrchk(cudaSetDevice(gid));
-      DeviceData<Real>* gd = &(gds[gid]);
-      gpuErrchk(cudaStreamSynchronize(gd->cuStream_bn)); // transfer complete
+      DeviceData<Real>& gpu = gds[gid];
+      gpuErrchk(cudaStreamSynchronize(gpu.cuStream_bn)); // transfer complete
     }
     for (int gid = 0; gid < ngpus; gid++) {
-      DeviceData<Real>* gd = &(gds[gid]);
+      DeviceData<Real>& gpu = gds[gid];
       // update pointers
       Real* tmp_ptr = nullptr;
-      tmp_ptr       = gd->u1;
-      gd->u1        = gd->u0;
-      gd->u0        = tmp_ptr;
+      tmp_ptr       = gpu.u1;
+      gpu.u1        = gpu.u0;
+      gpu.u0        = tmp_ptr;
 
       // will use extra vector for this (simpler than extra copy kernel)
-      tmp_ptr = gd->u2b;
-      gd->u2b = gd->u1b;
-      gd->u1b = gd->u0b;
-      gd->u0b = tmp_ptr;
+      tmp_ptr = gpu.u2b;
+      gpu.u2b = gpu.u1b;
+      gpu.u1b = gpu.u0b;
+      gpu.u0b = tmp_ptr;
 
       if (gid == 0) {
         gpuErrchk(cudaSetDevice(gid));
@@ -1298,12 +1296,12 @@ auto run(Simulation3D<Real> const& sim) -> void {
       gpuErrchk(cudaSetDevice(0));
       gpuErrchk(cudaEventSynchronize(cuEv_main_sample_end)); // not sure this is correct
 
-      auto const& gd = gds[0];
+      auto const& gpu = gds[0];
 
       elapsed               = elapsedTime(cuEv_main_start, cuEv_main_sample_end);
       elapsedSample         = elapsedTime(cuEv_main_sample_start, cuEv_main_sample_end);
-      elapsedSampleAir      = elapsedTime(gd.cuEv_air_start, gd.cuEv_air_end);
-      elapsedSampleBoundary = elapsedTime(gd.cuEv_bn_roundtrip_start, gd.cuEv_bn_roundtrip_end);
+      elapsedSampleAir      = elapsedTime(gpu.cuEv_air_start, gpu.cuEv_air_end);
+      elapsedSampleBoundary = elapsedTime(gpu.cuEv_bn_roundtrip_start, gpu.cuEv_bn_roundtrip_end);
 
       elapsedAir += elapsedSampleAir;
       elapsedBoundary += elapsedSampleBoundary;
@@ -1331,7 +1329,7 @@ auto run(Simulation3D<Real> const& sim) -> void {
     gpuErrchk(cudaDeviceSynchronize());
   }
   {
-    // timing (on device 0)
+    // timing (on gpu 0)
     gpuErrchk(cudaSetDevice(0));
     gpuErrchk(cudaEventRecord(cuEv_main_end));
     gpuErrchk(cudaEventSynchronize(cuEv_main_end));
@@ -1349,47 +1347,47 @@ auto run(Simulation3D<Real> const& sim) -> void {
   gpuErrchk(cudaEventDestroy(cuEv_main_sample_end));
   for (int gid = 0; gid < ngpus; gid++) {
     gpuErrchk(cudaSetDevice(gid));
-    DeviceData<Real>* gd = &(gds[gid]);
-    HostData<Real>* ghd  = &(ghds[gid]);
+    DeviceData<Real>& gpu = gds[gid];
+    HostData<Real>& host  = ghds[gid];
     // cleanup streams
-    gpuErrchk(cudaStreamDestroy(gd->cuStream_air));
-    gpuErrchk(cudaStreamDestroy(gd->cuStream_bn));
+    gpuErrchk(cudaStreamDestroy(gpu.cuStream_air));
+    gpuErrchk(cudaStreamDestroy(gpu.cuStream_bn));
 
     // cleanup events
-    gpuErrchk(cudaEventDestroy(gd->cuEv_air_start));
-    gpuErrchk(cudaEventDestroy(gd->cuEv_air_end));
-    gpuErrchk(cudaEventDestroy(gd->cuEv_bn_roundtrip_start));
-    gpuErrchk(cudaEventDestroy(gd->cuEv_bn_roundtrip_end));
-    gpuErrchk(cudaEventDestroy(gd->cuEv_readout_end));
+    gpuErrchk(cudaEventDestroy(gpu.cuEv_air_start));
+    gpuErrchk(cudaEventDestroy(gpu.cuEv_air_end));
+    gpuErrchk(cudaEventDestroy(gpu.cuEv_bn_roundtrip_start));
+    gpuErrchk(cudaEventDestroy(gpu.cuEv_bn_roundtrip_end));
+    gpuErrchk(cudaEventDestroy(gpu.cuEv_readout_end));
 
     // free memory
-    gpuErrchk(cudaFree(gd->u0));
-    gpuErrchk(cudaFree(gd->u1));
-    gpuErrchk(cudaFree(gd->out_ixyz));
-    gpuErrchk(cudaFree(gd->bn_ixyz));
-    gpuErrchk(cudaFree(gd->bnl_ixyz));
-    gpuErrchk(cudaFree(gd->bna_ixyz));
-    gpuErrchk(cudaFree(gd->Q_bna));
-    gpuErrchk(cudaFree(gd->adj_bn));
-    gpuErrchk(cudaFree(gd->mat_bnl));
-    gpuErrchk(cudaFree(gd->K_bn));
-    gpuErrchk(cudaFree(gd->ssaf_bnl));
-    gpuErrchk(cudaFree(gd->mat_beta));
-    gpuErrchk(cudaFree(gd->mat_quads));
-    gpuErrchk(cudaFree(gd->bn_mask));
-    gpuErrchk(cudaFree(gd->u0b));
-    gpuErrchk(cudaFree(gd->u1b));
-    gpuErrchk(cudaFree(gd->u2b));
-    gpuErrchk(cudaFree(gd->u2ba));
-    gpuErrchk(cudaFree(gd->vh1));
-    gpuErrchk(cudaFree(gd->gh1));
-    gpuErrchk(cudaFree(gd->u_out_buf));
-    delete[] ghd->bn_mask;
-    delete[] ghd->bn_ixyz;
-    delete[] ghd->bnl_ixyz;
-    delete[] ghd->bna_ixyz;
-    delete[] ghd->in_ixyz;
-    delete[] ghd->out_ixyz;
+    gpuErrchk(cudaFree(gpu.u0));
+    gpuErrchk(cudaFree(gpu.u1));
+    gpuErrchk(cudaFree(gpu.out_ixyz));
+    gpuErrchk(cudaFree(gpu.bn_ixyz));
+    gpuErrchk(cudaFree(gpu.bnl_ixyz));
+    gpuErrchk(cudaFree(gpu.bna_ixyz));
+    gpuErrchk(cudaFree(gpu.Q_bna));
+    gpuErrchk(cudaFree(gpu.adj_bn));
+    gpuErrchk(cudaFree(gpu.mat_bnl));
+    gpuErrchk(cudaFree(gpu.K_bn));
+    gpuErrchk(cudaFree(gpu.ssaf_bnl));
+    gpuErrchk(cudaFree(gpu.mat_beta));
+    gpuErrchk(cudaFree(gpu.mat_quads));
+    gpuErrchk(cudaFree(gpu.bn_mask));
+    gpuErrchk(cudaFree(gpu.u0b));
+    gpuErrchk(cudaFree(gpu.u1b));
+    gpuErrchk(cudaFree(gpu.u2b));
+    gpuErrchk(cudaFree(gpu.u2ba));
+    gpuErrchk(cudaFree(gpu.vh1));
+    gpuErrchk(cudaFree(gpu.gh1));
+    gpuErrchk(cudaFree(gpu.u_out_buf));
+    delete[] host.bn_mask;
+    delete[] host.bn_ixyz;
+    delete[] host.bnl_ixyz;
+    delete[] host.bna_ixyz;
+    delete[] host.in_ixyz;
+    delete[] host.out_ixyz;
   }
   gpuErrchk(cudaFreeHost(u_out_buf));
 

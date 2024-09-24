@@ -165,9 +165,9 @@ auto run(Simulation3D<Real> const& sim) -> void {
         for (int8_t m = 0; m < Mb[k]; m++) {
           int64_t const nbm = nb * MMb + m;
           int32_t const mbk = k * MMb + m;
-          auto const* tm    = &(mat_quads[mbk]);
+          auto const& tm    = mat_quads[mbk];
           vh1nb[m]          = vh1[nbm];
-          u0bint -= fac * (_2 * (tm->bDh) * vh1nb[m] - (tm->bFh) * gh1[nbm]);
+          u0bint -= fac * (_2 * tm.bDh * vh1nb[m] - tm.bFh * gh1[nbm]);
         }
 
         Real du = u0bint - u2bint;
@@ -175,8 +175,8 @@ auto run(Simulation3D<Real> const& sim) -> void {
         for (int8_t m = 0; m < Mb[k]; m++) {
           int64_t const nbm = nb * MMb + m;
           int32_t const mbk = k * MMb + m;
-          auto const* tm    = &(mat_quads[mbk]);
-          Real vh0nbm       = (tm->b) * du + (tm->bd) * vh1nb[m] - _2 * (tm->bFh) * gh1[nbm];
+          auto const& tm    = mat_quads[mbk];
+          Real vh0nbm       = tm.b * du + tm.bd * vh1nb[m] - _2 * tm.bFh * gh1[nbm];
           gh1[nbm] += (vh0nbm + vh1nb[m]) / _2;
           vh1[nbm] = vh0nbm;
         }
