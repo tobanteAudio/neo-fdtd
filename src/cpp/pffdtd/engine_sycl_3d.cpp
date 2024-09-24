@@ -64,7 +64,7 @@ auto run(Simulation3D<Real> const& sim) -> void {
   auto const a1  = static_cast<Real>(sim.a1);
   auto const a2  = static_cast<Real>(sim.a2);
 
-  auto Q_bna_buf     = sycl::buffer{sim.Q_bna, sycl::range(size_t(Nba))};
+  auto Q_bna_buf     = sycl::buffer{sim.Q_bna};
   auto bn_mask_buf   = sycl::buffer{sim.bn_mask};
   auto adj_bn_buf    = sycl::buffer{sim.adj_bn};
   auto bn_ixyz_buf   = sycl::buffer{sim.bn_ixyz};

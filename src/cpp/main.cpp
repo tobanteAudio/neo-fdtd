@@ -81,7 +81,6 @@ auto run3D(Arguments::Sim3D const& args) {
   rescaleOutput(sim);
   writeOutputs(sim, simDir);
   printLastSample(sim);
-  freeSimulation3D(sim);
 
   auto const stop = getTime();
   auto const sec  = Seconds(stop - start);

@@ -102,7 +102,7 @@ auto run(Simulation3D<Real> const& sd) -> void {
   uint16_t const* adj_bn         = sd.adj_bn.data();
   uint8_t const* bn_mask         = sd.bn_mask.data();
   int8_t const* mat_bnl          = sd.mat_bnl.data();
-  int8_t* Q_bna                  = sd.Q_bna;
+  int8_t const* Q_bna            = sd.Q_bna.data();
   double const* in_sigs          = sd.in_sigs.data();
   int8_t const fcc_flag          = sd.fcc_flag;
   Real const* ssaf_bnl           = sd.ssaf_bnl.data();

@@ -170,7 +170,7 @@ struct H5FWriter {
 };
 
 template<typename T>
-[[nodiscard]] auto read(H5FReader& reader, char const* dset_str, int ndims, hsize_t* dims) -> T* {
+[[nodiscard]] auto read(H5FReader& reader, char const* dset_str, int ndims, hsize_t* dims) -> std::unique_ptr<T[]> {
   auto dset   = H5Dopen(reader.handle(), dset_str, H5P_DEFAULT);
   auto dspace = H5Dget_space(dset);
   PFFDTD_ASSERT(H5Sget_simple_extent_ndims(dspace) == ndims);
@@ -186,14 +186,14 @@ template<typename T>
   }
 
   auto status = herr_t{0};
-  auto* ptr   = allocate_zeros<T>(N);
+  auto ptr    = allocate_zeros<T>(N);
 
   if constexpr (std::is_same_v<T, double>) {
-    status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr);
+    status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr.get());
   } else if constexpr (std::is_same_v<T, int64_t>) {
-    status = H5Dread(dset, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr);
+    status = H5Dread(dset, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr.get());
   } else if constexpr (std::is_same_v<T, int8_t> or std::is_same_v<T, bool>) {
-    status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr);
+    status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr.get());
   } else {
     static_assert(always_false<T>);
   }

@@ -80,8 +80,10 @@ void check_inside_grid(int64_t const* idx, int64_t N, int64_t Nx, int64_t Ny, in
 }
 
 // load the sim data from Python-written HDF5 files
+// NOLINTBEGIN(clang-analyzer-cplusplus.NewDeleteLeaks)
 template<typename Real>
 [[nodiscard]] auto loadSimulation3D_impl(std::filesystem::path const& simDir) -> Simulation3D<Real> {
+
   int expected_ndims = 0;
   hsize_t dims[2]    = {};
 
@@ -175,8 +177,8 @@ template<typename Real>
   //////////////////
   // adj_bn dataset
   //////////////////
-  expected_ndims    = 2;
-  bool* adj_bn_bool = read<bool>(vox_out, "adj_bn", expected_ndims, dims);
+  expected_ndims   = 2;
+  auto adj_bn_bool = read<bool>(vox_out, "adj_bn", expected_ndims, dims);
   PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nb);
   PFFDTD_ASSERT(dims[1] == (hsize_t)NN);
 
@@ -189,11 +191,10 @@ template<typename Real>
   //////////////////
   // saf_bn dataset
   //////////////////
-  expected_ndims = 1;
-  double* saf_bn = read<double>(vox_out, "saf_bn", expected_ndims, dims);
-  PFFDTD_ASSERT(static_cast<int64_t>(dims[0]) == Nb);
+  auto saf_bn = vox_out.read<std::vector<double>>("saf_bn");
+  PFFDTD_ASSERT(std::cmp_equal(saf_bn.size(), Nb));
 
-  auto* ssaf_bn = allocate_zeros<Real>(Nb);
+  auto ssaf_bn = std::vector<Real>(size_t(Nb));
   for (int64_t i = 0; i < Nb; i++) {
     if (fcc_flag > 0) {
       ssaf_bn[i] = (Real)(0.5 / std::numbers::sqrt2) * saf_bn[i]; // rescale for S*h/V and cast
@@ -201,7 +202,6 @@ template<typename Real>
       ssaf_bn[i] = (Real)saf_bn[i]; // just cast
     }
   }
-  delete[] saf_bn;
 
   ////////////////////////////////////////////////////////////////////////
   // Read signals HDF5 dataset
@@ -281,11 +281,9 @@ template<typename Real>
   auto mat_beta  = std::vector<Real>(size_t(Nm));
   auto mat_quads = std::vector<MatQuad<Real>>(static_cast<unsigned long>(Nm) * size_t(MMb));
   for (int8_t i = 0; i < Nm; i++) {
-    expected_ndims = 2;
-    auto* DEF      = read<double>(materials, fmt::format("mat_{:02d}_DEF", i).c_str(), expected_ndims, dims);
-    PFFDTD_ASSERT((int8_t)dims[0] == Mb[i]);
-    PFFDTD_ASSERT((int8_t)dims[1] == 3);
+    auto DEF = materials.read<std::vector<double>>(fmt::format("mat_{:02d}_DEF", i).c_str());
     PFFDTD_ASSERT(Mb[i] <= MMb);
+    PFFDTD_ASSERT(std::cmp_equal(DEF.size(), Mb[i] * 3));
 
     for (int8_t j = 0; j < Mb[i]; j++) {
       double const D = DEF[j * 3 + 0];
@@ -314,7 +312,6 @@ template<typename Real>
       mat_quads[mij].bFh = (Real)bFh;
       mat_beta[i] += (Real)b;
     }
-    delete[] DEF;
   }
 
   ////////////////////////////////////////////////////////////////////////
@@ -363,7 +360,6 @@ template<typename Real>
     }
   }
   fmt::println("adj_bn double checked");
-  delete[] adj_bn_bool;
 
   //////////////////
   // calculate K_bn from adj_bn
@@ -429,7 +425,6 @@ template<typename Real>
     }
     PFFDTD_ASSERT(j == Nbl);
   }
-  delete[] ssaf_bn;
 
   fmt::println("separated non-rigid bn");
 
@@ -441,7 +436,7 @@ template<typename Real>
   }
 
   auto bna_ixyz = std::vector<int64_t>(size_t(Nba));
-  auto* Q_bna   = allocate_zeros<int8_t>(Nba);
+  auto Q_bna    = std::vector<int8_t>(Nba);
   {
     int64_t ii = 0;
     for (int64_t ix = 1; ix < Nx - 1; ix++) {
@@ -471,21 +466,18 @@ template<typename Real>
     PFFDTD_ASSERT(ii == Nba);
     fmt::println("ABC nodes");
     if (fcc_flag == 2) { // need to sort bna_ixyz
-      auto* bna_sort_keys = allocate_zeros<int64_t>(Nba);
-      sort_keys(bna_ixyz.data(), bna_sort_keys, Nba);
+      auto bna_sort_keys = std::vector<int64_t>(static_cast<size_t>(Nba));
+      sort_keys(bna_ixyz.data(), bna_sort_keys.data(), Nba);
 
-      // now sort corresponding Q_bna array
-      int8_t* Q_bna_unsorted = nullptr;
-      auto* Q_bna_sorted     = allocate_zeros<int8_t>(Nba);
-      // swap pointers
-      Q_bna_unsorted = Q_bna;
-      Q_bna          = Q_bna_sorted;
+      auto Q_bna_sorted = std::vector<int8_t>(Nba);
+      for (int64_t cc = 0; cc < Nba; cc++) {
+        Q_bna_sorted[cc] = Q_bna[bna_sort_keys[cc]];
+      }
 
       for (int64_t cc = 0; cc < Nba; cc++) {
-        Q_bna_sorted[cc] = Q_bna_unsorted[bna_sort_keys[cc]];
+        Q_bna[cc] = Q_bna_sorted[cc];
       }
-      delete[] bna_sort_keys;
-      delete[] Q_bna_unsorted;
+
       fmt::println("sorted ABC nodes for FCC/GPU");
     }
   }
@@ -494,7 +486,7 @@ template<typename Real>
       .bn_ixyz     = std::move(bn_ixyz),
       .bnl_ixyz    = std::move(bnl_ixyz),
       .bna_ixyz    = std::move(bna_ixyz),
-      .Q_bna       = Q_bna,
+      .Q_bna       = std::move(Q_bna),
       .in_ixyz     = std::move(in_ixyz),
       .out_ixyz    = std::move(out_ixyz),
       .out_reorder = std::move(out_reorder),
@@ -504,7 +496,7 @@ template<typename Real>
       .mat_bnl     = std::move(mat_bnl),
       .K_bn        = std::move(K_bn),
       .in_sigs     = std::move(in_sigs),
-      .u_out       = std::unique_ptr<double[]>{allocate_zeros<double>(Nr * Nt)},
+      .u_out       = allocate_zeros<double>(Nr * Nt),
       .Ns          = Ns,
       .Nr          = Nr,
       .Nt          = Nt,
@@ -530,6 +522,8 @@ template<typename Real>
       .a1          = a1,
   };
 }
+
+// NOLINTEND(clang-analyzer-cplusplus.NewDeleteLeaks)
 
 template<typename Real>
 void writeOutputs_impl(Simulation3D<Real> const& sim, std::filesystem::path const& simDir) {

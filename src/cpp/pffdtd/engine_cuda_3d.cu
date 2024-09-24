@@ -43,8 +43,7 @@ __device__ auto fma(Real x, Real y, Real z) -> Real {
   }
 }
 
-// standard error checking
-// NOLINTNEXTLINE
+// NOLINTNEXTLINE(cppcoreguidelines-macro-usage)
 #define gpuErrchk(ans)                                                                                                 \
   do {                                                                                                                 \
     gpuAssert((ans), __FILE__, __LINE__);                                                                              \
@@ -106,21 +105,21 @@ __constant__ int8_t cuMb[MNm]; // to store Mb per mat
 // this is data on host, sometimes copied and recomputed for copy to GPU devices
 // (indices), sometimes just aliased pointers (scalar arrays)
 template<typename Real>
-struct HostData {           // arrays on host (for copy), mirrors gpu local data
-  double const* in_sigs{};  // aliased
-  Real* u_out_buf{};        // aliased
-  double* u_out{};          // aliased
-  Real const* ssaf_bnl{};   // aliased
-  int64_t* in_ixyz{};       // recomputed
-  int64_t* out_ixyz{};      // recomputed
-  int64_t* bn_ixyz{};       // recomputed
-  int64_t* bnl_ixyz{};      // recomputed
-  int64_t* bna_ixyz{};      // recomputed
-  int8_t* Q_bna{};          // aliased
-  uint16_t const* adj_bn{}; // aliased
-  int8_t const* mat_bnl{};  // aliased
-  uint8_t* bn_mask{};       // recomputed
-  int8_t const* K_bn{};     // aliased
+struct HostData {                      // arrays on host (for copy), mirrors gpu local data
+  std::unique_ptr<int64_t[]> in_ixyz;  // recomputed
+  std::unique_ptr<int64_t[]> out_ixyz; // recomputed
+  std::unique_ptr<int64_t[]> bn_ixyz;  // recomputed
+  std::unique_ptr<int64_t[]> bnl_ixyz; // recomputed
+  std::unique_ptr<int64_t[]> bna_ixyz; // recomputed
+  std::unique_ptr<uint8_t[]> bn_mask;  // recomputed
+  double const* in_sigs{};             // aliased
+  Real* u_out_buf{};                   // aliased
+  double* u_out{};                     // aliased
+  Real const* ssaf_bnl{};              // aliased
+  int8_t const* Q_bna{};               // aliased
+  uint16_t const* adj_bn{};            // aliased
+  int8_t const* mat_bnl{};             // aliased
+  int8_t const* K_bn{};                // aliased
   int64_t Ns{};
   int64_t Nr{};
   int64_t Npts{};
@@ -725,7 +724,7 @@ void splitData(Simulation3D<Real> const& sim, std::span<HostData<Real>> ghds) {
 }
 
 template<typename Real>
-auto run(Simulation3D<Real> const& sim) -> void {
+auto run(Simulation3D<Real> const& sim) -> void { // NOLINT(readability-function-cognitive-complexity)
   // if you want to test synchronous, env variable for that
   auto const* s = std::getenv("CUDA_LAUNCH_BLOCKING"); // NOLINT(concurrency-mt-unsafe)
   if (s != nullptr) {
@@ -834,7 +833,7 @@ auto run(Simulation3D<Real> const& sim) -> void {
     host.adj_bn    = sim.adj_bn.data() + Nb_read;
     host.mat_bnl   = sim.mat_bnl.data() + Nbl_read;
     host.K_bn      = sim.K_bn.data() + Nb_read;
-    host.Q_bna     = sim.Q_bna + Nba_read;
+    host.Q_bna     = sim.Q_bna.data() + Nba_read;
     host.u_out     = sim.u_out.get() + Nr_read * sim.Nt;
     host.u_out_buf = u_out_buf + Nr_read;
 
@@ -920,19 +919,21 @@ auto run(Simulation3D<Real> const& sim) -> void {
     gpuErrchk(cudaMemset(gpu.u_out_buf, 0, (size_t)(host.Nr * sizeof(Real))));
 
     gpuErrchk(cudaMalloc(&(gpu.bn_ixyz), (size_t)(host.Nb * sizeof(int64_t))));
-    gpuErrchk(cudaMemcpy(gpu.bn_ixyz, host.bn_ixyz, (size_t)host.Nb * sizeof(int64_t), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(gpu.bn_ixyz, host.bn_ixyz.get(), (size_t)host.Nb * sizeof(int64_t), cudaMemcpyHostToDevice));
 
     gpuErrchk(cudaMalloc(&(gpu.bnl_ixyz), (size_t)(host.Nbl * sizeof(int64_t))));
-    gpuErrchk(cudaMemcpy(gpu.bnl_ixyz, host.bnl_ixyz, (size_t)host.Nbl * sizeof(int64_t), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(gpu.bnl_ixyz, host.bnl_ixyz.get(), (size_t)host.Nbl * sizeof(int64_t), cudaMemcpyHostToDevice)
+    );
 
     gpuErrchk(cudaMalloc(&(gpu.bna_ixyz), (size_t)(host.Nba * sizeof(int64_t))));
-    gpuErrchk(cudaMemcpy(gpu.bna_ixyz, host.bna_ixyz, (size_t)host.Nba * sizeof(int64_t), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(gpu.bna_ixyz, host.bna_ixyz.get(), (size_t)host.Nba * sizeof(int64_t), cudaMemcpyHostToDevice)
+    );
 
     gpuErrchk(cudaMalloc(&(gpu.Q_bna), (size_t)(host.Nba * sizeof(int8_t))));
     gpuErrchk(cudaMemcpy(gpu.Q_bna, host.Q_bna, host.Nba * sizeof(int8_t), cudaMemcpyHostToDevice));
 
     gpuErrchk(cudaMalloc(&(gpu.out_ixyz), (size_t)(host.Nr * sizeof(int64_t))));
-    gpuErrchk(cudaMemcpy(gpu.out_ixyz, host.out_ixyz, (size_t)host.Nr * sizeof(int64_t), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(gpu.out_ixyz, host.out_ixyz.get(), (size_t)host.Nr * sizeof(int64_t), cudaMemcpyHostToDevice));
 
     gpuErrchk(cudaMalloc(&(gpu.adj_bn), (size_t)(host.Nb * sizeof(uint16_t))));
     gpuErrchk(cudaMemcpy(gpu.adj_bn, host.adj_bn, (size_t)host.Nb * sizeof(uint16_t), cudaMemcpyHostToDevice));
@@ -952,7 +953,7 @@ auto run(Simulation3D<Real> const& sim) -> void {
     ));
 
     gpuErrchk(cudaMalloc(&(gpu.bn_mask), (size_t)(host.Nbm * sizeof(uint8_t))));
-    gpuErrchk(cudaMemcpy(gpu.bn_mask, host.bn_mask, (size_t)host.Nbm * sizeof(uint8_t), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(gpu.bn_mask, host.bn_mask.get(), (size_t)host.Nbm * sizeof(uint8_t), cudaMemcpyHostToDevice));
 
     Ns_read += host.Ns;
     Nr_read += host.Nr;
@@ -1352,7 +1353,7 @@ auto run(Simulation3D<Real> const& sim) -> void {
   for (int gid = 0; gid < ngpus; gid++) {
     gpuErrchk(cudaSetDevice(gid));
     DeviceData<Real> const& gpu = gds[gid];
-    HostData<Real> const& host  = ghds[gid];
+
     // cleanup streams
     gpuErrchk(cudaStreamDestroy(gpu.cuStream_air));
     gpuErrchk(cudaStreamDestroy(gpu.cuStream_bn));
@@ -1386,12 +1387,6 @@ auto run(Simulation3D<Real> const& sim) -> void {
     gpuErrchk(cudaFree(gpu.vh1));
     gpuErrchk(cudaFree(gpu.gh1));
     gpuErrchk(cudaFree(gpu.u_out_buf));
-    delete[] host.bn_mask;
-    delete[] host.bn_ixyz;
-    delete[] host.bnl_ixyz;
-    delete[] host.bna_ixyz;
-    delete[] host.in_ixyz;
-    delete[] host.out_ixyz;
   }
   gpuErrchk(cudaFreeHost(u_out_buf));
 

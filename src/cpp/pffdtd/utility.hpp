@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 
 #ifndef DIV_CEIL
   #define DIV_CEIL(x, y) (((x) + (y) - 1) / (y)) // this works for x≥0 and y>0
@@ -19,10 +20,9 @@
 namespace pffdtd {
 
 template<typename T>
-[[nodiscard]] auto allocate_zeros(std::integral auto count) -> T* {
-  auto* const ptr  = new T[count];
-  auto const bytes = static_cast<size_t>(count) * sizeof(T);
-  std::memset(static_cast<void*>(ptr), 0, bytes);
+[[nodiscard]] auto allocate_zeros(std::integral auto count) -> std::unique_ptr<T[]> {
+  auto ptr = std::make_unique<T[]>(static_cast<size_t>(count));
+  std::memset(static_cast<void*>(ptr.get()), 0, static_cast<size_t>(count) * sizeof(T));
   return ptr;
 }
 

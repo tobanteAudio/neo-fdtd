@@ -37,7 +37,7 @@ struct Simulation3D {
   std::vector<int64_t> bn_ixyz;         // boundary node indices
   std::vector<int64_t> bnl_ixyz;        // lossy boundary node indices
   std::vector<int64_t> bna_ixyz;        // absorbing boundary node indices
-  int8_t* Q_bna;                        // integer for ABCs (wall 1,edge 2,corner 3)
+  std::vector<int8_t> Q_bna;            // integer for ABCs (wall 1,edge 2,corner 3)
   std::vector<int64_t> in_ixyz;         // input points
   std::vector<int64_t> out_ixyz;        // output points
   std::vector<int64_t> out_reorder;     // ordering for outputs point for final print/save
@@ -145,11 +145,6 @@ void rescaleOutput(Simulation3D<Real>& sim) {
   double* u_out    = sim.u_out.get();
 
   std::transform(u_out, u_out + Nr * Nt, u_out, [infac](auto sample) { return sample * infac; });
-}
-
-template<typename Real>
-void freeSimulation3D(Simulation3D<Real> const& sim) {
-  delete[] sim.Q_bna;
 }
 
 } // namespace pffdtd
