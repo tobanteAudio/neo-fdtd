@@ -23,7 +23,6 @@ target_sources(pffdtd
         pffdtd/engine_cpu_3d.cpp
         pffdtd/engine_cpu_3d.hpp
         pffdtd/exception.hpp
-        pffdtd/hdf.cpp
         pffdtd/hdf.hpp
         pffdtd/mdspan.hpp
         pffdtd/progress.cpp

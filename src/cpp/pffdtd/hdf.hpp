@@ -6,10 +6,14 @@
 #include "pffdtd/assert.hpp"
 #include "pffdtd/exception.hpp"
 #include "pffdtd/mdspan.hpp"
+#include "pffdtd/utility.hpp"
 
 #include "hdf5.h"
+#include <fmt/format.h>
 
 #include <array>
+#include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <vector>
 
@@ -159,6 +163,44 @@ struct H5FWriter {
   hid_t _handle;
 };
 
-void readDataset(hid_t file, char const* dset_str, int ndims, hsize_t* dims, void** out, DataType t);
+template<typename T>
+[[nodiscard]] auto read(H5FReader& reader, char const* dset_str, int ndims, hsize_t* dims) -> T* {
+  auto dset   = H5Dopen(reader.handle(), dset_str, H5P_DEFAULT);
+  auto dspace = H5Dget_space(dset);
+  PFFDTD_ASSERT(H5Sget_simple_extent_ndims(dspace) == ndims);
+
+  uint64_t N = 0;
+  H5Sget_simple_extent_dims(dspace, dims, nullptr);
+  if (ndims == 1) {
+    N = dims[0];
+  } else if (ndims == 2) {
+    N = dims[0] * dims[1];
+  } else {
+    raisef<std::invalid_argument>("unexpected ndims = {} for dset = {}", ndims, dset_str);
+  }
+
+  auto status = herr_t{0};
+  auto* ptr   = allocate_zeros<T>(N);
+
+  if constexpr (std::is_same_v<T, double>) {
+    status = H5Dread(dset, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr);
+  } else if constexpr (std::is_same_v<T, int64_t>) {
+    status = H5Dread(dset, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr);
+  } else if constexpr (std::is_same_v<T, int8_t> or std::is_same_v<T, bool>) {
+    status = H5Dread(dset, H5T_NATIVE_INT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, ptr);
+  } else {
+    static_assert(always_false<T>);
+  }
+
+  if (status != 0) {
+    raisef<std::runtime_error>("error reading dataset: {}", dset_str);
+  }
+
+  if (H5Dclose(dset) != 0) {
+    raisef<std::runtime_error>("error closing dataset: {}", dset_str);
+  }
+
+  return ptr;
+}
 
 } // namespace pffdtd
