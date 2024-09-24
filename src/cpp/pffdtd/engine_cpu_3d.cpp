@@ -79,7 +79,7 @@ auto process_bnl_fd(
 }
 
 template<typename Real>
-auto run(Simulation3D<Real>& sd) -> void {
+auto run(Simulation3D<Real> const& sd) -> void {
   // keep local ints, scalars
   int64_t const Ns   = sd.Ns;
   int64_t const Nr   = sd.Nr;
@@ -373,8 +373,8 @@ auto run(Simulation3D<Real>& sd) -> void {
 
 } // namespace
 
-auto EngineCPU3D::operator()(Simulation3D<float>& sim) const -> void { run(sim); }
+auto EngineCPU3D::operator()(Simulation3D<float> const& sim) const -> void { run(sim); }
 
-auto EngineCPU3D::operator()(Simulation3D<double>& sim) const -> void { run(sim); }
+auto EngineCPU3D::operator()(Simulation3D<double> const& sim) const -> void { run(sim); }
 
 } // namespace pffdtd

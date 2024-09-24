@@ -553,7 +553,7 @@ template<typename Real>
 }
 
 template<typename Real>
-void writeOutputs_impl(Simulation3D<Real>& sim, std::filesystem::path const& simDir) {
+void writeOutputs_impl(Simulation3D<Real> const& sim, std::filesystem::path const& simDir) {
   auto Nt           = static_cast<size_t>(sim.Nt);
   auto Nr           = static_cast<size_t>(sim.Nr);
   auto* out_reorder = sim.out_reorder;
@@ -573,7 +573,7 @@ void writeOutputs_impl(Simulation3D<Real>& sim, std::filesystem::path const& sim
 
 // print last samples of simulation (for correctness checking..)
 template<typename Real>
-void printLastSample_impl(Simulation3D<Real>& sim) {
+void printLastSample_impl(Simulation3D<Real> const& sim) {
   int64_t const Nt     = sim.Nt;
   int64_t const Nr     = sim.Nr;
   double* u_out        = sim.u_out;
@@ -598,12 +598,16 @@ void printLastSample_impl(Simulation3D<Real>& sim) {
   return loadSimulation3D_impl<double>(simDir);
 }
 
-void printLastSample(Simulation3D<float>& sim) { printLastSample_impl(sim); }
+void printLastSample(Simulation3D<float> const& sim) { printLastSample_impl(sim); }
 
-void printLastSample(Simulation3D<double>& sim) { printLastSample_impl(sim); }
+void printLastSample(Simulation3D<double> const& sim) { printLastSample_impl(sim); }
 
-void writeOutputs(Simulation3D<float>& sim, std::filesystem::path const& simDir) { writeOutputs_impl(sim, simDir); }
+void writeOutputs(Simulation3D<float> const& sim, std::filesystem::path const& simDir) {
+  writeOutputs_impl(sim, simDir);
+}
 
-void writeOutputs(Simulation3D<double>& sim, std::filesystem::path const& simDir) { writeOutputs_impl(sim, simDir); }
+void writeOutputs(Simulation3D<double> const& sim, std::filesystem::path const& simDir) {
+  writeOutputs_impl(sim, simDir);
+}
 
 } // namespace pffdtd

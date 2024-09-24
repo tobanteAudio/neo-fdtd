@@ -1405,8 +1405,8 @@ static auto run(Simulation3D<Real> const& sim) -> void {
   std::printf("Combined (total): %.6fs, %.2f Mvox/s\n", elapsedSec, sim.Npts * sim.Nt / 1e6 / elapsedSec);
 }
 
-auto EngineCUDA3D::operator()(Simulation3D<float>& sim) const -> void { run(sim); }
+auto EngineCUDA3D::operator()(Simulation3D<float> const& sim) const -> void { run(sim); }
 
-auto EngineCUDA3D::operator()(Simulation3D<double>& sim) const -> void { run(sim); }
+auto EngineCUDA3D::operator()(Simulation3D<double> const& sim) const -> void { run(sim); }
 
 } // namespace pffdtd

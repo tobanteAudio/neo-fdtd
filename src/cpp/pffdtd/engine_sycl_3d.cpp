@@ -39,7 +39,7 @@ template<typename T>
 struct ReadOutput;
 
 template<typename Real>
-auto run(Simulation3D<Real>& sim) -> void {
+auto run(Simulation3D<Real> const& sim) -> void {
   PFFDTD_ASSERT(sim.fcc_flag == 0);
 
   auto queue  = sycl::queue{sycl::property::queue::enable_profiling{}};
@@ -350,8 +350,8 @@ auto run(Simulation3D<Real>& sim) -> void {
 
 } // namespace
 
-auto EngineSYCL3D::operator()(Simulation3D<float>& sim) const -> void { run(sim); }
+auto EngineSYCL3D::operator()(Simulation3D<float> const& sim) const -> void { run(sim); }
 
-auto EngineSYCL3D::operator()(Simulation3D<double>& sim) const -> void { run(sim); }
+auto EngineSYCL3D::operator()(Simulation3D<double> const& sim) const -> void { run(sim); }
 
 } // namespace pffdtd

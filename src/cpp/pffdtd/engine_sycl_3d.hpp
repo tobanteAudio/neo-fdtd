@@ -11,8 +11,8 @@
 namespace pffdtd {
 
 struct EngineSYCL3D {
-  auto operator()(Simulation3D<float>& sim) const -> void;
-  auto operator()(Simulation3D<double>& sim) const -> void;
+  auto operator()(Simulation3D<float> const& sim) const -> void;
+  auto operator()(Simulation3D<double> const& sim) const -> void;
 };
 
 } // namespace pffdtd

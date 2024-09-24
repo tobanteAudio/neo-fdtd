@@ -75,11 +75,11 @@ struct Simulation3D {
 [[nodiscard]] auto loadSimulation3D_float(std::filesystem::path const& simDir) -> Simulation3D<float>;
 [[nodiscard]] auto loadSimulation3D_double(std::filesystem::path const& simDir) -> Simulation3D<double>;
 
-auto printLastSample(Simulation3D<float>& sim) -> void;
-auto printLastSample(Simulation3D<double>& sim) -> void;
+auto printLastSample(Simulation3D<float> const& sim) -> void;
+auto printLastSample(Simulation3D<double> const& sim) -> void;
 
-auto writeOutputs(Simulation3D<float>& sim, std::filesystem::path const& simDir) -> void;
-auto writeOutputs(Simulation3D<double>& sim, std::filesystem::path const& simDir) -> void;
+auto writeOutputs(Simulation3D<float> const& sim, std::filesystem::path const& simDir) -> void;
+auto writeOutputs(Simulation3D<double> const& sim, std::filesystem::path const& simDir) -> void;
 
 template<typename Real>
 [[nodiscard]] auto loadSimulation3D(std::filesystem::path const& simDir) -> Simulation3D<Real> {
@@ -148,7 +148,7 @@ void rescaleOutput(Simulation3D<Real>& sim) {
 }
 
 template<typename Real>
-void freeSimulation3D(Simulation3D<Real>& sim) {
+void freeSimulation3D(Simulation3D<Real> const& sim) {
   std::free(sim.bn_ixyz);
   std::free(sim.bnl_ixyz);
   std::free(sim.bna_ixyz);
