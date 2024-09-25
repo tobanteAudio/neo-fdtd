@@ -99,6 +99,7 @@ template<typename Real>
   auto const l2       = constants.read<double>("l2");
   auto const Ts       = constants.read<double>("Ts");
   auto const fcc_flag = constants.read<int8_t>("fcc_flag");
+  auto const grid     = static_cast<Grid>(fcc_flag);
   fmt::println("l={:.16g}", l);
   fmt::println("l2={:.16g}", l2);
   fmt::println("Ts={:.16g}", Ts);
@@ -107,7 +108,7 @@ template<typename Real>
 
   // FCC (1 is CPU-based, 2 is CPU or GPU)
   int8_t NN = 0;
-  if (fcc_flag > 0) {
+  if (isFCC(grid)) {
     PFFDTD_ASSERT(l2 <= 1.0);
     PFFDTD_ASSERT(l <= 1.0);
     NN = 12;
@@ -119,7 +120,7 @@ template<typename Real>
   }
 
   // calculate some update coefficients
-  double const lfac = (fcc_flag > 0) ? 0.25 : 1.0; // laplacian factor
+  double const lfac = isFCC(grid) ? 0.25 : 1.0;    // laplacian factor
   double const dsl2 = (1.0 + EPS<Real>)*lfac * l2; // scale for stability (EPS in fdtd_common.hpp)
   double const da1  = (2.0 - dsl2 * NN);           // scaling for stability in single
   double const da2  = lfac * l2;
@@ -186,7 +187,7 @@ template<typename Real>
 
   auto ssaf_bn = std::vector<Real>(size_t(Nb));
   for (int64_t i = 0; i < Nb; i++) {
-    if (fcc_flag > 0) {
+    if (isFCC(grid)) {
       ssaf_bn[i] = (Real)(0.5 / std::numbers::sqrt2) * saf_bn[i]; // rescale for S*h/V and cast
     } else {
       ssaf_bn[i] = (Real)saf_bn[i]; // just cast
@@ -409,9 +410,9 @@ template<typename Real>
   fmt::println("separated non-rigid bn");
 
   // ABC ndoes
-  int64_t const Nyf = (fcc_flag == 2) ? 2 * (Ny - 1) : Ny; // full Ny dim, taking into account FCC fold
+  int64_t const Nyf = grid == Grid::FCC_FOLDED ? 2 * (Ny - 1) : Ny; // full Ny dim, taking into account FCC fold
   int64_t Nba       = 2 * (Nx * Nyf + Nx * Nz + Nyf * Nz) - 12 * (Nx + Nyf + Nz) + 56;
-  if (fcc_flag > 0) {
+  if (isFCC(grid)) {
     Nba /= 2;
   }
 
@@ -423,7 +424,7 @@ template<typename Real>
       for (int64_t iy = 1; iy < Nyf - 1; iy++) {
         for (int64_t iz = 1; iz < Nz - 1; iz++) {
 
-          if ((fcc_flag > 0) && (ix + iy + iz) % 2 == 1) {
+          if (isFCC(grid) && (ix + iy + iz) % 2 == 1) {
             continue;
           }
 
@@ -432,7 +433,7 @@ template<typename Real>
           Q        = static_cast<int8_t>(Q + static_cast<int>((iy == 1) || (iy == Nyf - 2)));
           Q        = static_cast<int8_t>(Q + static_cast<int>((iz == 1) || (iz == Nz - 2)));
           if (Q > 0) {
-            if ((fcc_flag == 2) && (iy >= Nyf / 2)) {
+            if (grid == Grid::FCC_FOLDED && (iy >= Nyf / 2)) {
               bna_ixyz[ii] = ix * Nz * Ny + (Nyf - iy - 1) * Nz + iz; // index on folded grid
             } else {
               bna_ixyz[ii] = ix * Nz * Ny + iy * Nz + iz;
@@ -445,7 +446,7 @@ template<typename Real>
     }
     PFFDTD_ASSERT(ii == Nba);
     fmt::println("ABC nodes");
-    if (fcc_flag == 2) { // need to sort bna_ixyz
+    if (grid == Grid::FCC_FOLDED) { // need to sort bna_ixyz
       auto bna_sort_keys = std::vector<int64_t>(static_cast<size_t>(Nba));
       sort_keys(bna_ixyz.data(), bna_sort_keys.data(), Nba);
 
@@ -489,7 +490,7 @@ template<typename Real>
       .Nba         = Nba,
       .l           = l,
       .l2          = l2,
-      .fcc_flag    = fcc_flag,
+      .grid        = grid,
       .NN          = NN,
       .Nm          = Nm,
       .Mb          = std::move(Mb),

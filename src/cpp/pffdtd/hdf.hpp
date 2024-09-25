@@ -19,13 +19,6 @@
 
 namespace pffdtd {
 
-enum struct DataType : unsigned char {
-  Float64,
-  Int64,
-  Int8,
-  Bool,
-};
-
 template<typename T>
 inline constexpr auto isStdVector = false;
 

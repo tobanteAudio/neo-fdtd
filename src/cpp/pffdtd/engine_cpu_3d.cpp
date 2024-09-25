@@ -79,36 +79,36 @@ auto process_bnl_fd(
 }
 
 template<typename Real>
-auto run(Simulation3D<Real> const& sd) -> void {
+auto run(Simulation3D<Real> const& sim) -> void {
   // keep local ints, scalars
-  int64_t const Ns   = sd.Ns;
-  int64_t const Nr   = sd.Nr;
-  int64_t const Nt   = sd.Nt;
-  int64_t const Npts = sd.Npts;
-  int64_t const Nx   = sd.Nx;
-  int64_t const Ny   = sd.Ny;
-  int64_t const Nz   = sd.Nz;
-  int64_t const Nb   = sd.Nb;
-  int64_t const Nbl  = sd.Nbl;
-  int64_t const Nba  = sd.Nba;
+  int64_t const Ns   = sim.Ns;
+  int64_t const Nr   = sim.Nr;
+  int64_t const Nt   = sim.Nt;
+  int64_t const Npts = sim.Npts;
+  int64_t const Nx   = sim.Nx;
+  int64_t const Ny   = sim.Ny;
+  int64_t const Nz   = sim.Nz;
+  int64_t const Nb   = sim.Nb;
+  int64_t const Nbl  = sim.Nbl;
+  int64_t const Nba  = sim.Nba;
+  auto const grid    = sim.grid;
 
   // keep local copies of pointers (style choice)
-  int8_t const* Mb               = sd.Mb.data();
-  int64_t const* bn_ixyz         = sd.bn_ixyz.data();
-  int64_t const* bnl_ixyz        = sd.bnl_ixyz.data();
-  int64_t const* bna_ixyz        = sd.bna_ixyz.data();
-  int64_t const* in_ixyz         = sd.in_ixyz.data();
-  int64_t const* out_ixyz        = sd.out_ixyz.data();
-  uint16_t const* adj_bn         = sd.adj_bn.data();
-  uint8_t const* bn_mask         = sd.bn_mask.data();
-  int8_t const* mat_bnl          = sd.mat_bnl.data();
-  int8_t const* Q_bna            = sd.Q_bna.data();
-  double const* in_sigs          = sd.in_sigs.data();
-  int8_t const fcc_flag          = sd.fcc_flag;
-  Real const* ssaf_bnl           = sd.ssaf_bnl.data();
-  Real const* mat_beta           = sd.mat_beta.data();
-  MatQuad<Real> const* mat_quads = sd.mat_quads.data();
-  double* u_out                  = sd.u_out.get();
+  int8_t const* Mb               = sim.Mb.data();
+  int64_t const* bn_ixyz         = sim.bn_ixyz.data();
+  int64_t const* bnl_ixyz        = sim.bnl_ixyz.data();
+  int64_t const* bna_ixyz        = sim.bna_ixyz.data();
+  int64_t const* in_ixyz         = sim.in_ixyz.data();
+  int64_t const* out_ixyz        = sim.out_ixyz.data();
+  uint16_t const* adj_bn         = sim.adj_bn.data();
+  uint8_t const* bn_mask         = sim.bn_mask.data();
+  int8_t const* mat_bnl          = sim.mat_bnl.data();
+  int8_t const* Q_bna            = sim.Q_bna.data();
+  double const* in_sigs          = sim.in_sigs.data();
+  Real const* ssaf_bnl           = sim.ssaf_bnl.data();
+  Real const* mat_beta           = sim.mat_beta.data();
+  MatQuad<Real> const* mat_quads = sim.mat_quads.data();
+  double* u_out                  = sim.u_out.get();
 
   // allocate memory
   auto u0_buf   = std::vector<Real>(static_cast<size_t>(Npts));
@@ -130,17 +130,17 @@ auto run(Simulation3D<Real> const& sd) -> void {
   auto* gh1  = gh1_buf.data();
 
   // sim coefficients
-  auto const lo2 = sd.lo2;
-  auto const sl2 = sd.sl2;
-  auto const l   = sd.l;
-  auto const a1  = sd.a1;
-  auto const a2  = sd.a2;
+  auto const lo2 = sim.lo2;
+  auto const sl2 = sim.sl2;
+  auto const l   = sim.l;
+  auto const a1  = sim.a1;
+  auto const a2  = sim.a2;
 
   // can control outside with OMP_NUM_THREADS env variable
   int const numWorkers = omp_get_max_threads();
 
-  fmt::println("ENGINE: fcc_flag={}", fcc_flag);
-  fmt::println("fcc={}", (fcc_flag > 0) ? "true" : "false");
+  fmt::println("ENGINE: fcc_flag={}", static_cast<int8_t>(grid));
+  fmt::println("fcc={}", isFCC(grid) ? "true" : "false");
 
   // for timing
   auto elapsedAir       = std::chrono::nanoseconds{0};
@@ -158,7 +158,7 @@ auto run(Simulation3D<Real> const& sd) -> void {
     for (int64_t nb = 0; nb < Nba; nb++) {
       u2ba[nb] = u0[bna_ixyz[nb]];
     }
-    if (fcc_flag == 2) { // copy y-z face for FCC folded grid
+    if (grid == Grid::FCC_FOLDED) { // copy y-z face for FCC folded grid
 #pragma omp parallel for
       for (int64_t ix = 0; ix < Nx; ix++) {
         for (int64_t iz = 0; iz < Nz; iz++) {
@@ -181,7 +181,7 @@ auto run(Simulation3D<Real> const& sd) -> void {
         u1[ix * NzNy + 0 * Nz + iz] = u1[ix * NzNy + 2 * Nz + iz];
       }
     }
-    if (fcc_flag != 2) { // only this y-face if not FCC folded grid
+    if (grid != Grid::FCC_FOLDED) { // only this y-face if not FCC folded grid
 #pragma omp parallel for
       for (int64_t ix = 0; ix < Nx; ix++) {
         for (int64_t iz = 0; iz < Nz; iz++) {
@@ -198,7 +198,7 @@ auto run(Simulation3D<Real> const& sd) -> void {
     }
 
     // air update for schemes
-    if (fcc_flag == 0) { // cartesian scheme
+    if (grid == Grid::CART) { // cartesian scheme
 #pragma omp parallel for
       for (int64_t ix = 1; ix < Nx - 1; ix++) {
         for (int64_t iy = 1; iy < Ny - 1; iy++) {
@@ -217,12 +217,12 @@ auto run(Simulation3D<Real> const& sd) -> void {
           }
         }
       }
-    } else if (fcc_flag > 0) {
+    } else if (isFCC(grid)) {
 #pragma omp parallel for
       for (int64_t ix = 1; ix < Nx - 1; ix++) {
         for (int64_t iy = 1; iy < Ny - 1; iy++) {
           // while loop iterates iterates over both types of FCC grids
-          int64_t iz = (fcc_flag == 1) ? 2 - (ix + iy) % 2 : 1;
+          int64_t iz = grid == Grid::FCC ? 2 - (ix + iy) % 2 : 1;
           while (iz < Nz - 1) {
             int64_t const ii = ix * NzNy + iy * Nz + iz;
             if ((GET_BIT(bn_mask[ii >> 3], ii % 8)) == 0) {
@@ -241,7 +241,7 @@ auto run(Simulation3D<Real> const& sd) -> void {
               partial += a2 * u1[ii - NzNy + 1];
               u0[ii] = partial;
             }
-            iz += ((fcc_flag == 1) ? 2 : 1);
+            iz += (grid == Grid::FCC ? 2 : 1);
           }
         }
       }
@@ -256,7 +256,7 @@ auto run(Simulation3D<Real> const& sd) -> void {
     // rigid boundary nodes, using adj data
     elapsedSampleAir = getTime() - sampleStartTime;
     elapsedAir += elapsedSampleAir;
-    if (fcc_flag == 0) {
+    if (grid == Grid::CART) {
 #pragma omp parallel for
       for (int64_t nb = 0; nb < Nb; nb++) {
         auto const ii   = bn_ixyz[nb];
@@ -277,7 +277,7 @@ auto run(Simulation3D<Real> const& sd) -> void {
         partial += b2 * get_bit_as<Real>(adj, 5) * u1[ii - 1];
         u0[ii] = partial;
       }
-    } else if (fcc_flag > 0) {
+    } else if (isFCC(grid)) {
 #pragma omp parallel for
       for (int64_t nb = 0; nb < Nb; nb++) {
         auto const ii   = bn_ixyz[nb];

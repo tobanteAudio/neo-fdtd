@@ -19,6 +19,14 @@
 
 namespace pffdtd {
 
+enum struct Grid : int8_t {
+  CART       = 0,
+  FCC        = 1,
+  FCC_FOLDED = 2,
+};
+
+[[nodiscard]] constexpr auto isFCC(Grid grid) noexcept -> bool { return grid != Grid::CART; }
+
 inline constexpr auto MMb = 12; // maximum number of RLC branches in freq-dep (FD) boundaries
 inline constexpr auto MNm = 64; // maximum number of materials allows
 
@@ -60,7 +68,7 @@ struct Simulation3D {
   int64_t Nba;                          // number of ABC nodes
   double l;                             // Courant number (CFL)
   double l2;                            // CFL number squared
-  int8_t fcc_flag;                      // boolean for FCC
+  Grid grid;                            // Grid type
   int8_t NN;                            // integer, neareast neighbours
   int8_t Nm;                            // number of materials used
   std::vector<int8_t> Mb;               // number of branches per material

@@ -40,7 +40,7 @@ struct ReadOutput;
 
 template<typename Real>
 auto run(Simulation3D<Real> const& sim) -> void {
-  PFFDTD_ASSERT(sim.fcc_flag == 0);
+  PFFDTD_ASSERT(sim.grid == Grid::CART);
 
   auto queue  = sycl::queue{sycl::property::queue::enable_profiling{}};
   auto device = queue.get_device();

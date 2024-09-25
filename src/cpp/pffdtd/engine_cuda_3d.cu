@@ -735,7 +735,7 @@ auto run(Simulation3D<Real> const& sim) -> void { // NOLINT(readability-function
     }
   }
 
-  PFFDTD_ASSERT((sim.fcc_flag != 1)); // uses either cartesian or FCC folded grid
+  PFFDTD_ASSERT(sim.grid != Grid::FCC); // uses either cartesian or FCC folded grid
 
   int max_ngpus = 0;
   cudaGetDeviceCount(&max_ngpus); // control outside with CUDA_VISIBLE_DEVICES
@@ -1089,7 +1089,7 @@ auto run(Simulation3D<Real> const& sim) -> void { // NOLINT(readability-function
       gpuErrchk(cudaEventRecord(gpu.cuEv_bn_roundtrip_start, gpu.cuStream_bn));
 
       // boundary updates
-      if (sim.fcc_flag == 0) {
+      if (sim.grid == Grid::CART) {
         KernelBoundaryRigidCart<<<gpu.grid_dim_bn, gpu.block_dim_bn, 0, gpu.cuStream_bn>>>(
             gpu.u0,
             gpu.u1,
@@ -1154,7 +1154,7 @@ auto run(Simulation3D<Real> const& sim) -> void { // NOLINT(readability-function
         FlipHaloXY_Zend<<<gpu.grid_dim_halo_xy, gpu.block_dim_halo_xy, 0, gpu.cuStream_air>>>(gpu.u1);
       }
       FlipHaloXZ_Ybeg<<<gpu.grid_dim_halo_xz, gpu.block_dim_halo_xz, 0, gpu.cuStream_air>>>(gpu.u1);
-      if (sim.fcc_flag == 0) {
+      if (sim.grid == Grid::CART) {
         FlipHaloXZ_Yend<<<gpu.grid_dim_halo_xz, gpu.block_dim_halo_xz, 0, gpu.cuStream_air>>>(gpu.u1);
       }
       FlipHaloYZ_Xbeg<<<gpu.grid_dim_halo_yz, gpu.block_dim_halo_yz, 0, gpu.cuStream_air>>>(gpu.u1);
@@ -1166,7 +1166,7 @@ auto run(Simulation3D<Real> const& sim) -> void { // NOLINT(readability-function
         AddIn<<<1, 1, 0, gpu.cuStream_air>>>(gpu.u0 + host.in_ixyz[ns], (Real)(-(host.in_sigs[ns * sim.Nt + n])));
       }
       // now air updates (not conflicting with bn updates because of bn_mask)
-      if (sim.fcc_flag == 0) {
+      if (sim.grid == Grid::CART) {
         KernelAirCart<<<gpu.grid_dim_air, gpu.block_dim_air, 0, gpu.cuStream_air>>>(gpu.u0, gpu.u1, gpu.bn_mask);
       } else {
         KernelAirFCC<<<gpu.grid_dim_air, gpu.block_dim_air, 0, gpu.cuStream_air>>>(gpu.u0, gpu.u1, gpu.bn_mask);
