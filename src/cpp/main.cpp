@@ -135,6 +135,7 @@ auto main(int argc, char** argv) -> int {
   }
 
   if (*test) {
+    // NOLINTBEGIN
     using pffdtd::Double;
     PFFDTD_ASSERT(static_cast<float>(Double{42.0F} + Double{2.0F}) == 44.0F);
     PFFDTD_ASSERT(static_cast<float>(Double{42.0F} - Double{2.0F}) == 40.0F);
@@ -145,6 +146,7 @@ auto main(int argc, char** argv) -> int {
     PFFDTD_ASSERT(static_cast<double>(Double{42.0} - Double{2.0}) == 40.0);
     PFFDTD_ASSERT(static_cast<double>(Double{42.0} * Double{2.0}) == 84.0);
     PFFDTD_ASSERT(static_cast<double>(Double{42.0} / Double{2.0}) == 21.0);
+    // NOLINTEND
   }
 
   return EXIT_SUCCESS;

@@ -16,11 +16,13 @@
 
 namespace pffdtd {
 
+namespace {
 [[nodiscard]] constexpr auto
 to_ixy(std::integral auto x, std::integral auto y, std::integral auto /*Nx*/, std::integral auto Ny) -> std::integral
     auto {
   return x * Ny + y;
 }
+} // namespace
 
 auto EngineCPU2D::operator()(Simulation2D const& sim) const -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
 

@@ -42,6 +42,7 @@ Checks: >
   readability-*,
   readability-identifier-naming,
   -readability-identifier-length,
+  -readability-math-missing-parentheses,
 
   -*-avoid-c-arrays,
   -*-magic-numbers,
