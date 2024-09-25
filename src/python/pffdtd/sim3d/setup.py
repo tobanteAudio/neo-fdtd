@@ -7,6 +7,7 @@ import importlib
 import importlib.util
 import inspect
 from pathlib import Path
+import sys
 from typing import Literal
 import uuid
 
@@ -200,7 +201,7 @@ def run_setup3d_for_class(class_name):
         bmax=sim.bmax,
         Nvox_est=None,
         Nh=None,
-        Nprocs=None,
+        Nprocs=None if sys.platform.startswith('linux') else 1,
         compress=sim.compress,
         rot_az_el=sim.rot_az_el,
         model_factory=model_factory,
