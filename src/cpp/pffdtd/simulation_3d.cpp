@@ -90,12 +90,7 @@ template<typename Real>
   ////////////////////////////////////////////////////////////////////////
   // Read constants HDF5 dataset
   ////////////////////////////////////////////////////////////////////////
-  auto filename = simDir / "constants.h5";
-  if (not std::filesystem::exists(filename)) {
-    raisef<std::invalid_argument>("file '{}' does not exist", filename.string());
-  }
-
-  auto constants = H5FReader{filename};
+  auto constants = HDF5Reader{simDir / "constants.h5"};
 
   //////////////////
   // constants
@@ -147,12 +142,7 @@ template<typename Real>
   ////////////////////////////////////////////////////////////////////////
   // Read vox HDF5 dataset
   ////////////////////////////////////////////////////////////////////////
-  filename = simDir / "vox_out.h5";
-  if (not std::filesystem::exists(filename)) {
-    raisef<std::invalid_argument>("file '{}' does not exist", filename.string());
-  }
-
-  auto vox_out = H5FReader{filename};
+  auto vox_out = HDF5Reader{simDir / "vox_out.h5"};
 
   //////////////////
   // integers
@@ -206,12 +196,7 @@ template<typename Real>
   ////////////////////////////////////////////////////////////////////////
   // Read signals HDF5 dataset
   ////////////////////////////////////////////////////////////////////////
-  filename = simDir / "signals.h5";
-  if (not std::filesystem::exists(filename)) {
-    raisef<std::invalid_argument>("file '{}' does not exist", filename.string());
-  }
-
-  auto signals = H5FReader{filename};
+  auto signals = HDF5Reader{simDir / "signals.h5"};
 
   //////////////////
   // integers
@@ -254,12 +239,7 @@ template<typename Real>
   ////////////////////////////////////////////////////////////////////////
   // Read materials HDF5 dataset
   ////////////////////////////////////////////////////////////////////////
-  filename = simDir / "materials.h5";
-  if (not std::filesystem::exists(filename)) {
-    raisef<std::invalid_argument>("file '{}' does not exist", filename.string());
-  }
-
-  auto materials = H5FReader{filename};
+  auto materials = HDF5Reader{simDir / "materials.h5"};
 
   //////////////////
   // integers
@@ -539,7 +519,7 @@ void writeOutputs_impl(Simulation3D<Real> const& sim, std::filesystem::path cons
     }
   }
 
-  auto writer = H5FWriter{simDir / "sim_outs.h5"};
+  auto writer = HDF5Writer{simDir / "sim_outs.h5"};
   writer.write("u_out", u_out);
   std::puts("wrote output dataset");
 }

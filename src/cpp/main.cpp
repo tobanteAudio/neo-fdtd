@@ -114,7 +114,7 @@ auto main(int argc, char** argv) -> int {
     auto const sim    = pffdtd::loadSimulation2D(simDir);
     auto const out    = engine(sim);
 
-    auto results = pffdtd::H5FWriter{simDir / args.sim2d.out};
+    auto results = pffdtd::HDF5Writer{simDir / args.sim2d.out};
     results.write("out", out);
 
     auto const stop = pffdtd::getTime();

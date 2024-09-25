@@ -10,7 +10,7 @@
 namespace pffdtd {
 
 auto loadSimulation2D(std::filesystem::path const& dir) -> Simulation2D {
-  auto sim = H5FReader{dir / "sim.h5"};
+  auto sim = HDF5Reader{dir / "sim.h5"};
 
   auto const Nx = sim.read<int64_t>("Nx");
   auto const Ny = sim.read<int64_t>("Ny");

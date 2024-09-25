@@ -32,11 +32,16 @@ inline constexpr auto isStdVector = false;
 template<typename T>
 inline constexpr auto isStdVector<std::vector<T>> = true;
 
-struct H5FReader {
-  explicit H5FReader(std::filesystem::path const& path)
-      : _handle{H5Fopen(path.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT)} {}
+struct HDF5Reader {
+  explicit HDF5Reader(std::filesystem::path const& path)
+      : _handle{[&] {
+        if (not std::filesystem::exists(path)) {
+          raisef<std::invalid_argument>("file '{}' does not exist", path.string());
+        }
+        return H5Fopen(path.string().c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+      }()} {}
 
-  ~H5FReader() { H5Fclose(_handle); }
+  ~HDF5Reader() { H5Fclose(_handle); }
 
   [[nodiscard]] auto handle() const noexcept -> hid_t { return _handle; }
 
@@ -131,11 +136,11 @@ struct H5FReader {
   hid_t _handle;
 };
 
-struct H5FWriter {
-  explicit H5FWriter(std::filesystem::path const& path)
+struct HDF5Writer {
+  explicit HDF5Writer(std::filesystem::path const& path)
       : _handle{H5Fcreate(path.string().c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)} {}
 
-  ~H5FWriter() { H5Fclose(_handle); }
+  ~HDF5Writer() { H5Fclose(_handle); }
 
   auto write(char const* name, stdex::mdspan<double const, stdex::dextents<size_t, 2>> buf) -> void {
     hsize_t dims[2]{
@@ -170,7 +175,7 @@ struct H5FWriter {
 };
 
 template<typename T>
-[[nodiscard]] auto read(H5FReader& reader, char const* dset_str, int ndims, hsize_t* dims) -> std::unique_ptr<T[]> {
+[[nodiscard]] auto read(HDF5Reader& reader, char const* dset_str, int ndims, hsize_t* dims) -> std::unique_ptr<T[]> {
   auto dset   = H5Dopen(reader.handle(), dset_str, H5P_DEFAULT);
   auto dspace = H5Dget_space(dset);
   PFFDTD_ASSERT(H5Sget_simple_extent_ndims(dspace) == ndims);
