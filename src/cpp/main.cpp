@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // SPDX-FileCopyrightText: 2024 Tobias Hienzsch
 
+#include "pffdtd/double.hpp"
 #include "pffdtd/engine_cpu_2d.hpp"
 #include "pffdtd/engine_cpu_3d.hpp"
 #include "pffdtd/exception.hpp"
@@ -102,6 +103,7 @@ auto main(int argc, char** argv) -> int {
   sim3d->add_option("-s,--sim_dir", args.sim3d.simDir)->check(CLI::ExistingDirectory)->required();
   sim3d->add_option("-p,--precision", args.sim3d.precision)->transform(toLower);
 
+  auto* test = app.add_subcommand("test", "Run unit tests");
   CLI11_PARSE(app, argc, argv);
 
   if (*sim2d) {
@@ -130,6 +132,19 @@ auto main(int argc, char** argv) -> int {
     } else {
       pffdtd::raisef<std::invalid_argument>("invalid precision '{}'", args.sim3d.precision);
     }
+  }
+
+  if (*test) {
+    using pffdtd::Double;
+    PFFDTD_ASSERT(static_cast<float>(Double{42.0F} + Double{2.0F}) == 44.0F);
+    PFFDTD_ASSERT(static_cast<float>(Double{42.0F} - Double{2.0F}) == 40.0F);
+    PFFDTD_ASSERT(static_cast<float>(Double{42.0F} * Double{2.0F}) == 84.0F);
+    PFFDTD_ASSERT(static_cast<float>(Double{42.0F} / Double{2.0F}) == 21.0F);
+
+    PFFDTD_ASSERT(static_cast<double>(Double{42.0} + Double{2.0}) == 44.0);
+    PFFDTD_ASSERT(static_cast<double>(Double{42.0} - Double{2.0}) == 40.0);
+    PFFDTD_ASSERT(static_cast<double>(Double{42.0} * Double{2.0}) == 84.0);
+    PFFDTD_ASSERT(static_cast<double>(Double{42.0} / Double{2.0}) == 21.0);
   }
 
   return EXIT_SUCCESS;
