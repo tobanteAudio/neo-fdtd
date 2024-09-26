@@ -5,6 +5,7 @@
 #pragma once
 
 #include "pffdtd/assert.hpp"
+#include "pffdtd/mat_quad.hpp"
 #include "pffdtd/utility.hpp"
 
 #include <algorithm>
@@ -26,18 +27,6 @@ enum struct Grid : int8_t {
 };
 
 [[nodiscard]] constexpr auto isFCC(Grid grid) noexcept -> bool { return grid != Grid::CART; }
-
-inline constexpr auto MMb = 12; // maximum number of RLC branches in freq-dep (FD) boundaries
-inline constexpr auto MNm = 64; // maximum number of materials allows
-
-// see python code and 2016 ISMRA paper
-template<typename Real>
-struct MatQuad {
-  Real b;   // b
-  Real bd;  // b*d
-  Real bDh; // b*D-hat
-  Real bFh; // b*F-hat
-};
 
 // main sim data, on host
 template<typename Real>
