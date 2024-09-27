@@ -32,13 +32,32 @@
 
 namespace {
 
-[[nodiscard]] auto getEngines() {
+[[nodiscard]] auto getEngines2D() {
   using pffdtd::Simulation2D;
   using Callback    = std::function<stdex::mdarray<double, stdex::dextents<size_t, 2>>(Simulation2D const&)>;
   auto engines      = std::map<std::string, Callback>{};
   engines["native"] = pffdtd::EngineCPU2D{};
 #if defined(PFFDTD_HAS_SYCL)
   engines["sycl"] = pffdtd::EngineSYCL2D{};
+#endif
+  return engines;
+}
+
+template<typename Real>
+[[nodiscard]] auto getEngines3D() {
+  using namespace pffdtd;
+  auto engines   = std::map<std::string, std::function<void(Simulation3D<Real> const&)>>{};
+  engines["cpu"] = EngineCPU3D{};
+#if defined(PFFDTD_HAS_CUDA)
+  engines["cuda"] = EngineCUDA3D{};
+#endif
+#if defined(PFFDTD_HAS_METAL)
+  if constexpr (std::same_as<Real, float>) {
+    engines["metal"] = EngineMETAL3D{};
+  }
+#endif
+#if defined(PFFDTD_HAS_SYCL)
+  engines["sycl"] = EngineSYCL3D{};
 #endif
   return engines;
 }
@@ -50,13 +69,14 @@ namespace {
 
 struct Arguments {
   struct Sim2D {
-    std::string engine{"native"};
     std::string simDir;
+    std::string engine{"native"};
     std::string out{"out.h5"};
   };
 
   struct Sim3D {
     std::string simDir;
+    std::string engine{"cpu"};
     std::string precision{"64"};
   };
 
@@ -67,28 +87,17 @@ struct Arguments {
 template<typename Real>
 auto run3D(Arguments::Sim3D const& args) {
   using namespace pffdtd;
+  fmt::println("Running: {} on {} with precision {}", args.simDir, args.engine, args.precision);
 
-  fmt::println("Running: {} with precision {}", args.simDir, args.precision);
+  auto const engines = getEngines3D<Real>();
+  auto const& engine = engines.at(args.engine);
+
   auto const simDir = std::filesystem::path{args.simDir};
   auto const start  = getTime();
 
   auto sim = loadSimulation3D<Real>(simDir);
   scaleInput(sim);
-
-#if defined(PFFDTD_HAS_CUDA)
-  EngineCUDA3D{}(sim);
-#elif defined(PFFDTD_HAS_METAL)
-  if constexpr (std::same_as<Real, float>) {
-    EngineMETAL3D{}(sim);
-  } else {
-    raisef<std::runtime_error>("Metal engine only supports float32");
-  }
-#elif defined(PFFDTD_HAS_SYCL)
-  EngineSYCL3D{}(sim);
-#else
-  EngineCPU3D{}(sim);
-#endif
-
+  engine(sim);
   rescaleOutput(sim);
   writeOutputs(sim, simDir);
   printLastSample(sim);
@@ -105,12 +114,13 @@ auto main(int argc, char** argv) -> int {
   auto args = Arguments{};
 
   auto* sim2d = app.add_subcommand("sim2d", "Run 2D simulation");
-  sim2d->add_option("-e,--engine", args.sim2d.engine)->transform(toLower);
   sim2d->add_option("-s,--sim_dir", args.sim2d.simDir)->check(CLI::ExistingDirectory)->required();
+  sim2d->add_option("-e,--engine", args.sim2d.engine)->transform(toLower);
   sim2d->add_option("-o,--out", args.sim2d.out);
 
   auto* sim3d = app.add_subcommand("sim3d", "Run 3D simulation");
   sim3d->add_option("-s,--sim_dir", args.sim3d.simDir)->check(CLI::ExistingDirectory)->required();
+  sim3d->add_option("-e,--engine", args.sim3d.engine)->transform(toLower);
   sim3d->add_option("-p,--precision", args.sim3d.precision)->transform(toLower);
 
   auto* test = app.add_subcommand("test", "Run unit tests");
@@ -118,7 +128,7 @@ auto main(int argc, char** argv) -> int {
 
   if (*sim2d) {
     fmt::println("Using engine: {}", args.sim2d.engine);
-    auto const engines = getEngines();
+    auto const engines = getEngines2D();
     auto const& engine = engines.at(args.sim2d.engine);
 
     auto const start  = pffdtd::getTime();

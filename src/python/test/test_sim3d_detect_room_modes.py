@@ -12,7 +12,7 @@ from pffdtd.sim3d.testing import run_engine, skip_if_native_engine_unavailable
 from pffdtd.sim3d.process_outputs import process_outputs
 
 
-@pytest.mark.parametrize('engine', ['python', 'native'])
+@pytest.mark.parametrize('engine', ['python', 'cpu'])
 @pytest.mark.parametrize(
     'room,fmax,ppw,fcc,dx_scale,tolerance_pct',
     [
