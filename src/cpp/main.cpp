@@ -15,6 +15,10 @@
   #include "pffdtd/engine_cuda_3d.hpp"
 #endif
 
+#if defined(PFFDTD_HAS_METAL)
+  #include "pffdtd/engine_metal_3d.hpp"
+#endif
+
 #if defined(PFFDTD_HAS_SYCL)
   #include "pffdtd/engine_sycl_2d.hpp"
   #include "pffdtd/engine_sycl_3d.hpp"
@@ -73,6 +77,12 @@ auto run3D(Arguments::Sim3D const& args) {
 
 #if defined(PFFDTD_HAS_CUDA)
   EngineCUDA3D{}(sim);
+#elif defined(PFFDTD_HAS_METAL)
+  if constexpr (std::same_as<Real, float>) {
+    EngineMETAL3D{}(sim);
+  } else {
+    raisef<std::runtime_error>("Metal engine only supports float32");
+  }
 #elif defined(PFFDTD_HAS_SYCL)
   EngineSYCL3D{}(sim);
 #else

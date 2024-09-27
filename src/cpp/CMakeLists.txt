@@ -56,6 +56,44 @@ if(PFFDTD_HAS_SYCL)
     endif()
 endif()
 
+if(PFFDTD_HAS_METAL)
+    target_compile_definitions(pffdtd PUBLIC PFFDTD_HAS_METAL=1)
+    target_sources(pffdtd PRIVATE pffdtd/engine_metal_3d.hpp pffdtd/engine_metal_3d.mm)
+
+    set(SHADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/pffdtd/engine_metal.metal")
+    set(SHADER_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/engine_metal.air")
+    set(SHADER_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}/default.metallib")
+
+    # Add a custom command to compile the Metal shader
+    add_custom_command(
+        OUTPUT ${SHADER_OUTPUT}
+        COMMAND xcrun -sdk macosx metal -c ${SHADER_FILES} -o ${SHADER_OUTPUT}
+        DEPENDS ${SHADER_FILES}
+        COMMENT "Compiling Metal shader: ${SHADER_FILES}"
+        VERBATIM
+    )
+
+    # Add a custom command to link the compiled shader into a metallib file
+    add_custom_command(
+        OUTPUT ${SHADER_LIBRARY}
+        COMMAND xcrun -sdk macosx metallib ${SHADER_OUTPUT} -o ${SHADER_LIBRARY}
+        DEPENDS ${SHADER_OUTPUT}
+        COMMENT "Linking Metal shader into metallib: ${SHADER_LIBRARY}"
+        VERBATIM
+    )
+
+    # Add a custom target for the Metal library
+    add_custom_target(pffdtd-engine-metal-shaders ALL DEPENDS ${SHADER_LIBRARY})
+
+    find_library(Foundation_Framework Foundation)
+    find_library(Metal_Framework Metal)
+    find_library(MetalKit_Framework MetalKit)
+
+    target_link_libraries(pffdtd PUBLIC ${Foundation_Framework} ${Metal_Framework} ${MetalKit_Framework})
+    set_target_properties(pffdtd PROPERTIES LINK_FLAGS "-Wl,-sectcreate,addseg,addsect,${SHADER_LIBRARY}")
+    add_dependencies(pffdtd pffdtd-engine-metal-shaders)
+endif()
+
 if((CMAKE_CXX_COMPILER_ID STREQUAL "MSVC") OR (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC"))
     target_compile_options(pffdtd PUBLIC /W3)
 else ()
