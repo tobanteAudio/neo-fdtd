@@ -3,33 +3,31 @@
 
 #pragma once
 
-#if not defined(__METAL__)
-  #include <cstdint>
-#endif
-
 #include "mat_quad.hpp"
+
+static_assert(sizeof(long) == 8, "sizeof(long) should equal sizeof(int64_t)");
 
 namespace pffdtd {
 
 template<typename Real>
 struct Constants2D {
-  int64_t Ny;
+  long Ny;
   Real lossFactor;
 };
 
 template<typename Real>
 struct Constants3D {
-  int64_t n;
-  int64_t Nx;
-  int64_t Ny;
-  int64_t Nz;
-  int64_t NzNy;
-  int64_t Nb;
-  int64_t Nbl;
-  int64_t Nba;
-  int64_t Ns;
-  int64_t Nr;
-  int64_t Nt;
+  long n;
+  long Nx;
+  long Ny;
+  long Nz;
+  long NzNy;
+  long Nb;
+  long Nbl;
+  long Nba;
+  long Ns;
+  long Nr;
+  long Nt;
   Real l;
   Real lo2;
   Real sl2;
@@ -38,7 +36,7 @@ struct Constants3D {
 };
 
 template<typename T>
-auto get_bit(int64_t word, int64_t pos) -> T {
+auto get_bit(long word, long pos) -> T {
   return static_cast<T>((word >> pos) & 1);
 }
 
