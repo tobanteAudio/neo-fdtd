@@ -58,6 +58,7 @@ endif()
 
 if(PFFDTD_HAS_METAL)
     target_compile_definitions(pffdtd PUBLIC PFFDTD_HAS_METAL=1)
+    target_sources(pffdtd PRIVATE pffdtd/engine_metal_2d.hpp pffdtd/engine_metal_2d.mm)
     target_sources(pffdtd PRIVATE pffdtd/engine_metal_3d.hpp pffdtd/engine_metal_3d.mm)
 
     set(SHADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/pffdtd/engine_metal.metal")

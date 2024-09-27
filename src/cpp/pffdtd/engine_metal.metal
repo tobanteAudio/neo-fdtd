@@ -13,7 +13,7 @@ namespace sim2d {
     device float const* u1 [[buffer(1)]],
     device float const* u2 [[buffer(2)]],
     device uint8_t const* in_mask [[buffer(3)]],
-    constant Constants2D<float> const& constants [[buffer(4)]],
+    constant Constants2D<float>& constants [[buffer(4)]],
     uint2 id [[thread_position_in_grid]]
 ) {
   int64_t const x   = id.x + 1;
@@ -39,7 +39,7 @@ namespace sim2d {
     device float const* u2 [[buffer(2)]],
     device int64_t const* bn_ixy [[buffer(3)]],
     device int64_t const* adj_bn [[buffer(4)]],
-    constant Constants2D<float> const& constants [[buffer(5)]],
+    constant Constants2D<float>& constants [[buffer(5)]],
     uint id [[thread_position_in_grid]]
 ) {
   int64_t const ib = bn_ixy[id];
@@ -62,7 +62,7 @@ namespace sim2d {
     device float const* u2 [[buffer(1)]],
     device int64_t const* bn_ixy [[buffer(2)]],
     device int64_t const* adj_bn [[buffer(3)]],
-    constant Constants2D<float> const& constants [[buffer(4)]],
+    constant Constants2D<float>& constants [[buffer(4)]],
     uint id [[thread_position_in_grid]]
 ) {
   int64_t const ib = bn_ixy[id];
@@ -76,6 +76,27 @@ namespace sim2d {
   u0[ib] = (current + lossFactor * K4 * prev) / (1.0 + lossFactor * K4);
 }
 
+[[kernel]] void addSource(
+    device float* u0 [[buffer(0)]],
+    device float const* src_sig [[buffer(1)]],
+    constant Constants2D<float>& constants [[buffer(2)]],
+    constant int64_t& timestep [[buffer(3)]],
+    uint id [[thread_position_in_grid]]
+) {
+  u0[constants.in_ixy] += src_sig[timestep];
+}
+
+[[kernel]] void readOutput(
+    device float* out [[buffer(0)]],
+    device float const* u0 [[buffer(1)]],
+    device int64_t const* out_ixy [[buffer(2)]],
+    constant Constants2D<float>& constants [[buffer(3)]],
+    constant int64_t& timestep [[buffer(4)]],
+    uint id [[thread_position_in_grid]]
+) {
+  out[id * constants.Nt + timestep] = u0[out_ixy[id]];
+}
+
 } // namespace sim2d
 
 namespace sim3d {
@@ -84,33 +105,32 @@ namespace sim3d {
     device float* u0 [[buffer(0)]],
     device float const* u1 [[buffer(1)]],
     device uint8_t const* bn_mask [[buffer(2)]],
-    constant Constants3D<float> const& constants [[buffer(3)]],
+    constant Constants3D<float>& constants [[buffer(3)]],
     uint3 id [[thread_position_in_grid]]
 ) {
+  float const a1 = constants.a1;
+  float const a2 = constants.a2;
+
   int64_t const Nz   = constants.Nz;
   int64_t const NzNy = constants.NzNy;
-  float const a1     = constants.a1;
-  float const a2     = constants.a2;
 
-  int64_t const ix = id.x + 1;
-  int64_t const iy = id.y + 1;
-  int64_t const iz = id.z + 1;
-  int64_t const ii = ix * NzNy + iy * Nz + iz;
+  int64_t const x = id.x + 1;
+  int64_t const y = id.y + 1;
+  int64_t const z = id.z + 1;
+  int64_t const i = x * NzNy + y * Nz + z;
 
-  if (get_bit<int>(bn_mask[ii >> 3], ii % 8) != 0) {
+  if (get_bit<int>(bn_mask[i / 8], i % 8) != 0) {
     return;
   }
 
-  float partial = a1 * u1[ii] - u0[ii];
-  partial += a2 * u1[ii + NzNy];
-  partial += a2 * u1[ii - NzNy];
-  partial += a2 * u1[ii + Nz];
-  partial += a2 * u1[ii - Nz];
-  partial += a2 * u1[ii + 1];
-  partial += a2 * u1[ii - 1];
-  u0[ii] = partial;
-
-  // u0[ii] = a1 + a2;
+  float partial = a1 * u1[i] - u0[i];
+  partial += a2 * u1[i + NzNy];
+  partial += a2 * u1[i - NzNy];
+  partial += a2 * u1[i + Nz];
+  partial += a2 * u1[i - Nz];
+  partial += a2 * u1[i + 1];
+  partial += a2 * u1[i - 1];
+  u0[i] = partial;
 }
 
 [[kernel]] void rigidUpdateCart(
@@ -118,12 +138,12 @@ namespace sim3d {
     device float const* u1 [[buffer(1)]],
     device int64_t const* bn_ixyz [[buffer(2)]],
     device uint16_t const* adj_bn [[buffer(3)]],
-    constant Constants3D<float> const& constants [[buffer(4)]],
+    constant Constants3D<float>& constants [[buffer(4)]],
     uint id [[thread_position_in_grid]]
 ) {
+  int64_t const ii = bn_ixyz[id];
   auto const adj   = adj_bn[id];
   auto const Kint  = metal::popcount(adj);
-  int64_t const ii = bn_ixyz[id];
 
   float const _2 = 2.0;
   float const K  = Kint;
@@ -150,7 +170,7 @@ namespace sim3d {
     device float const* mat_beta [[buffer(6)]],
     device MatQuad<float> const* mat_quads [[buffer(7)]],
     device uint8_t const* Mb [[buffer(8)]],
-    constant Constants3D<float> const& constants [[buffer(9)]],
+    constant Constants3D<float>& constants [[buffer(9)]],
     uint id [[thread_position_in_grid]]
 ) {
   auto nb         = static_cast<int64_t>(id);
@@ -194,7 +214,7 @@ namespace sim3d {
     device float const* u2ba [[buffer(1)]],
     device float const* Q_bna [[buffer(2)]],
     device int64_t const* bna_ixyz [[buffer(3)]],
-    constant Constants3D<float> const& constants [[buffer(4)]],
+    constant Constants3D<float>& constants [[buffer(4)]],
     uint id [[thread_position_in_grid]]
 ) {
   auto const lQ = constants.l * Q_bna[id];
@@ -204,7 +224,7 @@ namespace sim3d {
 
 [[kernel]] void flipHaloXY(
     device float* u1 [[buffer(0)]],
-    constant Constants3D<float> const& constants [[buffer(1)]],
+    constant Constants3D<float>& constants [[buffer(1)]],
     uint2 id [[thread_position_in_grid]]
 ) {
   auto const Nz   = constants.Nz;
@@ -220,7 +240,7 @@ namespace sim3d {
 
 [[kernel]] void flipHaloXZ(
     device float* u1 [[buffer(0)]],
-    constant Constants3D<float> const& constants [[buffer(1)]],
+    constant Constants3D<float>& constants [[buffer(1)]],
     uint2 id [[thread_position_in_grid]]
 ) {
   auto const Ny   = constants.Ny;
@@ -236,7 +256,7 @@ namespace sim3d {
 
 [[kernel]] void flipHaloYZ(
     device float* u1 [[buffer(0)]],
-    constant Constants3D<float> const& constants [[buffer(1)]],
+    constant Constants3D<float>& constants [[buffer(1)]],
     uint2 id [[thread_position_in_grid]]
 ) {
   auto const Nx   = constants.Nx;
@@ -272,33 +292,24 @@ namespace sim3d {
     device float* u0 [[buffer(0)]],
     device float const* in_sigs [[buffer(1)]],
     device int64_t const* in_ixyz [[buffer(2)]],
-    constant Constants3D<float> const& constants [[buffer(3)]],
+    constant Constants3D<float>& constants [[buffer(3)]],
+    constant int64_t& timestep [[buffer(4)]],
     uint id [[thread_position_in_grid]]
 ) {
-  auto const ii = in_ixyz[id];
-  u0[ii] += in_sigs[id * constants.Nt + constants.n];
+  u0[in_ixyz[id]] += in_sigs[id * constants.Nt + timestep];
 }
 
 [[kernel]] void readOutput(
     device float* u_out [[buffer(0)]],
     device float const* u1 [[buffer(1)]],
     device int64_t const* out_ixyz [[buffer(2)]],
-    constant Constants3D<float> const& constants [[buffer(3)]],
+    constant Constants3D<float>& constants [[buffer(3)]],
+    constant int64_t& timestep [[buffer(4)]],
     uint id [[thread_position_in_grid]]
 ) {
-  auto const ii                          = out_ixyz[id];
-  u_out[id * constants.Nt + constants.n] = u1[ii];
+  u_out[id * constants.Nt + timestep] = u1[out_ixyz[id]];
 }
 
 } // namespace sim3d
 
-[[kernel]] void
-foo(device float const* in [[buffer(0)]], device float* out [[buffer(1)]], uint id [[thread_position_in_grid]]) {
-  out[id] = in[id] + 42.0;
-}
-
-[[kernel]] void
-bar(device float const* in [[buffer(0)]], device float* out [[buffer(1)]], uint id [[thread_position_in_grid]]) {
-  out[id] = in[id] - 1.0;
-}
 } // namespace pffdtd

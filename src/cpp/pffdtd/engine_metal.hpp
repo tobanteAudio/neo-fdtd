@@ -11,13 +11,20 @@ namespace pffdtd {
 
 template<typename Real>
 struct Constants2D {
+  long Nx;
   long Ny;
+  long Nt;
+  long in_ixy;
   Real lossFactor;
 };
 
 template<typename Real>
 struct Constants3D {
-  long n;
+  Real l;
+  Real lo2;
+  Real sl2;
+  Real a1;
+  Real a2;
   long Nx;
   long Ny;
   long Nz;
@@ -28,11 +35,6 @@ struct Constants3D {
   long Ns;
   long Nr;
   long Nt;
-  Real l;
-  Real lo2;
-  Real sl2;
-  Real a1;
-  Real a2;
 };
 
 template<typename T>

@@ -4,57 +4,22 @@
 
 #include "pffdtd/assert.hpp"
 #include "pffdtd/engine_metal.hpp"
+#include "pffdtd/metal.hpp"
 #include "pffdtd/progress.hpp"
 #include "pffdtd/time.hpp"
 
 #include <fmt/format.h>
 
-#import <Foundation/Foundation.h>
-#import <Metal/Metal.h>
-
-#include <span>
+#include <vector>
 
 namespace pffdtd {
 
 namespace {
 
-void summary(id<MTLDevice> device) {
-  fmt::println("- Device {}", [device.name UTF8String]);
-  fmt::println("  - Unified memory: {}", device.hasUnifiedMemory != 0 ? "true" : "false");
-  fmt::println("  - Max buffer length {} MB", device.maxBufferLength / 1'000'000);
-  fmt::println("  - Recommended max working set size: {} MB", device.recommendedMaxWorkingSetSize / 1'000'000);
-  fmt::println("  - Max transfer rate: {}", device.maxTransferRate);
-  fmt::println("  - Max threads per threadgroup: {}", device.maxThreadsPerThreadgroup.width);
-  fmt::println("  - Max threadgroup memory size: {} bytes\n", device.maxThreadgroupMemoryLength);
-}
-
-id<MTLComputePipelineState> makeComputePipeline(id<MTLLibrary> library, char const* function) {
-  id<MTLFunction> kernel = [library newFunctionWithName:[NSString stringWithUTF8String:function]];
-  PFFDTD_ASSERT(kernel != nil);
-
-  NSError* error                       = nullptr;
-  id<MTLComputePipelineState> pipeline = [library.device newComputePipelineStateWithFunction:kernel error:&error];
-  PFFDTD_ASSERT(error == nullptr);
-
-  fmt::println("- {}:", function);
-  fmt::println("  - threadExecutionWidth = {}", pipeline.threadExecutionWidth);
-  fmt::println("  - maxTotalThreadsPerThreadgroup = {}", pipeline.maxTotalThreadsPerThreadgroup);
-  fmt::println("  - staticThreadgroupMemoryLength = {}\n", pipeline.staticThreadgroupMemoryLength);
-
-  return pipeline;
-}
-
-template<typename T, typename ModeT>
-id<MTLBuffer> makeBuffer(id<MTLDevice> device, std::vector<T> const& data, ModeT mode) {
-  auto const size   = data.size() * sizeof(T);
-  id<MTLBuffer> buf = [device newBufferWithBytes:data.data() length:size options:mode];
-  PFFDTD_ASSERT(buf != nil);
-  return buf;
-}
-
 template<typename Real>
 auto run(Simulation3D<Real> const& sim) {
   @autoreleasepool {
+
     // Device
     NSArray* devices     = MTLCopyAllDevices();
     id<MTLDevice> device = devices[0];
@@ -95,7 +60,7 @@ auto run(Simulation3D<Real> const& sim) {
     auto const a1  = static_cast<Real>(sim.a1);
     auto const a2  = static_cast<Real>(sim.a2);
 
-    fmt::println("HOST-BUFFERS");
+    fmt::println("COPY-BUFFERS");
     id<MTLBuffer> out_ixyz  = makeBuffer(device, sim.out_ixyz, MTLResourceStorageModeShared);
     id<MTLBuffer> in_ixyz   = makeBuffer(device, sim.in_ixyz, MTLResourceStorageModeShared);
     id<MTLBuffer> in_sigs   = makeBuffer(device, sim.in_sigs, MTLResourceStorageModeShared);
@@ -111,170 +76,174 @@ auto run(Simulation3D<Real> const& sim) {
     id<MTLBuffer> mat_quads = makeBuffer(device, sim.mat_quads, MTLResourceStorageModeShared);
     id<MTLBuffer> Q_bna     = makeBuffer(device, sim.Q_bna, MTLResourceStorageModeShared);
 
-    fmt::println("DEVICE-BUFFERS");
-    id<MTLBuffer> u0    = [device newBufferWithLength:sizeof(Real) * Npts options:MTLResourceStorageModeShared];
-    id<MTLBuffer> u1    = [device newBufferWithLength:sizeof(Real) * Npts options:MTLResourceStorageModeShared];
-    id<MTLBuffer> u0b   = [device newBufferWithLength:sizeof(Real) * Nbl options:MTLResourceStorageModeShared];
-    id<MTLBuffer> u1b   = [device newBufferWithLength:sizeof(Real) * Nbl options:MTLResourceStorageModeShared];
-    id<MTLBuffer> u2b   = [device newBufferWithLength:sizeof(Real) * Nbl options:MTLResourceStorageModeShared];
-    id<MTLBuffer> u2ba  = [device newBufferWithLength:sizeof(Real) * Nba options:MTLResourceStorageModeShared];
-    id<MTLBuffer> gh1   = [device newBufferWithLength:sizeof(Real) * Nbl * MMb options:MTLResourceStorageModeShared];
-    id<MTLBuffer> vh1   = [device newBufferWithLength:sizeof(Real) * Nbl * MMb options:MTLResourceStorageModeShared];
-    id<MTLBuffer> u_out = [device newBufferWithLength:sizeof(Real) * Nr * Nt options:MTLResourceStorageModeShared];
+    fmt::println("EMPTY-BUFFERS");
+    id<MTLBuffer> u0    = makeEmptyBuffer<Real>(device, Npts, MTLResourceStorageModeShared);
+    id<MTLBuffer> u1    = makeEmptyBuffer<Real>(device, Npts, MTLResourceStorageModeShared);
+    id<MTLBuffer> u0b   = makeEmptyBuffer<Real>(device, Nbl, MTLResourceStorageModeShared);
+    id<MTLBuffer> u1b   = makeEmptyBuffer<Real>(device, Nbl, MTLResourceStorageModeShared);
+    id<MTLBuffer> u2b   = makeEmptyBuffer<Real>(device, Nbl, MTLResourceStorageModeShared);
+    id<MTLBuffer> u2ba  = makeEmptyBuffer<Real>(device, Nba, MTLResourceStorageModeShared);
+    id<MTLBuffer> gh1   = makeEmptyBuffer<Real>(device, Nbl * MMb, MTLResourceStorageModeShared);
+    id<MTLBuffer> vh1   = makeEmptyBuffer<Real>(device, Nbl * MMb, MTLResourceStorageModeShared);
+    id<MTLBuffer> u_out = makeEmptyBuffer<Real>(device, Nr * Nt, MTLResourceStorageModeShared);
+
+    auto const c = Constants3D<Real>{
+        .l    = l,
+        .lo2  = lo2,
+        .sl2  = sl2,
+        .a1   = a1,
+        .a2   = a2,
+        .Nx   = Nx,
+        .Ny   = Ny,
+        .Nz   = Nz,
+        .NzNy = NzNy,
+        .Nb   = Nb,
+        .Nbl  = Nbl,
+        .Nba  = Nba,
+        .Ns   = Ns,
+        .Nr   = Nr,
+        .Nt   = Nt,
+    };
+    id<MTLBuffer> constants = [device newBufferWithBytes:&c length:sizeof(c) options:MTLResourceStorageModeShared];
 
     // Queue
     id<MTLCommandQueue> commandQueue = [device newCommandQueue];
-    assert(commandQueue != nil);
+    PFFDTD_ASSERT(commandQueue != nil);
 
     fmt::println("START");
     auto const start = getTime();
     for (int64_t n = 0; n < Nt; n++) {
       auto const sampleStart = getTime();
 
-      auto const c = Constants3D<Real>{
-          .n    = n,
-          .Nx   = Nx,
-          .Ny   = Ny,
-          .Nz   = Nz,
-          .NzNy = NzNy,
-          .Nb   = Nb,
-          .Nbl  = Nbl,
-          .Nba  = Nba,
-          .Ns   = Ns,
-          .Nr   = Nr,
-          .Nt   = Nt,
-          .l    = l,
-          .lo2  = lo2,
-          .sl2  = sl2,
-          .a1   = a1,
-          .a2   = a2,
-      };
-      id<MTLBuffer> constants = [device newBufferWithBytes:&c length:sizeof(c) options:MTLResourceStorageModeShared];
-
       id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
+      id<MTLBuffer> timestep = [device newBufferWithBytes:&n length:sizeof(n) options:MTLResourceStorageModeShared];
+      PFFDTD_ASSERT(timestep != nil);
 
       // Rigid
-      id<MTLComputeCommandEncoder> rigidEncoder = [commandBuffer computeCommandEncoder];
-      [rigidEncoder setComputePipelineState:kernelRigidCart];
-      [rigidEncoder setBuffer:u0 offset:0 atIndex:0];
-      [rigidEncoder setBuffer:u1 offset:0 atIndex:1];
-      [rigidEncoder setBuffer:bn_ixyz offset:0 atIndex:2];
-      [rigidEncoder setBuffer:adj_bn offset:0 atIndex:3];
-      [rigidEncoder setBuffer:constants offset:0 atIndex:4];
-      [rigidEncoder dispatchThreads:MTLSizeMake(Nb, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
-      [rigidEncoder endEncoding];
+      id<MTLComputeCommandEncoder> rigidUpdate = [commandBuffer computeCommandEncoder];
+      [rigidUpdate setComputePipelineState:kernelRigidCart];
+      [rigidUpdate setBuffer:u0 offset:0 atIndex:0];
+      [rigidUpdate setBuffer:u1 offset:0 atIndex:1];
+      [rigidUpdate setBuffer:bn_ixyz offset:0 atIndex:2];
+      [rigidUpdate setBuffer:adj_bn offset:0 atIndex:3];
+      [rigidUpdate setBuffer:constants offset:0 atIndex:4];
+      [rigidUpdate dispatchThreads:MTLSizeMake(Nb, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
+      [rigidUpdate endEncoding];
 
       // Copy to boundary buffer
-      id<MTLComputeCommandEncoder> copyToBoundaryEncoder = [commandBuffer computeCommandEncoder];
-      [copyToBoundaryEncoder setComputePipelineState:kernelCopyFromGrid];
-      [copyToBoundaryEncoder setBuffer:u0b offset:0 atIndex:0];
-      [copyToBoundaryEncoder setBuffer:u0 offset:0 atIndex:1];
-      [copyToBoundaryEncoder setBuffer:bnl_ixyz offset:0 atIndex:2];
-      [copyToBoundaryEncoder dispatchThreads:MTLSizeMake(Nbl, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
-      [copyToBoundaryEncoder endEncoding];
+      id<MTLComputeCommandEncoder> copyToBoundary = [commandBuffer computeCommandEncoder];
+      [copyToBoundary setComputePipelineState:kernelCopyFromGrid];
+      [copyToBoundary setBuffer:u0b offset:0 atIndex:0];
+      [copyToBoundary setBuffer:u0 offset:0 atIndex:1];
+      [copyToBoundary setBuffer:bnl_ixyz offset:0 atIndex:2];
+      [copyToBoundary dispatchThreads:MTLSizeMake(Nbl, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
+      [copyToBoundary endEncoding];
 
       // Apply rigid loss
-      id<MTLComputeCommandEncoder> boundaryLossEncoder = [commandBuffer computeCommandEncoder];
-      [boundaryLossEncoder setComputePipelineState:kernelBoundaryLossFD];
-      [boundaryLossEncoder setBuffer:u0b offset:0 atIndex:0];
-      [boundaryLossEncoder setBuffer:u2b offset:0 atIndex:1];
-      [boundaryLossEncoder setBuffer:vh1 offset:0 atIndex:2];
-      [boundaryLossEncoder setBuffer:gh1 offset:0 atIndex:3];
-      [boundaryLossEncoder setBuffer:ssaf_bnl offset:0 atIndex:4];
-      [boundaryLossEncoder setBuffer:mat_bnl offset:0 atIndex:5];
-      [boundaryLossEncoder setBuffer:mat_beta offset:0 atIndex:6];
-      [boundaryLossEncoder setBuffer:mat_quads offset:0 atIndex:7];
-      [boundaryLossEncoder setBuffer:Mb offset:0 atIndex:8];
-      [boundaryLossEncoder setBuffer:constants offset:0 atIndex:9];
-      [boundaryLossEncoder dispatchThreads:MTLSizeMake(Nbl, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
-      [boundaryLossEncoder endEncoding];
+      id<MTLComputeCommandEncoder> boundaryLoss = [commandBuffer computeCommandEncoder];
+      [boundaryLoss setComputePipelineState:kernelBoundaryLossFD];
+      [boundaryLoss setBuffer:u0b offset:0 atIndex:0];
+      [boundaryLoss setBuffer:u2b offset:0 atIndex:1];
+      [boundaryLoss setBuffer:vh1 offset:0 atIndex:2];
+      [boundaryLoss setBuffer:gh1 offset:0 atIndex:3];
+      [boundaryLoss setBuffer:ssaf_bnl offset:0 atIndex:4];
+      [boundaryLoss setBuffer:mat_bnl offset:0 atIndex:5];
+      [boundaryLoss setBuffer:mat_beta offset:0 atIndex:6];
+      [boundaryLoss setBuffer:mat_quads offset:0 atIndex:7];
+      [boundaryLoss setBuffer:Mb offset:0 atIndex:8];
+      [boundaryLoss setBuffer:constants offset:0 atIndex:9];
+      [boundaryLoss dispatchThreads:MTLSizeMake(Nbl, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
+      [boundaryLoss endEncoding];
 
       // Copy from boundary buffer
-      id<MTLComputeCommandEncoder> copyFromBoundaryEncoder = [commandBuffer computeCommandEncoder];
-      [copyFromBoundaryEncoder setComputePipelineState:kernelCopyToGrid];
-      [copyFromBoundaryEncoder setBuffer:u0 offset:0 atIndex:0];
-      [copyFromBoundaryEncoder setBuffer:u0b offset:0 atIndex:1];
-      [copyFromBoundaryEncoder setBuffer:bnl_ixyz offset:0 atIndex:2];
-      [copyFromBoundaryEncoder dispatchThreads:MTLSizeMake(Nbl, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
-      [copyFromBoundaryEncoder endEncoding];
+      id<MTLComputeCommandEncoder> copyFromBoundary = [commandBuffer computeCommandEncoder];
+      [copyFromBoundary setComputePipelineState:kernelCopyToGrid];
+      [copyFromBoundary setBuffer:u0 offset:0 atIndex:0];
+      [copyFromBoundary setBuffer:u0b offset:0 atIndex:1];
+      [copyFromBoundary setBuffer:bnl_ixyz offset:0 atIndex:2];
+      [copyFromBoundary dispatchThreads:MTLSizeMake(Nbl, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
+      [copyFromBoundary endEncoding];
 
       // Copy to ABC buffer
-      id<MTLComputeCommandEncoder> copyToABCEncoder = [commandBuffer computeCommandEncoder];
-      [copyToABCEncoder setComputePipelineState:kernelCopyFromGrid];
-      [copyToABCEncoder setBuffer:u2ba offset:0 atIndex:0];
-      [copyToABCEncoder setBuffer:u0 offset:0 atIndex:1];
-      [copyToABCEncoder setBuffer:bna_ixyz offset:0 atIndex:2];
-      [copyToABCEncoder dispatchThreads:MTLSizeMake(Nba, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
-      [copyToABCEncoder endEncoding];
+      id<MTLComputeCommandEncoder> copyToABC = [commandBuffer computeCommandEncoder];
+      [copyToABC setComputePipelineState:kernelCopyFromGrid];
+      [copyToABC setBuffer:u2ba offset:0 atIndex:0];
+      [copyToABC setBuffer:u0 offset:0 atIndex:1];
+      [copyToABC setBuffer:bna_ixyz offset:0 atIndex:2];
+      [copyToABC dispatchThreads:MTLSizeMake(Nba, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
+      [copyToABC endEncoding];
 
       // Flip halo XY
-      id<MTLComputeCommandEncoder> flipHaloXYEncoder = [commandBuffer computeCommandEncoder];
-      [flipHaloXYEncoder setComputePipelineState:kernelFlipHaloXY];
-      [flipHaloXYEncoder setBuffer:u1 offset:0 atIndex:0];
-      [flipHaloXYEncoder setBuffer:constants offset:0 atIndex:1];
-      [flipHaloXYEncoder dispatchThreads:MTLSizeMake(Nx, Ny, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
-      [flipHaloXYEncoder endEncoding];
+      id<MTLComputeCommandEncoder> flipHaloXY = [commandBuffer computeCommandEncoder];
+      [flipHaloXY setComputePipelineState:kernelFlipHaloXY];
+      [flipHaloXY setBuffer:u1 offset:0 atIndex:0];
+      [flipHaloXY setBuffer:constants offset:0 atIndex:1];
+      [flipHaloXY dispatchThreads:MTLSizeMake(Nx, Ny, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
+      [flipHaloXY endEncoding];
 
       // Flip halo XZ
-      id<MTLComputeCommandEncoder> flipHaloXZEncoder = [commandBuffer computeCommandEncoder];
-      [flipHaloXZEncoder setComputePipelineState:kernelFlipHaloXZ];
-      [flipHaloXZEncoder setBuffer:u1 offset:0 atIndex:0];
-      [flipHaloXZEncoder setBuffer:constants offset:0 atIndex:1];
-      [flipHaloXZEncoder dispatchThreads:MTLSizeMake(Nx, Nz, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
-      [flipHaloXZEncoder endEncoding];
+      id<MTLComputeCommandEncoder> flipHaloXZ = [commandBuffer computeCommandEncoder];
+      [flipHaloXZ setComputePipelineState:kernelFlipHaloXZ];
+      [flipHaloXZ setBuffer:u1 offset:0 atIndex:0];
+      [flipHaloXZ setBuffer:constants offset:0 atIndex:1];
+      [flipHaloXZ dispatchThreads:MTLSizeMake(Nx, Nz, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
+      [flipHaloXZ endEncoding];
 
       // Flip halo YZ
-      id<MTLComputeCommandEncoder> flipHaloYZEncoder = [commandBuffer computeCommandEncoder];
-      [flipHaloYZEncoder setComputePipelineState:kernelFlipHaloYZ];
-      [flipHaloYZEncoder setBuffer:u1 offset:0 atIndex:0];
-      [flipHaloYZEncoder setBuffer:constants offset:0 atIndex:1];
-      [flipHaloYZEncoder dispatchThreads:MTLSizeMake(Ny, Nz, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
-      [flipHaloYZEncoder endEncoding];
+      id<MTLComputeCommandEncoder> flipHaloYZ = [commandBuffer computeCommandEncoder];
+      [flipHaloYZ setComputePipelineState:kernelFlipHaloYZ];
+      [flipHaloYZ setBuffer:u1 offset:0 atIndex:0];
+      [flipHaloYZ setBuffer:constants offset:0 atIndex:1];
+      [flipHaloYZ dispatchThreads:MTLSizeMake(Ny, Nz, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
+      [flipHaloYZ endEncoding];
 
       // Add source
-      id<MTLComputeCommandEncoder> addSourceEncoder = [commandBuffer computeCommandEncoder];
-      [addSourceEncoder setComputePipelineState:kernelAddSource];
-      [addSourceEncoder setBuffer:u0 offset:0 atIndex:0];
-      [addSourceEncoder setBuffer:in_sigs offset:0 atIndex:1];
-      [addSourceEncoder setBuffer:in_ixyz offset:0 atIndex:2];
-      [addSourceEncoder setBuffer:constants offset:0 atIndex:3];
-      [addSourceEncoder dispatchThreads:MTLSizeMake(Ns, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
-      [addSourceEncoder endEncoding];
+      id<MTLComputeCommandEncoder> addSource = [commandBuffer computeCommandEncoder];
+      [addSource setComputePipelineState:kernelAddSource];
+      [addSource setBuffer:u0 offset:0 atIndex:0];
+      [addSource setBuffer:in_sigs offset:0 atIndex:1];
+      [addSource setBuffer:in_ixyz offset:0 atIndex:2];
+      [addSource setBuffer:constants offset:0 atIndex:3];
+      [addSource setBuffer:timestep offset:0 atIndex:4];
+      [addSource dispatchThreads:MTLSizeMake(Ns, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
+      [addSource endEncoding];
 
       // Air update
-      id<MTLComputeCommandEncoder> airUpdateEncoder = [commandBuffer computeCommandEncoder];
-      [airUpdateEncoder setComputePipelineState:kernelAirCart];
-      [airUpdateEncoder setBuffer:u0 offset:0 atIndex:0];
-      [airUpdateEncoder setBuffer:u1 offset:0 atIndex:1];
-      [airUpdateEncoder setBuffer:bn_mask offset:0 atIndex:2];
-      [airUpdateEncoder setBuffer:constants offset:0 atIndex:3];
-      [airUpdateEncoder dispatchThreads:MTLSizeMake(Nx - 2, Ny - 2, Nz - 2) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
-      [airUpdateEncoder endEncoding];
+      id<MTLComputeCommandEncoder> airUpdate = [commandBuffer computeCommandEncoder];
+      [airUpdate setComputePipelineState:kernelAirCart];
+      [airUpdate setBuffer:u0 offset:0 atIndex:0];
+      [airUpdate setBuffer:u1 offset:0 atIndex:1];
+      [airUpdate setBuffer:bn_mask offset:0 atIndex:2];
+      [airUpdate setBuffer:constants offset:0 atIndex:3];
+      [airUpdate dispatchThreads:MTLSizeMake(Nx - 2, Ny - 2, Nz - 2) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
+      [airUpdate endEncoding];
 
       // ABC loss
-      id<MTLComputeCommandEncoder> abcEncoder = [commandBuffer computeCommandEncoder];
-      [abcEncoder setComputePipelineState:kernelBoundaryLossABC];
-      [abcEncoder setBuffer:u0 offset:0 atIndex:0];
-      [abcEncoder setBuffer:u2ba offset:0 atIndex:1];
-      [abcEncoder setBuffer:Q_bna offset:0 atIndex:2];
-      [abcEncoder setBuffer:bna_ixyz offset:0 atIndex:3];
-      [abcEncoder setBuffer:constants offset:0 atIndex:4];
-      [abcEncoder dispatchThreads:MTLSizeMake(Nba, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
-      [abcEncoder endEncoding];
+      id<MTLComputeCommandEncoder> abcLoss = [commandBuffer computeCommandEncoder];
+      [abcLoss setComputePipelineState:kernelBoundaryLossABC];
+      [abcLoss setBuffer:u0 offset:0 atIndex:0];
+      [abcLoss setBuffer:u2ba offset:0 atIndex:1];
+      [abcLoss setBuffer:Q_bna offset:0 atIndex:2];
+      [abcLoss setBuffer:bna_ixyz offset:0 atIndex:3];
+      [abcLoss setBuffer:constants offset:0 atIndex:4];
+      [abcLoss dispatchThreads:MTLSizeMake(Nba, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
+      [abcLoss endEncoding];
 
       // Read receiver
-      id<MTLComputeCommandEncoder> readOutputEncoder = [commandBuffer computeCommandEncoder];
-      [readOutputEncoder setComputePipelineState:kernelReadOutput];
-      [readOutputEncoder setBuffer:u_out offset:0 atIndex:0];
-      [readOutputEncoder setBuffer:u1 offset:0 atIndex:1];
-      [readOutputEncoder setBuffer:out_ixyz offset:0 atIndex:2];
-      [readOutputEncoder setBuffer:constants offset:0 atIndex:3];
-      [readOutputEncoder dispatchThreads:MTLSizeMake(Nr, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
-      [readOutputEncoder endEncoding];
+      id<MTLComputeCommandEncoder> readOutput = [commandBuffer computeCommandEncoder];
+      [readOutput setComputePipelineState:kernelReadOutput];
+      [readOutput setBuffer:u_out offset:0 atIndex:0];
+      [readOutput setBuffer:u1 offset:0 atIndex:1];
+      [readOutput setBuffer:out_ixyz offset:0 atIndex:2];
+      [readOutput setBuffer:constants offset:0 atIndex:3];
+      [readOutput setBuffer:timestep offset:0 atIndex:4];
+      [readOutput dispatchThreads:MTLSizeMake(Nr, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];
+      [readOutput endEncoding];
 
       // Wait
       [commandBuffer commit];
       [commandBuffer waitUntilCompleted];
+      PFFDTD_ASSERT(commandBuffer.status == MTLCommandBufferStatusCompleted);
 
       // Swap buffers
       {

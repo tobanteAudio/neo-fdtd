@@ -16,6 +16,7 @@
 #endif
 
 #if defined(PFFDTD_HAS_METAL)
+  #include "pffdtd/engine_metal_2d.hpp"
   #include "pffdtd/engine_metal_3d.hpp"
 #endif
 
@@ -37,6 +38,9 @@ namespace {
   using Callback    = std::function<stdex::mdarray<double, stdex::dextents<size_t, 2>>(Simulation2D const&)>;
   auto engines      = std::map<std::string, Callback>{};
   engines["native"] = pffdtd::EngineCPU2D{};
+#if defined(PFFDTD_HAS_METAL)
+  engines["metal"] = pffdtd::EngineMETAL2D{};
+#endif
 #if defined(PFFDTD_HAS_SYCL)
   engines["sycl"] = pffdtd::EngineSYCL2D{};
 #endif
