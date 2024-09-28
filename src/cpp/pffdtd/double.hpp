@@ -9,7 +9,7 @@
 namespace pffdtd {
 
 /// https://github.com/sukop/doubledouble/blob/master/doubledouble.py
-template<std::floating_point Real>
+template<typename Real>
 struct Double {
   constexpr Double() = default;
 
@@ -19,12 +19,12 @@ struct Double {
 
   [[nodiscard]] constexpr auto low() const noexcept -> Real { return _low; }
 
-  template<std::floating_point OtherReal>
+  template<typename OtherReal>
   explicit constexpr operator OtherReal() const noexcept {
     return static_cast<OtherReal>(high());
   }
 
-  template<std::floating_point OtherReal>
+  template<typename OtherReal>
   explicit constexpr operator Double<OtherReal>() const noexcept {
     return Double<OtherReal>{
         static_cast<OtherReal>(high()),
@@ -104,8 +104,16 @@ struct Double {
 
   [[nodiscard]] static constexpr auto twoProduct(Real x, Real y) noexcept -> Double {
     auto r = x * y;
-    auto e = std::fma(x, y, -r);
-    return Double{r, e};
+#if defined(__APPLE__)
+    if constexpr (std::same_as<Real, _Float16>) {
+      auto e = static_cast<_Float16>(std::fma(float{x}, float{y}, float{-r}));
+      return Double{r, e};
+    } else
+#endif
+    {
+      auto e = std::fma(x, y, -r);
+      return Double{r, e};
+    }
   }
 
   Real _high{static_cast<Real>(0)};
@@ -114,5 +122,5 @@ struct Double {
 
 } // namespace pffdtd
 
-template<std::floating_point Real>
+template<typename Real>
 struct std::numeric_limits<pffdtd::Double<Real>> : std::numeric_limits<Real> {};
