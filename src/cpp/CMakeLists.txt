@@ -27,6 +27,7 @@ target_sources(pffdtd
         pffdtd/exception.hpp
         pffdtd/hdf.hpp
         pffdtd/mdspan.hpp
+        pffdtd/precision.hpp
         pffdtd/progress.cpp
         pffdtd/progress.hpp
         pffdtd/simulation_2d.cpp

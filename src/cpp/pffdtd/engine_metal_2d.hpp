@@ -8,6 +8,7 @@
 #endif
 
 #include "pffdtd/mdspan.hpp"
+#include "pffdtd/precision.hpp"
 #include "pffdtd/simulation_2d.hpp"
 
 namespace pffdtd {

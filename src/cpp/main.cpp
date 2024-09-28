@@ -6,6 +6,7 @@
 #include "pffdtd/engine_cpu_3d.hpp"
 #include "pffdtd/exception.hpp"
 #include "pffdtd/hdf.hpp"
+#include "pffdtd/precision.hpp"
 #include "pffdtd/simulation_2d.hpp"
 #include "pffdtd/simulation_3d.hpp"
 #include "pffdtd/time.hpp"
@@ -33,19 +34,14 @@
 
 namespace {
 
-enum struct Precision {
-  Float,
-  Double,
-};
-
 [[nodiscard]] auto precisionOptions() {
-  return std::map<std::string, Precision>{
-      {"32",  Precision::Float},
-      {"64", Precision::Double},
+  return std::map<std::string, pffdtd::Precision>{
+      {"32",  pffdtd::Precision::Float},
+      {"64", pffdtd::Precision::Double},
   };
 }
 
-[[nodiscard]] auto toString(Precision precision) -> std::string {
+[[nodiscard]] auto toString(pffdtd::Precision precision) -> std::string {
   for (auto const& p : precisionOptions()) {
     if (p.second == precision) {
       return p.first;
@@ -55,15 +51,15 @@ enum struct Precision {
 }
 
 [[nodiscard]] auto getEngines2D() {
-  using pffdtd::Simulation2D;
-  using Callback = std::function<stdex::mdarray<double, stdex::dextents<size_t, 2>>(Simulation2D const&)>;
+  using namespace pffdtd;
+  using Callback = std::function<stdex::mdarray<double, stdex::dextents<size_t, 2>>(Simulation2D const&, Precision)>;
   auto engines   = std::map<std::string, Callback>{};
-  engines["cpu"] = pffdtd::EngineCPU2D{};
+  engines["cpu"] = EngineCPU2D{};
 #if defined(PFFDTD_HAS_METAL)
-  engines["metal"] = pffdtd::EngineMETAL2D{};
+  engines["metal"] = EngineMETAL2D{};
 #endif
 #if defined(PFFDTD_HAS_SYCL)
-  engines["sycl"] = pffdtd::EngineSYCL2D{};
+  engines["sycl"] = EngineSYCL2D{};
 #endif
   return engines;
 }
@@ -97,12 +93,13 @@ struct Arguments {
     std::string simDir;
     std::string engine{"cpu"};
     std::string out{"out.h5"};
+    pffdtd::Precision precision{pffdtd::Precision::Double};
   };
 
   struct Sim3D {
     std::string simDir;
     std::string engine{"cpu"};
-    Precision precision{Precision::Double};
+    pffdtd::Precision precision{pffdtd::Precision::Double};
   };
 
   Sim2D sim2d;
@@ -142,6 +139,9 @@ auto main(int argc, char** argv) -> int {
   sim2d->add_option("-s,--sim_dir", args.sim2d.simDir)->required()->check(CLI::ExistingDirectory);
   sim2d->add_option("-e,--engine", args.sim2d.engine)->transform(toLower);
   sim2d->add_option("-o,--out", args.sim2d.out);
+  sim2d->add_option("-p,--precision", args.sim3d.precision)
+      ->required()
+      ->transform(CLI::CheckedTransformer(precisionOptions(), CLI::ignore_case));
 
   auto* sim3d = app.add_subcommand("sim3d", "Run 3D simulation");
   sim3d->add_option("-s,--sim_dir", args.sim3d.simDir)->required()->check(CLI::ExistingDirectory);
@@ -154,14 +154,14 @@ auto main(int argc, char** argv) -> int {
   CLI11_PARSE(app, argc, argv);
 
   if (*sim2d) {
-    fmt::println("Using engine: {}", args.sim2d.engine);
+    fmt::println("Using engine: {} with precision {}", args.sim2d.engine, toString(args.sim2d.precision));
     auto const engines = getEngines2D();
     auto const& engine = engines.at(args.sim2d.engine);
 
     auto const start  = pffdtd::getTime();
     auto const simDir = std::filesystem::path{args.sim2d.simDir};
     auto const sim    = pffdtd::loadSimulation2D(simDir);
-    auto const out    = engine(sim);
+    auto const out    = engine(sim, args.sim2d.precision);
 
     auto results = pffdtd::HDF5Writer{simDir / args.sim2d.out};
     results.write("out", out);
@@ -172,9 +172,9 @@ auto main(int argc, char** argv) -> int {
   }
 
   if (*sim3d) {
-    if (args.sim3d.precision == Precision::Float) {
+    if (args.sim3d.precision == pffdtd::Precision::Float) {
       run3D<float>(args.sim3d);
-    } else if (args.sim3d.precision == Precision::Double) {
+    } else if (args.sim3d.precision == pffdtd::Precision::Double) {
       run3D<double>(args.sim3d);
     } else {
       pffdtd::raisef<std::invalid_argument>("invalid precision '{}'", toString(args.sim3d.precision));

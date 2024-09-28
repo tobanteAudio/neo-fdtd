@@ -4,6 +4,7 @@
 #include "engine_cpu_2d.hpp"
 
 #include "pffdtd/double.hpp"
+#include "pffdtd/exception.hpp"
 #include "pffdtd/progress.hpp"
 #include "pffdtd/time.hpp"
 
@@ -17,9 +18,10 @@
 
 namespace pffdtd {
 
-auto EngineCPU2D::operator()(Simulation2D const& sim) const -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
-  using Real = double;
+namespace {
 
+template<typename Real>
+auto run(Simulation2D const& sim) {
   summary(sim);
 
   auto const Nx         = sim.Nx;
@@ -143,6 +145,19 @@ auto EngineCPU2D::operator()(Simulation2D const& sim) const -> stdex::mdarray<do
   fmt::println("");
 
   return out_buf;
+}
+
+} // namespace
+
+auto EngineCPU2D::operator()(Simulation2D const& sim, Precision precision) const
+    -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
+  if (precision == Precision::Float) {
+    return run<float>(sim);
+  } else if (precision == Precision::Double) {
+    return run<double>(sim);
+  } else {
+    raisef<std::invalid_argument>("invalid precision {}", static_cast<int>(precision));
+  }
 }
 
 } // namespace pffdtd

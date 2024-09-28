@@ -5,6 +5,7 @@
 
 #include "pffdtd/assert.hpp"
 #include "pffdtd/double.hpp"
+#include "pffdtd/exception.hpp"
 #include "pffdtd/progress.hpp"
 #include "pffdtd/sycl.hpp"
 #include "pffdtd/time.hpp"
@@ -19,11 +20,8 @@ namespace {
 
 [[nodiscard]] constexpr auto to_ixy(auto x, auto y, auto /*Nx*/, auto Ny) { return x * Ny + y; }
 
-} // namespace
-
-auto EngineSYCL2D::operator()(Simulation2D const& sim) const -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
-  using Real = double;
-
+template<typename Real>
+auto run(Simulation2D const& sim) {
   summary(sim);
 
   auto const Nx          = sim.Nx;
@@ -190,5 +188,18 @@ auto EngineSYCL2D::operator()(Simulation2D const& sim) const -> stdex::mdarray<d
   fmt::println("");
 
   return outputs;
+}
+
+} // namespace
+
+auto EngineSYCL2D::operator()(Simulation2D const& sim, Precision precision) const
+    -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
+  if (precision == Precision::Float) {
+    return run<float>(sim);
+  } else if (precision == Precision::Double) {
+    return run<double>(sim);
+  } else {
+    raisef<std::invalid_argument>("invalid precision {}", static_cast<int>(precision));
+  }
 }
 } // namespace pffdtd

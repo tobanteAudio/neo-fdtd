@@ -190,7 +190,9 @@ auto run(Simulation2D const& sim) {
 
 } // namespace
 
-auto EngineMETAL2D::operator()(Simulation2D const& sim) const -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
+auto EngineMETAL2D::operator()(Simulation2D const& sim, Precision precision) const
+    -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
+  PFFDTD_ASSERT(precision == Precision::Float);
   return run(sim);
 }
 
