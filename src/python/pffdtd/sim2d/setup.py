@@ -101,15 +101,15 @@ def sim_setup_2d(
         loss_factor = 0.5*np.sqrt(0.5)*g  # a loss factor
 
     # Set up an excitation signal
-    src_sig = np.zeros(Nt, dtype=np.float64)
-    src_sig[0] = 1.0
-    src_sig_f = src_sig
+    in_sigs = np.zeros(Nt, dtype=np.float64)
+    in_sigs[0] = 1.0
+    in_sigs_f = in_sigs
 
     if diff:
         b = 2/constants.Ts*np.array([1.0, -1.0])
         a = np.array([1.0, 1.0])
-        src_sig_f = lfilter(b, a, src_sig, axis=-1)
-        src_sig_f /= np.max(np.abs(src_sig_f))
+        in_sigs_f = lfilter(b, a, in_sigs, axis=-1)
+        in_sigs_f /= np.max(np.abs(in_sigs_f))
 
     sps30 = dt*30
     target_sps = 0.115
@@ -130,7 +130,7 @@ def sim_setup_2d(
     h5f.create_dataset('bn_ixy', data=bn_ixy)
     h5f.create_dataset('in_mask', data=in_mask.flatten().astype(np.uint8))
     h5f.create_dataset('out_ixy', data=out_ixy)
-    h5f.create_dataset('src_sig', data=src_sig_f)
+    h5f.create_dataset('in_sigs', data=in_sigs_f)
     h5f.close()
 
     if image:

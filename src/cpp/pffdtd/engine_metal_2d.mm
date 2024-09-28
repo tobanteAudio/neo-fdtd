@@ -32,17 +32,15 @@ auto run(Simulation2D const& sim) {
     auto const Npts        = Nx * Ny;
     auto const Nt          = sim.Nt;
     auto const Nb          = static_cast<int64_t>(sim.adj_bn.size());
-    auto const inx         = sim.inx;
-    auto const iny         = sim.iny;
     auto const Nr          = static_cast<int64_t>(sim.out_ixy.size());
     auto const loss_factor = sim.loss_factor;
-    auto const src_sig_f32 = toFloat(sim.src_sig);
+    auto const in_sigs_f32 = toFloat(sim.in_sigs);
 
     auto const c = Constants2D<float>{
         .Nx         = Nx,
         .Ny         = Ny,
         .Nt         = Nt,
-        .in_ixy     = inx * Ny + iny,
+        .in_ixy     = sim.in_ixy.at(0),
         .lossFactor = static_cast<float>(loss_factor),
     };
 
@@ -67,7 +65,7 @@ auto run(Simulation2D const& sim) {
     id<MTLBuffer> bn_ixy    = makeBuffer(device, sim.bn_ixy, MTLResourceStorageModeShared);
     id<MTLBuffer> adj_bn    = makeBuffer(device, sim.adj_bn, MTLResourceStorageModeShared);
     id<MTLBuffer> out_ixy   = makeBuffer(device, sim.out_ixy, MTLResourceStorageModeShared);
-    id<MTLBuffer> src_sig   = makeBuffer(device, src_sig_f32, MTLResourceStorageModeShared);
+    id<MTLBuffer> in_sigs   = makeBuffer(device, in_sigs_f32, MTLResourceStorageModeShared);
     id<MTLBuffer> constants = [device newBufferWithBytes:&c
                                                   length:sizeof(Constants2D<float>)
                                                  options:MTLResourceStorageModeShared];
@@ -132,7 +130,7 @@ auto run(Simulation2D const& sim) {
       id<MTLComputeCommandEncoder> addSource = [commandBuffer computeCommandEncoder];
       [addSource setComputePipelineState:addSourceKernel];
       [addSource setBuffer:u0 offset:0 atIndex:0];
-      [addSource setBuffer:src_sig offset:0 atIndex:1];
+      [addSource setBuffer:in_sigs offset:0 atIndex:1];
       [addSource setBuffer:constants offset:0 atIndex:2];
       [addSource setBuffer:timestep offset:0 atIndex:3];
       [addSource dispatchThreads:MTLSizeMake(1, 1, 1) threadsPerThreadgroup:MTLSizeMake(1, 1, 1)];

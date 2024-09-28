@@ -106,7 +106,7 @@ auto EngineSYCL2D::operator()(Simulation2D const& sim) const -> stdex::mdarray<d
   auto bn_ixy_buf  = sycl::buffer<int64_t, 1>{sim.bn_ixy};
   auto adj_bn_buf  = sycl::buffer<int64_t, 1>{sim.adj_bn};
   auto out_ixy_buf = sycl::buffer<int64_t, 1>{sim.out_ixy};
-  auto src_sig_buf = sycl::buffer<double, 1>{sim.src_sig};
+  auto src_sig_buf = sycl::buffer<double, 1>{sim.in_sigs};
 
   auto elapsedAir      = std::chrono::nanoseconds{0};
   auto elapsedBoundary = std::chrono::nanoseconds{0};
@@ -151,9 +151,9 @@ auto EngineSYCL2D::operator()(Simulation2D const& sim) const -> stdex::mdarray<d
 
     queue.submit([&](sycl::handler& cgh) {
       auto u0      = sycl::accessor{u0_buf, cgh, sycl::read_write};
-      auto src_sig = sycl::accessor{src_sig_buf, cgh, sycl::read_only};
+      auto in_sigs = sycl::accessor{src_sig_buf, cgh, sycl::read_only};
 
-      cgh.parallel_for<struct CopyInput>(1, [=](sycl::id<1>) { u0[inx][iny] += src_sig[n]; });
+      cgh.parallel_for<struct CopyInput>(1, [=](sycl::id<1>) { u0[inx][iny] += in_sigs[n]; });
     });
 
     queue.submit([&](sycl::handler& cgh) {

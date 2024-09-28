@@ -38,10 +38,10 @@ class ProStudio(Setup3D):
     rh = 50
     fcc = False
     ppw = 7.7
-    fmax = 2000.0
+    fmax = 800.0
     save_folder = '../../sim_data/ProStudio/cpu'
     save_folder_gpu = '../../sim_data/ProStudio/gpu'
-    draw_vox = True
+    draw_vox = False
     draw_backend = 'polyscope'
     compress = 0
     rot_az_el = [0, 0]

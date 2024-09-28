@@ -27,7 +27,7 @@ class Engine2D:
         self.adj_bn = h5f['adj_bn'][...]
         self.bn_ixy = h5f['bn_ixy'][...]
         self.in_mask = h5f['in_mask'][...]
-        self.src_sig = h5f['src_sig'][...]
+        self.in_sigs = h5f['in_sigs'][...]
         self.out_ixy = h5f['out_ixy'][...]
 
         print(self.in_mask.shape)
@@ -39,7 +39,7 @@ class Engine2D:
         bn_ixy = self.bn_ixy
         adj_bn = self.adj_bn
         in_mask = self.in_mask
-        src_sig = self.src_sig
+        in_sigs = self.in_sigs
         out_ixy = self.out_ixy
         inx = self.inx
         iny = self.iny
@@ -70,7 +70,7 @@ class Engine2D:
             stencil_boundary_rigid(u0, u1, u2, bn_ixy, adj_bn)
             stencil_boundary_loss(u0, u2, bn_ixy, adj_bn, loss_factor)
 
-            u0[inx, iny] = u0[inx, iny] + src_sig[nt]
+            u0[inx, iny] = u0[inx, iny] + in_sigs[nt]
 
             self.out[:, nt] = u0.flat[[out_ixy]]
 

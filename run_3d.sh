@@ -7,9 +7,9 @@ set -e
 
 root_dir="$(cd "$(dirname "$0")" && pwd)"
 pffdtd_engine="$root_dir/build/src/cpp/pffdtd-engine"
-pffdtd_engine="$root_dir/cmake-build-cuda/src/cpp/pffdtd-engine"
+# pffdtd_engine="$root_dir/cmake-build-cuda/src/cpp/pffdtd-engine"
 
-sim_name="ProStudio"
+sim_name="Modes"
 sim_setup="${sim_name}.py"
 sim_dir="$root_dir/sim_data/$sim_name/gpu"
 
@@ -17,7 +17,7 @@ model_dir="$root_dir/models/$sim_name"
 materials_dir="$root_dir/materials"
 
 fmin=20
-fmax=2000
+fmax=800
 smoothing=0
 
 # Delete old sim
@@ -28,7 +28,7 @@ cd "$model_dir"
 pffdtd sim3d setup "$sim_setup"
 
 # Run sim
-$pffdtd_engine sim3d -p "64" -s "$sim_dir"
+$pffdtd_engine sim3d -e cpu -p "32" -s "$sim_dir"
 # pffdtd sim3d engine --sim_dir="$sim_dir" --plot --draw_backend="mayavi" --json_model="${model_dir}/model.json"
 
 # Post-process

@@ -59,7 +59,7 @@ def main(sim_dir, out_file):
 
     print(times.shape)
 
-    modes = room_modes(3, 3, 3)[:30]
+    modes = room_modes(3.65, 6, 3)[:30]
     modes_f = [mode['frequency'] for mode in modes]
 
     plt.plot(times, out.squeeze(), label=f'{15}deg')
