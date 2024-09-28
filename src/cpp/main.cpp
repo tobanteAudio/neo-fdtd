@@ -35,9 +35,14 @@
 namespace {
 
 [[nodiscard]] auto precisionOptions() {
-  return std::map<std::string, pffdtd::Precision>{
-      {"32",  pffdtd::Precision::Float},
-      {"64", pffdtd::Precision::Double},
+  using pffdtd::Precision;
+  return std::map<std::string, Precision>{
+      {  "16",         Precision::Half},
+      {  "32",        Precision::Float},
+      {  "64",       Precision::Double},
+      {"16x2",   Precision::DoubleHalf},
+      {"32x2",  Precision::DoubleFloat},
+      {"64x2", Precision::DoubleDouble},
   };
 }
 
@@ -139,7 +144,7 @@ auto main(int argc, char** argv) -> int {
   sim2d->add_option("-s,--sim_dir", args.sim2d.simDir)->required()->check(CLI::ExistingDirectory);
   sim2d->add_option("-e,--engine", args.sim2d.engine)->transform(toLower);
   sim2d->add_option("-o,--out", args.sim2d.out);
-  sim2d->add_option("-p,--precision", args.sim3d.precision)
+  sim2d->add_option("-p,--precision", args.sim2d.precision)
       ->required()
       ->transform(CLI::CheckedTransformer(precisionOptions(), CLI::ignore_case));
 

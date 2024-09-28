@@ -18,7 +18,65 @@ namespace pffdtd {
 
 namespace {
 
+template<typename Real>
+struct AirUpdate;
+template<typename Real>
+struct BoundaryRigid;
+template<typename Real>
+struct BoundaryLoss;
+template<typename Real>
+struct CopyInput;
+template<typename Real>
+struct CopyOutput;
+
+template<typename Real>
+static constexpr auto min_exponent = std::numeric_limits<Real>::min_exponent;
+
+template<typename Real>
+static constexpr auto min_exponent<Double<Real>> = min_exponent<Real>;
+
+template<>
+static constexpr auto min_exponent<_Float16> = -13;
+
+template<typename Real>
+static constexpr auto max_exponent = std::numeric_limits<Real>::max_exponent;
+
+template<typename Real>
+static constexpr auto max_exponent<Double<Real>> = max_exponent<Real>;
+
+template<>
+static constexpr auto max_exponent<_Float16> = 16;
+
 [[nodiscard]] constexpr auto to_ixy(auto x, auto y, auto /*Nx*/, auto Ny) { return x * Ny + y; }
+
+template<typename Real>
+auto scaleInput(std::vector<double> const& buf) {
+  static constexpr auto min_exp = static_cast<double>(min_exponent<Real>);
+  static constexpr auto max_exp = static_cast<double>(max_exponent<Real>);
+  fmt::println("min_exp = {}, min_exp = {}", min_exp, max_exp);
+
+  auto const aexp  = 0.5;
+  auto const pow2  = static_cast<int>(std::round(aexp * max_exp + (1 - aexp) * min_exp));
+  auto const norm1 = std::pow(2.0, pow2);
+
+  auto const max_in    = *std::ranges::max_element(buf, [](auto l, auto r) { return std::fabs(l) < std::fabs(r); });
+  auto const inv_infac = norm1 / max_in;
+  auto const infac     = 1.0 / inv_infac;
+
+  std::printf(
+      "max_in = %.16e, pow2 = %d, norm1 = %.16e, inv_infac = %.16e, infac = "
+      "%.16e\n",
+      max_in,
+      pow2,
+      norm1,
+      inv_infac,
+      infac
+  );
+
+  auto buf_out = buf;
+  std::ranges::transform(buf_out, buf_out.begin(), [=](auto v) { return v * inv_infac; });
+  return std::pair{buf_out, infac};
+}
 
 template<typename Real>
 auto run(Simulation2D const& sim) {
@@ -37,6 +95,8 @@ auto run(Simulation2D const& sim) {
   auto device = queue.get_device();
   summary(device);
 
+  auto const [in_sigs_scaled, infac] = scaleInput<Real>(sim.in_sigs);
+
   auto u0_buf  = sycl::buffer<Real, 1>(sycl::range<1>(Npts));
   auto u1_buf  = sycl::buffer<Real, 1>(sycl::range<1>(Npts));
   auto u2_buf  = sycl::buffer<Real, 1>(sycl::range<1>(Npts));
@@ -45,7 +105,7 @@ auto run(Simulation2D const& sim) {
   auto in_mask_buf = sycl::buffer{sim.in_mask};
   auto bn_ixy_buf  = sycl::buffer{sim.bn_ixy};
   auto adj_bn_buf  = sycl::buffer{sim.adj_bn};
-  auto in_sigs_buf = sycl::buffer{sim.in_sigs};
+  auto in_sigs_buf = sycl::buffer{in_sigs_scaled};
   auto in_ixy_buf  = sycl::buffer{sim.in_ixy};
   auto out_ixy_buf = sycl::buffer{sim.out_ixy};
 
@@ -62,7 +122,7 @@ auto run(Simulation2D const& sim) {
       auto u2      = sycl::accessor{u2_buf, cgh, sycl::read_only};
       auto in_mask = sycl::accessor{in_mask_buf, cgh, sycl::read_only};
 
-      cgh.parallel_for<struct AirUpdate>(sycl::range<2>(Nx - 2, Ny - 2), [=](sycl::id<2> id) {
+      cgh.parallel_for<AirUpdate<Real>>(sycl::range<2>(Nx - 2, Ny - 2), [=](sycl::id<2> id) {
         auto const x   = static_cast<int64_t>(id[0] + 1);
         auto const y   = static_cast<int64_t>(id[1] + 1);
         auto const idx = to_ixy(x, y, 0, Ny);
@@ -88,7 +148,7 @@ auto run(Simulation2D const& sim) {
       auto bn_ixy = sycl::accessor{bn_ixy_buf, cgh, sycl::read_only};
       auto adj_bn = sycl::accessor{adj_bn_buf, cgh, sycl::read_only};
 
-      cgh.parallel_for<struct BoundaryRigid>(Nb, [=](sycl::id<1> id) {
+      cgh.parallel_for<BoundaryRigid<Real>>(Nb, [=](sycl::id<1> id) {
         auto const ib = bn_ixy[id];
         auto const K  = static_cast<Real>(adj_bn[id]);
 
@@ -111,7 +171,7 @@ auto run(Simulation2D const& sim) {
       auto bn_ixy = sycl::accessor{bn_ixy_buf, cgh, sycl::read_only};
       auto adj_bn = sycl::accessor{adj_bn_buf, cgh, sycl::read_only};
 
-      cgh.parallel_for<struct BoundaryLoss>(Nb, [=](sycl::id<1> id) {
+      cgh.parallel_for<BoundaryLoss<Real>>(Nb, [=](sycl::id<1> id) {
         auto const ib      = bn_ixy[id];
         auto const K       = adj_bn[id];
         auto const current = u0[ib];
@@ -127,7 +187,7 @@ auto run(Simulation2D const& sim) {
       auto in_ixy  = sycl::accessor{in_ixy_buf, cgh, sycl::read_only};
       auto in_sigs = sycl::accessor{in_sigs_buf, cgh, sycl::read_only};
 
-      cgh.parallel_for<struct CopyInput>(Ns, [=](sycl::id<1> id) {
+      cgh.parallel_for<CopyInput<Real>>(Ns, [=](sycl::id<1> id) {
         auto src_ixy = to_ixy(id[0], n, Ns, Nt);
         u0[in_ixy[id[0]]] += static_cast<Real>(in_sigs[src_ixy]);
       });
@@ -138,7 +198,7 @@ auto run(Simulation2D const& sim) {
       auto out     = sycl::accessor{out_buf, cgh, sycl::write_only};
       auto out_ixy = sycl::accessor{out_ixy_buf, cgh, sycl::read_only};
 
-      cgh.parallel_for<struct CopyOutput>(Nr, [=](sycl::id<1> id) {
+      cgh.parallel_for<CopyOutput<Real>>(Nr, [=](sycl::id<1> id) {
         auto const r = id[0];
         out[r][n]    = u0[out_ixy[r]];
       });
@@ -181,7 +241,7 @@ auto run(Simulation2D const& sim) {
   auto host    = sycl::host_accessor{out_buf, sycl::read_only};
   for (auto it{0UL}; it < static_cast<size_t>(Nt); ++it) {
     for (auto ir{0UL}; ir < Nr; ++ir) {
-      outputs(ir, it) = static_cast<double>(host[ir][it]);
+      outputs(ir, it) = static_cast<double>(host[ir][it]) * infac;
     }
   }
 
@@ -194,12 +254,17 @@ auto run(Simulation2D const& sim) {
 
 auto EngineSYCL2D::operator()(Simulation2D const& sim, Precision precision) const
     -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
-  if (precision == Precision::Float) {
-    return run<float>(sim);
-  } else if (precision == Precision::Double) {
-    return run<double>(sim);
-  } else {
-    raisef<std::invalid_argument>("invalid precision {}", static_cast<int>(precision));
+  switch (precision) {
+    case Precision::Float: return run<float>(sim);
+    case Precision::Double: return run<double>(sim);
+    case Precision::DoubleFloat: return run<Double<float>>(sim);
+    case Precision::DoubleDouble: return run<Double<double>>(sim);
+#if defined(__APPLE__) or defined(__clang__)
+    case Precision::Half: return run<_Float16>(sim);
+    case Precision::DoubleHalf: return run<Double<_Float16>>(sim);
+#endif
+
+    default: raisef<std::invalid_argument>("invalid precision {}", static_cast<int>(precision));
   }
 }
 } // namespace pffdtd

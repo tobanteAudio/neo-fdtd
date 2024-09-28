@@ -109,21 +109,16 @@ struct Double {
   [[nodiscard]] static constexpr auto twoProduct(Real x, Real y) noexcept -> Double {
     auto r = x * y;
 
-#if defined(SYCL_LANGUAGE_VERSION)
-    auto e = sycl::fma(x, y, -r);
-    return Double{r, e};
-#else
-  #if defined(__APPLE__)
+#if defined(__APPLE__) or defined(__clang__)
     if constexpr (std::same_as<Real, _Float16>) {
       auto e = static_cast<_Float16>(std::fma(float{x}, float{y}, float{-r}));
       return Double{r, e};
     } else
-  #endif
+#endif
     {
       auto e = std::fma(x, y, -r);
       return Double{r, e};
     }
-#endif
   }
 
   Real _high{static_cast<Real>(0)};
@@ -131,6 +126,3 @@ struct Double {
 };
 
 } // namespace pffdtd
-
-template<typename Real>
-struct std::numeric_limits<pffdtd::Double<Real>> : std::numeric_limits<Real> {};

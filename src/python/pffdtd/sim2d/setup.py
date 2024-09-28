@@ -109,7 +109,6 @@ def sim_setup_2d(
         b = 2/constants.Ts*np.array([1.0, -1.0])
         a = np.array([1.0, 1.0])
         in_sigs_f = lfilter(b, a, in_sigs, axis=-1)
-        in_sigs_f /= np.max(np.abs(in_sigs_f))
 
     sps30 = dt*30
     target_sps = 0.115

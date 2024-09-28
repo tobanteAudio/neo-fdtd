@@ -151,12 +151,16 @@ auto run(Simulation2D const& sim) {
 
 auto EngineCPU2D::operator()(Simulation2D const& sim, Precision precision) const
     -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
-  if (precision == Precision::Float) {
-    return run<float>(sim);
-  } else if (precision == Precision::Double) {
-    return run<double>(sim);
-  } else {
-    raisef<std::invalid_argument>("invalid precision {}", static_cast<int>(precision));
+  switch (precision) {
+    case Precision::Float: return run<float>(sim);
+    case Precision::Double: return run<double>(sim);
+    case Precision::DoubleFloat: return run<Double<float>>(sim);
+    case Precision::DoubleDouble: return run<Double<double>>(sim);
+#if defined(__APPLE__) or defined(__clang__)
+    case Precision::Half: return run<_Float16>(sim);
+    case Precision::DoubleHalf: return run<Double<_Float16>>(sim);
+#endif
+    default: raisef<std::invalid_argument>("invalid precision {}", static_cast<int>(precision));
   }
 }
 
