@@ -2,6 +2,10 @@
 // SPDX-FileCopyrightText: 2024 Tobias Hienzsch
 #pragma once
 
+#if defined(SYCL_LANGUAGE_VERSION)
+  #include "pffdtd/sycl.hpp"
+#endif
+
 #include <cmath>
 #include <concepts>
 #include <limits>
@@ -104,16 +108,22 @@ struct Double {
 
   [[nodiscard]] static constexpr auto twoProduct(Real x, Real y) noexcept -> Double {
     auto r = x * y;
-#if defined(__APPLE__)
+
+#if defined(SYCL_LANGUAGE_VERSION)
+    auto e = sycl::fma(x, y, -r);
+    return Double{r, e};
+#else
+  #if defined(__APPLE__)
     if constexpr (std::same_as<Real, _Float16>) {
       auto e = static_cast<_Float16>(std::fma(float{x}, float{y}, float{-r}));
       return Double{r, e};
     } else
-#endif
+  #endif
     {
       auto e = std::fma(x, y, -r);
       return Double{r, e};
     }
+#endif
   }
 
   Real _high{static_cast<Real>(0)};

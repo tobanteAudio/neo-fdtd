@@ -2,10 +2,11 @@
 # SPDX-FileCopyrightText: 2024 Tobias Hienzsch
 
 import click
-from scipy.io import wavfile
 import matplotlib.pyplot as plt
-import numpy as np
 from matplotlib.ticker import ScalarFormatter
+import numpy as np
+from scipy.io import wavfile
+from tqdm import tqdm
 
 from pffdtd.common.plot import plot_styles
 from pffdtd.geometry.math import iceil
@@ -28,7 +29,7 @@ def fractional_octave_smoothing(magnitudes, fs, nfft, fraction=3):
     frequencies = np.fft.rfftfreq(nfft, 1/fs)
     smoothed = np.zeros_like(magnitudes)
 
-    for i in range(magnitudes.shape[-1]):
+    for i in tqdm(range(magnitudes.shape[-1])):
         fc = frequencies[i]
         fl = fc / 2**(1/(2*fraction))
         fu = fc * 2**(1/(2*fraction))
