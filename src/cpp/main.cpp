@@ -33,11 +33,32 @@
 
 namespace {
 
+enum struct Precision {
+  Float,
+  Double,
+};
+
+[[nodiscard]] auto precisionOptions() {
+  return std::map<std::string, Precision>{
+      {"32",  Precision::Float},
+      {"64", Precision::Double},
+  };
+}
+
+[[nodiscard]] auto toString(Precision precision) -> std::string {
+  for (auto const& p : precisionOptions()) {
+    if (p.second == precision) {
+      return p.first;
+    }
+  }
+  return "";
+}
+
 [[nodiscard]] auto getEngines2D() {
   using pffdtd::Simulation2D;
-  using Callback    = std::function<stdex::mdarray<double, stdex::dextents<size_t, 2>>(Simulation2D const&)>;
-  auto engines      = std::map<std::string, Callback>{};
-  engines["native"] = pffdtd::EngineCPU2D{};
+  using Callback = std::function<stdex::mdarray<double, stdex::dextents<size_t, 2>>(Simulation2D const&)>;
+  auto engines   = std::map<std::string, Callback>{};
+  engines["cpu"] = pffdtd::EngineCPU2D{};
 #if defined(PFFDTD_HAS_METAL)
   engines["metal"] = pffdtd::EngineMETAL2D{};
 #endif
@@ -74,14 +95,14 @@ template<typename Real>
 struct Arguments {
   struct Sim2D {
     std::string simDir;
-    std::string engine{"native"};
+    std::string engine{"cpu"};
     std::string out{"out.h5"};
   };
 
   struct Sim3D {
     std::string simDir;
     std::string engine{"cpu"};
-    std::string precision{"64"};
+    Precision precision{Precision::Double};
   };
 
   Sim2D sim2d;
@@ -91,7 +112,7 @@ struct Arguments {
 template<typename Real>
 auto run3D(Arguments::Sim3D const& args) {
   using namespace pffdtd;
-  fmt::println("Running: {} on {} with precision {}", args.simDir, args.engine, args.precision);
+  fmt::println("Running: {} on {} with precision {}", args.simDir, args.engine, toString(args.precision));
 
   auto const engines = getEngines3D<Real>();
   auto const& engine = engines.at(args.engine);
@@ -118,14 +139,16 @@ auto main(int argc, char** argv) -> int {
   auto args = Arguments{};
 
   auto* sim2d = app.add_subcommand("sim2d", "Run 2D simulation");
-  sim2d->add_option("-s,--sim_dir", args.sim2d.simDir)->check(CLI::ExistingDirectory)->required();
+  sim2d->add_option("-s,--sim_dir", args.sim2d.simDir)->required()->check(CLI::ExistingDirectory);
   sim2d->add_option("-e,--engine", args.sim2d.engine)->transform(toLower);
   sim2d->add_option("-o,--out", args.sim2d.out);
 
   auto* sim3d = app.add_subcommand("sim3d", "Run 3D simulation");
-  sim3d->add_option("-s,--sim_dir", args.sim3d.simDir)->check(CLI::ExistingDirectory)->required();
-  sim3d->add_option("-e,--engine", args.sim3d.engine)->transform(toLower);
-  sim3d->add_option("-p,--precision", args.sim3d.precision)->transform(toLower);
+  sim3d->add_option("-s,--sim_dir", args.sim3d.simDir)->required()->check(CLI::ExistingDirectory);
+  sim3d->add_option("-e,--engine", args.sim3d.engine)->required()->transform(toLower);
+  sim3d->add_option("-p,--precision", args.sim3d.precision)
+      ->required()
+      ->transform(CLI::CheckedTransformer(precisionOptions(), CLI::ignore_case));
 
   auto* test = app.add_subcommand("test", "Run unit tests");
   CLI11_PARSE(app, argc, argv);
@@ -149,12 +172,12 @@ auto main(int argc, char** argv) -> int {
   }
 
   if (*sim3d) {
-    if (args.sim3d.precision == "32") {
+    if (args.sim3d.precision == Precision::Float) {
       run3D<float>(args.sim3d);
-    } else if (args.sim3d.precision == "64") {
+    } else if (args.sim3d.precision == Precision::Double) {
       run3D<double>(args.sim3d);
     } else {
-      pffdtd::raisef<std::invalid_argument>("invalid precision '{}'", args.sim3d.precision);
+      pffdtd::raisef<std::invalid_argument>("invalid precision '{}'", toString(args.sim3d.precision));
     }
   }
 
