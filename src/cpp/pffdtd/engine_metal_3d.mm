@@ -287,7 +287,7 @@ auto run(Simulation3D const& sim) {
 } // namespace
 
 auto EngineMETAL3D::operator()(Simulation3D const& sim) const -> void {
-  PFFDTD_ASSERT(precision == Precision::Float);
+  PFFDTD_ASSERT(sim.precision == Precision::Float);
   run<float>(sim);
 }
 
