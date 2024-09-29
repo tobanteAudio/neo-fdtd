@@ -28,7 +28,7 @@ cd "$model_dir"
 python "$sim_setup"
 
 # Run sim
-DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=$jobs OMP_NUM_THREADS=$jobs "$engine_exe" sim2d -p 32 -s "$sim_dir" -e sycl
+DPCPP_CPU_PLACES=cores DPCPP_CPU_CU_AFFINITY=spread DPCPP_CPU_NUM_CUS=$jobs OMP_NUM_THREADS=$jobs "$engine_exe" sim2d -p 64 -s "$sim_dir" -e sycl
 # pffdtd sim2d run --sim_dir "$sim_dir" --video
 
 # Post-process

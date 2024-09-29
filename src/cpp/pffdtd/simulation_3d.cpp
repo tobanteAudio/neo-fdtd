@@ -3,6 +3,8 @@
 
 #include "simulation_3d.hpp"
 
+#include "pffdtd/double.hpp"
+#include "pffdtd/exception.hpp"
 #include "pffdtd/hdf.hpp"
 
 #include <fmt/format.h>
@@ -22,6 +24,61 @@ constexpr auto EPS = 0.0;
 
 template<>
 constexpr auto EPS<float> = 1.19209289e-07;
+
+auto getEpsilon(Precision precision) {
+  switch (precision) {
+    case Precision::Half: return EPS<float>;
+    case Precision::Float: return EPS<float>;
+    case Precision::Double: return EPS<double>;
+
+    case Precision::DoubleHalf: return EPS<float>;
+    case Precision::DoubleFloat: return EPS<float>;
+    case Precision::DoubleDouble: return EPS<double>;
+
+    default: break;
+  }
+
+  raisef<std::invalid_argument>("invalid precision = {}", int(precision));
+}
+
+template<typename Real>
+static constexpr auto min_exponent = std::numeric_limits<Real>::min_exponent;
+
+template<typename Real>
+static constexpr auto max_exponent = std::numeric_limits<Real>::max_exponent;
+
+template<typename Real>
+static constexpr auto min_exponent<Double<Real>> = min_exponent<Real>;
+
+template<typename Real>
+static constexpr auto max_exponent<Double<Real>> = max_exponent<Real>;
+
+#if defined(__APPLE__) or defined(__clang__)
+template<>
+static constexpr auto min_exponent<_Float16> = -13;
+
+template<>
+static constexpr auto max_exponent<_Float16> = 16;
+#endif
+
+auto getMinMaxExponent(Precision precision) {
+  switch (precision) {
+    case Precision::Float: return std::pair{min_exponent<float>, max_exponent<float>};
+    case Precision::DoubleFloat: return std::pair{min_exponent<float>, max_exponent<float>};
+
+    case Precision::Double: return std::pair{min_exponent<double>, max_exponent<double>};
+    case Precision::DoubleDouble: return std::pair{min_exponent<double>, max_exponent<double>};
+
+#if defined(__APPLE__) or defined(__clang__)
+    case Precision::Half: return std::pair{min_exponent<_Float16>, max_exponent<_Float16>};
+    case Precision::DoubleHalf: return std::pair{min_exponent<_Float16>, max_exponent<_Float16>};
+#endif
+
+    default: break;
+  }
+
+  raisef<std::invalid_argument>("invalid precision = {}", int(precision));
+}
 
 // sort and return indices
 void sort_keys(int64_t* val_arr, int64_t* key_arr, int64_t N) {
@@ -81,9 +138,7 @@ void check_inside_grid(int64_t const* idx, int64_t N, int64_t Nx, int64_t Ny, in
 
 // load the sim data from Python-written HDF5 files
 // NOLINTBEGIN(clang-analyzer-cplusplus.NewDeleteLeaks)
-template<typename Real>
-[[nodiscard]] auto loadSimulation3D_impl(std::filesystem::path const& simDir) -> Simulation3D<Real> {
-
+[[nodiscard]] auto loadSimulation3D_impl(std::filesystem::path const& simDir, Precision precision) -> Simulation3D {
   int expected_ndims = 0;
   hsize_t dims[2]    = {};
 
@@ -120,22 +175,23 @@ template<typename Real>
   }
 
   // calculate some update coefficients
-  double const lfac = isFCC(grid) ? 0.25 : 1.0;    // laplacian factor
-  double const dsl2 = (1.0 + EPS<Real>)*lfac * l2; // scale for stability (EPS in fdtd_common.hpp)
-  double const da1  = (2.0 - dsl2 * NN);           // scaling for stability in single
+  double const eps  = getEpsilon(precision);
+  double const lfac = isFCC(grid) ? 0.25 : 1.0; // laplacian factor
+  double const dsl2 = (1.0 + eps) * lfac * l2;  // scale for stability (EPS in fdtd_common.hpp)
+  double const da1  = (2.0 - dsl2 * NN);        // scaling for stability in single
   double const da2  = lfac * l2;
 
-  auto const a1  = static_cast<Real>(da1);
-  auto const a2  = static_cast<Real>(da2);
-  auto const sl2 = static_cast<Real>(dsl2);
-  auto const lo2 = static_cast<Real>(0.5 * l);
+  auto const a1  = static_cast<double>(da1);
+  auto const a2  = static_cast<double>(da2);
+  auto const sl2 = static_cast<double>(dsl2);
+  auto const lo2 = static_cast<double>(0.5 * l);
 
   fmt::println("a2 (double): {:.16g}", da2);
-  fmt::println("a2 (Real): {:.16g}", a2);
+  fmt::println("a2 (double): {:.16g}", a2);
   fmt::println("a1 (double): {:.16g}", da1);
-  fmt::println("a1 (Real): {:.16g}", a1);
+  fmt::println("a1 (double): {:.16g}", a1);
   fmt::println("sl2 (double): {:.16g}", dsl2);
-  fmt::println("sl2 (Real): {:.16g}", sl2);
+  fmt::println("sl2 (double): {:.16g}", sl2);
 
   fmt::println("l2={:.16g}", l2);
   fmt::println("NN={}", NN);
@@ -185,12 +241,12 @@ template<typename Real>
   auto saf_bn = vox_out.read<std::vector<double>>("saf_bn");
   PFFDTD_ASSERT(std::cmp_equal(saf_bn.size(), Nb));
 
-  auto ssaf_bn = std::vector<Real>(size_t(Nb));
+  auto ssaf_bn = std::vector<double>(size_t(Nb));
   for (int64_t i = 0; i < Nb; i++) {
     if (isFCC(grid)) {
-      ssaf_bn[i] = (Real)(0.5 / std::numbers::sqrt2) * saf_bn[i]; // rescale for S*h/V and cast
+      ssaf_bn[i] = (double)(0.5 / std::numbers::sqrt2) * saf_bn[i]; // rescale for S*h/V and cast
     } else {
-      ssaf_bn[i] = (Real)saf_bn[i]; // just cast
+      ssaf_bn[i] = (double)saf_bn[i]; // just cast
     }
   }
 
@@ -233,7 +289,7 @@ template<typename Real>
   PFFDTD_ASSERT(std::cmp_equal(in_sigs.size(), Ns * Nt));
 
   // not recommended to run single without differentiating input
-  if (sizeof(Real) == 4) {
+  if (sizeof(double) == 4) {
     PFFDTD_ASSERT(diff);
   }
 
@@ -259,8 +315,8 @@ template<typename Real>
   //////////////////
   // DEF (RLC) datasets
   //////////////////
-  auto mat_beta  = std::vector<Real>(size_t(Nm));
-  auto mat_quads = std::vector<MatQuad<Real>>(static_cast<unsigned long>(Nm) * size_t(MMb));
+  auto mat_beta  = std::vector<double>(size_t(Nm));
+  auto mat_quads = std::vector<MatQuad<double>>(static_cast<unsigned long>(Nm) * size_t(MMb));
   for (int8_t i = 0; i < Nm; i++) {
     auto DEF = materials.read<std::vector<double>>(fmt::format("mat_{:02d}_DEF", i).c_str());
     PFFDTD_ASSERT(Mb[i] <= MMb);
@@ -287,11 +343,11 @@ template<typename Real>
       PFFDTD_ASSERT(not std::isnan(bd));
 
       int32_t const mij  = (int32_t)MMb * i + j;
-      mat_quads[mij].b   = (Real)b;
-      mat_quads[mij].bd  = (Real)bd;
-      mat_quads[mij].bDh = (Real)bDh;
-      mat_quads[mij].bFh = (Real)bFh;
-      mat_beta[i] += (Real)b;
+      mat_quads[mij].b   = (double)b;
+      mat_quads[mij].bd  = (double)bd;
+      mat_quads[mij].bDh = (double)bDh;
+      mat_quads[mij].bFh = (double)bFh;
+      mat_beta[i] += (double)b;
     }
   }
 
@@ -393,7 +449,7 @@ template<typename Real>
   fmt::println("Nbl = {}", Nbl);
   auto mat_bnl  = std::vector<int8_t>(static_cast<size_t>(Nbl));
   auto bnl_ixyz = std::vector<int64_t>(static_cast<size_t>(Nbl));
-  auto ssaf_bnl = std::vector<Real>(static_cast<size_t>(Nbl));
+  auto ssaf_bnl = std::vector<double>(static_cast<size_t>(Nbl));
   {
     int64_t j = 0;
     for (int64_t i = 0; i < Nb; i++) {
@@ -463,7 +519,7 @@ template<typename Real>
     }
   }
 
-  return Simulation3D<Real>{
+  return Simulation3D{
       .bn_ixyz     = std::move(bn_ixyz),
       .bnl_ixyz    = std::move(bnl_ixyz),
       .bna_ixyz    = std::move(bna_ixyz),
@@ -501,13 +557,61 @@ template<typename Real>
       .lo2         = lo2,
       .a2          = a2,
       .a1          = a1,
+      .precision   = precision,
   };
 }
 
 // NOLINTEND(clang-analyzer-cplusplus.NewDeleteLeaks)
 
-template<typename Real>
-void writeOutputs_impl(Simulation3D<Real> const& sim, std::filesystem::path const& simDir) {
+} // namespace
+
+[[nodiscard]] auto loadSimulation3D(std::filesystem::path const& simDir, Precision precision) -> Simulation3D {
+  return loadSimulation3D_impl(simDir, precision);
+}
+
+// scale input to be in middle of floating-point range
+void scaleInput(Simulation3D& sim) {
+  auto* in_sigs    = sim.in_sigs.data();
+  int64_t const Nt = sim.Nt;
+  int64_t const Ns = sim.Ns;
+
+  // normalise input signals (and save gain)
+  double max_in = 0.0;
+  for (int64_t n = 0; n < Nt; n++) {
+    for (int64_t ns = 0; ns < Ns; ns++) {
+      max_in = std::max(max_in, fabs(in_sigs[ns * Nt + n]));
+    }
+  }
+
+  auto const [min_exp, max_exp] = std::pair<double, double>{getMinMaxExponent(sim.precision)};
+
+  auto const aexp      = 0.5; // normalise to middle power of two
+  auto const pow2      = static_cast<int32_t>(std::round(aexp * max_exp + (1 - aexp) * min_exp));
+  auto const norm1     = std::pow(2.0, pow2);
+  auto const inv_infac = norm1 / max_in;
+  auto const infac     = 1.0 / inv_infac;
+
+  std::printf(
+      "max_in = %.16e, pow2 = %d, norm1 = %.16e, inv_infac = %.16e, infac = "
+      "%.16e\n",
+      max_in,
+      pow2,
+      norm1,
+      inv_infac,
+      infac
+  );
+
+  // normalise input data
+  for (int64_t ns = 0; ns < Ns; ns++) {
+    for (int64_t n = 0; n < Nt; n++) {
+      in_sigs[ns * Nt + n] *= inv_infac;
+    }
+  }
+
+  sim.infac = infac;
+}
+
+void writeOutputs(Simulation3D const& sim, std::filesystem::path const& simDir) {
   auto const* out_reorder = sim.out_reorder.data();
   auto Nt                 = static_cast<size_t>(sim.Nt);
   auto Nr                 = static_cast<size_t>(sim.Nr);
@@ -525,9 +629,7 @@ void writeOutputs_impl(Simulation3D<Real> const& sim, std::filesystem::path cons
   std::puts("wrote output dataset");
 }
 
-// print last samples of simulation (for correctness checking..)
-template<typename Real>
-void printLastSample_impl(Simulation3D<Real> const& sim) {
+void printLastSample(Simulation3D const& sim) {
   int64_t const Nt           = sim.Nt;
   int64_t const Nr           = sim.Nr;
   double* u_out              = sim.u_out.get();
@@ -540,28 +642,6 @@ void printLastSample_impl(Simulation3D<Real> const& sim) {
       printf("sample %ld: %.16e\n", long(n), u_out[out_reorder[nr] * Nt + n]);
     }
   }
-}
-
-} // namespace
-
-[[nodiscard]] auto loadSimulation3D_float(std::filesystem::path const& simDir) -> Simulation3D<float> {
-  return loadSimulation3D_impl<float>(simDir);
-}
-
-[[nodiscard]] auto loadSimulation3D_double(std::filesystem::path const& simDir) -> Simulation3D<double> {
-  return loadSimulation3D_impl<double>(simDir);
-}
-
-void printLastSample(Simulation3D<float> const& sim) { printLastSample_impl(sim); }
-
-void printLastSample(Simulation3D<double> const& sim) { printLastSample_impl(sim); }
-
-void writeOutputs(Simulation3D<float> const& sim, std::filesystem::path const& simDir) {
-  writeOutputs_impl(sim, simDir);
-}
-
-void writeOutputs(Simulation3D<double> const& sim, std::filesystem::path const& simDir) {
-  writeOutputs_impl(sim, simDir);
 }
 
 } // namespace pffdtd

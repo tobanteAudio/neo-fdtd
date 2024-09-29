@@ -4,13 +4,13 @@
 
 #pragma once
 
+#include "pffdtd/precision.hpp"
 #include "pffdtd/simulation_3d.hpp"
 
 namespace pffdtd {
 
 struct EngineCPU3D {
-  auto operator()(Simulation3D<float> const& sim) const -> void;
-  auto operator()(Simulation3D<double> const& sim) const -> void;
+  auto operator()(Simulation3D const& sim) const -> void;
 };
 
 } // namespace pffdtd

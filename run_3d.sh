@@ -7,7 +7,7 @@ set -e
 
 root_dir="$(cd "$(dirname "$0")" && pwd)"
 pffdtd_engine="$root_dir/build/src/cpp/pffdtd-engine"
-# pffdtd_engine="$root_dir/cmake-build-cuda/src/cpp/pffdtd-engine"
+pffdtd_engine="$root_dir/cmake-build-cuda/src/cpp/pffdtd-engine"
 
 sim_name="Modes"
 sim_setup="${sim_name}.py"
@@ -28,7 +28,7 @@ cd "$model_dir"
 pffdtd sim3d setup "$sim_setup"
 
 # Run sim
-$pffdtd_engine sim3d -e cpu -p "32" -s "$sim_dir"
+$pffdtd_engine sim3d -e cuda -p "64" -s "$sim_dir"
 # pffdtd sim3d engine --sim_dir="$sim_dir" --plot --draw_backend="mayavi" --json_model="${model_dir}/model.json"
 
 # Post-process

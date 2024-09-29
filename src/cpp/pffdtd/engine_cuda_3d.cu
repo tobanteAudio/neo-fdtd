@@ -543,8 +543,7 @@ auto print_gpu_details(int i) -> uint64_t {
 }
 
 // input indices need to be sorted for multi-device allocation
-template<typename Real>
-void checkSorted(Simulation3D<Real> const& sim) {
+void checkSorted(Simulation3D const& sim) {
   int64_t const* bn_ixyz  = sim.bn_ixyz.data();
   int64_t const* bnl_ixyz = sim.bnl_ixyz.data();
   int64_t const* bna_ixyz = sim.bna_ixyz.data();
@@ -574,7 +573,7 @@ void checkSorted(Simulation3D<Real> const& sim) {
 
 // counts for splitting data across GPUs
 template<typename Real>
-void splitData(Simulation3D<Real> const& sim, std::span<HostData<Real>> ghds) {
+void splitData(Simulation3D const& sim, std::span<HostData<Real>> ghds) {
   auto const Nx    = sim.Nx;
   auto const Ny    = sim.Ny;
   auto const Nz    = sim.Nz;
@@ -724,7 +723,7 @@ void splitData(Simulation3D<Real> const& sim, std::span<HostData<Real>> ghds) {
 }
 
 template<typename Real>
-auto run(Simulation3D<Real> const& sim) -> void { // NOLINT(readability-function-cognitive-complexity)
+auto run(Simulation3D const& sim) -> void { // NOLINT(readability-function-cognitive-complexity)
   // if you want to test synchronous, env variable for that
   auto const* s = std::getenv("CUDA_LAUNCH_BLOCKING"); // NOLINT(concurrency-mt-unsafe)
   if (s != nullptr) {
@@ -745,6 +744,10 @@ auto run(Simulation3D<Real> const& sim) -> void { // NOLINT(readability-function
   auto ghds = std::vector<HostData<Real>>(static_cast<size_t>(ngpus));
   auto gds  = std::vector<DeviceData<Real>>(static_cast<size_t>(ngpus));
 
+  auto const ssaf_bnl_real  = convertTo<Real>(sim.ssaf_bnl);
+  auto const mat_beta_real  = convertTo<Real>(sim.mat_beta);
+  auto const mat_quads_real = convertTo<Real>(sim.mat_quads);
+
   if (ngpus > 1) {
     checkSorted(sim); // needs to be sorted for multi-GPU
   }
@@ -756,11 +759,11 @@ auto run(Simulation3D<Real> const& sim) -> void { // NOLINT(readability-function
     gds[gid].totalmembytes = print_gpu_details(gid);
   }
 
-  Real lo2 = sim.lo2;
-  Real a1  = sim.a1;
-  Real a2  = sim.a2;
-  Real l   = sim.l;
-  Real sl2 = sim.sl2;
+  auto lo2 = static_cast<Real>(sim.lo2);
+  auto a1  = static_cast<Real>(sim.a1);
+  auto a2  = static_cast<Real>(sim.a2);
+  auto l   = static_cast<Real>(sim.l);
+  auto sl2 = static_cast<Real>(sim.sl2);
 
   // timing stuff
   auto elapsed               = std::chrono::nanoseconds{0};
@@ -829,7 +832,7 @@ auto run(Simulation3D<Real> const& sim) -> void { // NOLINT(readability-function
 
     // aliased pointers (to memory already allocated)
     host.in_sigs   = sim.in_sigs.data() + Ns_read * sim.Nt;
-    host.ssaf_bnl  = sim.ssaf_bnl.data() + Nbl_read;
+    host.ssaf_bnl  = ssaf_bnl_real.data() + Nbl_read;
     host.adj_bn    = sim.adj_bn.data() + Nb_read;
     host.mat_bnl   = sim.mat_bnl.data() + Nbl_read;
     host.K_bn      = sim.K_bn.data() + Nb_read;
@@ -942,12 +945,12 @@ auto run(Simulation3D<Real> const& sim) -> void { // NOLINT(readability-function
     gpuErrchk(cudaMemcpy(gpu.mat_bnl, host.mat_bnl, (size_t)host.Nbl * sizeof(int8_t), cudaMemcpyHostToDevice));
 
     gpuErrchk(cudaMalloc(&(gpu.mat_beta), (size_t)sim.Nm * sizeof(Real)));
-    gpuErrchk(cudaMemcpy(gpu.mat_beta, sim.mat_beta.data(), (size_t)sim.Nm * sizeof(Real), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(gpu.mat_beta, mat_beta_real.data(), (size_t)sim.Nm * sizeof(Real), cudaMemcpyHostToDevice));
 
     gpuErrchk(cudaMalloc(&(gpu.mat_quads), (size_t)sim.Nm * MMb * sizeof(MatQuad<Real>)));
     gpuErrchk(cudaMemcpy(
         gpu.mat_quads,
-        sim.mat_quads.data(),
+        mat_quads_real.data(),
         (size_t)sim.Nm * MMb * sizeof(MatQuad<Real>),
         cudaMemcpyHostToDevice
     ));
@@ -1407,8 +1410,12 @@ auto run(Simulation3D<Real> const& sim) -> void { // NOLINT(readability-function
 
 } // namespace
 
-auto EngineCUDA3D::operator()(Simulation3D<float> const& sim) const -> void { run(sim); }
-
-auto EngineCUDA3D::operator()(Simulation3D<double> const& sim) const -> void { run(sim); }
+auto EngineCUDA3D::operator()(Simulation3D const& sim) const -> void {
+  switch (sim.precision) {
+    case Precision::Float: return run<float>(sim);
+    case Precision::Double: return run<double>(sim);
+    default: throw std::invalid_argument("invalid precision " + std::to_string(static_cast<int>(sim.precision)));
+  }
+}
 
 } // namespace pffdtd

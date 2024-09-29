@@ -4,6 +4,8 @@
 
 #include "engine_cpu_3d.hpp"
 
+#include "pffdtd/double.hpp"
+#include "pffdtd/exception.hpp"
 #include "pffdtd/progress.hpp"
 #include "pffdtd/time.hpp"
 #include "pffdtd/utility.hpp"
@@ -79,7 +81,11 @@ auto process_bnl_fd(
 }
 
 template<typename Real>
-auto run(Simulation3D<Real> const& sim) -> void {
+auto run(Simulation3D const& sim) -> void {
+  auto const ssaf_bnl_real  = convertTo<Real>(sim.ssaf_bnl);
+  auto const mat_beta_real  = convertTo<Real>(sim.mat_beta);
+  auto const mat_quads_real = convertTo<Real>(sim.mat_quads);
+
   // keep local ints, scalars
   int64_t const Ns   = sim.Ns;
   int64_t const Nr   = sim.Nr;
@@ -105,9 +111,9 @@ auto run(Simulation3D<Real> const& sim) -> void {
   int8_t const* mat_bnl          = sim.mat_bnl.data();
   int8_t const* Q_bna            = sim.Q_bna.data();
   double const* in_sigs          = sim.in_sigs.data();
-  Real const* ssaf_bnl           = sim.ssaf_bnl.data();
-  Real const* mat_beta           = sim.mat_beta.data();
-  MatQuad<Real> const* mat_quads = sim.mat_quads.data();
+  Real const* ssaf_bnl           = ssaf_bnl_real.data();
+  Real const* mat_beta           = mat_beta_real.data();
+  MatQuad<Real> const* mat_quads = mat_quads_real.data();
   double* u_out                  = sim.u_out.get();
 
   // allocate memory
@@ -130,11 +136,11 @@ auto run(Simulation3D<Real> const& sim) -> void {
   auto* gh1  = gh1_buf.data();
 
   // sim coefficients
-  auto const lo2 = sim.lo2;
-  auto const sl2 = sim.sl2;
-  auto const l   = sim.l;
-  auto const a1  = sim.a1;
-  auto const a2  = sim.a2;
+  auto const lo2 = static_cast<Real>(sim.lo2);
+  auto const sl2 = static_cast<Real>(sim.sl2);
+  auto const l   = static_cast<Real>(sim.l);
+  auto const a1  = static_cast<Real>(sim.a1);
+  auto const a2  = static_cast<Real>(sim.a2);
 
   // can control outside with OMP_NUM_THREADS env variable
   int const numWorkers = omp_get_max_threads();
@@ -373,8 +379,14 @@ auto run(Simulation3D<Real> const& sim) -> void {
 
 } // namespace
 
-auto EngineCPU3D::operator()(Simulation3D<float> const& sim) const -> void { run(sim); }
-
-auto EngineCPU3D::operator()(Simulation3D<double> const& sim) const -> void { run(sim); }
+auto EngineCPU3D::operator()(Simulation3D const& sim) const -> void {
+  switch (sim.precision) {
+    case Precision::Float: return run<float>(sim);
+    case Precision::Double: return run<double>(sim);
+    case Precision::DoubleFloat: return run<Double<float>>(sim);
+    case Precision::DoubleDouble: return run<Double<double>>(sim);
+    default: raisef<std::invalid_argument>("invalid precision {}", static_cast<int>(sim.precision));
+  }
+}
 
 } // namespace pffdtd

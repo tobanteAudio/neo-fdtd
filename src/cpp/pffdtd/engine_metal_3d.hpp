@@ -11,7 +11,7 @@
 namespace pffdtd {
 
 struct EngineMETAL3D {
-  auto operator()(Simulation3D<float> const& sim) const -> void;
+  auto operator()(Simulation3D const& sim) const -> void;
 };
 
 } // namespace pffdtd

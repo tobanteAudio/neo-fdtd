@@ -17,7 +17,7 @@ namespace pffdtd {
 namespace {
 
 template<typename Real>
-auto run(Simulation3D<Real> const& sim) {
+auto run(Simulation3D const& sim) {
   @autoreleasepool {
 
     // Device
@@ -286,6 +286,9 @@ auto run(Simulation3D<Real> const& sim) {
 
 } // namespace
 
-auto EngineMETAL3D::operator()(Simulation3D<float> const& sim) const -> void { run(sim); }
+auto EngineMETAL3D::operator()(Simulation3D const& sim) const -> void {
+  PFFDTD_ASSERT(precision == Precision::Float);
+  run<float>(sim);
+}
 
 } // namespace pffdtd

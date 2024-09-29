@@ -3,6 +3,9 @@
 #include "engine_sycl_3d.hpp"
 
 #include "pffdtd/assert.hpp"
+#include "pffdtd/double.hpp"
+#include "pffdtd/exception.hpp"
+#include "pffdtd/precision.hpp"
 #include "pffdtd/progress.hpp"
 #include "pffdtd/sycl.hpp"
 #include "pffdtd/time.hpp"
@@ -39,7 +42,7 @@ template<typename T>
 struct ReadOutput;
 
 template<typename Real>
-auto run(Simulation3D<Real> const& sim) -> void {
+auto run(Simulation3D const& sim) -> void {
   PFFDTD_ASSERT(sim.grid == Grid::CART);
 
   auto queue  = sycl::queue{sycl::property::queue::enable_profiling{}};
@@ -64,6 +67,10 @@ auto run(Simulation3D<Real> const& sim) -> void {
   auto const a1  = static_cast<Real>(sim.a1);
   auto const a2  = static_cast<Real>(sim.a2);
 
+  auto const ssaf_bnl_real  = convertTo<Real>(sim.ssaf_bnl);
+  auto const mat_beta_real  = convertTo<Real>(sim.mat_beta);
+  auto const mat_quads_real = convertTo<Real>(sim.mat_quads);
+
   auto Q_bna_buf     = sycl::buffer{sim.Q_bna};
   auto bn_mask_buf   = sycl::buffer{sim.bn_mask};
   auto adj_bn_buf    = sycl::buffer{sim.adj_bn};
@@ -73,11 +80,11 @@ auto run(Simulation3D<Real> const& sim) -> void {
   auto in_ixyz_buf   = sycl::buffer{sim.in_ixyz};
   auto out_ixyz_buf  = sycl::buffer{sim.out_ixyz};
   auto in_sigs_buf   = sycl::buffer{sim.in_sigs};
-  auto mat_beta_buf  = sycl::buffer{sim.mat_beta};
+  auto mat_beta_buf  = sycl::buffer{mat_beta_real};
   auto mat_bnl_buf   = sycl::buffer{sim.mat_bnl};
-  auto mat_quads_buf = sycl::buffer{sim.mat_quads};
+  auto mat_quads_buf = sycl::buffer{mat_quads_real};
   auto Mb_buf        = sycl::buffer{sim.Mb};
-  auto ssaf_bnl_buf  = sycl::buffer{sim.ssaf_bnl};
+  auto ssaf_bnl_buf  = sycl::buffer{ssaf_bnl_real};
 
   auto u0_buf    = sycl::buffer<Real>(static_cast<size_t>(Npts));
   auto u1_buf    = sycl::buffer<Real>(static_cast<size_t>(Npts));
@@ -343,14 +350,27 @@ auto run(Simulation3D<Real> const& sim) -> void {
   // Copy output to host
   auto host = sycl::host_accessor{u_out_buf, sycl::read_only};
   for (auto i{0UL}; i < static_cast<size_t>(Nr * Nt); ++i) {
-    sim.u_out[i] = host[i];
+    sim.u_out[i] = static_cast<double>(host[i]);
   }
 }
 
 } // namespace
 
-auto EngineSYCL3D::operator()(Simulation3D<float> const& sim) const -> void { run(sim); }
+auto EngineSYCL3D::operator()(Simulation3D const& sim) const -> void {
+  switch (sim.precision) {
+#if defined(__APPLE__) or defined(__clang__)
+    case Precision::Half: return run<_Float16>(sim);
+    case Precision::DoubleHalf: return run<Double<_Float16>>(sim);
+#endif
 
-auto EngineSYCL3D::operator()(Simulation3D<double> const& sim) const -> void { run(sim); }
+    case Precision::Float: return run<float>(sim);
+    case Precision::DoubleFloat: return run<Double<float>>(sim);
+
+    case Precision::Double: return run<double>(sim);
+    case Precision::DoubleDouble: return run<Double<double>>(sim);
+
+    default: raisef<std::invalid_argument>("invalid precision {}", static_cast<int>(sim.precision));
+  }
+}
 
 } // namespace pffdtd

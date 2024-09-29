@@ -3,12 +3,16 @@
 // Misc function definitions not specific to FDTD simulation
 #pragma once
 
+#include "pffdtd/mat_quad.hpp"
+
+#include <algorithm>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <vector>
 
 #ifndef DIV_CEIL
   #define DIV_CEIL(x, y) (((x) + (y) - 1) / (y)) // this works for x≥0 and y>0
@@ -29,6 +33,27 @@ template<typename T>
 template<typename T>
 [[nodiscard]] constexpr auto get_bit_as(std::integral auto word, std::integral auto pos) -> T {
   return static_cast<T>(GET_BIT(word, pos));
+}
+
+template<typename T>
+auto convertTo(std::vector<double> const& in) {
+  auto out = std::vector<T>(in.size());
+  std::ranges::transform(in, out.begin(), [](auto v) { return static_cast<T>(v); });
+  return out;
+}
+
+template<typename T>
+auto convertTo(std::vector<MatQuad<double>> const& in) {
+  auto out = std::vector<MatQuad<T>>(in.size());
+  std::ranges::transform(in, out.begin(), [](MatQuad<double> mq) {
+    return MatQuad<T>{
+        .b   = static_cast<T>(mq.b),
+        .bd  = static_cast<T>(mq.bd),
+        .bDh = static_cast<T>(mq.bDh),
+        .bFh = static_cast<T>(mq.bFh),
+    };
+  });
+  return out;
 }
 
 } // namespace pffdtd

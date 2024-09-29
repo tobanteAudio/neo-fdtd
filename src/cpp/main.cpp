@@ -69,18 +69,15 @@ namespace {
   return engines;
 }
 
-template<typename Real>
 [[nodiscard]] auto getEngines3D() {
   using namespace pffdtd;
-  auto engines   = std::map<std::string, std::function<void(Simulation3D<Real> const&)>>{};
+  auto engines   = std::map<std::string, std::function<void(Simulation3D const&)>>{};
   engines["cpu"] = EngineCPU3D{};
 #if defined(PFFDTD_HAS_CUDA)
   engines["cuda"] = EngineCUDA3D{};
 #endif
 #if defined(PFFDTD_HAS_METAL)
-  if constexpr (std::same_as<Real, float>) {
-    engines["metal"] = EngineMETAL3D{};
-  }
+  engines["metal"] = EngineMETAL3D{};
 #endif
 #if defined(PFFDTD_HAS_SYCL)
   engines["sycl"] = EngineSYCL3D{};
@@ -111,18 +108,17 @@ struct Arguments {
   Sim3D sim3d;
 };
 
-template<typename Real>
 auto run3D(Arguments::Sim3D const& args) {
   using namespace pffdtd;
   fmt::println("Running: {} on {} with precision {}", args.simDir, args.engine, toString(args.precision));
 
-  auto const engines = getEngines3D<Real>();
+  auto const engines = getEngines3D();
   auto const& engine = engines.at(args.engine);
 
   auto const simDir = std::filesystem::path{args.simDir};
   auto const start  = getTime();
 
-  auto sim = loadSimulation3D<Real>(simDir);
+  auto sim = loadSimulation3D(simDir, args.precision);
   scaleInput(sim);
   engine(sim);
   rescaleOutput(sim);
@@ -177,13 +173,7 @@ auto main(int argc, char** argv) -> int {
   }
 
   if (*sim3d) {
-    if (args.sim3d.precision == pffdtd::Precision::Float) {
-      run3D<float>(args.sim3d);
-    } else if (args.sim3d.precision == pffdtd::Precision::Double) {
-      run3D<double>(args.sim3d);
-    } else {
-      pffdtd::raisef<std::invalid_argument>("invalid precision '{}'", toString(args.sim3d.precision));
-    }
+    run3D(args.sim3d);
   }
 
   if (*test) {

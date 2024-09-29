@@ -19,7 +19,7 @@ namespace {
 
 auto toFloat(std::vector<double> const& buf) {
   auto buf32 = std::vector<float>(buf.size());
-  std::ranges::transform(buf32, buf32.begin(), [](auto v) { return static_cast<float>(v); });
+  std::ranges::transform(buf, buf32.begin(), [](auto v) { return static_cast<float>(v); });
   return buf32;
 }
 
