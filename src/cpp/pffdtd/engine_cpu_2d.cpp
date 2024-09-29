@@ -31,7 +31,7 @@ auto run(Simulation2D const& sim) {
   auto const Nb         = static_cast<int64_t>(sim.adj_bn.size());
   auto const Ns         = static_cast<int64_t>(sim.in_ixy.size());
   auto const Nr         = static_cast<int64_t>(sim.out_ixy.size());
-  auto const lossFactor = sim.loss_factor;
+  auto const lossFactor = static_cast<Real>(sim.loss_factor);
 
   auto u0_buf  = stdex::mdarray<Real, stdex::dextents<size_t, 1>>(Npts);
   auto u1_buf  = stdex::mdarray<Real, stdex::dextents<size_t, 1>>(Npts);

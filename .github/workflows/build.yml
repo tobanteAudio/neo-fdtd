@@ -68,7 +68,7 @@ jobs:
             cmake_prefix_path: ""
             cmake_flags: ""
             build_type: "Release"
-            cxx_flags: ""
+            cxx_flags: "/EHsc"
             python_version: "3.12"
             pffdtd_engine_2d: "build/src/cpp/pffdtd-engine.exe"
             pffdtd_engine_3d: "build/src/cpp/pffdtd-engine.exe"
