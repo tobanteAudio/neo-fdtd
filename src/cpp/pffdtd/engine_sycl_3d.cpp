@@ -358,15 +358,14 @@ auto run(Simulation3D const& sim) -> void {
 
 auto EngineSYCL3D::operator()(Simulation3D const& sim) const -> void {
   switch (sim.precision) {
-#if defined(__APPLE__) or defined(__clang__)
+#if not defined(__INTEL_LLVM_COMPILER)
     case Precision::Half: return run<_Float16>(sim);
     case Precision::DoubleHalf: return run<Double<_Float16>>(sim);
 #endif
 
     case Precision::Float: return run<float>(sim);
-    case Precision::DoubleFloat: return run<Double<float>>(sim);
-
     case Precision::Double: return run<double>(sim);
+    case Precision::DoubleFloat: return run<Double<float>>(sim);
     case Precision::DoubleDouble: return run<Double<double>>(sim);
 
     default: raisef<std::invalid_argument>("invalid precision {}", static_cast<int>(sim.precision));

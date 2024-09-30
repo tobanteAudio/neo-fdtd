@@ -3,7 +3,7 @@
 
 #include "sycl.hpp"
 
-#include <fmt/format.h>
+#include "pffdtd/print.hpp"
 
 namespace pffdtd {
 
@@ -44,24 +44,23 @@ auto summary(sycl::device const& dev) -> void {
   auto const hasProfiling     = dev.get_info<sycl::info::device::queue_profiling>();
   auto const extensions       = dev.get_info<sycl::info::device::extensions>();
 
-  fmt::println("----------------------------------------");
-  fmt::println("Vendor: {}", vendor);
-  fmt::println("Name: {}", name);
-  fmt::println("Type: {}", toString(type));
-  fmt::println("Driver: {}", driverVersion);
-  fmt::println("Has queue profiling: {}", hasProfiling ? "true" : "false");
-  fmt::println("Global memory: {} GB", globalMemorySize / 1'000'000'000);
-  fmt::println("Local memory: {} KB", localMemorySize / 1000);
-  fmt::println("Max alloc size: {} GB", allocSize / 1'000'000'000);
-  fmt::println("Max clock frequency: {} Hz", clockFrequency);
-  fmt::println("Max compute units: {}", computeUnits);
-  fmt::println("Max work group size: {}", workGroupSize);
-  fmt::println("Max work item size: [{},{},{}]", workItemSize[0], workItemSize[1], workItemSize[2]);
-  fmt::println("Extension:");
+  println("----------------------------------------");
+  println("Vendor: {}", vendor);
+  println("Name: {}", name);
+  println("Type: {}", toString(type));
+  println("Driver: {}", driverVersion);
+  println("Has queue profiling: {}", hasProfiling ? "true" : "false");
+  println("Global memory: {} GB", globalMemorySize / 1'000'000'000);
+  println("Local memory: {} KB", localMemorySize / 1000);
+  println("Max alloc size: {} GB", allocSize / 1'000'000'000);
+  println("Max clock frequency: {} Hz", clockFrequency);
+  println("Max compute units: {}", computeUnits);
+  println("Max work group size: {}", workGroupSize);
+  println("Max work item size: [{},{},{}]", workItemSize[0], workItemSize[1], workItemSize[2]);
+  println("Extension:");
   for (auto const& ext : extensions) {
-    fmt::println("  - '{}'", ext);
+    println("  - '{}'", ext);
   }
-  fmt::println("");
 }
 
 } // namespace pffdtd

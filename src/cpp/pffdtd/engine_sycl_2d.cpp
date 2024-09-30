@@ -6,6 +6,7 @@
 #include "pffdtd/assert.hpp"
 #include "pffdtd/double.hpp"
 #include "pffdtd/exception.hpp"
+#include "pffdtd/print.hpp"
 #include "pffdtd/progress.hpp"
 #include "pffdtd/sycl.hpp"
 #include "pffdtd/time.hpp"
@@ -36,7 +37,7 @@ template<typename Real>
 static constexpr auto min_exponent<Double<Real>> = min_exponent<Real>;
 
 template<>
-static constexpr auto min_exponent<_Float16> = -13;
+[[maybe_unused]] static constexpr auto min_exponent<_Float16> = -13;
 
 template<typename Real>
 static constexpr auto max_exponent = std::numeric_limits<Real>::max_exponent;
@@ -45,7 +46,7 @@ template<typename Real>
 static constexpr auto max_exponent<Double<Real>> = max_exponent<Real>;
 
 template<>
-static constexpr auto max_exponent<_Float16> = 16;
+[[maybe_unused]] static constexpr auto max_exponent<_Float16> = 16;
 
 [[nodiscard]] constexpr auto to_ixy(auto x, auto y, auto /*Nx*/, auto Ny) { return x * Ny + y; }
 
@@ -53,7 +54,7 @@ template<typename Real>
 auto scaleInput(std::vector<double> const& buf) {
   static constexpr auto min_exp = static_cast<double>(min_exponent<Real>);
   static constexpr auto max_exp = static_cast<double>(max_exponent<Real>);
-  fmt::println("min_exp = {}, min_exp = {}", min_exp, max_exp);
+  println("min_exp = {}, min_exp = {}", min_exp, max_exp);
 
   auto const aexp  = 0.5;
   auto const pow2  = static_cast<int>(std::round(aexp * max_exp + (1 - aexp) * min_exp));
@@ -63,9 +64,8 @@ auto scaleInput(std::vector<double> const& buf) {
   auto const inv_infac = norm1 / max_in;
   auto const infac     = 1.0 / inv_infac;
 
-  std::printf(
-      "max_in = %.16e, pow2 = %d, norm1 = %.16e, inv_infac = %.16e, infac = "
-      "%.16e\n",
+  println(
+      "max_in = {:.16e}, pow2 = {}, norm1 = {:.16e}, inv_infac = {:.16e}, infac = {:.16e}\n",
       max_in,
       pow2,
       norm1,
@@ -255,15 +255,15 @@ auto run(Simulation2D const& sim) {
 auto EngineSYCL2D::operator()(Simulation2D const& sim, Precision precision) const
     -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
   switch (precision) {
-    case Precision::Float: return run<float>(sim);
-    case Precision::Double: return run<double>(sim);
-    case Precision::DoubleFloat: return run<Double<float>>(sim);
-    case Precision::DoubleDouble: return run<Double<double>>(sim);
-#if defined(__APPLE__) or defined(__clang__)
+#if not defined(__INTEL_LLVM_COMPILER)
     case Precision::Half: return run<_Float16>(sim);
     case Precision::DoubleHalf: return run<Double<_Float16>>(sim);
 #endif
 
+    case Precision::Float: return run<float>(sim);
+    case Precision::Double: return run<double>(sim);
+    case Precision::DoubleFloat: return run<Double<float>>(sim);
+    case Precision::DoubleDouble: return run<Double<double>>(sim);
     default: raisef<std::invalid_argument>("invalid precision {}", static_cast<int>(precision));
   }
 }

@@ -7,6 +7,7 @@
 #include "pffdtd/exception.hpp"
 #include "pffdtd/hdf.hpp"
 #include "pffdtd/precision.hpp"
+#include "pffdtd/print.hpp"
 #include "pffdtd/simulation_2d.hpp"
 #include "pffdtd/simulation_3d.hpp"
 #include "pffdtd/time.hpp"
@@ -27,7 +28,6 @@
 #endif
 
 #include <CLI/CLI.hpp>
-#include <fmt/format.h>
 
 #include <filesystem>
 #include <string>
@@ -90,6 +90,11 @@ namespace {
   return str;
 }
 
+[[nodiscard]] auto toUpper(std::string str) -> std::string {
+  std::ranges::transform(str, str.begin(), [](auto ch) { return static_cast<char>(std::toupper(ch)); });
+  return str;
+}
+
 struct Arguments {
   struct Sim2D {
     std::string simDir;
@@ -110,7 +115,7 @@ struct Arguments {
 
 auto run3D(Arguments::Sim3D const& args) {
   using namespace pffdtd;
-  fmt::println("Running: {} on {} with precision {}", args.simDir, args.engine, toString(args.precision));
+  println("Running: {} on {} with precision {}", args.simDir, args.engine, toString(args.precision));
 
   auto const engines = getEngines3D();
   auto const& engine = engines.at(args.engine);
@@ -127,7 +132,7 @@ auto run3D(Arguments::Sim3D const& args) {
 
   auto const stop = getTime();
   auto const sec  = Seconds(stop - start);
-  fmt::println("--Simulation time: {} s", sec.count());
+  println("--Simulation time: {} s", sec.count());
 }
 
 } // namespace
@@ -155,7 +160,8 @@ auto main(int argc, char** argv) -> int {
   CLI11_PARSE(app, argc, argv);
 
   if (*sim2d) {
-    fmt::println("Using engine: {} with precision {}", args.sim2d.engine, toString(args.sim2d.precision));
+    using namespace pffdtd;
+    println("Using {} with precision {}", toUpper(args.sim2d.engine), toString(args.sim2d.precision));
     auto const engines = getEngines2D();
     auto const& engine = engines.at(args.sim2d.engine);
 
@@ -169,7 +175,7 @@ auto main(int argc, char** argv) -> int {
 
     auto const stop = pffdtd::getTime();
     auto const sec  = pffdtd::Seconds(stop - start);
-    fmt::println("Simulation time: {} s", sec.count());
+    println("Simulation time: {} s", sec.count());
   }
 
   if (*sim3d) {
