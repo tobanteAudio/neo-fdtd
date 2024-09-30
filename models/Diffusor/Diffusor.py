@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2024 Tobias Hienzsch
 
 import numpy as np
+from tqdm import tqdm
 
 from pffdtd.geometry.math import to_ixy, point_on_circle
 from pffdtd.diffusor.design import diffusor_bandwidth
@@ -30,7 +31,7 @@ def quantize_point(pos, dx, ret_err=True, scale=False):
 
 
 def add_diffusor(prime, well_width, max_depth, room, in_mask, X, Y, dx, c, verbose=False):
-    print('--SIM-SETUP: Quantize diffusor')
+    print('--DIFFUSOR: Quantize diffusor')
     dim = (well_width, max_depth)
     width = well_width
     depth = max_depth
@@ -61,11 +62,11 @@ def add_diffusor(prime, well_width, max_depth, room, in_mask, X, Y, dx, c, verbo
         print(f"  error_w={werr_q/width*100:.2f}%")
         print(f"  error_d={derr_q/depth*100:.2f}%")
 
-    print('--SIM-SETUP: Locate diffusor')
+    print('--DIFFUSOR: Locate diffusor')
     depths, _ = primitive_root_diffuser(prime, g=None, depth=depth_q)
     depths = quadratic_residue_diffuser(prime, depth_q)
     prime = depths.shape[0]
-    for w in range(n):
+    for w in tqdm(range(n)):
         xs = (room[0]/2-total_width/2)+w*width_q
         xe = xs+width_q
         ys = room[1]/2-5-depth_q
@@ -99,7 +100,7 @@ def diffusor_model_factory(*, Lx=None, Ly=None, Nx=None, Ny=None, dx=None, X=Non
     assert in_mask[inx, iny]
 
     # Diffusor
-    print('--SIM-SETUP: Generate diffusor')
+    print('--DIFFUSOR: Generate diffusor')
     prime = 17
     depth = 0.35
     width = 0.048
@@ -107,7 +108,7 @@ def diffusor_model_factory(*, Lx=None, Ly=None, Nx=None, Ny=None, dx=None, X=Non
                            in_mask, X, Y, dx, 343.0, True)
 
     # Receiver linear index
-    print('--SIM-SETUP: Generate receivers')
+    print('--DIFFUSOR: Generate receivers')
     arc_radius = 5.0
     arc_center = (x_in, y_in-arc_radius)
     out_ixy, _ = make_receiver_arc(180, arc_center, arc_radius, dx, Nx, Ny)
@@ -117,12 +118,12 @@ def diffusor_model_factory(*, Lx=None, Ly=None, Nx=None, Ny=None, dx=None, X=Non
 
 sim_setup_2d(
     sim_dir='../../sim_data/Diffusor/cpu',
-    room=(30, 30),
+    room=(45, 45),
     Tc=20,
     rh=50,
-    fmax=800,
+    fmax=20_000,
     ppw=10.5,
-    duration=0.050,
+    duration=0.085,
     refl_coeff=0.99,
     model_factory=diffusor_model_factory,
     apply_loss=True,

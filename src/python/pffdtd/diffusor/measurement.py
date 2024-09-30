@@ -11,7 +11,7 @@ from scipy import signal
 from pffdtd.common.wavfile import collect_wav_files, load_wav_files
 
 
-def bandpass_filter(y, lowcut, highcut, fs, order=4):
+def bandpass_filter(y, lowcut, highcut, fs, order=8):
     nyquist = 0.5 * fs
     low = lowcut / nyquist
     high = highcut / nyquist
@@ -22,7 +22,7 @@ def bandpass_filter(y, lowcut, highcut, fs, order=4):
 def polar_response(y: np.array, fs: float, min_angle=0, max_angle=180, trim_angle=5):
     octave_bands = [
         # (63, 125),
-        # (125, 250),
+        (125, 250),
         (250, 500),
         (500, 1000),
         (1000, 2000),
@@ -59,7 +59,7 @@ def main(sim_dir):
 
     constants = h5py.File(sim_dir / 'constants.h5', 'r')
     fmax = float(constants['fmax'][...])
-    trim_ms = 11
+    trim_ms = 20
     trim_samples = int(fs/1000*trim_ms)
 
     print(len(files))

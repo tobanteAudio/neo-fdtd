@@ -100,6 +100,7 @@ def main(filename, fmin, fmax, label_a, label_b, smoothing, target):
     ax[0].legend()
 
     label = f'{label_b}-{label_a}'
+    max_diff = np.max(np.abs(difference[(freqs > 10) & (freqs < 20e3)]))
     ax[1].semilogx(freqs, difference, linestyle='-', label=label)
     if target != 0.0:
         ax[1].hlines(target, fmin, fmax, linestyle='--',
@@ -108,8 +109,7 @@ def main(filename, fmin, fmax, label_a, label_b, smoothing, target):
     ax[1].set_xlabel('Frequency [Hz]')
     ax[1].set_ylabel('Amplitude [dB]')
     ax[1].set_xlim((fmin, fmax))
-    # ax[1].set_ylim((-np.max(np.abs(difference)), np.max(np.abs(difference))))
-    ax[1].set_ylim((-30, 30))
+    ax[1].set_ylim((-max_diff*1.1, max_diff*1.1))
     ax[1].xaxis.set_major_formatter(formatter)
     ax[1].grid(which='minor', color='#DDDDDD', linestyle=':', linewidth=0.5)
     ax[1].minorticks_on()
