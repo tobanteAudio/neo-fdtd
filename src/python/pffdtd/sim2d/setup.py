@@ -8,6 +8,7 @@ import h5py
 import numpy as np
 from scipy.signal import lfilter
 
+from pffdtd.absorption.admittance import convert_R_to_Yn
 from pffdtd.geometry.math import to_ixy
 from pffdtd.sim3d.constants import SimConstants
 
@@ -95,9 +96,7 @@ def sim_setup_2d(
     print('--SIM-SETUP: Calculate loss factor')
     loss_factor = 0
     if apply_loss:
-        # calculate specific admittance γ (g)
-        assert abs(refl_coeff) <= 1.0
-        g = (1-refl_coeff)/(1+refl_coeff)
+        g = convert_R_to_Yn(refl_coeff)
         loss_factor = 0.5*np.sqrt(0.5)*g  # a loss factor
 
     # Set up an excitation signal

@@ -49,11 +49,12 @@ class ProStudio(Setup3D):
     def generate_materials(self):
         self._print('Generate materials')
         folder = Path(self.mat_folder)
+        iso_octaves = 1000*(2.0**np.arange(-6, 5))
 
         # autopep8: off
-        absorber_8000_50mm            = porous_absorber(0.05, 8000.0, 1000*(2.0**np.arange(-6, 5)), offset_zeros=True)
-        absorber_8000_200mm_gap_100mm = np.array([0.10, 0.23, 0.59, 0.84, 0.91, 0.92, 0.95, 0.95, 0.94, 0.93, 0.90])
-        absorber_8000_200mm_gap_200mm = np.array([0.19, 0.38, 0.69, 0.84, 0.88, 0.93, 0.95, 0.95, 0.94, 0.93, 0.90])
+        absorber_8000_50mm            = porous_absorber(0.05, 8000.0, frequency=iso_octaves, offset_zeros=True)
+        absorber_8000_200mm_gap_100mm = porous_absorber(0.20, 8000.0, frequency=iso_octaves, air_gap=0.1, offset_zeros=True)
+        absorber_8000_200mm_gap_200mm = porous_absorber(0.20, 8000.0, frequency=iso_octaves, air_gap=0.2, offset_zeros=True)
         glas_thick                    = np.array([0.15, 0.30, 0.27, 0.18, 0.06, 0.04, 0.03, 0.02, 0.02, 0.02, 0.01])
         leather_arm_chair             = np.array([0.04, 0.08, 0.16, 0.20, 0.25, 0.29, 0.31, 0.29, 0.25, 0.22, 0.30])
         metal_iron                    = np.array([0.01, 0.01, 0.01, 0.01, 0.01, 0.02, 0.02, 0.03, 0.03, 0.03, 0.02])

@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 
 from pffdtd.absorption.admittance import fit_to_Sabs_oct_11
+from pffdtd.absorption.porous import porous_absorber
 from pffdtd.geometry.math import find_third_vertex
 from pffdtd.sim3d.model_builder import RoomModelBuilder
 from pffdtd.sim3d.setup import Setup3D
@@ -32,7 +33,7 @@ class Studio(Setup3D):
     rh = 50
     fcc = False
     ppw = 10.5
-    fmax = 800.0
+    fmax = 1000.0
     save_folder = '../../sim_data/Studio/cpu'
     save_folder_gpu = '../../sim_data/Studio/gpu'
     draw_vox = True
@@ -43,10 +44,11 @@ class Studio(Setup3D):
     def generate_materials(self):
         self._print('Generate materials')
         folder = Path(self.mat_folder)
+        iso_octaves = 1000*(2.0**np.arange(-6, 5))
 
         # autopep8: off
-        absorber_8000_100mm           = np.array([0.02, 0.03, 0.05, 0.30, 0.69, 0.92, 0.93, 0.94, 0.95, 0.93, 0.90])
-        absorber_8000_200mm           = np.array([0.05, 0.10, 0.40, 0.85, 0.89, 0.92, 0.93, 0.94, 0.95, 0.93, 0.90])
+        absorber_8000_100mm           = porous_absorber(0.1, 8000.0, frequency=iso_octaves, offset_zeros=True)
+        absorber_8000_200mm           = porous_absorber(0.2, 8000.0, frequency=iso_octaves, offset_zeros=True)
         concrete_painted              = np.array([0.01, 0.01, 0.01, 0.05, 0.06, 0.07, 0.09, 0.08, 0.08, 0.08, 0.08])
         wood                          = np.array([0.10, 0.11, 0.13, 0.15, 0.11, 0.10, 0.07, 0.06, 0.07, 0.07, 0.07])
         wood_on_concrete              = np.array([0.01, 0.01, 0.01, 0.04, 0.04, 0.07, 0.06, 0.06, 0.07, 0.06, 0.06])

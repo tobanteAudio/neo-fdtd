@@ -17,8 +17,8 @@ def convert_nabs_to_R(nabs):
     """normal-incidence absorption to reflection coefficient
     """
     nabs = np.float64(nabs)
-    assert nabs >= 0
-    assert nabs <= 1
+    assert np.all(nabs >= 0)
+    assert np.all(nabs <= 1)
     return np.sqrt(1.0-nabs)
 
 
