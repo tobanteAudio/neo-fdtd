@@ -32,9 +32,6 @@ auto loadSimulation2D(std::filesystem::path const& dir) -> Simulation2D {
       .bn_ixy      = sim.read<std::vector<int64_t>>("bn_ixy"),
       .loss_factor = sim.read<double>("loss_factor"),
 
-      .inx = sim.read<int64_t>("inx"),
-      .iny = sim.read<int64_t>("iny"),
-
       .in_sigs = sim.read<std::vector<double>>("in_sigs"),
       .in_ixy  = std::move(in_ixy),
       .out_ixy = sim.read<std::vector<int64_t>>("out_ixy"),

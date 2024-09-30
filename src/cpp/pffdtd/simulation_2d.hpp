@@ -21,9 +21,6 @@ struct Simulation2D {
   std::vector<int64_t> bn_ixy;  // Boundary nodes
   double loss_factor;           // Boundary loss
 
-  int64_t inx; // Source position x
-  int64_t iny; // Source position y
-
   std::vector<double> in_sigs;  // Source signal
   std::vector<int64_t> in_ixy;  // Source nodes
   std::vector<int64_t> out_ixy; // Receiver nodes
