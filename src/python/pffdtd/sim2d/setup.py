@@ -69,7 +69,7 @@ def sim_setup_2d(
     # Mask for 'interior' points
     assert model_factory
     in_mask = np.zeros((Nx, Ny), dtype=bool)
-    in_mask, inx, iny, out_ixy = model_factory(
+    in_mask, in_ixy, out_ixy = model_factory(
         Lx=Lx,
         Ly=Ly,
         Nx=Nx,
@@ -79,8 +79,6 @@ def sim_setup_2d(
         Y=Y,
         in_mask=in_mask
     )
-
-    in_ixy = [to_ixy(inx, iny, Nx, Ny)]
 
     print('--SIM-SETUP: Create node ABCs')
     # Calculate number of interior neighbours (for interior points only)
@@ -121,14 +119,13 @@ def sim_setup_2d(
     h5f.create_dataset('Nt', data=np.int64(Nt))
     h5f.create_dataset('Nx', data=np.int64(Nx))
     h5f.create_dataset('Ny', data=np.int64(Ny))
-    h5f.create_dataset('inx', data=np.int64(inx))
-    h5f.create_dataset('iny', data=np.int64(iny))
     h5f.create_dataset('loss_factor', data=np.float64(loss_factor))
-    h5f.create_dataset('adj_bn', data=adj_bn)
-    h5f.create_dataset('bn_ixy', data=bn_ixy)
+    h5f.create_dataset('adj_bn', data=np.array(adj_bn, dtype=np.int64))
+    h5f.create_dataset('bn_ixy', data=np.array(bn_ixy, dtype=np.int64))
     h5f.create_dataset('in_mask', data=in_mask.flatten().astype(np.uint8))
-    h5f.create_dataset('out_ixy', data=out_ixy)
-    h5f.create_dataset('in_sigs', data=in_sigs_f)
+    h5f.create_dataset('in_sigs', data=np.array(in_sigs_f, dtype=np.float64))
+    h5f.create_dataset('in_ixy', data=np.array(in_ixy, dtype=np.int64))
+    h5f.create_dataset('out_ixy', data=np.array(out_ixy, dtype=np.int64))
     h5f.close()
 
     if image:

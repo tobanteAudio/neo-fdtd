@@ -19,8 +19,6 @@ class Engine2D:
         h5f = h5py.File(self.sim_dir / 'sim.h5', 'r')
         self.fps = h5f['video_fps'][()]
         self.loss_factor = h5f['loss_factor'][()]
-        self.inx = h5f['inx'][()]
-        self.iny = h5f['iny'][()]
         self.Nt = h5f['Nt'][()]
         self.Nx = h5f['Nx'][()]
         self.Ny = h5f['Ny'][()]
@@ -28,6 +26,7 @@ class Engine2D:
         self.bn_ixy = h5f['bn_ixy'][...]
         self.in_mask = h5f['in_mask'][...]
         self.in_sigs = h5f['in_sigs'][...]
+        self.in_ixy = h5f['in_ixy'][...]
         self.out_ixy = h5f['out_ixy'][...]
 
         print(self.in_mask.shape)
@@ -40,9 +39,8 @@ class Engine2D:
         adj_bn = self.adj_bn
         in_mask = self.in_mask
         in_sigs = self.in_sigs
+        in_ixy = self.in_ixy
         out_ixy = self.out_ixy
-        inx = self.inx
-        iny = self.iny
         loss_factor = self.loss_factor
         fps = self.fps
 
@@ -70,8 +68,7 @@ class Engine2D:
             stencil_boundary_rigid(u0, u1, u2, bn_ixy, adj_bn)
             stencil_boundary_loss(u0, u2, bn_ixy, adj_bn, loss_factor)
 
-            u0[inx, iny] = u0[inx, iny] + in_sigs[nt]
-
+            u0.flat[in_ixy] += in_sigs[nt]
             self.out[:, nt] = u0.flat[[out_ixy]]
 
             u2 = u1.copy()
@@ -89,7 +86,7 @@ class Engine2D:
         if self.video:
             video.release()
 
-        print(f"last: u0={u0[inx, iny]} u1={u1[inx, iny]} u2={u2[inx, iny]}")
+        print(f"last: u0={u0.flat[in_ixy]} u1={u1.flat[in_ixy]} u2={u2.flat[in_ixy]}")
 
     def save_output(self):
         h5f = h5py.File(self.sim_dir / self.output_file, 'w')

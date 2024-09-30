@@ -11,7 +11,7 @@ def model(*, Lx=None, Ly=None, Nx=None, Ny=None, dx=None, X=None, Y=None, in_mas
     iny = 2
     out_ixy = [to_ixy(Nx-4, Ny-4, Nx, Ny)]
     assert in_mask[inx, iny]
-    return in_mask, inx, iny, out_ixy
+    return in_mask, [to_ixy(inx, iny, Nx, Ny)], out_ixy
 
 
 sim_setup_2d(
@@ -19,7 +19,7 @@ sim_setup_2d(
     room=(3.65, 6),
     Tc=20,
     rh=50,
-    fmax=20_000.0,
+    fmax=1_000.0,
     ppw=10.5,
     duration=8.0,
     refl_coeff=0.99,

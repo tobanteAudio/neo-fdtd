@@ -112,7 +112,7 @@ def diffusor_model_factory(*, Lx=None, Ly=None, Nx=None, Ny=None, dx=None, X=Non
     arc_center = (x_in, y_in-arc_radius)
     out_ixy, _ = make_receiver_arc(180, arc_center, arc_radius, dx, Nx, Ny)
 
-    return in_mask, inx, iny, out_ixy
+    return in_mask, [to_ixy(inx, iny, Nx, Ny)], out_ixy
 
 
 sim_setup_2d(
@@ -120,7 +120,7 @@ sim_setup_2d(
     room=(30, 30),
     Tc=20,
     rh=50,
-    fmax=1000,
+    fmax=800,
     ppw=10.5,
     duration=0.050,
     refl_coeff=0.99,
