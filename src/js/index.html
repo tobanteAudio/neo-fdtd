@@ -1,0 +1,74 @@
+<!-- SPDX-License-Identifier: MIT -->
+<!-- SPDX-FileCopyrightText: 2021 Brian Hamilton -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>PFFDTD Viewer</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Monospace;
+        font-size: 13px;
+        line-height: 24px;
+      }
+      canvas {
+        display: block;
+      }
+      #scene-container {
+        position: absolute;
+        top: 50px;
+        width: 100%;
+        height: 100%;
+      }
+      #upload-container {
+        position: absolute;
+        top: 0px;
+        width: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+        text-align: center;
+      }
+      #info-container {
+        position: absolute;
+        bottom: 0px;
+        right: 0px;
+        padding: 0px;
+        box-sizing: border-box;
+        text-align: left;
+        z-index: 1; /* hack to get on top of canvas */
+        color: #000;
+      }
+      #copyright-container {
+        position: absolute;
+        bottom: 0px;
+        left: 0px;
+        padding: 0px;
+        box-sizing: border-box;
+        text-align: left;
+        font-size: 13px;
+        z-index: 1; /* hack to get on top of canvas */
+        color: #000;
+      }
+    </style>
+  </head>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@v0.124.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@v0.124.0/examples/jsm/"
+      }
+    }
+  </script>
+  <body>
+    <div id="upload-container">
+      Choose JSON export file (eg model_export.json):
+      <input type="file" id="filepicker" name="fileList" accept=".json" />
+    </div>
+    <div id="scene-container"></div>
+    <div id="info-container"></div>
+
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
