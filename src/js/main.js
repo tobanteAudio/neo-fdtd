@@ -4,7 +4,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import Stats from "three/addons/libs/stats.module.js";
-import { GUI } from "three/addons/libs/dat.gui.module.js";
+import { GUI } from "three/addons/libs/lil-gui.module.min.js";
 
 let json_data = {};
 
@@ -58,17 +58,13 @@ function onWindowResize(obj) {
 async function createScene(obj) {
   // Get a reference to the container element that will hold our scene
   obj.scene_container = document.querySelector("#scene-container");
-  let scene_container = obj.scene_container;
 
   if (!obj.scene) {
-    // create a Scene
     obj.scene = new THREE.Scene();
-    let scene = obj.scene;
-
-    // Set the background color
-    scene.background = new THREE.Color("skyblue"); //0x87CEEB
+    obj.scene.background = new THREE.Color("skyblue"); //0x87CEEB
   }
 }
+
 async function createRenderer(obj, update) {
   let scene_container = obj.scene_container;
 
@@ -81,8 +77,9 @@ async function createRenderer(obj, update) {
 
     renderer.setSize(scene_container.clientWidth, scene_container.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
+    // renderer.outputEncoding = THREE.LinearSRGBColorSpace;
 
-    renderer.gammaFactor = 2.2;
+    // renderer.gammaFactor = 2.2;
     //renderer.gammaOutput = true;
 
     // add the automatically created <canvas> element to the page
@@ -107,9 +104,8 @@ async function createStats(obj, update) {
   obj.stats = new Stats();
   stats = obj.stats;
   stats.domElement.style.cssText = "position:absolute;top:0px;right:0px;";
-  //scene_container.appendChild( stats.domElement );
   scene_container.appendChild(stats.domElement);
-  // resstart the animation loop
+  // restart the animation loop
   renderer.setAnimationLoop(() => {
     update();
     stats.begin();
@@ -191,7 +187,7 @@ async function createModelGUI() {
   scene_container.appendChild(gui.domElement);
 
   //folder for material colors
-  let f0 = gui.addFolder("Material Groups");
+  let f0 = gui.addFolder("Materials");
   let f0m1 = f0.addFolder("Colours");
   let mats = geo.mat_names;
   for (let i = 0; i < mats.length; i++) {
@@ -274,13 +270,17 @@ async function createModelMesh() {
   let mats = geo.mat_names;
   for (let i = 0; i < mats.length; i++) {
     let mat = mats[i];
-    const mat_geometry = new THREE.Geometry();
+    console.log("Add " + mat);
     let pts = geo.mats_hash[mat].pts;
+
+    const vertices = [];
+    const indices = [];
+
     for (let j = 0; j < pts.length; j += 1) {
       let x = pts[j][0];
       let y = pts[j][1];
       let z = pts[j][2];
-      mat_geometry.vertices.push(new THREE.Vector3(x, y, z));
+      vertices.push(x, y, z);
       if (x > geo.max.x) {
         geo.max.x = x;
       }
@@ -306,10 +306,16 @@ async function createModelMesh() {
       let v1 = tris[j][0];
       let v2 = tris[j][1];
       let v3 = tris[j][2];
-      mat_geometry.faces.push(new THREE.Face3(v1, v2, v3));
+      indices.push(v1, v2, v3);
     }
 
-    mat_geometry.computeFaceNormals();
+    const mat_geometry = new THREE.BufferGeometry();
+    mat_geometry.name = mat;
+    mat_geometry.setIndex(indices);
+    mat_geometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(vertices, 3)
+    );
     mat_geometry.computeVertexNormals();
 
     let material = new THREE.MeshStandardMaterial({
@@ -399,7 +405,7 @@ async function createModelCamera() {
 
   camera.up.set(0, 0, 1);
   camera.position.set(cam_pos.x, cam_pos.y, cam_pos.z);
-  //camera.lookAt(geo.cent.x,geo.cent.y,geo.cent.z);
+  camera.lookAt(geo.cent.x, geo.cent.y, geo.cent.z);
   camera.updateProjectionMatrix();
 }
 
@@ -434,86 +440,3 @@ window.addEventListener("resize", function () {
   onWindowResize(threejs);
 });
 document.getElementById("filepicker").addEventListener("change", loadJSON);
-
-// // Scene, Camera, Renderer
-// const scene = new THREE.Scene();
-// const camera = new THREE.PerspectiveCamera(
-//   75,
-//   window.innerWidth / window.innerHeight,
-//   0.1,
-//   1000
-// );
-// const renderer = new THREE.WebGLRenderer();
-// renderer.setSize(window.innerWidth, window.innerHeight);
-// document.body.appendChild(renderer.domElement);
-
-// // Cube as placeholder object
-// const geometry = new THREE.BoxGeometry();
-// const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-// const cube = new THREE.Mesh(geometry, material);
-// scene.add(cube);
-
-// // Position the camera
-// camera.position.z = 5;
-
-// // Animation loop
-// function animate() {
-//   requestAnimationFrame(animate);
-//   cube.rotation.x += 0.01;
-//   cube.rotation.y += 0.01;
-//   renderer.render(scene, camera);
-// }
-// animate();
-
-// // GLTFLoader instance for loading models
-// const loader = new GLTFLoader();
-
-// // Handle file input
-// document
-//   .getElementById("modelInput")
-//   .addEventListener("change", function (event) {
-//     const file = event.target.files[0];
-//     if (file) {
-//       const reader = new FileReader();
-
-//       // Read the file as a URL
-//       reader.readAsDataURL(file);
-//       reader.onload = function (e) {
-//         const fileUrl = e.target.result;
-
-//         // Load the 3D model from the file URL
-//         loader.load(
-//           fileUrl,
-//           function (gltf) {
-//             // Remove the cube placeholder
-//             scene.remove(cube);
-
-//             // Add the loaded model to the scene
-//             const model = gltf.scene;
-//             scene.add(model);
-
-//             // Optionally, position or scale the model
-//             model.position.set(0, 0, 0);
-//             model.scale.set(1, 1, 1);
-
-//             // Render the scene
-//             animate();
-//           },
-//           undefined,
-//           function (error) {
-//             console.error("Error loading the model:", error);
-//           }
-//         );
-//       };
-//     }
-//   });
-
-const geometry = new THREE.BufferGeometry();
-const vertices = new Float32Array([
-  -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0,
-]);
-const indices = [0, 1, 2, 2, 3, 0];
-geometry.setIndex(indices);
-geometry.setAttribute("position", new THREE.BufferAttribute(vertices, 3));
-const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-const mesh = new THREE.Mesh(geometry, material);
