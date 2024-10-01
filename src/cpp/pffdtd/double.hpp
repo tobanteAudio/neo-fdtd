@@ -2,6 +2,9 @@
 // SPDX-FileCopyrightText: 2024 Tobias Hienzsch
 #pragma once
 
+#include "pffdtd/float.hpp"
+#include "pffdtd/utility.hpp"
+
 #if defined(SYCL_LANGUAGE_VERSION)
   #include "pffdtd/sycl.hpp"
 #endif
@@ -12,12 +15,22 @@
 
 namespace pffdtd {
 
-/// https://github.com/sukop/doubledouble/blob/master/doubledouble.py
+/// https://hal.science/hal-01351529v3/document
+/// https://inria.hal.science/inria-00070314/document
+/// https://github.com/sukop/doubledouble
+/// https://github.com/JuliaMath/DoubleFloats.jl
+/// https://github.com/FlorisSteenkamp/double-double
 template<typename Real>
 struct Double {
   constexpr Double() = default;
 
-  constexpr Double(Real x, Real y = 0.0) noexcept : _high{x}, _low{y} {}
+  constexpr Double(Real x) noexcept {
+    auto const [h, l] = split(x);
+    _high             = h;
+    _low              = l;
+  }
+
+  constexpr Double(Real x, Real y) noexcept : _high{x}, _low{y} {}
 
   [[nodiscard]] constexpr auto high() const noexcept -> Real { return _high; }
 
@@ -86,6 +99,21 @@ struct Double {
   }
 
   private:
+  [[nodiscard]] static constexpr auto split(Real a) noexcept -> Double {
+    constexpr auto const digits = FloatTraits<Real>::digits;
+    constexpr auto const f      = ipow<2>(idiv(digits, 2)) + 1;
+
+    if constexpr (std::same_as<Real, double> and sizeof(double) == 8) {
+      static_assert(f == 134217729); // 2**27 + 1
+    }
+
+    auto const c   = static_cast<Real>(f) * a;
+    auto const a_h = c - (c - a);
+    auto const a_l = a - a_h;
+
+    return {a_h, a_l};
+  }
+
   [[nodiscard]] static constexpr auto twoSum(Real x, Real y) noexcept -> Double {
     auto r = x + y;
     auto t = r - x;
@@ -109,7 +137,7 @@ struct Double {
   [[nodiscard]] static constexpr auto twoProduct(Real x, Real y) noexcept -> Double {
     auto r = x * y;
 
-#if defined(__APPLE__) or defined(__clang__)
+#if defined(PFFDTD_HAS_FLOAT16)
     if constexpr (std::same_as<Real, _Float16>) {
       auto e = static_cast<_Float16>(std::fma(float{x}, float{y}, float{-r}));
       return Double{r, e};
@@ -124,5 +152,8 @@ struct Double {
   Real _high{static_cast<Real>(0)};
   Real _low{static_cast<Real>(0)};
 };
+
+template<typename Real>
+struct FloatTraits<Double<Real>> : FloatTraits<Real> {};
 
 } // namespace pffdtd

@@ -10,6 +10,7 @@
 #include "pffdtd/progress.hpp"
 #include "pffdtd/sycl.hpp"
 #include "pffdtd/time.hpp"
+#include "pffdtd/utility.hpp"
 
 #include <fmt/format.h>
 
@@ -30,35 +31,17 @@ struct CopyInput;
 template<typename Real>
 struct CopyOutput;
 
-template<typename Real>
-static constexpr auto min_exponent = std::numeric_limits<Real>::min_exponent;
-
-template<typename Real>
-static constexpr auto min_exponent<Double<Real>> = min_exponent<Real>;
-
-template<>
-[[maybe_unused]] static constexpr auto min_exponent<_Float16> = -13;
-
-template<typename Real>
-static constexpr auto max_exponent = std::numeric_limits<Real>::max_exponent;
-
-template<typename Real>
-static constexpr auto max_exponent<Double<Real>> = max_exponent<Real>;
-
-template<>
-[[maybe_unused]] static constexpr auto max_exponent<_Float16> = 16;
-
 [[nodiscard]] constexpr auto to_ixy(auto x, auto y, auto /*Nx*/, auto Ny) { return x * Ny + y; }
 
 template<typename Real>
 auto scaleInput(std::vector<double> const& buf) {
-  static constexpr auto min_exp = static_cast<double>(min_exponent<Real>);
-  static constexpr auto max_exp = static_cast<double>(max_exponent<Real>);
+  static constexpr auto min_exp = static_cast<double>(FloatTraits<Real>::minExponent);
+  static constexpr auto max_exp = static_cast<double>(FloatTraits<Real>::maxExponent);
   println("min_exp = {}, min_exp = {}", min_exp, max_exp);
 
   auto const aexp  = 0.5;
   auto const pow2  = static_cast<int>(std::round(aexp * max_exp + (1 - aexp) * min_exp));
-  auto const norm1 = std::pow(2.0, pow2);
+  auto const norm1 = static_cast<double>(ipow(2, pow2));
 
   auto const max_in    = *std::ranges::max_element(buf, [](auto l, auto r) { return std::fabs(l) < std::fabs(r); });
   auto const inv_infac = norm1 / max_in;
@@ -255,7 +238,7 @@ auto run(Simulation2D const& sim) {
 auto EngineSYCL2D::operator()(Simulation2D const& sim, Precision precision) const
     -> stdex::mdarray<double, stdex::dextents<size_t, 2>> {
   switch (precision) {
-#if not defined(__INTEL_LLVM_COMPILER)
+#if defined(PFFDTD_HAS_FLOAT16)
     case Precision::Half: return run<_Float16>(sim);
     case Precision::DoubleHalf: return run<Double<_Float16>>(sim);
 #endif

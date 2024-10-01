@@ -25,8 +25,10 @@ target_sources(pffdtd
         pffdtd/engine_cpu_3d.cpp
         pffdtd/engine_cpu_3d.hpp
         pffdtd/exception.hpp
+        pffdtd/float.hpp
         pffdtd/hdf.hpp
         pffdtd/mdspan.hpp
+        pffdtd/precision.cpp
         pffdtd/precision.hpp
         pffdtd/print.hpp
         pffdtd/progress.cpp

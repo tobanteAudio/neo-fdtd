@@ -6,6 +6,7 @@
 #include "pffdtd/double.hpp"
 #include "pffdtd/exception.hpp"
 #include "pffdtd/hdf.hpp"
+#include "pffdtd/utility.hpp"
 
 #include <fmt/format.h>
 
@@ -18,67 +19,6 @@
 namespace pffdtd {
 
 namespace {
-
-template<typename T>
-constexpr auto EPS = 0.0;
-
-template<>
-constexpr auto EPS<float> = 1.19209289e-07;
-
-auto getEpsilon(Precision precision) {
-  switch (precision) {
-    case Precision::Half: return EPS<float>;
-    case Precision::Float: return EPS<float>;
-    case Precision::Double: return EPS<double>;
-
-    case Precision::DoubleHalf: return EPS<float>;
-    case Precision::DoubleFloat: return EPS<float>;
-    case Precision::DoubleDouble: return EPS<double>;
-
-    default: break;
-  }
-
-  raisef<std::invalid_argument>("invalid precision = {}", int(precision));
-}
-
-template<typename Real>
-static constexpr auto min_exponent = std::numeric_limits<Real>::min_exponent;
-
-template<typename Real>
-static constexpr auto max_exponent = std::numeric_limits<Real>::max_exponent;
-
-template<typename Real>
-static constexpr auto min_exponent<Double<Real>> = min_exponent<Real>;
-
-template<typename Real>
-static constexpr auto max_exponent<Double<Real>> = max_exponent<Real>;
-
-#if defined(__APPLE__) or defined(__clang__)
-template<>
-static constexpr auto min_exponent<_Float16> = -13;
-
-template<>
-static constexpr auto max_exponent<_Float16> = 16;
-#endif
-
-auto getMinMaxExponent(Precision precision) {
-  switch (precision) {
-    case Precision::Float: return std::pair{min_exponent<float>, max_exponent<float>};
-    case Precision::DoubleFloat: return std::pair{min_exponent<float>, max_exponent<float>};
-
-    case Precision::Double: return std::pair{min_exponent<double>, max_exponent<double>};
-    case Precision::DoubleDouble: return std::pair{min_exponent<double>, max_exponent<double>};
-
-#if defined(__APPLE__) or defined(__clang__)
-    case Precision::Half: return std::pair{min_exponent<_Float16>, max_exponent<_Float16>};
-    case Precision::DoubleHalf: return std::pair{min_exponent<_Float16>, max_exponent<_Float16>};
-#endif
-
-    default: break;
-  }
-
-  raisef<std::invalid_argument>("invalid precision = {}", int(precision));
-}
 
 // sort and return indices
 void sort_keys(int64_t* val_arr, int64_t* key_arr, int64_t N) {
@@ -586,8 +526,8 @@ void scaleInput(Simulation3D& sim) {
   auto const [min_exp, max_exp] = std::pair<double, double>{getMinMaxExponent(sim.precision)};
 
   auto const aexp      = 0.5; // normalise to middle power of two
-  auto const pow2      = static_cast<int32_t>(std::round(aexp * max_exp + (1 - aexp) * min_exp));
-  auto const norm1     = std::pow(2.0, pow2);
+  auto const pow2      = static_cast<int>(std::round(aexp * max_exp + (1 - aexp) * min_exp));
+  auto const norm1     = static_cast<double>(ipow(2, pow2));
   auto const inv_infac = norm1 / max_in;
   auto const infac     = 1.0 / inv_infac;
 

@@ -358,7 +358,7 @@ auto run(Simulation3D const& sim) -> void {
 
 auto EngineSYCL3D::operator()(Simulation3D const& sim) const -> void {
   switch (sim.precision) {
-#if not defined(__INTEL_LLVM_COMPILER)
+#if defined(PFFDTD_HAS_FLOAT16)
     case Precision::Half: return run<_Float16>(sim);
     case Precision::DoubleHalf: return run<Double<_Float16>>(sim);
 #endif
