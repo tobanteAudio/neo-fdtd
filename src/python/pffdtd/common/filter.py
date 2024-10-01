@@ -26,7 +26,7 @@ def apply_lowcut(y, fs, fcut, order, apply_int):
     if apply_int:
         # shouldn't really use this without lowcut, but here in case
         b = dt/2*np.array([1, 1])
-        a = np.array([1, 1])
+        a = np.array([1, -1])
         return lfilter(b, a, y)
 
     return np.copy(y)
