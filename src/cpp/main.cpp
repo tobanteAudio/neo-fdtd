@@ -185,15 +185,34 @@ auto main(int argc, char** argv) -> int {
   if (*test) {
     // NOLINTBEGIN
     using pffdtd::Double;
+    PFFDTD_ASSERT(static_cast<float>(Double{42.0F} + 2.0F) == 44.0F);
     PFFDTD_ASSERT(static_cast<float>(Double{42.0F} + Double{2.0F}) == 44.0F);
     PFFDTD_ASSERT(static_cast<float>(Double{42.0F} - Double{2.0F}) == 40.0F);
     PFFDTD_ASSERT(static_cast<float>(Double{42.0F} * Double{2.0F}) == 84.0F);
     PFFDTD_ASSERT(static_cast<float>(Double{42.0F} / Double{2.0F}) == 21.0F);
 
+    PFFDTD_ASSERT(static_cast<double>(Double{42.0} + 2.0) == 44.0);
     PFFDTD_ASSERT(static_cast<double>(Double{42.0} + Double{2.0}) == 44.0);
     PFFDTD_ASSERT(static_cast<double>(Double{42.0} - Double{2.0}) == 40.0);
     PFFDTD_ASSERT(static_cast<double>(Double{42.0} * Double{2.0}) == 84.0);
     PFFDTD_ASSERT(static_cast<double>(Double{42.0} / Double{2.0}) == 21.0);
+
+    auto a = Double{42.0};
+    PFFDTD_ASSERT(a == a);
+    PFFDTD_ASSERT(a != Double<double>{});
+    PFFDTD_ASSERT(Double<double>{} != a);
+    PFFDTD_ASSERT(static_cast<double>(+a) == +42.0);
+    PFFDTD_ASSERT(static_cast<double>(-a) == -42.0);
+
+    a += Double{2.0};
+    PFFDTD_ASSERT(static_cast<double>(a) == 44.0);
+    a -= Double{2.0};
+    PFFDTD_ASSERT(static_cast<double>(a) == 42.0);
+    a *= Double{2.0};
+    PFFDTD_ASSERT(static_cast<double>(a) == 84.0);
+    a /= Double{2.0};
+    PFFDTD_ASSERT(static_cast<double>(a) == 42.0);
+
     // NOLINTEND
   }
 

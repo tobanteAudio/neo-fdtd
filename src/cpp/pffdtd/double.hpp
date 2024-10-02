@@ -17,6 +17,7 @@ namespace pffdtd {
 
 /// https://hal.science/hal-01351529v3/document
 /// https://inria.hal.science/inria-00070314/document
+/// https://people.eecs.berkeley.edu/~jrs/papers/robustr.pdf
 /// https://github.com/sukop/doubledouble
 /// https://github.com/JuliaMath/DoubleFloats.jl
 /// https://github.com/FlorisSteenkamp/double-double
@@ -53,29 +54,34 @@ struct Double {
 
   friend constexpr auto operator-(Double x) noexcept -> Double { return {-x.high(), -x.low()}; }
 
+  friend constexpr auto operator+(Double lhs, Real rhs) noexcept -> Double {
+    auto [sl, sh] = twoSum(lhs.high(), rhs);
+    return twoSumFast(sh, lhs.low() + sl);
+  }
+
   friend constexpr auto operator+(Double lhs, Double rhs) noexcept -> Double {
     auto [r, e] = twoSum(lhs.high(), rhs.high());
     e += lhs.low() + rhs.low();
-    return twoSumQuick(r, e);
+    return twoSumFast(r, e);
   }
 
   friend constexpr auto operator-(Double lhs, Double rhs) noexcept -> Double {
     auto [r, e] = twoDifference(lhs.high(), rhs.high());
     e += lhs.low() - rhs.low();
-    return twoSumQuick(r, e);
+    return twoSumFast(r, e);
   }
 
   friend constexpr auto operator*(Double lhs, Double rhs) noexcept -> Double {
     auto [r, e] = twoProduct(lhs.high(), rhs.high());
     e += lhs.high() * rhs.low() + lhs.low() * rhs.high();
-    return twoSumQuick(r, e);
+    return twoSumFast(r, e);
   }
 
   friend constexpr auto operator/(Double lhs, Double rhs) noexcept -> Double {
     auto r      = lhs.high() / rhs.high();
     auto [s, f] = twoProduct(r, rhs.high());
     auto e      = (lhs.high() - s - f + lhs.low() - r * rhs.low()) / rhs.high();
-    return twoSumQuick(r, e);
+    return twoSumFast(r, e);
   }
 
   friend constexpr auto operator+=(Double& lhs, Double rhs) noexcept -> Double& {
@@ -97,6 +103,8 @@ struct Double {
     lhs = lhs / rhs;
     return lhs;
   }
+
+  friend constexpr auto operator==(Double lhs, Double rhs) noexcept -> bool = default;
 
   private:
   [[nodiscard]] static constexpr auto split(Real a) noexcept -> Double {
@@ -121,7 +129,7 @@ struct Double {
     return Double{r, e};
   }
 
-  [[nodiscard]] static constexpr auto twoSumQuick(Real x, Real y) noexcept -> Double {
+  [[nodiscard]] static constexpr auto twoSumFast(Real x, Real y) noexcept -> Double {
     auto r = x + y;
     auto e = y - (r - x);
     return Double{r, e};

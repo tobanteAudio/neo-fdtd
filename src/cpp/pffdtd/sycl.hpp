@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "pffdtd/float.hpp"
 #include "pffdtd/time.hpp"
 
 #if not defined(PFFDTD_HAS_SYCL)
@@ -26,5 +27,12 @@ template<typename Accessor>
 
 auto toString(sycl::info::device_type type) -> std::string;
 auto summary(sycl::device const& dev) -> void;
+
+template<>
+struct FloatTraits<sycl::half> {
+  static constexpr auto digits      = 11;
+  static constexpr auto minExponent = -13;
+  static constexpr auto maxExponent = 16;
+};
 
 } // namespace pffdtd
